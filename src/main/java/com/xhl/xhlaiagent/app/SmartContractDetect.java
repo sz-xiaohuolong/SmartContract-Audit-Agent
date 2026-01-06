@@ -1,0 +1,135 @@
+package com.xhl.xhlaiagent.app;
+
+import com.xhl.xhlaiagent.advisor.MyLoggerAdvisor;
+import com.xhl.xhlaiagent.chatmemory.FileBasedChatMemory;
+import com.xhl.xhlaiagent.constant.FileConstant;
+import com.xhl.xhlaiagent.rag.SafeQuestionAnswerAdvisor;
+import com.xhl.xhlaiagent.rag.model.SmartContractAnalysisResult;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.stereotype.Component;
+
+@Component
+@Slf4j
+public class SmartContractDetect {
+
+    private final ChatClient chatClient;
+
+    // 系统提示词
+    public static final String SYSTEM_PROMPT = """
+            你是一名资深的智能合约安全专家，熟悉 Solidity、EVM、以及区块链常见漏洞检测与防御机制（如重入攻击、整数溢出、权限控制错误、时间戳依赖、Gas 限制问题等）。
+            你的任务是分析用户提供的智能合约代码，判断其中是否存在安全漏洞。
+            
+            请严格按照以下步骤完成任务：
+            1. 阅读合约代码，理解其主要逻辑与功能。
+            2. 识别潜在漏洞，判断是否存在常见漏洞类型或安全隐患。
+            3. 输出结论：
+               - 如果未发现漏洞，仅输出：`不存在漏洞`
+               - 如果发现漏洞，请按以下格式输出：
+                 存在漏洞：
+                 - 漏洞类型：(漏洞名称)
+                 - 漏洞原因：(简要描述)
+            
+            要求：
+            - 不输出推理过程或多余说明。
+            - 不进行代码修复，只判断漏洞是否存在及类型。
+            - 保持输出简洁、结构化。
+            
+            待分析的智能合约代码如下：
+            ${contract_code}
+            """;
+    public static final String SYSTEM_PROMPT1 = """
+            你是一名 VeriRAG-Agent，即资深的智能合约安全审计智能体。你配备了静态代码分析工具（Slither），并拥有庞大的漏洞知识库。
+            
+            你的核心工作流（Workflow）必须严格遵守以下 "假设-验证" 四阶段循环：
+            
+            1. **Phase I & II (检索与理解)**: 结合 RAG 检索到的知识，阅读并理解用户的合约代码。
+            
+            2. **Phase III (认知推理与假设)**: 
+               - 基于代码逻辑，进行 Step-by-Step 的思维链推理。
+               - 提出“漏洞假设”：即初步判断是否存在漏洞（例如：疑似存在重入攻击）。
+            
+            3. **Phase IV (动态工具验证 - 关键)**: 
+               - **如果你在 Phase III 中产生了“存在漏洞”的假设（hasVulnerability == true），你必须调用 `analyzeContract` 工具进行验证！**
+               - 不要仅凭肉眼判断，必须以 Slither 工具的静态分析结果作为“基准真值（Ground Truth）”来佐证你的判断。
+               - 如果工具报错或未发现问题，请重新评估你的假设。
+            
+            4. **Final Output (最终结论)**: 
+               - 综合你的推理和工具的验证结果，输出最终审计报告。
+               - 即使工具发现了漏洞，你也需要结合代码上下文解释原因。
+               - 更新vulnerabilityType、vulnerabilityReason的内容
+            
+            注意：
+            - 你拥有工具调用权限，**务必积极使用**。
+            - 最终输出必须严格遵守 JSON 格式要求。
+            
+            待分析的智能合约代码如下：
+            ${contract_code}
+            """;
+
+
+    // 构造器注入
+    public SmartContractDetect(ChatModel dashscopeChatModel) {
+        // 初始化基于文件的对话记忆
+        String fileDir = FileConstant.FILE_SAVE_DIR + "/chat-memory";
+        ChatMemory chatMemory = new FileBasedChatMemory(fileDir);
+        chatClient = ChatClient.builder(dashscopeChatModel)
+                .defaultSystem(SYSTEM_PROMPT1)
+                .defaultAdvisors(
+                        // 自定义日志 Advisor
+                        new MyLoggerAdvisor()
+                        // 自定义推理增强 Advisor，可按需开启
+                        // new ReReadingAdvisor()
+                )
+                .build();
+    }
+
+
+    // 最简单的方法，用于对比实验
+    public String doChat(String message) {
+        ChatResponse response = chatClient
+                .prompt()
+                .user(message)
+                .call()
+                .chatResponse();
+        return response.getResult().getOutput().getText();
+    }
+
+
+    String formatPrompt = """
+            请使用以下 JSON 格式输出结果（不要添加额外文字）：
+            {
+              "hasVulnerability": true 或 false,
+              "vulnerabilityType": "漏洞类型（如重入攻击）",
+              "vulnerabilityReason": "漏洞原因简述"
+            }
+            """;
+
+    @Resource
+    private VectorStore contractAppVectorStore;
+
+    @Resource
+    private ToolCallback[] allTools; //工具调用
+
+    public SmartContractAnalysisResult doChatWithRag(String message) {
+        String userMessage = message + "\n\n" + formatPrompt;
+        SmartContractAnalysisResult result = chatClient
+                .prompt()
+                .user(userMessage)
+                // 开启日志，便于观察效果
+                .advisors(new MyLoggerAdvisor())
+                // 应用知识库问答
+                .advisors(new SafeQuestionAnswerAdvisor(contractAppVectorStore))
+                .tools(allTools)
+                .call()
+                .entity(SmartContractAnalysisResult.class);
+        return result;
+    }
+
+}
