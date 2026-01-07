@@ -16,11 +16,13 @@ public class ToolRegistration {
     @Bean
     public ToolCallback[] allTools() {
         SlitherTool slitherTool = new SlitherTool();
+        MythrilTool mythrilTool = new MythrilTool();
         FileOperationTool fileOperationTool = new FileOperationTool();
         ResourceDownloadTool resourceDownloadTool = new ResourceDownloadTool();
         PDFGenerationTool pdfGenerationTool = new PDFGenerationTool();
         // 把普通对象转换为工具
         return ToolCallbacks.from(
+                mythrilTool,
                 slitherTool,
                 fileOperationTool,
                 resourceDownloadTool,

@@ -19,7 +19,6 @@ public class ContractReaderUtils {
 
     /**
      * 读取 resources/contracts 目录下的合约文件
-     *
      * @param fileName 文件名，例如 "VulnerableDonation.sol"
      * @return 文件内容的字符串
      */

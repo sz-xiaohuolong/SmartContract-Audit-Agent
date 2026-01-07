@@ -45,25 +45,30 @@ public class SmartContractDetect {
             ${contract_code}
             """;
     public static final String SYSTEM_PROMPT1 = """
-            你是一名 VeriRAG-Agent，即资深的智能合约安全审计智能体。你配备了静态代码分析工具（Slither），并拥有庞大的漏洞知识库。
+            你是一名 VeriRAG-Agent，即资深的智能合约安全审计智能体。你配备了双引擎检测系统：
+            1. **Slither (静态分析)**: 速度快，用于全面扫描。
+            2. **Mythril (符号执行)**: 精度高但速度慢，用于验证复杂逻辑或算术漏洞。
             
-            你的核心工作流（Workflow）必须严格遵守以下 "假设-验证" 四阶段循环：
+            你的核心工作流（Workflow）必须严格遵守以下循环：
             
             1. **Phase I & II (检索与理解)**: 结合 RAG 检索到的知识，阅读并理解用户的合约代码。
             
             2. **Phase III (认知推理与假设)**: 
                - 基于代码逻辑，进行 Step-by-Step 的思维链推理。
-               - 提出“漏洞假设”：即初步判断是否存在漏洞（例如：疑似存在重入攻击）。
+               - 提出“漏洞假设”。
             
-            3. **Phase IV (动态工具验证 - 关键)**: 
-               - **如果你在 Phase III 中产生了“存在漏洞”的假设（hasVulnerability == true），你必须调用 `analyzeContract` 工具进行验证！**
-               - 不要仅凭肉眼判断，必须以 Slither 工具的静态分析结果作为“基准真值（Ground Truth）”来佐证你的判断。
-               - 如果工具报错或未发现问题，请重新评估你的假设。
+            3. **Phase IV (双引擎动态验证 - 核心)**: 
+               - **Step A**: 优先调用 `SlitherTool` 进行全量扫描。
+               - **Step B (按需启动)**: 
+                   - 如果 Slither 报告了高危漏洞，且你需要确认其可利用性（Exploitability）；
+                   - 或者你怀疑存在整数溢出、复杂权限绕过等 Slither 容易漏报的问题；
+                   - **务必追加调用 `MythrilTool` 进行深度验证！**
+               - 对比两者的结果作为“基准真值（Ground Truth）”。
             
             4. **Final Output (最终结论)**: 
-               - 综合你的推理和工具的验证结果，输出最终审计报告。
-               - 即使工具发现了漏洞，你也需要结合代码上下文解释原因。
-               - 更新vulnerabilityType、vulnerabilityReason的内容
+               - 综合推理、Slither 和 Mythril 的结果输出审计报告。
+               - 明确指出是哪个工具发现了漏洞。
+               - 更新 vulnerabilityType、vulnerabilityReason 的内容
             
             注意：
             - 你拥有工具调用权限，**务必积极使用**。
@@ -72,7 +77,6 @@ public class SmartContractDetect {
             待分析的智能合约代码如下：
             ${contract_code}
             """;
-
 
     // 构造器注入
     public SmartContractDetect(ChatModel dashscopeChatModel) {
@@ -112,7 +116,7 @@ public class SmartContractDetect {
             """;
 
     @Resource
-    private VectorStore contractAppVectorStore;
+    private VectorStore milvusVectorVectorStore;
 
     @Resource
     private ToolCallback[] allTools; //工具调用
@@ -125,7 +129,7 @@ public class SmartContractDetect {
                 // 开启日志，便于观察效果
                 .advisors(new MyLoggerAdvisor())
                 // 应用知识库问答
-                .advisors(new SafeQuestionAnswerAdvisor(contractAppVectorStore))
+                .advisors(new SafeQuestionAnswerAdvisor(milvusVectorVectorStore))
                 .tools(allTools)
                 .call()
                 .entity(SmartContractAnalysisResult.class);

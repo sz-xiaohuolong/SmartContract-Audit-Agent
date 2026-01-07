@@ -24,7 +24,7 @@ public class SlitherTool {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Tool(description = "静态代码分析工具。输入Solidity合约代码，调用本地Slither引擎进行漏洞扫描，返回结构化的漏洞报告。")
-    public String analyzeContract(@ToolParam(description = "完整的智能合约源代码") String contractCode) {
+    public String slitherAnalyze(@ToolParam(description = "完整的智能合约源代码") String contractCode) {
         Path tempDir = null;
         try {
             // ================= 修改点 1: 清洗 Markdown 标记 =================

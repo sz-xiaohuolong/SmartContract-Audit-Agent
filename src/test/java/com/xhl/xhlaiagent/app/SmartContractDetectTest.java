@@ -19,36 +19,14 @@ class SmartContractDetectTest {
 
     @Test
     void doChat() {
-        String message = """
-                请分析以下智能合约代码，并给出相应的审计建议：
-                          pragma solidity ^0.8.0;
-                          contract VulnerableDonation {
-                              mapping (address => uint) public balances;
-                              address payable public owner;
-                
-                              constructor() {
-                                  owner = payable(msg.sender);
-                              }
-                
-                              function donate() public payable {
-                                  balances[msg.sender] += msg.value;
-                              }
-                
-                              function withdraw(uint _amount) public {
-                                  require(balances[msg.sender] >= _amount, "Insufficient balance");
-                                  msg.sender.transfer(_amount);
-                                  balances[msg.sender] -= _amount;
-                              }
-                          }
-                """;
-
+        String message = ContractReaderUtils.createPromptFromContract("VulnerableDonation.sol");
         String content = smartContractDetect.doChat(message);
         Assertions.assertNotNull(content);
     }
 
     @Test
     void doChatWithRag() {
-        String message = ContractReaderUtils.createPromptFromContract("VulnerableDonation.sol");
+        String message = ContractReaderUtils.createPromptFromContract("OverFlow.sol");
         SmartContractAnalysisResult result = smartContractDetect.doChatWithRag(message);
         Assertions.assertNotNull(result);
     }
