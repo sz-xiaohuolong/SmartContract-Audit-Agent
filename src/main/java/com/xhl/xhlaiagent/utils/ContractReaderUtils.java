@@ -1,4 +1,4 @@
-package com.xhl.utils;
+package com.xhl.xhlaiagent.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
@@ -46,7 +46,6 @@ public class ContractReaderUtils {
     public static String createPromptFromContract(String fileName) {
         String code = readContract(fileName);
         return """
-                请分析以下智能合约代码，并给出相应的审计建议，最后调用静态代码分析工具：
                 ```solidity
                 %s
                 ```

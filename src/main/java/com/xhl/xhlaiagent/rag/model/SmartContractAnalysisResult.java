@@ -1,9 +1,13 @@
 package com.xhl.xhlaiagent.rag.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 // 智能合约安全分析结果包装类
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SmartContractAnalysisResult {
 
     /**

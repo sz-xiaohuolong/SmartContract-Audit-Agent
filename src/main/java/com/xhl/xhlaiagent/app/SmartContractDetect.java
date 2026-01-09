@@ -22,28 +22,15 @@ public class SmartContractDetect {
     private final ChatClient chatClient;
 
     // 系统提示词
-    public static final String SYSTEM_PROMPT = """
-            你是一名资深的智能合约安全专家，熟悉 Solidity、EVM、以及区块链常见漏洞检测与防御机制（如重入攻击、整数溢出、权限控制错误、时间戳依赖、Gas 限制问题等）。
-            你的任务是分析用户提供的智能合约代码，判断其中是否存在安全漏洞。
-            
-            请严格按照以下步骤完成任务：
-            1. 阅读合约代码，理解其主要逻辑与功能。
-            2. 识别潜在漏洞，判断是否存在常见漏洞类型或安全隐患。
-            3. 输出结论：
-               - 如果未发现漏洞，仅输出：`不存在漏洞`
-               - 如果发现漏洞，请按以下格式输出：
-                 存在漏洞：
-                 - 漏洞类型：(漏洞名称)
-                 - 漏洞原因：(简要描述)
-            
-            要求：
-            - 不输出推理过程或多余说明。
-            - 不进行代码修复，只判断漏洞是否存在及类型。
-            - 保持输出简洁、结构化。
-            
+    // 简单的 System Prompt (用于 Baseline / RAG-Only 模式)
+    private static final String BASIC_SYSTEM_PROMPT = """
+            你是一名智能合约安全专家。请分析用户提供的 Solidity 代码，判断是否存在安全漏洞。
+            请直接输出分析结果，不需要调用任何外部工具。
+            最终结果请严格按照 JSON 格式输出。
             待分析的智能合约代码如下：
             ${contract_code}
             """;
+
     public static final String SYSTEM_PROMPT1 = """
             你是一名 VeriRAG-Agent，即资深的智能合约安全审计智能体。你配备了双引擎检测系统：
             1. **Slither (静态分析)**: 速度快，用于全面扫描。
@@ -94,12 +81,14 @@ public class SmartContractDetect {
                 .build();
     }
 
-
     // 最简单的方法，用于对比实验
-    public String doChat(String message) {
+    public String auditVanilla(String message) {
+        log.info("🧪 [Experiment] Running Mode: Vanilla LLM");
+        String userMessage = message + "\n\n" + formatPrompt;
         ChatResponse response = chatClient
                 .prompt()
-                .user(message)
+                .system(BASIC_SYSTEM_PROMPT)
+                .user(userMessage)
                 .call()
                 .chatResponse();
         return response.getResult().getOutput().getText();
@@ -121,7 +110,24 @@ public class SmartContractDetect {
     @Resource
     private ToolCallback[] allTools; //工具调用
 
-    public SmartContractAnalysisResult doChatWithRag(String message) {
+
+    public SmartContractAnalysisResult auditRAGOnly(String message) {
+        log.info("🧪 [Experiment] Running Mode: RAG Only");
+        String userMessage = message + "\n\n" + formatPrompt;
+        SmartContractAnalysisResult result = chatClient
+                .prompt()
+                .user(userMessage)
+                // 开启日志，便于观察效果
+                .advisors(new MyLoggerAdvisor())
+                // 应用知识库问答
+                .advisors(new SafeQuestionAnswerAdvisor(milvusVectorVectorStore))
+                .call()
+                .entity(SmartContractAnalysisResult.class);
+        return result;
+    }
+
+    public SmartContractAnalysisResult auditFullAgent(String message) {
+        log.info("🧪 [Experiment] Running Mode: VeriRAG-Agent (Full)");
         String userMessage = message + "\n\n" + formatPrompt;
         SmartContractAnalysisResult result = chatClient
                 .prompt()

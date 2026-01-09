@@ -1,11 +1,9 @@
 package com.xhl.xhlaiagent.tools;
 
-import com.xhl.utils.ContractReaderUtils;
+import com.xhl.xhlaiagent.utils.ContractReaderUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 class MythrilToolTest {

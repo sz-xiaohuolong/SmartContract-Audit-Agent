@@ -1,13 +1,12 @@
 package com.xhl.xhlaiagent.rag;
 
-import com.xhl.utils.SimpleLengthSplitter;
+import com.xhl.xhlaiagent.utils.SimpleLengthSplitter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.document.DocumentTransformer;
-import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,6 +25,8 @@ public class MilvusVectorStoreConfig {
     // 你现在导入的 SmartBugs 数据集名字（来自 Front Matter 的 Dataset: smartbugs-curated）
     private static final String DATASET_NAME = "smartbugs-curated";
 
+
+
     @Bean
     public VectorStore milvusVectorVectorStore() {
 
@@ -38,6 +39,8 @@ public class MilvusVectorStoreConfig {
         }
 
         log.info("Milvus does not contain dataset='{}', start loading documents...", DATASET_NAME);
+
+
 
         // 2) 加载文档（每个 md = 1 Document；包含 Solidity code blocks）
         List<Document> documents = contractAppDocumentLoader.loadMarkdowns();
@@ -61,14 +64,17 @@ public class MilvusVectorStoreConfig {
             return vectorStore;
         }
 
+
         // 4) 先切分：避免 embedding 输入超过 2048
-        List<Document> smartbugsChunks = SimpleLengthSplitter.split(smartbugsDocs, 1800, 150);
+        List<Document> smartbugsChunks = SimpleLengthSplitter.split(smartbugsDocs, 6000, 400);
+
         log.info("Split {} docs into {} chunks (maxLen={}, overlap={})",
-                smartbugsDocs.size(), smartbugsChunks.size(), 1800, 150);
+                smartbugsDocs.size(), smartbugsChunks.size(), 6000, 400);
 
-
-        // 4) 分批写入（防止一次 add 太大；同时打印进度）
-        int batchSize = 20;
+        // ------------------ 修改点 2：调整 Batch Size ------------------
+        // 虽然 DashScope 允许 batch=25，但因为现在每个 chunk 可能长达 6000 字符 (是之前的3倍)，
+        // 为了避免请求体过大导致超时或 413 错误，建议将 batchSize 调小一点，比如 10。
+        int batchSize = 10;
         int total = smartbugsChunks.size();
         log.info("Ready to add {} documents for dataset='{}' into Milvus (batchSize={})",
                 total, DATASET_NAME, batchSize);

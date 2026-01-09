@@ -1,4 +1,4 @@
-package com.xhl.utils;
+package com.xhl.xhlaiagent.utils;
 
 import org.springframework.ai.document.Document;
 
