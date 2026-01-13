@@ -45,12 +45,14 @@ public class SafeQuestionAnswerAdvisor implements CallAroundAdvisor {
         // 向量检索
         SearchRequest searchRequestToUse = SearchRequest.from(this.searchRequest)
                 .query(query)
+                .topK(3)
+                .similarityThreshold(0.5)
                 .filterExpression(doGetFilterExpression(request.adviseContext()))
                 .build();
 
         List<Document> documents = this.vectorStore.similaritySearch(searchRequestToUse);
 
-        // 拼接上下文
+        // 拼接上下文，把检索结果“注入”到 Prompt 里
         String contextText = documents.stream()
                 .map(Document::getText)
                 .collect(Collectors.joining("\n\n"));
@@ -77,8 +79,8 @@ public class SafeQuestionAnswerAdvisor implements CallAroundAdvisor {
     }
 
     private Filter.Expression doGetFilterExpression(Map<String, Object> context) {
-        if (context.containsKey("qa_filter_expression") && 
-            StringUtils.hasText(context.get("qa_filter_expression").toString())) {
+        if (context.containsKey("qa_filter_expression") &&
+                StringUtils.hasText(context.get("qa_filter_expression").toString())) {
             return new FilterExpressionTextParser().parse(context.get("qa_filter_expression").toString());
         }
         return this.searchRequest.getFilterExpression();

@@ -24,7 +24,7 @@ class SmartContractDetectTest {
 
     @Test
     void doChatWithRag() {
-        String message = ContractReaderUtils.createPromptFromContract("OverFlow.sol");
+        String message = ContractReaderUtils.createPromptFromContract("OverFlow15.sol");
         SmartContractAnalysisResult result = smartContractDetect.auditFullAgent(message);
         Assertions.assertNotNull(result);
     }

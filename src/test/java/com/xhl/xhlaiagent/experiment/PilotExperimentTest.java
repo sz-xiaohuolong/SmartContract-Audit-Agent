@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,27 +30,42 @@ public class PilotExperimentTest {
     // 用于手动解析 Vanilla 模式返回的 JSON 字符串
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // 定义单次实验记录
+    /**
+     * 运行模式（一次只跑一个）
+     * 用法：mvn test -Dtest=PilotExperimentTest -Dmode=Vanilla
+     * 可选：Vanilla / RAG-Only / VeriRAG-Full
+     */
+    private static final List<String> MODES = List.of("Vanilla", "RAG-Only", "VeriRAG-Full");
+
+    // 定义单次实验记录（新增 vulnerabilityReason）
     record ExperimentRecord(
             String filename,
             String mode,
             boolean hasVuln,
-            String type,
+            String vulnerabilityType,
+            String vulnerabilityReason,
             long timeMs,
-            String rawError // 记录可能的解析错误
-    ) {}
+            String rawError, // 记录可能的解析/系统错误
+            String peopleAudit // 人工审核
+    ) {
+    }
 
     @Test
-    void runPilotAblationStudy() throws IOException {
-        // 1. 定位数据集 (确保这里的路径与你实际存放 .sol 文件的位置一致)
-        // 假设之前我们放在了 src/main/resources/testset/pilot_set
-        File datasetDir = new File("src/main/resources/testset/pilot_set");
+    void runPilotSingleMode() throws IOException {
 
-        // 如果上面找不到，尝试 test resources
+        // 0) 读取本次要跑的 mode（默认 Vanilla）
+        String mode = System.getProperty("mode", "Vanilla");
+        if (!MODES.contains(mode)) {
+            log.error("❌ mode 参数非法: {}，可选: {}", mode, MODES);
+            return;
+        }
+        log.info("🧪 Pilot Experiment - Selected Mode = {}", mode);
+
+        // 1) 定位数据集目录
+        File datasetDir = new File("src/main/resources/testset/pilot_set");
         if (!datasetDir.exists()) {
             datasetDir = new File("src/test/resources/contracts/pilot_set");
         }
-
         if (!datasetDir.exists() || datasetDir.listFiles() == null) {
             log.error("❌ 未找到数据集目录: {}", datasetDir.getAbsolutePath());
             return;
@@ -59,59 +73,76 @@ public class PilotExperimentTest {
 
         File[] contractFiles = datasetDir.listFiles((dir, name) -> name.endsWith(".sol"));
         if (contractFiles == null || contractFiles.length == 0) {
-            log.error("❌ 目录下没有 .sol 文件");
+            log.error("❌ 目录下没有 .sol 文件: {}", datasetDir.getAbsolutePath());
             return;
         }
 
-        log.info("🚀 开始 Pilot 消融实验，共发现 {} 个样本", contractFiles.length);
+        log.info("🚀 开始 Pilot 单模式实验，共发现 {} 个样本，模式={}", contractFiles.length, mode);
         List<ExperimentRecord> report = new ArrayList<>();
 
-        // 2. 遍历每个合约
+        // 2) 遍历每个合约（只跑一个 mode）
         for (File file : contractFiles) {
             String filename = file.getName();
-            // 读取文件内容
             String code = Files.readString(file.toPath());
 
-            log.info("\n========== 处理样本: {} ==========", filename);
+            log.info("\n========== 处理样本: {} (mode={}) ==========", filename, mode);
 
-            // === Mode 1: Vanilla (基准线 - 手动解析 JSON) ===
-            report.add(runVanillaTest(filename, code));
-
-            // === Mode 2: RAG Only (消融) ===
-            report.add(runStandardTest(filename, "RAG-Only", () -> detector.auditRAGOnly(code)));
-
-            // === Mode 3: Full Agent (完整) ===
-            report.add(runStandardTest(filename, "VeriRAG-Full", () -> detector.auditFullAgent(code)));
+            ExperimentRecord r;
+            switch (mode) {
+                case "Vanilla" -> r = runVanillaTest(filename, code);
+                case "RAG-Only" -> r = runStandardTest(filename, "RAG-Only", () -> detector.auditRAGOnly(code));
+                case "VeriRAG-Full" ->
+                        r = runStandardTest(filename, "VeriRAG-Full", () -> detector.auditFullAgent(code));
+                default -> {
+                    // 不会到这里
+                    r = new ExperimentRecord(filename, mode, false, "InvalidMode", "InvalidMode", 0, "Invalid mode", null);
+                }
+            }
+            report.add(r);
         }
 
-        // 3. 生成 Markdown 报告
-        saveReportToMarkdown(report);
+        // 3) 生成 Markdown 报告（只针对本次 mode）
+        saveReportToMarkdown(report, mode);
     }
 
     /**
-     * 专门处理 auditVanilla (返回 String) 的测试逻辑
+     * 专门处理 Vanilla：detector.auditVanilla(code) 返回 String JSON 的解析逻辑
      */
     private ExperimentRecord runVanillaTest(String filename, String code) {
         long start = System.currentTimeMillis();
         try {
-            // 1. 获取原始字符串
-            String rawJson = detector.auditVanilla(code);
+            String rawJson = detector.auditVanilla(code); // 这里你已改成返回 String
             long duration = System.currentTimeMillis() - start;
 
-            // 2. 清洗并解析 JSON
             SmartContractAnalysisResult result = parseRawJson(rawJson);
 
-            log.info("✅ [Vanilla] 完成, 耗时: {}ms, 结果: {}", duration, result.isHasVulnerability());
-            return new ExperimentRecord(filename, "Vanilla", result.isHasVulnerability(), result.getVulnerabilityType(), duration, null);
+            log.info("✅ [Vanilla] 完成, 耗时: {}ms, hasVuln={}, type={}, reason={}",
+                    duration,
+                    result.isHasVulnerability(),
+                    safeOneLine(result.getVulnerabilityType(), 80),
+                    safeOneLine(result.getVulnerabilityReason(), 120)
+            );
+
+            return new ExperimentRecord(
+                    filename,
+                    "Vanilla",
+                    result.isHasVulnerability(),
+                    nullToNA(result.getVulnerabilityType()),
+                    nullToNA(result.getVulnerabilityReason()),
+                    duration,
+                    null,
+                    null
+            );
 
         } catch (Exception e) {
             log.error("❌ [Vanilla] 失败: {}", e.getMessage());
-            return new ExperimentRecord(filename, "Vanilla", false, "ParseError", 0, e.getMessage());
+            return new ExperimentRecord(filename, "Vanilla", false,
+                    "ParseError", "ParseError", 0, e.getMessage(), null);
         }
     }
 
     /**
-     * 处理 auditRAGOnly 和 auditFullAgent (直接返回 Object) 的测试逻辑
+     * 处理 RAG-Only / Full：直接返回 Object（SmartContractAnalysisResult）
      */
     private ExperimentRecord runStandardTest(String filename, String mode, java.util.function.Supplier<SmartContractAnalysisResult> func) {
         long start = System.currentTimeMillis();
@@ -119,23 +150,41 @@ public class PilotExperimentTest {
             SmartContractAnalysisResult res = func.get();
             long duration = System.currentTimeMillis() - start;
 
-            log.info("✅ [{}] 完成, 耗时: {}ms, 结果: {}", mode, duration, res.isHasVulnerability());
-            return new ExperimentRecord(filename, mode, res.isHasVulnerability(), res.getVulnerabilityType(), duration, null);
+            log.info("✅ [{}] 完成, 耗时: {}ms, hasVuln={}, type={}, reason={}",
+                    mode,
+                    duration,
+                    res.isHasVulnerability(),
+                    safeOneLine(res.getVulnerabilityType(), 80),
+                    safeOneLine(res.getVulnerabilityReason(), 120)
+            );
+
+            return new ExperimentRecord(
+                    filename,
+                    mode,
+                    res.isHasVulnerability(),
+                    nullToNA(res.getVulnerabilityType()),
+                    nullToNA(res.getVulnerabilityReason()),
+                    duration,
+                    null,
+                    null
+            );
 
         } catch (Exception e) {
             log.error("❌ [{}] 失败: {}", mode, e.getMessage());
-            return new ExperimentRecord(filename, mode, false, "SystemError", 0, e.getMessage());
+            return new ExperimentRecord(filename, mode, false,
+                    "SystemError", "SystemError", 0, e.getMessage(), null);
         }
     }
 
     /**
-     * 辅助方法：清洗 LLM 返回的脏 JSON 字符串
+     * 清洗 LLM 返回的脏 JSON 字符串（Vanilla 模式）
      */
     private SmartContractAnalysisResult parseRawJson(String rawOutput) {
         try {
-            // 1. 尝试提取 ```json ... ``` 块
             String cleanJson = rawOutput;
-            if (rawOutput.contains("```")) {
+
+            // 1) 提取 ```json ... ``` 块
+            if (rawOutput != null && rawOutput.contains("```")) {
                 Pattern pattern = Pattern.compile("```(?:json)?(.*?)```", Pattern.DOTALL);
                 Matcher matcher = pattern.matcher(rawOutput);
                 if (matcher.find()) {
@@ -143,74 +192,103 @@ public class PilotExperimentTest {
                 }
             }
 
-            // 2. 确保只包含 { ... }
+            // 2) 只保留 { ... }
             int startIndex = cleanJson.indexOf("{");
             int endIndex = cleanJson.lastIndexOf("}");
             if (startIndex != -1 && endIndex != -1) {
                 cleanJson = cleanJson.substring(startIndex, endIndex + 1);
             }
 
-            // 3. 反序列化
-            return objectMapper.readValue(cleanJson, SmartContractAnalysisResult.class);
+            // 3) 反序列化
+            SmartContractAnalysisResult r = objectMapper.readValue(cleanJson, SmartContractAnalysisResult.class);
+
+            // 兜底：字段为空时给 N/A，避免 Markdown 空白难看
+            if (r.getVulnerabilityType() == null || r.getVulnerabilityType().isBlank()) {
+                r.setVulnerabilityType("N/A");
+            }
+            if (r.getVulnerabilityReason() == null || r.getVulnerabilityReason().isBlank()) {
+                r.setVulnerabilityReason("N/A");
+            }
+            return r;
 
         } catch (Exception e) {
-            log.warn("JSON 解析失败，原始输出: {}", rawOutput);
-            // 返回一个默认的错误结果，而不是抛出异常中断实验
+            log.warn("⚠️ JSON 解析失败，原始输出片段: {}", safeOneLine(rawOutput, 300));
+            // 返回默认错误结果，不中断实验
             return new SmartContractAnalysisResult(false, "JSON Parsing Failed", "Raw output was not valid JSON");
         }
     }
 
+
     /**
-     * 生成报告
+     * 生成 Markdown 报告（只包含本次 mode）
      */
-    private void saveReportToMarkdown(List<ExperimentRecord> records) throws IOException {
+    private void saveReportToMarkdown(List<ExperimentRecord> records, String mode) throws IOException {
         records.sort(Comparator.comparing(ExperimentRecord::filename));
-        StringBuilder sb = new StringBuilder();
+
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        StringBuilder sb = new StringBuilder();
 
-        sb.append("# 智能合约审计实验报告\n\n");
+        sb.append("# 智能合约审计实验报告（Pilot Single-Mode）\n\n");
         sb.append("**测试时间**: ").append(timestamp).append("\n\n");
+        sb.append("**本次模式**: ").append(mode).append("\n\n");
 
+        // 1) 摘要
         sb.append("## 1. 统计摘要\n");
-        sb.append("| 模式 (Mode) | 平均耗时 (Avg Time) | 检出率 (Success Rate) | 样本数 |\n");
-        sb.append("|---|---|---|---|\n");
+        sb.append("| Mode | Avg Time (ms) | Detected Rate | Samples |\n");
+        sb.append("|---|---:|---:|---:|\n");
 
-        Map<String, List<ExperimentRecord>> grouped = records.stream().collect(Collectors.groupingBy(ExperimentRecord::mode));
-        List<String> modes = List.of("Vanilla", "RAG-Only", "VeriRAG-Full");
+        double avgTime = records.stream().mapToLong(ExperimentRecord::timeMs).average().orElse(0);
+        long detected = records.stream().filter(ExperimentRecord::hasVuln).count();
+        double rate = records.isEmpty() ? 0 : (double) detected / records.size() * 100;
 
-        for (String mode : modes) {
-            List<ExperimentRecord> rs = grouped.getOrDefault(mode, Collections.emptyList());
-            if (rs.isEmpty()) continue;
+        sb.append(String.format("| **%s** | %.0f | **%.1f%%** (%d/%d) | %d |\n",
+                mode, avgTime, rate, detected, records.size(), records.size()));
 
-            double avgTime = rs.stream().mapToLong(ExperimentRecord::timeMs).average().orElse(0);
-            long detected = rs.stream().filter(ExperimentRecord::hasVuln).count();
-            double rate = (double) detected / rs.size() * 100;
-
-            sb.append(String.format("| **%s** | %.0f ms | **%.1f%%** (%d/%d) | %d |\n",
-                    mode, avgTime, rate, detected, rs.size(), rs.size()));
-        }
-
+        // 2) 详细数据（新增“人工审核”列）
         sb.append("\n## 2. 详细数据\n");
-        sb.append("| Filename | Mode | Detected | Type/Reason | Time |\n");
-        sb.append("|---|---|---|---|---|\n");
+        sb.append("| Filename | Detected | vulnerabilityType | vulnerabilityReason | Time(ms) | Error | 人工审核 |\n");
+        // ✅ 分隔行必须和表头列数一致：7 列
+        sb.append("|---|---|---|---|---:|---|---|\n");
 
-        String currentFile = "";
         for (ExperimentRecord r : records) {
-            String fileNameDisplay = r.filename.equals(currentFile) ? "" : "**" + r.filename + "**";
-            currentFile = r.filename;
-
             String status = r.hasVuln ? "✅" : "❌";
-            String note = r.type;
-            if ("ParseError".equals(r.type)) note = "⚠️ JSON Error";
-            if (note != null) note = note.replace("\n", " ").replace("|", "");
-            if (note != null && note.length() > 40) note = note.substring(0, 40) + "...";
+            String type = safeOneLine(r.vulnerabilityType, 60);
+            String reason = safeOneLine(r.vulnerabilityReason, 120);
+            String err = safeOneLine(r.rawError, 120); // 适当放长点
 
-            sb.append(String.format("| %s | %s | %s | %s | %d |\n",
-                    fileNameDisplay, r.mode, status, note, r.timeMs));
+            // 人工审核：默认空（方便你手动填：TP/FP/TN/FN 或 ✅/❌ 或 备注）
+            String people = safeOneLine(r.peopleAudit, 80);
+            if (people == null) people = "";
+
+            // ✅ 每行也必须是 7 列；最后一列不要写 null
+            sb.append(String.format("| **%s** | %s | %s | %s | %d | %s | %s |\n",
+                    r.filename,
+                    status,
+                    (type == null ? "" : type),
+                    (reason == null ? "" : reason),
+                    r.timeMs,
+                    (err == null ? "" : err),
+                    people
+            ));
         }
 
-        String fileName = "Ablation_Study_" + System.currentTimeMillis() + ".md";
+        // 输出文件
+        String fileName = "Pilot_" + mode.replaceAll("[^a-zA-Z0-9_-]", "_")
+                + "_Report_" + System.currentTimeMillis() + ".md";
+
         Files.writeString(Paths.get(fileName), sb.toString(), StandardCharsets.UTF_8);
         System.out.println("🎉 报告已生成: " + Paths.get(fileName).toAbsolutePath());
+    }
+
+
+    private static String nullToNA(String s) {
+        return (s == null || s.isBlank()) ? "N/A" : s;
+    }
+
+    private static String safeOneLine(String s, int maxLen) {
+        if (s == null) return null;
+        String t = s.replace("\n", " ").replace("\r", " ").replace("|", " ");
+        if (t.length() > maxLen) t = t.substring(0, maxLen) + "...";
+        return t;
     }
 }

@@ -27,7 +27,9 @@ def setup_data():
         "Overflow-Underflow",
         "Timestamp-Dependency",
         "Unhandled-Exceptions",
-        "Unchecked-Send"
+        "Unchecked-Send",
+        "TOD",
+        "tx.origin",
     ]
 
     print(f"🚀 开始构建 Pilot 数据集...")
@@ -44,7 +46,7 @@ def setup_data():
         # 获取该分类下所有 .sol 文件
         files = [f for f in os.listdir(src_folder) if f.endswith(".sol")]
 
-        # 每个分类随机取 2 个，凑齐 10 个
+        # 每个分类随机取 2 个
         selected = random.sample(files, min(len(files), 2))
 
         for f in selected:

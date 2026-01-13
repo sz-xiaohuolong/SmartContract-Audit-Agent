@@ -25,7 +25,7 @@ public class SmartContractDetect {
     // 简单的 System Prompt (用于 Baseline / RAG-Only 模式)
     private static final String BASIC_SYSTEM_PROMPT = """
             你是一名智能合约安全专家。请分析用户提供的 Solidity 代码，判断是否存在安全漏洞。
-            请直接输出分析结果，不需要调用任何外部工具。
+            请直接输出分析结果，不需要调用任何外部工具。如果没有检测出漏洞，不要编造，直接返回false。
             最终结果请严格按照 JSON 格式输出。
             待分析的智能合约代码如下：
             ${contract_code}
@@ -54,16 +54,50 @@ public class SmartContractDetect {
             
             4. **Final Output (最终结论)**: 
                - 综合推理、Slither 和 Mythril 的结果输出审计报告。
-               - 明确指出是哪个工具发现了漏洞。
+               - 务必明确指出是哪个工具发现了漏洞。
                - 更新 vulnerabilityType、vulnerabilityReason 的内容
             
             注意：
             - 你拥有工具调用权限，**务必积极使用**。
             - 最终输出必须严格遵守 JSON 格式要求。
+            - 输出语言为中文
             
             待分析的智能合约代码如下：
             ${contract_code}
             """;
+
+    public static final String SYSTEM_PROMPT_RAG_ONLY = """
+            你是一名 RAG-based 智能合约安全审计助手，专注于结合“外部安全知识库（RAG）”与自身的推理能力，对 Solidity 智能合约进行漏洞分析。
+            
+            你的核心工作流必须遵循以下阶段：
+            
+            1. **Phase I (检索与理解)**  
+               - 基于用户提供的合约代码，从安全知识库中检索相关的漏洞模式、历史案例或最佳实践。
+               - 阅读并理解检索到的上下文信息与合约源码。
+            
+            2. **Phase II (知识对齐与分析)**  
+               - 将检索到的漏洞知识与当前合约的代码结构、逻辑流程进行对齐。
+               - 判断是否存在相似的漏洞模式或安全隐患。
+            
+            3. **Phase III (推理与判断)**  
+               - 基于代码逻辑与检索到的知识，进行逐步（Step-by-Step）的推理分析。
+               - 若检索结果不足或未命中，请依赖你自身的智能合约安全知识进行独立推理。
+               - 明确判断合约是否存在漏洞，并形成合理的分析依据。
+            
+            4. **Final Output (最终结论)**  
+               - 输出结构化的审计结果。
+               - 若存在漏洞，请给出漏洞类型（vulnerabilityType）及简要原因说明（vulnerabilityReason）。
+               - 若未发现明显漏洞，也需说明判断依据。
+            
+            注意事项：
+            - 若知识库未检索到相关信息，不应直接下没有漏洞的定论，而应基于自身知识进行判断。
+            - 最终输出必须严格遵守 JSON 格式。
+            - 输出语言为中文。
+            
+            待分析的智能合约代码如下：
+            ${contract_code}
+            """;
+
 
     // 构造器注入
     public SmartContractDetect(ChatModel dashscopeChatModel) {
@@ -116,6 +150,7 @@ public class SmartContractDetect {
         String userMessage = message + "\n\n" + formatPrompt;
         SmartContractAnalysisResult result = chatClient
                 .prompt()
+                .system(SYSTEM_PROMPT_RAG_ONLY)
                 .user(userMessage)
                 // 开启日志，便于观察效果
                 .advisors(new MyLoggerAdvisor())
