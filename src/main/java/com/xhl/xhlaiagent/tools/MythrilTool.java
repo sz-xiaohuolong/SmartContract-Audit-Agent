@@ -12,8 +12,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -45,24 +43,14 @@ public class MythrilTool {
 
             // 3. 构建命令
             // myth analyze contract.sol --execution-timeout 60 -o json
-            List<String> commands = new ArrayList<>();
-            commands.add(mythExecutable);
-            commands.add("analyze");
-            commands.add("contract.sol");
+            ProcessBuilder builder = new ProcessBuilder(
+                    mythExecutable,
+                    "analyze",
+                    "contract.sol",
+                    "--execution-timeout", "60", // 强制限制符号执行时间为 60 秒
+                    "-o", "json"
+            );
 
-            // --- 性能优化核心配置 ---
-            commands.add("--execution-timeout");
-            commands.add("60"); // 限制总执行时间 60秒
-
-            commands.add("--max-depth");
-            commands.add("15"); // [新增] 限制交易深度。15层通常足够发现漏洞，且能防止死循环。
-
-            commands.add("--solver-timeout");
-            commands.add("10000"); // [新增] 限制单个求解器查询时间(毫秒)，防止卡在某一个数学难题上
-
-            commands.add("-o");
-            commands.add("json");
-            ProcessBuilder builder = new ProcessBuilder(commands);
             builder.directory(tempDir.toFile());
             builder.redirectErrorStream(true);
 
@@ -112,7 +100,6 @@ public class MythrilTool {
 
             String jsonString = rawOutput.substring(jsonStart, jsonEnd + 1);
             JsonNode root = objectMapper.readTree(jsonString);
-
             JsonNode issues = root.path("issues");
             if (issues.isMissingNode() || issues.isEmpty()) {
                 return "✅ Mythril 深度验证完成：未发现已知的高危漏洞。";
@@ -120,24 +107,32 @@ public class MythrilTool {
 
             StringBuilder report = new StringBuilder("🧪 Mythril 符号执行报告 (高精准度):\n");
             for (JsonNode issue : issues) {
-                String title = issue.path("title").asText();
-                String severity = issue.path("severity").asText();
-                String description = issue.path("description").asText();
+                String title = issue.path("title").asText("N/A");
+                String severity = issue.path("severity").asText("N/A");
+                String swcId = issue.path("swc-id").asText("N/A");
+                String contract = issue.path("contract").asText("N/A");
+                String function = issue.path("function").asText("N/A");
+                int lineno = issue.path("lineno").asInt(-1);
+                String description = issue.path("description").asText("");
 
-                // 获取行号
-                String lineInfo = "";
-                if (issue.has("lineno")) {
-                    lineInfo = " (Line " + issue.get("lineno").asText() + ")";
-                }
-
-                // Mythril 的 description 通常很长，包含汇编信息，需要精简
                 report.append(String.format("""
-                        ---
-                        🔴 漏洞  %s%s
-                        ⚠️ 级别: %s
-                        📝 描述: %s
-                        """, title, lineInfo, severity, simplifyDescription(description)));
+                                ---
+                                🔴 漏洞: %s
+                                ⚠️ 级别: %s
+                                🆔 SWC: %s
+                                📌 定位: %s::%s @ line %s
+                                📝 描述: %s
+                                """,
+                        title,
+                        severity,
+                        swcId,
+                        contract,
+                        function,
+                        (lineno == -1 ? "N/A" : String.valueOf(lineno)),
+                        simplifyDescription(description)
+                ));
             }
+
 
             return report.toString();
 

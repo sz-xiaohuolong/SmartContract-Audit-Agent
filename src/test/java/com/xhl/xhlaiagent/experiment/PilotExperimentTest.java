@@ -253,7 +253,7 @@ public class PilotExperimentTest {
         for (ExperimentRecord r : records) {
             String status = r.hasVuln ? "✅" : "❌";
             String type = safeOneLine(r.vulnerabilityType, 60);
-            String reason = safeOneLine(r.vulnerabilityReason, 120);
+            String reason = safeOneLine(r.vulnerabilityReason, 360);
             String err = safeOneLine(r.rawError, 120); // 适当放长点
 
             // 人工审核：默认空（方便你手动填：TP/FP/TN/FN 或 ✅/❌ 或 备注）
