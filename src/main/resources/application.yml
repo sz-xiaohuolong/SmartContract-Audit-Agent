@@ -2,7 +2,7 @@ spring:
   application:
     name: xhl-ai-agent
   profiles:
-    active: local
+    active: coding-plan
 server:
   port: 8123
   servlet:
