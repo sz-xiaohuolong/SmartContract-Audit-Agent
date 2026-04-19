@@ -1,5 +1,6 @@
 package com.xhl.xhlaiagent.rag.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)  // 忽略未知字段，防止 LLM 返回额外字段导致解析失败
 public class SmartContractAnalysisResult {
 
     /**

@@ -12,7 +12,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -67,7 +70,7 @@ public class SlitherTool {
             boolean finished = process.waitFor(30, TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
-                return "错误：分析超时 (Time Limit Exceeded)";
+                return buildToolResponse("timeout", List.of(), "Time limit exceeded", output);
             }
 
             // 4. 解析结果
@@ -75,10 +78,10 @@ public class SlitherTool {
 
         } catch (Exception e) {
             log.error("Slither 本地调用失败", e);
-            return "系统内部错误：无法执行静态分析 - " + e.getMessage();
+            return buildToolResponse("execution_error", List.of(), e.getMessage(), null);
         } finally {
             // 清理临时文件
-            deleteDirectory(tempDir.toFile());
+            deleteDirectory(tempDir == null ? null : tempDir.toFile());
         }
     }
 
@@ -89,14 +92,14 @@ public class SlitherTool {
         try {
             // 预判编译错误 (如果输出里包含了 Error 且没有 JSON 结构)
             if (rawOutput.contains("Error:") && !rawOutput.contains("{")) {
-                return "Slither 运行失败 (编译错误): \n" + rawOutput.substring(0, Math.min(rawOutput.length(), 300));
+                return buildToolResponse("compile_error", List.of(), "Compile error", rawOutput);
             }
 
             int jsonStart = rawOutput.indexOf("{");
             int jsonEnd = rawOutput.lastIndexOf("}");
 
             if (jsonStart == -1 || jsonEnd == -1) {
-                return "分析失败（无法提取 JSON 报告）：\n" + rawOutput.substring(0, Math.min(rawOutput.length(), 500));
+                return buildToolResponse("parse_error", List.of(), "Unable to extract Slither JSON report", rawOutput);
             }
 
             String jsonString = rawOutput.substring(jsonStart, jsonEnd + 1);
@@ -105,33 +108,63 @@ public class SlitherTool {
             JsonNode detectors = root.path("results").path("detectors");
 
             if (detectors.isMissingNode() || detectors.isEmpty()) {
-                return "✅ Slither 安全扫描完成：未发现已知的高危漏洞。";
+                return buildToolResponse("ok", List.of(), null, null);
             }
 
-            StringBuilder report = new StringBuilder("🚨 Slither 发现以下潜在漏洞：\n");
-            boolean foundIssues = false;
-
+            List<Map<String, Object>> issues = new ArrayList<>();
             for (JsonNode issue : detectors) {
-                String impact = issue.path("impact").asText();
-                String check = issue.path("check").asText();
-                String description = issue.path("description").asText();
-
-                // 过滤策略
-                if (List.of("High", "Medium").contains(impact)) {
-                    foundIssues = true;
-                    report.append(String.format("- [%s] 类型: %s\n  描述: %s\n", impact, check, simplifyDescription(description)));
-                }
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("check", issue.path("check").asText(""));
+                item.put("impact", issue.path("impact").asText(""));
+                item.put("confidence", issue.path("confidence").asText(""));
+                item.put("description", simplifyDescription(issue.path("description").asText("")));
+                item.put("line", extractPrimaryLine(issue));
+                item.put("contract", extractContractName(issue));
+                issues.add(item);
             }
 
-            if (!foundIssues) {
-                return "⚠️ 扫描完成：仅发现少量低级别风险或优化建议，无高危漏洞。";
-            }
-
-            return report.toString();
+            return buildToolResponse("ok", issues, null, null);
 
         } catch (Exception e) {
             log.warn("JSON 解析失败", e);
-            return "分析完成，但解析报告失败。可能是 Slither 输出格式异常。";
+            return buildToolResponse("parse_error", List.of(), e.getMessage(), rawOutput);
+        }
+    }
+
+    private Integer extractPrimaryLine(JsonNode issue) {
+        JsonNode elements = issue.path("elements");
+        if (!elements.isArray() || elements.isEmpty()) {
+            return null;
+        }
+
+        JsonNode sourceMapping = elements.get(0).path("source_mapping").path("lines");
+        if (sourceMapping.isArray() && !sourceMapping.isEmpty()) {
+            return sourceMapping.get(0).asInt();
+        }
+        return null;
+    }
+
+    private String extractContractName(JsonNode issue) {
+        JsonNode elements = issue.path("elements");
+        if (!elements.isArray() || elements.isEmpty()) {
+            return "";
+        }
+        return elements.get(0).path("name").asText("");
+    }
+
+    private String buildToolResponse(String status, List<Map<String, Object>> issues, String parseError, String stdoutExcerpt) {
+        try {
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("engine", "slither");
+            payload.put("status", status);
+            payload.put("issues", issues);
+            payload.put("parseError", parseError);
+            payload.put("stdoutExcerpt", stdoutExcerpt == null ? null : simplifyDescription(stdoutExcerpt));
+            return objectMapper.writeValueAsString(payload);
+        } catch (Exception e) {
+            log.warn("构建 Slither 结构化输出失败", e);
+            return "{\"engine\":\"slither\",\"status\":\"serialization_error\",\"issues\":[],\"parseError\":\""
+                    + simplifyDescription(e.getMessage()) + "\",\"stdoutExcerpt\":null}";
         }
     }
 

@@ -14,9 +14,14 @@ import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionTextParser;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
 public class SafeQuestionAnswerAdvisor implements CallAroundAdvisor {
+
+    private static final String DEFAULT_DATASET_FILTER = "dataset == 'smartbugs-curated'";
+    private static final int DEFAULT_TOP_K = 3;
+    private static final double DEFAULT_SIMILARITY_THRESHOLD = 0.5;
+    private static final int SNIPPET_LIMIT = 700;
 
     private final VectorStore vectorStore;
     private final SearchRequest searchRequest;
@@ -39,31 +44,18 @@ public class SafeQuestionAnswerAdvisor implements CallAroundAdvisor {
 
     @Override
     public AdvisedResponse aroundCall(AdvisedRequest request, CallAroundAdvisorChain chain) {
-        //不再使用 PromptTemplate —— 直接把用户输入当作普通字符串
-        String query = request.userText();
-
-        // 向量检索
-        SearchRequest searchRequestToUse = SearchRequest.from(this.searchRequest)
-                .query(query)
-                .topK(3)
-                .similarityThreshold(0.5)
-                .filterExpression(doGetFilterExpression(request.adviseContext()))
-                .build();
-
-        List<Document> documents = this.vectorStore.similaritySearch(searchRequestToUse);
-
-        // 拼接上下文，把检索结果“注入”到 Prompt 里
-        String contextText = documents.stream()
-                .map(Document::getText)
-                .collect(Collectors.joining("\n\n"));
-
-        // 把上下文附加在用户问题后
-        String userText = query + "\n\n--- 以下是知识库相关信息 ---\n" + contextText;
+        RetrievalContext retrievalContext = retrieveContext(request.userText(), request.adviseContext());
+        String userText = request.userText()
+                + "\n\n--- 以下是知识库相关信息 ---\n"
+                + retrievalContext.formattedEvidence();
 
         // 构造新的请求
         AdvisedRequest advisedRequest = AdvisedRequest.from(request)
                 .userText(userText)
-                .adviseContext(Map.of("qa_retrieved_documents", documents))
+                .adviseContext(Map.of(
+                        "qa_retrieved_documents", retrievalContext.documents(),
+                        "qa_retrieval_query", retrievalContext.query(),
+                        "qa_formatted_evidence", retrievalContext.formattedEvidence()))
                 .build();
 
         // 调用下一个 advisor
@@ -72,10 +64,31 @@ public class SafeQuestionAnswerAdvisor implements CallAroundAdvisor {
         // 保留检索文档信息
         ChatResponse chatResponse = ChatResponse.builder()
                 .from(response.response())
-                .metadata("qa_retrieved_documents", documents)
+                .metadata("qa_retrieved_documents", retrievalContext.documents())
+                .metadata("qa_retrieval_query", retrievalContext.query())
                 .build();
 
         return new AdvisedResponse(chatResponse, advisedRequest.adviseContext());
+    }
+
+    public RetrievalContext retrieveContext(String sourceCode) {
+        return retrieveContext(sourceCode, Collections.emptyMap());
+    }
+
+    public RetrievalContext retrieveContext(String sourceCode, Map<String, Object> context) {
+        String query = buildRetrievalQuery(sourceCode);
+
+        SearchRequest searchRequestToUse = SearchRequest.from(this.searchRequest)
+                .query(query)
+                .topK(DEFAULT_TOP_K)
+                .similarityThreshold(DEFAULT_SIMILARITY_THRESHOLD)
+                .filterExpression(doGetFilterExpression(context))
+                .build();
+
+        List<Document> documents = Optional.ofNullable(this.vectorStore.similaritySearch(searchRequestToUse))
+                .orElseGet(List::of);
+
+        return new RetrievalContext(query, documents, formatEvidence(documents));
     }
 
     private Filter.Expression doGetFilterExpression(Map<String, Object> context) {
@@ -83,6 +96,90 @@ public class SafeQuestionAnswerAdvisor implements CallAroundAdvisor {
                 StringUtils.hasText(context.get("qa_filter_expression").toString())) {
             return new FilterExpressionTextParser().parse(context.get("qa_filter_expression").toString());
         }
-        return this.searchRequest.getFilterExpression();
+        if (this.searchRequest.getFilterExpression() != null) {
+            return this.searchRequest.getFilterExpression();
+        }
+        return new FilterExpressionTextParser().parse(DEFAULT_DATASET_FILTER);
     }
+
+    private String buildRetrievalQuery(String sourceCode) {
+        String code = Optional.ofNullable(sourceCode).orElse("");
+        Set<String> terms = new LinkedHashSet<>();
+        terms.add("solidity smart contract security");
+
+        if (containsAny(code, "tx.origin")) {
+            terms.add("tx.origin authentication vulnerability");
+        }
+        if (containsAny(code, "block.timestamp", "now", "block.number")) {
+            terms.add("timestamp dependency transaction order dependence");
+        }
+        if (containsAny(code, ".call(", ".delegatecall(", ".staticcall(", "call{")) {
+            terms.add("external call reentrancy unchecked low level call");
+        }
+        if (containsAny(code, ".send(", ".transfer(")) {
+            terms.add("unchecked send ether transfer external call");
+        }
+        if (containsArithmeticSignal(code)) {
+            terms.add("integer overflow underflow arithmetic vulnerability");
+        }
+        if (containsAny(code, "require(", "assert(", "revert(")) {
+            terms.add("unhandled exception revert handling");
+        }
+        if (containsAny(code, "onlyOwner", "owner", "AccessControl", "delegatecall")) {
+            terms.add("authorization access control privilege escalation");
+        }
+
+        return String.join(" | ", terms);
+    }
+
+    private boolean containsArithmeticSignal(String code) {
+        return containsAny(code, "+", "-", "*", "/")
+                && (containsAny(code, "uint", "int", "SafeMath") || Pattern.compile("\\b[a-zA-Z_][a-zA-Z0-9_]*\\s*[+\\-*/]=").matcher(code).find());
+    }
+
+    private boolean containsAny(String text, String... needles) {
+        for (String needle : needles) {
+            if (text.contains(needle)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String formatEvidence(List<Document> documents) {
+        if (documents == null || documents.isEmpty()) {
+            return "未检索到高相关知识库证据。";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < documents.size(); i++) {
+            Document doc = documents.get(i);
+            Map<String, Object> metadata = doc.getMetadata() == null ? Collections.emptyMap() : doc.getMetadata();
+            String sourceFile = String.valueOf(metadata.getOrDefault("source_file", "unknown"));
+            String category = String.valueOf(metadata.getOrDefault("category", "unknown"));
+            String swcId = String.valueOf(metadata.getOrDefault("swc_id", "unknown"));
+            String snippet = abbreviate(doc.getText(), SNIPPET_LIMIT);
+            sb.append("[").append(i + 1).append("] ")
+                    .append("source=").append(sourceFile)
+                    .append(", category=").append(category)
+                    .append(", swc=").append(swcId)
+                    .append("\n")
+                    .append(snippet)
+                    .append("\n\n");
+        }
+        return sb.toString().trim();
+    }
+
+    private String abbreviate(String text, int limit) {
+        String normalized = Optional.ofNullable(text)
+                .orElse("")
+                .replaceAll("\\s+", " ")
+                .trim();
+        if (normalized.length() <= limit) {
+            return normalized;
+        }
+        return normalized.substring(0, limit) + "...";
+    }
+
+    public record RetrievalContext(String query, List<Document> documents, String formattedEvidence) {}
 }

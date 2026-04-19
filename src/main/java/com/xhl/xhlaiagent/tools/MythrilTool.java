@@ -12,6 +12,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -66,16 +70,16 @@ public class MythrilTool {
             boolean finished = process.waitFor(90, TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
-                return "错误：Mythril 分析超时 (已强制终止)。符号执行极其耗时，请尝试简化代码片段。";
+                return buildToolResponse("timeout", List.of(), "Time limit exceeded", output);
             }
 
             return parseMythrilOutput(output);
 
         } catch (Exception e) {
             log.error("Mythril 本地调用失败", e);
-            return "系统内部错误：无法执行 Mythril 分析 - " + e.getMessage();
+            return buildToolResponse("execution_error", List.of(), e.getMessage(), null);
         } finally {
-            deleteDirectory(tempDir.toFile());
+            deleteDirectory(tempDir == null ? null : tempDir.toFile());
         }
     }
 
@@ -83,7 +87,7 @@ public class MythrilTool {
         try {
             // 预判错误
             if ((rawOutput.contains("Error") || rawOutput.contains("Traceback")) && !rawOutput.contains("\"issues\"")) {
-                return "Mythril 运行失败 (编译或环境错误): \n" + rawOutput.substring(0, Math.min(rawOutput.length(), 300));
+                return buildToolResponse("compile_error", List.of(), "Compile or environment error", rawOutput);
             }
 
             // Mythril 的 JSON 输出通常在最后，但也可能混杂日志，寻找 JSON 起止点
@@ -93,52 +97,52 @@ public class MythrilTool {
             if (jsonStart == -1 || jsonEnd == -1) {
                 // Mythril 如果没发现漏洞，有时只输出文本，不输出 JSON，需特殊处理
                 if (rawOutput.contains("The analysis was completed successfully") && !rawOutput.contains("issues")) {
-                    return "✅ Mythril 深度验证完成：在指定时间内未发现可利用的漏洞路径。";
+                    return buildToolResponse("ok", List.of(), null, null);
                 }
-                return "分析失败（无法提取 JSON 报告）：\n" + rawOutput.substring(0, Math.min(rawOutput.length(), 500));
+                return buildToolResponse("parse_error", List.of(), "Unable to extract Mythril JSON report", rawOutput);
             }
 
             String jsonString = rawOutput.substring(jsonStart, jsonEnd + 1);
             JsonNode root = objectMapper.readTree(jsonString);
             JsonNode issues = root.path("issues");
             if (issues.isMissingNode() || issues.isEmpty()) {
-                return "✅ Mythril 深度验证完成：未发现已知的高危漏洞。";
+                return buildToolResponse("ok", List.of(), null, null);
             }
 
-            StringBuilder report = new StringBuilder("🧪 Mythril 符号执行报告 (高精准度):\n");
+            List<Map<String, Object>> structuredIssues = new ArrayList<>();
             for (JsonNode issue : issues) {
-                String title = issue.path("title").asText("N/A");
-                String severity = issue.path("severity").asText("N/A");
-                String swcId = issue.path("swc-id").asText("N/A");
-                String contract = issue.path("contract").asText("N/A");
-                String function = issue.path("function").asText("N/A");
-                int lineno = issue.path("lineno").asInt(-1);
-                String description = issue.path("description").asText("");
-
-                report.append(String.format("""
-                                ---
-                                🔴 漏洞: %s
-                                ⚠️ 级别: %s
-                                🆔 SWC: %s
-                                📌 定位: %s::%s @ line %s
-                                📝 描述: %s
-                                """,
-                        title,
-                        severity,
-                        swcId,
-                        contract,
-                        function,
-                        (lineno == -1 ? "N/A" : String.valueOf(lineno)),
-                        simplifyDescription(description)
-                ));
+                Map<String, Object> structured = new LinkedHashMap<>();
+                structured.put("title", issue.path("title").asText(""));
+                structured.put("severity", issue.path("severity").asText(""));
+                structured.put("swcId", issue.path("swc-id").asText(""));
+                structured.put("contract", issue.path("contract").asText(""));
+                structured.put("function", issue.path("function").asText(""));
+                structured.put("line", issue.path("lineno").isMissingNode() ? null : issue.path("lineno").asInt(-1));
+                structured.put("description", simplifyDescription(issue.path("description").asText("")));
+                structuredIssues.add(structured);
             }
 
-
-            return report.toString();
+            return buildToolResponse("ok", structuredIssues, null, null);
 
         } catch (Exception e) {
             log.warn("Mythril JSON 解析失败", e);
-            return "分析完成，但解析 Mythril 报告失败。";
+            return buildToolResponse("parse_error", List.of(), e.getMessage(), rawOutput);
+        }
+    }
+
+    private String buildToolResponse(String status, List<Map<String, Object>> issues, String parseError, String stdoutExcerpt) {
+        try {
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("engine", "mythril");
+            payload.put("status", status);
+            payload.put("issues", issues);
+            payload.put("parseError", parseError);
+            payload.put("stdoutExcerpt", stdoutExcerpt == null ? null : simplifyDescription(stdoutExcerpt));
+            return objectMapper.writeValueAsString(payload);
+        } catch (Exception e) {
+            log.warn("构建 Mythril 结构化输出失败", e);
+            return "{\"engine\":\"mythril\",\"status\":\"serialization_error\",\"issues\":[],\"parseError\":\""
+                    + simplifyDescription(e.getMessage()) + "\",\"stdoutExcerpt\":null}";
         }
     }
 

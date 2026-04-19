@@ -9,6 +9,11 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.RestClient;
+
+import java.time.Duration;
 
 /**
  * 百炼 Coding Plan OpenAI 兼容接口配置
@@ -46,6 +51,14 @@ public class CodingPlanConfig {
     @Value("${spring.ai.openai.chat.options.model}")
     private String model;
 
+    /** 连接超时时间（毫秒） */
+    @Value("${spring.ai.openai.connect-timeout:60000}")
+    private int connectTimeout;
+
+    /** 读取超时时间（毫秒） */
+    @Value("${spring.ai.openai.read-timeout:300000}")
+    private int readTimeout;
+
     /**
      * 创建名为 dashscopeChatModel 的 OpenAI 兼容 ChatModel Bean
      * <p>
@@ -57,9 +70,18 @@ public class CodingPlanConfig {
      */
     @Bean("dashscopeChatModel")
     public ChatModel dashscopeChatModel() {
+        // 创建带有超时配置的 RestClient
+        ClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        ((SimpleClientHttpRequestFactory) requestFactory).setConnectTimeout(Duration.ofMillis(connectTimeout));
+        ((SimpleClientHttpRequestFactory) requestFactory).setReadTimeout(Duration.ofMillis(readTimeout));
+
+        RestClient.Builder restClientBuilder = RestClient.builder()
+                .requestFactory(requestFactory);
+
         OpenAiApi openAiApi = OpenAiApi.builder()
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
+                .restClientBuilder(restClientBuilder)
                 .build();
 
         OpenAiChatOptions options = OpenAiChatOptions.builder()

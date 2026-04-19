@@ -70,10 +70,30 @@ public class PilotExperimentTest1 {
     // ─────────────────── 可调参数 ───────────────────
 
     /** 每个漏洞类别最多抽取的样本数（控制实验成本） */
-    private static final int MAX_SAMPLES_PER_CATEGORY = 8;
+    private static final int MAX_SAMPLES_PER_CATEGORY = 50;
+
+    /** 负样本最多抽取的样本数，确保总样本量稳定为 400 */
+    private static final int MAX_SAFE_SAMPLES = 50;
 
     /** 合法的运行模式 */
     private static final List<String> MODES = List.of("Vanilla", "RAG-Only", "VeriRAG-Full");
+
+    // ─────────────────── API 限流相关参数 ───────────────────
+
+    /** 最大重试次数 */
+    private static final int MAX_RETRIES = 5;
+
+    /** 初始延迟（毫秒） */
+    private static final long INITIAL_DELAY_MS = 2000;
+
+    /** 最大延迟（毫秒） */
+    private static final long MAX_DELAY_MS = 60000;
+
+    /** 请求间延迟（毫秒）- 避免 QPS 限制 */
+    private static final long REQUEST_DELAY_MS = 2000;
+
+    /** 随机抖动范围（毫秒）- 避免同步重试 */
+    private static final long JITTER_MS = 500;
 
     /**
      * SolidiFI-benchmark 目录名 → 标准漏洞类型名映射
@@ -83,7 +103,7 @@ public class PilotExperimentTest1 {
     private static final Map<String, String> CATEGORY_MAPPING = Map.of(
             "Re-entrancy",           "Reentrancy",
             "Overflow-Underflow",    "Integer Overflow/Underflow",
-            "Timestamp",             "Timestamp Dependency",
+            "Timestamp",             "Timestamp-Dependency",
             "Unchecked-Send",        "Unchecked Send",
             "TOD",                   "TOD",
             "tx.origin",             "tx.origin",
@@ -109,6 +129,7 @@ public class PilotExperimentTest1 {
      * @param mode              当前运行模式
      * @param timeMs            检测耗时（毫秒）
      * @param rawError          系统错误信息（正常为null）
+     * @param errorCategory     错误类别（无错误为 NONE）
      * @param outcome           TP / TN / FP / FN
      */
     record ExperimentRecord(
@@ -118,6 +139,7 @@ public class PilotExperimentTest1 {
             String mode,
             long timeMs,
             String rawError,
+            String errorCategory,
             String outcome    // "TP" / "TN" / "FP" / "FN"
     ) {}
 
@@ -127,7 +149,7 @@ public class PilotExperimentTest1 {
     void runFullExperiment() throws IOException {
 
         // 0) 读取模式
-        String mode = System.getProperty("mode", "Vanilla");
+        String mode = System.getProperty("mode", "VeriRAG-Full");
         if (!MODES.contains(mode)) {
             log.error("❌ mode 参数非法: {}，可选值: {}", mode, MODES);
             return;
@@ -166,6 +188,16 @@ public class PilotExperimentTest1 {
                     record.predicted().getVulnerabilityType(),
                     record.timeMs(),
                     record.outcome());
+
+            // 添加请求间延迟（避免触发 QPS 限制）
+            if (i < total - 1) {
+                try {
+                    Thread.sleep(REQUEST_DELAY_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.warn("⚠️ 请求延迟被中断");
+                }
+            }
         }
 
         // 3) 生成完整报告
@@ -231,7 +263,9 @@ public class PilotExperimentTest1 {
             File[] safeFiles = safeRoot.listFiles((d, name) -> name.endsWith(".sol"));
             if (safeFiles != null) {
                 Arrays.sort(safeFiles, Comparator.comparing(File::getName));
-                for (File f : safeFiles) {
+                int take = Math.min(safeFiles.length, MAX_SAFE_SAMPLES);
+                for (int i = 0; i < take; i++) {
+                    File f = safeFiles[i];
                     try {
                         String code = Files.readString(f.toPath());
                         GroundTruth gt = new GroundTruth(false, "Safe");
@@ -240,7 +274,7 @@ public class PilotExperimentTest1 {
                         log.warn("⚠️ 读取安全合约失败: {}", f.getName());
                     }
                 }
-                log.info("  📂 加载安全合约（负样本）: {} 份", safeFiles.length);
+                log.info("  📂 加载安全合约（负样本）: {} 份（共 {} 份可用）", take, safeFiles.length);
             }
         } else {
             log.warn("⚠️ 未找到 safe_contracts 目录！\n" +
@@ -291,17 +325,26 @@ public class PilotExperimentTest1 {
         long start = System.currentTimeMillis();
         SmartContractAnalysisResult predicted;
         String rawError = null;
+        String errorCategory = "NONE";
 
         try {
-            predicted = switch (mode) {
-                case "Vanilla"      -> parseVanilla(detector.auditVanilla(sample.code()));
-                case "RAG-Only"     -> detector.auditRAGOnly(sample.code());
-                case "VeriRAG-Full" -> detector.auditFullAgent(sample.code());
-                default             -> throw new IllegalArgumentException("Unknown mode: " + mode);
-            };
+            predicted = executeWithRetry(() -> {
+                try {
+                    return switch (mode) {
+                        case "Vanilla"      -> detector.auditVanilla(sample.code());  // 现在直接返回 SmartContractAnalysisResult
+                        case "RAG-Only"     -> detector.auditRAGOnly(sample.code());
+                        case "VeriRAG-Full" -> detector.auditFullAgent(sample.code());
+                        default             -> throw new IllegalArgumentException("Unknown mode: " + mode);
+                    };
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }, sample.filename());
+
         } catch (Exception e) {
-            log.error("❌ 检测异常: {}", e.getMessage());
+            log.error("❌ 检测异常（重试后仍失败）: {}", e.getMessage());
             rawError = e.getMessage();
+            errorCategory = classifyError(e.getMessage());
             predicted = new SmartContractAnalysisResult(false, "SystemError", e.getMessage());
         }
 
@@ -319,8 +362,88 @@ public class PilotExperimentTest1 {
                 mode,
                 duration,
                 rawError,
+                errorCategory,
                 outcome
         );
+    }
+
+    /**
+     * 带指数退避和随机抖动的重试执行器
+     */
+    private <T> T executeWithRetry(Supplier<T> action, String context) {
+        int retryCount = 0;
+        long delay = INITIAL_DELAY_MS;
+        Random random = new Random();
+
+        while (retryCount <= MAX_RETRIES) {
+            try {
+                return action.get();
+            } catch (Exception e) {
+                String errorMsg = e.getMessage();
+                boolean isRateLimit = isRateLimitError(e);
+
+                if (isRateLimit && retryCount < MAX_RETRIES) {
+                    // 添加随机抖动，避免多个请求同步重试
+                    long jitter = random.nextLong(JITTER_MS);
+                    long actualDelay = delay + jitter;
+
+                    log.warn("⚠️ [{}] 请求限流，{}ms 后重试（第{}/{}次）: {}",
+                            context, actualDelay, retryCount + 1, MAX_RETRIES, errorMsg);
+                    try {
+                        Thread.sleep(actualDelay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("重试被中断", ie);
+                    }
+                    delay = Math.min(delay * 2, MAX_DELAY_MS);  // 指数退避
+                    retryCount++;
+                } else {
+                    throw e;  // 非限流错误或超过最大重试次数
+                }
+            }
+        }
+        throw new RuntimeException("超过最大重试次数");
+    }
+
+    /**
+     * 判断是否为限流错误或可重试错误
+     */
+    private boolean isRateLimitError(Exception e) {
+        String msg = e.getMessage();
+        if (msg == null) return false;
+        String lower = msg.toLowerCase(Locale.ROOT);
+        return lower.contains("429") ||
+               lower.contains("rate limit") ||
+               lower.contains("too many requests") ||
+               lower.contains("read timed out") ||
+               lower.contains("connection reset") ||
+               lower.contains("connection refused") ||
+               lower.contains("i/o error");
+    }
+
+    private String classifyError(String msg) {
+        if (msg == null || msg.isBlank()) return "UNKNOWN";
+        String lower = msg.toLowerCase(Locale.ROOT);
+        if (lower.contains("429") || lower.contains("rate limit") || lower.contains("too many requests")) {
+            return "MODEL_RATE_LIMIT";
+        }
+        if (lower.contains("timeout") || lower.contains("timed out")) {
+            return "TIMEOUT";
+        }
+        if (lower.contains("jsonparseexception") || lower.contains("jsonmappingexception")
+                || lower.contains("mismatchedinputexception") || lower.contains("content is not a string")) {
+            return "PARSE_ERROR";
+        }
+        if (lower.contains("tool") || lower.contains("slither") || lower.contains("mythril")) {
+            return "TOOL_ERROR";
+        }
+        if (lower.contains("400") || lower.contains("invalidparameter") || lower.contains("range of input length")) {
+            return "MODEL_REQUEST_ERROR";
+        }
+        if (lower.contains("i/o error") || lower.contains("connection")) {
+            return "TRANSIENT_IO_ERROR";
+        }
+        return "FINAL_JUDGMENT_ERROR";
     }
 
     private String computeOutcome(boolean gtVuln, boolean predVuln) {
@@ -330,7 +453,12 @@ public class PilotExperimentTest1 {
         return "FN"; // gtVuln && !predVuln
     }
 
-    /** 处理 Vanilla 模式返回的原始 JSON 字符串 */
+    /**
+     * @deprecated 已废弃。现在 auditVanilla() 通过 JsonNormalizationAdvisor 直接返回 SmartContractAnalysisResult，
+     *             不再需要手动解析 JSON 字符串。
+     *             此方法保留作为备用，以防需要回退到旧的 String 返回模式。
+     */
+    @Deprecated
     private SmartContractAnalysisResult parseVanilla(String rawOutput) {
         try {
             String clean = rawOutput;
@@ -405,11 +533,61 @@ public class PilotExperimentTest1 {
         return result;
     }
 
+    /**
+     * 严格指标（VTA）：
+     * 只有“检测出漏洞”且“漏洞类型与 GT 对齐”才算 TP。
+     */
+    private Metrics calcStrictTypeMetrics(List<ExperimentRecord> records) {
+        int tp = 0, tn = 0, fp = 0, fn = 0;
+        for (ExperimentRecord r : records) {
+            boolean gtVuln = r.groundTruth().isVulnerable();
+            boolean predVuln = r.predicted().isHasVulnerability();
+
+            if (!gtVuln) {
+                if (predVuln) fp++;
+                else tn++;
+                continue;
+            }
+
+            if (predVuln && typeMatches(r.groundTruth().vulnerabilityType(), r.predicted().getVulnerabilityType())) {
+                tp++;
+            } else {
+                fn++;
+            }
+        }
+        return new Metrics(tp, tn, fp, fn);
+    }
+
+    private boolean typeMatches(String groundTruthType, String predictedType) {
+        if (groundTruthType == null || predictedType == null) return false;
+        String gt = normalizeType(groundTruthType);
+        String pred = normalizeType(predictedType);
+        return gt.equalsIgnoreCase(pred);
+    }
+
+    private String normalizeType(String type) {
+        String lower = type == null ? "" : type.toLowerCase(Locale.ROOT);
+        if (lower.contains("reentr") || lower.contains("重入")) return "Reentrancy";
+        if (lower.contains("overflow") || lower.contains("underflow") || lower.contains("整数溢出") || lower.contains("算术")) {
+            return "Integer Overflow/Underflow";
+        }
+        if (lower.contains("unchecked send") || lower.contains("unchecked-lowlevel") || lower.contains("unchecked_low_level")
+                || lower.contains("未检查")) {
+            return "Unchecked Send";
+        }
+        if (lower.contains("timestamp") || lower.contains("时间戳")) return "Timestamp-Dependency";
+        if (lower.contains("exception") || lower.contains("异常")) return "Unhandled Exceptions";
+        if (lower.contains("tx.origin")) return "tx.origin";
+        if (lower.contains("tod") || lower.contains("transaction order") || lower.contains("交易顺序依赖")) return "TOD";
+        return type;
+    }
+
     // ─────────────────── 报告生成 ───────────────────
 
     private String saveFullReport(List<ExperimentRecord> records, String mode) throws IOException {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         Metrics overall = calcMetrics(records);
+        Metrics strictOverall = calcStrictTypeMetrics(records);
         Map<String, Metrics> perCategory = calcPerCategoryMetrics(records);
 
         StringBuilder sb = new StringBuilder();
@@ -445,6 +623,24 @@ public class PilotExperimentTest1 {
         sb.append(String.format("| **Accuracy** | **%.4f** (%.1f%%) | (TP+TN) / Total |\n\n",
                 overall.accuracy(), overall.accuracy() * 100));
 
+        long systemErrorCount = records.stream()
+                .filter(r -> !"NONE".equals(r.errorCategory()))
+                .count();
+        double systemErrorRate = records.isEmpty() ? 0.0 : (double) systemErrorCount / records.size();
+
+        sb.append("### 1.3 系统稳定性与严格指标\n\n");
+        sb.append("| 指标 | 值 | 说明 |\n");
+        sb.append("|---|---|---|\n");
+        sb.append(String.format("| **SystemError Rate** | **%.4f** (%.1f%%) | 非 NONE 错误类别样本占比 |\n",
+                systemErrorRate, systemErrorRate * 100));
+        sb.append(String.format("| **VTA Precision** | **%.4f** (%.1f%%) | 漏洞存在且类型分类正确时计 TP |\n",
+                strictOverall.precision(), strictOverall.precision() * 100));
+        sb.append(String.format("| **VTA Recall** | **%.4f** (%.1f%%) | 漏洞存在且类型分类正确时计 TP |\n",
+                strictOverall.recall(), strictOverall.recall() * 100));
+        sb.append(String.format("| **VTA F1** | **%.4f** | 严格类型一致性 F1 |\n", strictOverall.f1()));
+        sb.append(String.format("| **VTA Accuracy** | **%.4f** (%.1f%%) | 严格类型一致性 Accuracy |\n\n",
+                strictOverall.accuracy(), strictOverall.accuracy() * 100));
+
         // ── 分类别指标 ──
         sb.append("## 2. 分漏洞类别检出率（Recall）\n\n");
         sb.append("> 注：分类别指标仅统计正样本（GT=Vulnerable），故此处展示 Recall（检出率）。\n\n");
@@ -465,6 +661,22 @@ public class PilotExperimentTest1 {
                 .filter(r -> r.outcome().equals("FN")).toList();
 
         sb.append("\n## 3. 错误样本分析\n\n");
+
+        Map<String, Long> errorBreakdown = records.stream()
+                .filter(r -> !"NONE".equals(r.errorCategory()))
+                .collect(Collectors.groupingBy(ExperimentRecord::errorCategory, TreeMap::new, Collectors.counting()));
+
+        sb.append("### 3.0 系统错误类别分布\n\n");
+        if (errorBreakdown.isEmpty()) {
+            sb.append("> 无系统错误。\n\n");
+        } else {
+            sb.append("| 错误类别 | 样本数 |\n");
+            sb.append("|---|---:|\n");
+            for (Map.Entry<String, Long> entry : errorBreakdown.entrySet()) {
+                sb.append(String.format("| %s | %d |\n", entry.getKey(), entry.getValue()));
+            }
+            sb.append("\n");
+        }
 
         sb.append("### 3.1 误报（FP）列表 — 系统误报漏洞，实为安全合约\n\n");
         if (fps.isEmpty()) {
@@ -498,8 +710,8 @@ public class PilotExperimentTest1 {
 
         // ── 完整样本明细 ──
         sb.append("## 4. 完整样本检测明细\n\n");
-        sb.append("| # | 文件名 | GT类型 | GT标签 | 预测标签 | 预测类型 | 结果 | 耗时(ms) |\n");
-        sb.append("|---|---|---|---|---|---|---|---:|\n");
+        sb.append("| # | 文件名 | GT类型 | GT标签 | 预测标签 | 预测类型 | 错误类别 | 结果 | 耗时(ms) |\n");
+        sb.append("|---|---|---|---|---|---|---|---|---:|\n");
 
         List<ExperimentRecord> sorted = records.stream()
                 .sorted(Comparator.comparing(ExperimentRecord::outcome)
@@ -515,13 +727,14 @@ public class PilotExperimentTest1 {
                 case "FN" -> "❌ FN";
                 default   -> r.outcome();
             };
-            sb.append(String.format("| %d | %s | %s | %s | %s | %s | %s | %d |\n",
+            sb.append(String.format("| %d | %s | %s | %s | %s | %s | %s | %s | %d |\n",
                     i + 1,
                     r.filename(),
                     r.groundTruth().vulnerabilityType(),
                     r.groundTruth().isVulnerable() ? "Vulnerable" : "Safe",
                     r.predicted().isHasVulnerability() ? "Vulnerable" : "Safe",
                     safeStr(r.predicted().getVulnerabilityType(), 40),
+                    r.errorCategory(),
                     outcomeEmoji,
                     r.timeMs()));
         }
@@ -539,6 +752,8 @@ public class PilotExperimentTest1 {
 
     private void printQuickSummary(List<ExperimentRecord> records, String mode) {
         Metrics m = calcMetrics(records);
+        Metrics strict = calcStrictTypeMetrics(records);
+        long systemErrorCount = records.stream().filter(r -> !"NONE".equals(r.errorCategory())).count();
         log.info("\n╔══════════════════════════════════════════════╗");
         log.info("║  Mode: {:10s}  |  Samples: {:4d}          ║", mode, m.total());
         log.info("╠══════════════════════════════════════════════╣");
@@ -549,6 +764,10 @@ public class PilotExperimentTest1 {
         log.info("║  Recall    : {:.4f} ({:.1f}%)               ║", m.recall(), m.recall() * 100);
         log.info("║  F1 Score  : {:.4f}                         ║", m.f1());
         log.info("║  Accuracy  : {:.4f} ({:.1f}%)               ║", m.accuracy(), m.accuracy() * 100);
+        log.info("║  VTA F1    : {:.4f}                         ║", strict.f1());
+        log.info("║  SysError  : {:4d} ({:.1f}%)                ║",
+                systemErrorCount,
+                records.isEmpty() ? 0.0 : systemErrorCount * 100.0 / records.size());
         log.info("╚══════════════════════════════════════════════╝");
     }
 

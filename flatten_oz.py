@@ -11,7 +11,12 @@ flatten_oz.py — 纯 Python Solidity 展平工具
     （已经通过 npm install @openzeppelin/contracts 安装）
 
 输出：
-    safe_contracts/safe_01_ERC20.sol 等 12 份展平合约
+    safe_contracts/safe_01_ERC20.sol 等 50 份展平合约
+
+样本配比说明：
+    - 正样本：7 类漏洞 × 50 = 350 份
+    - 负样本：50 份（与每类正样本数量对齐）
+    - 总样本：400 份
 """
 
 import os
@@ -25,20 +30,77 @@ WORK_DIR     = SCRIPT_DIR / "oz_flatten_workspace"
 NODE_MODULES = WORK_DIR / "node_modules"
 OUTPUT_DIR   = SCRIPT_DIR / "safe_contracts"
 
+# 预期输出的负样本数量
+EXPECTED_SAFE_CONTRACTS = 50
+
 # ─── 待展平合约：(输出文件名, OZ包内路径) ───────────────────────
+# 目标：生成 50 份安全合约作为负样本，与每类漏洞 50 份正样本对齐
 CONTRACTS = [
+    # === ERC20 系列 (10份) ===
     ("safe_01_ERC20.sol",              "token/ERC20/ERC20.sol"),
-    ("safe_02_ERC721.sol",             "token/ERC721/ERC721.sol"),
-    ("safe_03_ERC1155.sol",            "token/ERC1155/ERC1155.sol"),
-    ("safe_04_ERC20Capped.sol",        "token/ERC20/extensions/ERC20Capped.sol"),
-    ("safe_05_Ownable.sol",            "access/Ownable.sol"),
-    ("safe_06_Ownable2Step.sol",       "access/Ownable2Step.sol"),
-    ("safe_07_AccessControl.sol",      "access/AccessControl.sol"),
-    ("safe_08_ReentrancyGuard.sol",    "utils/ReentrancyGuard.sol"),
-    ("safe_09_Pausable.sol",           "utils/Pausable.sol"),
-    ("safe_10_Address.sol",            "utils/Address.sol"),
-    ("safe_11_TimelockController.sol", "governance/TimelockController.sol"),
-    ("safe_12_ERC20Burnable.sol",      "token/ERC20/extensions/ERC20Burnable.sol"),
+    ("safe_02_ERC20Burnable.sol",      "token/ERC20/extensions/ERC20Burnable.sol"),
+    ("safe_03_ERC20Capped.sol",        "token/ERC20/extensions/ERC20Capped.sol"),
+    ("safe_04_ERC20Pausable.sol",      "token/ERC20/extensions/ERC20Pausable.sol"),
+    ("safe_05_ERC20Votes.sol",         "token/ERC20/extensions/ERC20Votes.sol"),
+    ("safe_06_ERC20FlashMint.sol",     "token/ERC20/extensions/ERC20FlashMint.sol"),
+    ("safe_07_ERC20Wrapper.sol",       "token/ERC20/extensions/ERC20Wrapper.sol"),
+    ("safe_08_ERC4626.sol",            "token/ERC20/extensions/ERC4626.sol"),
+    ("safe_09_IERC20.sol",             "token/ERC20/IERC20.sol"),
+    ("safe_10_ERC20Permit.sol",        "token/ERC20/extensions/ERC20Permit.sol"),
+
+    # === ERC721 系列 (8份) ===
+    ("safe_11_ERC721.sol",             "token/ERC721/ERC721.sol"),
+    ("safe_12_ERC721Burnable.sol",     "token/ERC721/extensions/ERC721Burnable.sol"),
+    ("safe_13_ERC721Pausable.sol",     "token/ERC721/extensions/ERC721Pausable.sol"),
+    ("safe_14_ERC721URIStorage.sol",   "token/ERC721/extensions/ERC721URIStorage.sol"),
+    ("safe_15_ERC721Enumerable.sol",   "token/ERC721/extensions/ERC721Enumerable.sol"),
+    ("safe_16_ERC721Royalty.sol",      "token/ERC721/extensions/ERC721Royalty.sol"),
+    ("safe_17_ERC721Consecutive.sol",  "token/ERC721/extensions/ERC721Consecutive.sol"),
+    ("safe_18_IERC721.sol",            "token/ERC721/IERC721.sol"),
+
+    # === ERC1155 系列 (4份) ===
+    ("safe_19_ERC1155.sol",            "token/ERC1155/ERC1155.sol"),
+    ("safe_20_ERC1155Burnable.sol",    "token/ERC1155/extensions/ERC1155Burnable.sol"),
+    ("safe_21_ERC1155Pausable.sol",    "token/ERC1155/extensions/ERC1155Pausable.sol"),
+    ("safe_22_ERC1155Supply.sol",      "token/ERC1155/extensions/ERC1155Supply.sol"),
+
+    # === Access Control 系列 (6份) ===
+    ("safe_23_Ownable.sol",            "access/Ownable.sol"),
+    ("safe_24_Ownable2Step.sol",       "access/Ownable2Step.sol"),
+    ("safe_25_AccessControl.sol",      "access/AccessControl.sol"),
+    ("safe_26_IAccessControl.sol",     "access/IAccessControl.sol"),
+    ("safe_27_AccessControlDefaultAdminRules.sol", "access/extensions/AccessControlDefaultAdminRules.sol"),
+    ("safe_28_AccessControlEnumerable.sol", "access/extensions/AccessControlEnumerable.sol"),
+
+    # === Security Utils 系列 (8份) ===
+    ("safe_29_ReentrancyGuard.sol",    "utils/ReentrancyGuard.sol"),
+    ("safe_30_Pausable.sol",           "utils/Pausable.sol"),
+    ("safe_31_Address.sol",            "utils/Address.sol"),
+    ("safe_32_Multicall.sol",          "utils/Multicall.sol"),
+    ("safe_33_Context.sol",            "utils/Context.sol"),
+    ("safe_34_ShortStrings.sol",       "utils/ShortStrings.sol"),
+    ("safe_35_EIP712.sol",             "utils/cryptography/EIP712.sol"),
+    ("safe_36_ECDSA.sol",              "utils/cryptography/ECDSA.sol"),
+
+    # === Governance 系列 (6份) ===
+    ("safe_37_Governor.sol",           "governance/Governor.sol"),
+    ("safe_38_TimelockController.sol", "governance/TimelockController.sol"),
+    ("safe_39_GovernorCountingSimple.sol", "governance/extensions/GovernorCountingSimple.sol"),
+    ("safe_40_GovernorVotes.sol",      "governance/extensions/GovernorVotes.sol"),
+    ("safe_41_GovernorTimelockControl.sol", "governance/extensions/GovernorTimelockControl.sol"),
+    ("safe_42_Votes.sol",              "governance/utils/Votes.sol"),
+
+    # === Finance / Access Manager 系列 (4份) ===
+    ("safe_43_VestingWalletCliff.sol", "finance/VestingWalletCliff.sol"),
+    ("safe_44_VestingWallet.sol",      "finance/VestingWallet.sol"),
+    ("safe_45_AccessManaged.sol",      "access/manager/AccessManaged.sol"),
+    ("safe_46_AccessManager.sol",      "access/manager/AccessManager.sol"),
+
+    # === Proxy 系列 (4份) ===
+    ("safe_47_Erc1967Proxy.sol",       "proxy/ERC1967/ERC1967Proxy.sol"),
+    ("safe_48_TransparentUpgradeableProxy.sol", "proxy/transparent/TransparentUpgradeableProxy.sol"),
+    ("safe_49_ProxyAdmin.sol",         "proxy/transparent/ProxyAdmin.sol"),
+    ("safe_50_UUPSUpgradeable.sol",    "proxy/utils/UUPSUpgradeable.sol"),
 ]
 
 # ─── 颜色输出 ────────────────────────────────────────────────────
@@ -184,7 +246,12 @@ def main():
         print(blue(f"[INFO]  @openzeppelin/contracts 版本: {ver}"))
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    # 清理旧的展平结果，避免历史残留样本混入当前实验
+    old_outputs = list(OUTPUT_DIR.glob("*.sol"))
+    for old_file in old_outputs:
+        old_file.unlink()
     print(blue(f"[INFO]  输出目录: {OUTPUT_DIR}"))
+    print(blue(f"[INFO]  已清理旧样本: {len(old_outputs)} 份"))
     print()
 
     success, fail = 0, []
@@ -225,6 +292,18 @@ def main():
         for f in fail:
             print(f"     • {f}")
     print()
+    print(f"  📊 实验数据集配比：")
+    print(f"     • 正样本：7 类 × 50 = 350 份")
+    print(f"     • 负样本：{success} 份（目标 {EXPECTED_SAFE_CONTRACTS} 份）")
+    print(f"     • 总计  ：{350 + success} 份")
+    print()
+
+    if success != EXPECTED_SAFE_CONTRACTS:
+        print(yellow(
+            f"[WARN] 负样本数量与预期不一致：期望 {EXPECTED_SAFE_CONTRACTS}，实际 {success}。"
+            " 请检查 OpenZeppelin 版本或失效的合约路径。"
+        ))
+        print()
 
     if success > 0:
         print(green(f"展平合约已保存至: {OUTPUT_DIR}/"))

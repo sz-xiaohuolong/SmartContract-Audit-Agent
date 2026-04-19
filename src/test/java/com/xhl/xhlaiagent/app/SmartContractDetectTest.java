@@ -25,7 +25,7 @@ class SmartContractDetectTest {
     @Test
     void doChatWithRag() {
         String message = ContractReaderUtils.createPromptFromContract("Unchecked37.sol");
-        SmartContractAnalysisResult result = smartContractDetect.auditRAGOnly(message);
+        SmartContractAnalysisResult result = smartContractDetect.auditFullAgent(message);
         Assertions.assertNotNull(result);
     }
 }
