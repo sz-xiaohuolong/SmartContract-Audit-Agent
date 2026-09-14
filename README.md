@@ -65,15 +65,16 @@ flowchart LR
 │   ├── testset/              # Vulnerable and safe benchmark contracts
 │   └── application*.yml      # Spring Boot configuration
 ├── src/test/java/com/xhl/xhlaiagent/experiment/
-│   └── PilotExperimentTest1.java
+│   └── VeriRAGExperimentTest.java
+├── experiment-reports/       # Generated experiment reports
+├── scripts/                  # Root-level Python utility scripts
 ├── paper/
 │   ├── data/                 # Recomputed VTA tables
 │   ├── picture/              # Figures used in the paper
 │   ├── scripts/              # Plotting / table / doc update scripts
 │   └── overleaf_verirag_agent/
 ├── smartbugs-curated/        # Source dataset reference
-├── SolidiFI-benchmark/       # Benchmark reference
-└── Experiment_*.md           # Generated experiment reports
+└── SolidiFI-benchmark/       # Benchmark reference
 ```
 
 ## Output Schema
@@ -167,20 +168,20 @@ At the current stage, the repository is used primarily through the Java service 
 
 The main experiment harness is:
 
-- [src/test/java/com/xhl/xhlaiagent/experiment/PilotExperimentTest1.java](src/test/java/com/xhl/xhlaiagent/experiment/PilotExperimentTest1.java)
+- [src/test/java/com/xhl/xhlaiagent/experiment/VeriRAGExperimentTest.java](src/test/java/com/xhl/xhlaiagent/experiment/VeriRAGExperimentTest.java)
 
 Run the three modes separately:
 
 ```bash
-SPRING_PROFILES_ACTIVE=coding-plan ./mvnw test -Dtest=PilotExperimentTest1#runFullExperiment -Dmode=Vanilla
-SPRING_PROFILES_ACTIVE=coding-plan ./mvnw test -Dtest=PilotExperimentTest1#runFullExperiment -Dmode=RAG-Only
-SPRING_PROFILES_ACTIVE=coding-plan ./mvnw test -Dtest=PilotExperimentTest1#runFullExperiment -Dmode=VeriRAG-Full
+SPRING_PROFILES_ACTIVE=coding-plan ./mvnw test -Dtest=VeriRAGExperimentTest#runFullExperiment -Dmode=Vanilla
+SPRING_PROFILES_ACTIVE=coding-plan ./mvnw test -Dtest=VeriRAGExperimentTest#runFullExperiment -Dmode=RAG-Only
+SPRING_PROFILES_ACTIVE=coding-plan ./mvnw test -Dtest=VeriRAGExperimentTest#runFullExperiment -Dmode=VeriRAG-Full
 ```
 
 Generated reports are saved as:
 
 ```text
-Experiment_<MODE>_<TIMESTAMP>.md
+experiment-reports/Experiment_<MODE>_<TIMESTAMP>.md
 ```
 
 Each report includes:
@@ -226,4 +227,3 @@ This project builds on and interfaces with several important open-source tools a
 - [Slither](https://github.com/crytic/slither)
 - [Mythril](https://github.com/ConsenSysDiligence/mythril)
 - [OpenZeppelin Contracts](https://github.com/OpenZeppelin/openzeppelin-contracts)
-
