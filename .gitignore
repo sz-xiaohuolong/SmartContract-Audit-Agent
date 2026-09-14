@@ -35,3 +35,28 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### OS & Editor ###
+.DS_Store
+**/.DS_Store
+
+### Python & Venv ###
+venv/
+__pycache__/
+*.py[cod]
+
+### Temp Workspaces & Raw Benchmark Repos ###
+oz_flatten_workspace/
+SolidiFI-benchmark/
+smartbugs-curated/
+
+### LaTeX Build Artifacts ###
+paper/**/*.aux
+paper/**/*.log
+paper/**/*.synctex.gz
+paper/**/*.out
+paper/**/*.toc
+
+### Local Only Documents & Reports ###
+paper/
+experiment-reports/
