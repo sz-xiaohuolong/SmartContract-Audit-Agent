@@ -1,14 +1,17 @@
 import os
 import shutil
 import random
+from pathlib import Path
 
 # ================= 路径配置 (请根据你的实际情况修改) =================
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 # 1. 你刚刚 clone 下来的 SolidiFI 仓库路径
-SOURCE_ROOT = "./SolidiFI-benchmark/buggy_contracts"
+SOURCE_ROOT = PROJECT_ROOT / "SolidiFI-benchmark" / "buggy_contracts"
 
 # 2. 你的 Java 项目测试资源目录 (请修改为你的实际绝对路径或相对路径)
 # 假设你的 Java 项目文件夹叫 SmartContract-Audit-Agent
-TARGET_DIR = "./src/main/resources/testset/pilot_set"
+TARGET_DIR = PROJECT_ROOT / "src" / "main" / "resources" / "testset" / "pilot_set"
 # ===================================================================
 
 def setup_data():
@@ -60,7 +63,7 @@ def setup_data():
             total_count += 1
 
     print(f"\n🎉 成功！共准备了 {total_count} 个测试合约。")
-    print("现在你可以运行 Java 的 PilotExperimentTest 了。")
+    print("现在你可以运行 Java 的 VeriRAGExperimentTest 了。")
 
 if __name__ == "__main__":
     setup_data()

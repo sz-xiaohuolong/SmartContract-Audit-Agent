@@ -4,14 +4,14 @@ flatten_oz.py — 纯 Python Solidity 展平工具
 无需 Hardhat / Node 版本兼容，直接解析 import 递归拼接
 
 用法：
-    python3 flatten_oz.py
+    python3 scripts/flatten_oz.py
 
 前提：
     oz_flatten_workspace/node_modules/@openzeppelin/contracts 已存在
     （已经通过 npm install @openzeppelin/contracts 安装）
 
 输出：
-    safe_contracts/safe_01_ERC20.sol 等 50 份展平合约
+    src/main/resources/testset/safe_contracts/safe_01_ERC20.sol 等 50 份展平合约
 
 样本配比说明：
     - 正样本：7 类漏洞 × 50 = 350 份
@@ -26,9 +26,10 @@ from pathlib import Path
 
 # ─── 路径配置 ───────────────────────────────────────────────────
 SCRIPT_DIR   = Path(__file__).parent.resolve()
-WORK_DIR     = SCRIPT_DIR / "oz_flatten_workspace"
+PROJECT_ROOT = SCRIPT_DIR.parent
+WORK_DIR     = PROJECT_ROOT / "oz_flatten_workspace"
 NODE_MODULES = WORK_DIR / "node_modules"
-OUTPUT_DIR   = SCRIPT_DIR / "safe_contracts"
+OUTPUT_DIR   = PROJECT_ROOT / "src" / "main" / "resources" / "testset" / "safe_contracts"
 
 # 预期输出的负样本数量
 EXPECTED_SAFE_CONTRACTS = 50

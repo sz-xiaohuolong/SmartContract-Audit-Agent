@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -43,9 +44,9 @@ import java.util.stream.Collectors;
  *       └── ...
  *
  * 【运行方式】
- *   mvn test -Dtest=PilotExperimentTest#runFullExperiment -Dmode=Vanilla
- *   mvn test -Dtest=PilotExperimentTest#runFullExperiment -Dmode=RAG-Only
- *   mvn test -Dtest=PilotExperimentTest#runFullExperiment -Dmode=VeriRAG-Full
+ *   mvn test -Dtest=VeriRAGExperimentTest#runFullExperiment -Dmode=Vanilla
+ *   mvn test -Dtest=VeriRAGExperimentTest#runFullExperiment -Dmode=RAG-Only
+ *   mvn test -Dtest=VeriRAGExperimentTest#runFullExperiment -Dmode=VeriRAG-Full
  *
  * 【采样策略】
  *   每个漏洞类别最多取 MAX_SAMPLES_PER_CATEGORY 份合约（避免跑几千个）
@@ -60,7 +61,7 @@ import java.util.stream.Collectors;
  */
 @SpringBootTest
 @Slf4j
-public class PilotExperimentTest1 {
+public class VeriRAGExperimentTest {
 
     @Resource
     private SmartContractDetect detector;
@@ -77,6 +78,9 @@ public class PilotExperimentTest1 {
 
     /** 合法的运行模式 */
     private static final List<String> MODES = List.of("Vanilla", "RAG-Only", "VeriRAG-Full");
+
+    /** 实验报告输出目录 */
+    private static final Path REPORT_OUTPUT_DIR = Paths.get("experiment-reports");
 
     // ─────────────────── API 限流相关参数 ───────────────────
 
@@ -453,33 +457,6 @@ public class PilotExperimentTest1 {
         return "FN"; // gtVuln && !predVuln
     }
 
-    /**
-     * @deprecated 已废弃。现在 auditVanilla() 通过 JsonNormalizationAdvisor 直接返回 SmartContractAnalysisResult，
-     *             不再需要手动解析 JSON 字符串。
-     *             此方法保留作为备用，以防需要回退到旧的 String 返回模式。
-     */
-    @Deprecated
-    private SmartContractAnalysisResult parseVanilla(String rawOutput) {
-        try {
-            String clean = rawOutput;
-            if (rawOutput != null && rawOutput.contains("```")) {
-                Matcher m = Pattern.compile("```(?:json)?(.*?)```", Pattern.DOTALL).matcher(rawOutput);
-                if (m.find()) clean = m.group(1).trim();
-            }
-            int s = clean.indexOf("{"), e = clean.lastIndexOf("}");
-            if (s != -1 && e != -1) clean = clean.substring(s, e + 1);
-
-            SmartContractAnalysisResult r = objectMapper.readValue(clean, SmartContractAnalysisResult.class);
-            if (r.getVulnerabilityType() == null || r.getVulnerabilityType().isBlank())
-                r.setVulnerabilityType("N/A");
-            if (r.getVulnerabilityReason() == null || r.getVulnerabilityReason().isBlank())
-                r.setVulnerabilityReason("N/A");
-            return r;
-        } catch (Exception e) {
-            log.warn("⚠️ Vanilla JSON 解析失败，原始片段: {}", safeStr(rawOutput, 200));
-            return new SmartContractAnalysisResult(false, "ParseError", "Raw output was not valid JSON");
-        }
-    }
 
     // ─────────────────── 指标计算 ───────────────────
 
@@ -744,8 +721,10 @@ public class PilotExperimentTest1 {
                 mode.replaceAll("[^a-zA-Z0-9_-]", "_"),
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")));
 
-        Files.writeString(Paths.get(fileName), sb.toString(), StandardCharsets.UTF_8);
-        return Paths.get(fileName).toAbsolutePath().toString();
+        Files.createDirectories(REPORT_OUTPUT_DIR);
+        Path reportPath = REPORT_OUTPUT_DIR.resolve(fileName);
+        Files.writeString(reportPath, sb.toString(), StandardCharsets.UTF_8);
+        return reportPath.toAbsolutePath().toString();
     }
 
     // ─────────────────── 控制台摘要 ───────────────────
