@@ -1,229 +1,64 @@
-# VeriRAG-Agent
+# VeriRAG-Agent 毕业论文重构
 
-> Retrieval-augmented, tool-grounded smart contract auditing with type-aware evaluation.
->
-> An intelligent contract auditing framework for paper replication and open-source system engineering: Integrating LLM, RAG, Slither, Mythril and strict vulnerability type assessment (VTA) into a single closed loop.
-## Overview
+当前工程已完成单次审计入口、离线数据与实验基础、受限程序事实和 D1 条件对比检索。[S3 首个工程切片](docs/vibe/releases/R1-S3/VERIFICATION.md)也已实现来源登记、隔离门禁及合成夹具对照。D1 的真实研究效果尚未验证；D2 仅建立了固定候选与简单防护检查的数据契约。2026-09-24 的[第二轮查新](thesis/D1_D2第二轮查新与立题裁决_20260924.md)撤回 D2 宽创新主张。
 
-VeriRAG-Agent is a research-oriented smart contract auditing framework built around a simple question:
+新模块使用 Java 21。根 `pom.xml` 通过 Spring Boot 4.1.1 的父工程管理构建，并通过 Spring AI 2.0.1 BOM 管理依赖版本；`audit-mvp/pom.xml` 直接声明 `spring-ai-openai`。`SpringAiGateway` 在显式单次审计时调用 Spring AI 模型接口。命令行不启动 Spring 应用容器；D1 检索与 S3 离线实验使用普通 Java/Python 代码，不经过 Spring AI 的 RAG 组件。
 
-**Can retrieval and tool feedback make LLM-based Solidity auditing more reliable at the vulnerability-type level, not just the binary vulnerable/safe level?**
+## 构建与运行
 
-The repository implements and evaluates three modes in the same codebase:
-
-| Mode | LLM | RAG | Tools | Entry Method |
-| --- | --- | --- | --- | --- |
-| `Vanilla` | Yes | No | No | `auditVanilla()` |
-| `RAG-Only` | Yes | Yes | No | `auditRAGOnly()` |
-| `VeriRAG-Full` | Yes | Yes | Slither + Mythril | `auditFullAgent()` |
-
-The full system does not treat tools as hard overrides. Instead, it:
-
-1. retrieves domain evidence from a SmartBugs-style knowledge base,
-2. asks the LLM to generate a structured vulnerability hypothesis,
-3. runs static/symbolic tools for formal evidence,
-4. feeds that evidence back into the model for a final decision.
-
-This repository is intended for **research, reproduction, and method extension**. It is not positioned as a production-ready audit service.
-
-## Highlights
-
-- **Three directly comparable baselines in one codebase**: `Vanilla`, `RAG-Only`, and `VeriRAG-Full`.
-- **Type-aware evaluation**: the main metric is VTA, which penalizes wrong vulnerability types even when binary detection is correct.
-- **Structured output pipeline**: all modes converge to the same JSON result schema.
-- **Tool-grounded feedback loop**: Slither and Mythril are used as evidence generators, not simple post-process filters.
-- **Reproducible benchmark setup**: 350 vulnerable contracts across 7 categories plus 50 safe OpenZeppelin contracts.
-- **Paper artifacts included**: experiment reports, plotting scripts, data tables, and the paper source are all kept in-repo.
-
-## System Architecture
-
-
-```mermaid
-flowchart LR
-    A["Solidity Contract"] --> B["Zone 1: RAG Retrieval"]
-    B --> C["Zone 2: Hypothesis Generation"]
-    C --> D["Zone 3: Tool Verification"]
-    D --> E["Zone 4: Final Judgment"]
-    D -. evidence feedback .-> C
-    D --> F["Slither"]
-    D --> G["Mythril (conditional)"]
-    E --> H["Structured JSON Output"]
-```
-
-## Repository Layout
-
-```text
-.
-├── src/main/java/com/xhl/xhlaiagent/
-│   ├── app/                  # Core audit pipeline
-│   ├── rag/                  # Retrieval + Milvus integration
-│   ├── tools/                # Slither / Mythril wrappers
-│   ├── advisor/              # JSON normalization and logging advisors
-│   └── config/               # Spring AI / DashScope / vector store config
-├── src/main/resources/
-│   ├── document/smartbugs_kb/ # SmartBugs-derived RAG knowledge base
-│   ├── testset/              # Vulnerable and safe benchmark contracts
-│   └── application*.yml      # Spring Boot configuration
-├── src/test/java/com/xhl/xhlaiagent/experiment/
-│   └── VeriRAGExperimentTest.java
-├── experiment-reports/       # Generated experiment reports
-├── scripts/                  # Root-level Python utility scripts
-├── paper/
-│   ├── data/                 # Recomputed VTA tables
-│   ├── picture/              # Figures used in the paper
-│   ├── scripts/              # Plotting / table / doc update scripts
-│   └── overleaf_verirag_agent/
-├── smartbugs-curated/        # Source dataset reference
-└── SolidiFI-benchmark/       # Benchmark reference
-```
-
-## Output Schema
-
-All three modes return the same structured result:
-
-```json
-{
-  "hasVulnerability": true,
-  "vulnerabilityType": "Reentrancy",
-  "vulnerabilityReason": "合约在外部调用前后状态更新顺序存在风险，可能导致重入。"
-}
-```
-
-## Requirements
-
-- Java 21
-- Maven 3.9+ or the included Maven Wrapper
-- Python virtual environment at `venv/`
-- Milvus running on `localhost:19530`
-- A compatible LLM endpoint configured for Spring AI
-- `slither` available on `PATH`
-- `myth` available in the repo-local virtual environment or otherwise reachable by the Java tool wrapper
-
-## Before You Publish or Run
-
-This repo currently contains local research configuration files. Before pushing to a public GitHub repository:
-
-1. **Rotate any real API keys** already present in local config files.
-2. Prefer **environment variables or untracked local overrides** instead of committing secrets.
-3. Verify the `MythrilTool` executable path matches your own environment.
-
-A safer public setup is to override Spring Boot configuration from the shell:
+在当前工作树根目录执行：
 
 ```bash
-export SPRING_PROFILES_ACTIVE=coding-plan
-export SPRING_AI_OPENAI_BASE_URL=https://coding.dashscope.aliyuncs.com
-export SPRING_AI_OPENAI_API_KEY=<your_llm_api_key>
-export SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL=qwen3-coder-next
-export SPRING_AI_DASHSCOPE_API_KEY=<your_embedding_api_key>
-export SPRING_AI_VECTORSTORE_MILVUS_CLIENT_HOST=localhost
-export SPRING_AI_VECTORSTORE_MILVUS_CLIENT_PORT=19530
+mvn clean verify
+java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help
 ```
 
-If you prefer config files, use a local-only override such as `application-local.yml` and do not commit real keys.
+默认测试仅使用本机 HTTP 服务和 Java 子进程夹具，不要求 Milvus、Slither、Mythril 或模型凭证。首次构建仍需下载 Maven 依赖。
 
-## Quick Start
-
-### 1. Clone and build
+真实单合约调用前，复制 `config/providers.example.properties` 到自己的配置文件，核对账户模型标识和端点，并在运行环境设置 `ARK_API_KEY`。配置文件只引用环境变量名称。示例使用 Agent Plan 的 `/api/plan/v3`；不能混用 Coding Plan 或按量计费端点。
 
 ```bash
-git clone <your-repo-url>
-cd SmartContract-agent
-./mvnw clean install -DskipTests
+java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar \
+  --source /绝对路径/Contract.sol \
+  --config config/providers.example.properties \
+  --provider ark
 ```
 
-### 2. Prepare the Python environment
+上述命令会向所选供应商发送源码并调用一次模型。`deepseek-v4.1-flash` 是用户目标配置，尚未通过实际账户验证。`--provider custom` 可切换到另一个已配置的 OpenAI Chat Completions 兼容接口；不支持未经适配的供应商原生协议。SDK 重试关闭，超时及输出 token 上限可配置。
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install slither-analyzer mythril
-```
+无参数只显示帮助。源码必须为 UTF-8，最大 1 MiB。退出码：`0` 审计完成、`1` 模型调用或输出失败、`2` 输入/配置无效。标准输出为单条 JSON，可重定向保存。
 
-If Mythril or Slither installation fails on your platform, follow their official installation guides:
+## 当前实现
 
-- [Slither](https://github.com/crytic/slither)
-- [Mythril](https://github.com/ConsenSysDiligence/mythril)
+| 模块 | 作用 |
+| --- | --- |
+| ProviderRegistry / SpringAiGateway | 命名供应商、端点与模型切换、环境凭证、usage 和耗时 |
+| AuditService / AuditCli | 源码摘要、严格 JSON 校验、单次审计命令行 |
+| ProcessRunner | 独立排空输出、有限留存、进程超时与清理状态 |
+| ToolAnalyzer | Slither / Mythril 可执行路径适配与结构化结果解析 |
 
-### 3. Start Milvus
+`FAILED / UNRESOLVED` 与无发现分离；`NO_CONFIRMED_FINDINGS` 仅表示模型未报告漏洞；`VULNERABILITY_REPORTED` 尚未经过 D2 验证。缺失 usage 保留 `null`，真实零值仍保留为零。
 
-Run a local Milvus instance and make sure it is reachable at `localhost:19530`.
+工具适配器目前为 Java 接口，可使用 `ToolAnalyzer.analyze(engine, executable, source, timeout)` 单独调用。S0 的 CLI 尚不编排工具或 RAG，也不安装编译器与解析项目依赖。真实 Slither / Mythril 兼容性需后续环境验收；工具结果不能当成安全证明。`cleanedUp` 仅覆盖父进程与已观察到的后代；瞬间脱离父进程的后台任务无法由纯 Java 可靠追踪，此执行器不提供沙箱或进程组级隔离。
 
-On the first run, the application will automatically load the `smartbugs-curated` knowledge base from `src/main/resources/document/smartbugs_kb/` into Milvus if the dataset is not already present.
+## S1a 离线实验基础
 
-### 4. Run the application
+新增 [离线实验工具](tools/experiment/README.md)：生成源码哈希与完全重复组，并从保存的标签/预测重算多标签类型指标。使用 Python 标准库；测试命令为 `PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`。
 
-```bash
-SPRING_PROFILES_ACTIVE=coding-plan ./mvnw spring-boot:run
-```
+已生成旧数据集待审核清单：400 份源码、7 组字节重复（14 个文件）。项目谱系、近似克隆、标签与划分仍待复核。知识快照、断点恢复和结果规范化已在 S1b 实现，见[当前进度](docs/vibe/PROGRESS.md)；其工程实现不能替代科研标签审核。
 
-The default Spring Boot settings in this repo are:
+## 旧系统与研究文档
 
-- Port: `8123`
-- Context path: `/api`
+原 `src/` 保留为历史系统，未纳入新模块默认构建。原依赖迁移到 `legacy/pom.xml`，需要旧构建时显式运行 `mvn -f legacy/pom.xml test`，这可能触发真实外部服务，不能当成离线测试。旧实验路径仍需复核，已有实验缺陷并未因为保留代码而解决。
 
-At the current stage, the repository is used primarily through the Java service layer and the experiment test harness rather than a polished public REST API.
+旧示例曾把供应商密钥写入源码，现改为从 `DASHSCOPE_API_KEY` 环境变量读取；旧值已进入历史提交，需在供应商侧撤销或轮换。不要把真实凭证写入配置文件或提交记录。
 
-## Reproducing the Paper Experiments
+- [当前进度](docs/vibe/PROGRESS.md)
+- [S0 有效需求](docs/vibe/releases/R1-S0/SPEC.md)
+- [S0 实施计划](docs/vibe/releases/R1-S0/IMPLEMENTATION_PLAN.md)
+- [S0 验证记录](docs/vibe/releases/R1-S0/VERIFICATION.md)
+- [S2 验证记录](docs/vibe/releases/R1-S2/VERIFICATION.md)
+- [S3 需求与实施计划](docs/vibe/releases/R1-S3/SPEC.md)
+- [历史 README](legacy/README-historical.md)：仅为旧状态存档。
 
-The main experiment harness is:
-
-- [src/test/java/com/xhl/xhlaiagent/experiment/VeriRAGExperimentTest.java](src/test/java/com/xhl/xhlaiagent/experiment/VeriRAGExperimentTest.java)
-
-Run the three modes separately:
-
-```bash
-SPRING_PROFILES_ACTIVE=coding-plan ./mvnw test -Dtest=VeriRAGExperimentTest#runFullExperiment -Dmode=Vanilla
-SPRING_PROFILES_ACTIVE=coding-plan ./mvnw test -Dtest=VeriRAGExperimentTest#runFullExperiment -Dmode=RAG-Only
-SPRING_PROFILES_ACTIVE=coding-plan ./mvnw test -Dtest=VeriRAGExperimentTest#runFullExperiment -Dmode=VeriRAG-Full
-```
-
-Generated reports are saved as:
-
-```text
-experiment-reports/Experiment_<MODE>_<TIMESTAMP>.md
-```
-
-Each report includes:
-
-- confusion matrix,
-- overall precision / recall / F1 / accuracy,
-- per-category recall,
-- latency,
-- sample-level detailed predictions.
-
-## Benchmark Setup
-
-The current evaluation uses:
-
-- **350 vulnerable contracts**
-  - 50 per category
-  - `Reentrancy`
-  - `Integer Overflow/Underflow`
-  - `TOD`
-  - `Timestamp-Dependency`
-  - `Unchecked Send`
-  - `tx.origin`
-  - `Unhandled Exceptions`
-- **50 safe contracts**
-  - derived from OpenZeppelin components
-
-The test set lives under:
-
-```text
-src/main/resources/testset/
-├── buggy_contracts/
-└── safe_contracts/
-```
-
-
-## Acknowledgements
-
-This project builds on and interfaces with several important open-source tools and datasets:
-
-- [SmartBugs](https://github.com/smartbugs/smartbugs)
-- [SolidiFI benchmark](SolidiFI-benchmark)
-- [SmartBugs Curated](smartbugs-curated)
-- [Slither](https://github.com/crytic/slither)
-- [Mythril](https://github.com/ConsenSysDiligence/mythril)
-- [OpenZeppelin Contracts](https://github.com/OpenZeppelin/openzeppelin-contracts)
+依赖依据：[Spring AI 官方入门](https://docs.spring.io/spring-ai/reference/getting-started.html)、[OpenAI 适配文档](https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html)。Agent Plan 端点依据：[火山引擎 OpenViking 配置示例](https://github.com/volcengine/OpenViking/blob/main/examples/ov.conf.example)。

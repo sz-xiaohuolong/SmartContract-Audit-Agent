@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1",
+  "challenges": [
+    {
+      "id": "synthetic-vulnerable",
+      "sourceHash": "b9b6b9817ad5071683cbd387535b85be434874dce3763fba6d56f8b2a288682f",
+      "riskLine": 1,
+      "guardLine": null,
+      "claim": "访问控制风险候选",
+      "attackPath": "外部调用者可到达状态写入",
+      "sourceRef": "vulnerable.sol:1",
+      "originType": "SYNTHETIC",
+      "truth": "TRUE",
+      "reviewStatus": "REVIEWED",
+      "truthEvidence": [
+        "仅合成夹具设计预期；不是实际合约安全标签"
+      ],
+      "obligations": {
+        "actor": "UNKNOWN",
+        "resource": "UNKNOWN",
+        "beforeRisk": "UNKNOWN",
+        "entryCoverage": "UNKNOWN",
+        "stateVersion": "UNKNOWN",
+        "bypass": "UNKNOWN"
+      }
+    },
+    {
+      "id": "synthetic-defense",
+      "sourceHash": "499a57ff0b497743a277e938eeae5d28606e1cb2edca200363619905583eedce",
+      "riskLine": 1,
+      "guardLine": 1,
+      "claim": "访问控制风险候选",
+      "attackPath": "外部调用者可到达状态写入",
+      "sourceRef": "defense.sol:1",
+      "originType": "SYNTHETIC",
+      "truth": "FALSE",
+      "reviewStatus": "REVIEWED",
+      "truthEvidence": [
+        "仅合成夹具设计预期；不是实际合约安全标签"
+      ],
+      "obligations": {
+        "actor": "UNKNOWN",
+        "resource": "UNKNOWN",
+        "beforeRisk": "UNKNOWN",
+        "entryCoverage": "UNKNOWN",
+        "stateVersion": "UNKNOWN",
+        "bypass": "UNKNOWN"
+      }
+    }
+  ]
+}

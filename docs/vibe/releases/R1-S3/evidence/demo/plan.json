@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1",
+  "tokenProfile": {
+    "purpose": "FIXTURE",
+    "model": "synthetic-codepoint-only",
+    "version": "1",
+    "templateVersion": "s3-fixture-v1",
+    "sha256": "7da5e7eaac57d1f52c2d166936a1a721092b09d8f3b23b727417e0686f0afc6d",
+    "maxTokens": 600,
+    "system": "请审查合约。",
+    "question": "权限检查是否位于风险写入之前？",
+    "tool": "工具摘要：无。",
+    "format": "按证据说明条件适用性。"
+  },
+  "targets": [
+    {
+      "id": "target",
+      "request": "docs/vibe/releases/R1-S2/evidence/demo/request.json",
+      "caseSamples": {
+        "vulnerable": "vulnerable",
+        "defense": "defense"
+      },
+      "k": 2
+    }
+  ]
+}

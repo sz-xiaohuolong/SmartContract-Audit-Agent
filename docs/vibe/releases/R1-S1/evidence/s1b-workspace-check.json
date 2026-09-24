@@ -1,0 +1,106 @@
+{
+  "date": "2026-09-21",
+  "note": "no-index 退出码 1 表示新增文件与空文件有差异；没有空白错误输出。",
+  "checks": [
+    {
+      "check": "git diff --check",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/batch.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/isolation.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/java_adapter.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/offline.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/s1b.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/snapshots.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/storage.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/tests/test_batch.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/tests/test_isolation.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/tests/test_offline.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/tests/test_s1b_cli.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/tests/test_snapshots.py",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "tools/experiment/README.md",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "docs/vibe/PROJECT.md",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "docs/vibe/PROGRESS.md",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "docs/vibe/releases/R1-S1/IMPLEMENTATION_PLAN.md",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "docs/vibe/releases/R1-S1/S1B_REVIEW.md",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "docs/vibe/releases/R1-S1/SPEC.md",
+      "exit_code": 1,
+      "output": ""
+    },
+    {
+      "file": "docs/vibe/releases/R1-S1/VERIFICATION.md",
+      "exit_code": 1,
+      "output": ""
+    }
+  ]
+}

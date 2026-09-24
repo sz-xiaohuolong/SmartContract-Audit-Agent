@@ -1,0 +1,26 @@
+test_alias_tuple_and_unrecognized_writes_do_not_imply_absence (test_program_facts.ProgramFactsTest.test_alias_tuple_and_unrecognized_writes_do_not_imply_absence) ... FAIL
+test_branch_bypass_unresolved_modifier_and_internal_call_are_unknown (test_program_facts.ProgramFactsTest.test_branch_bypass_unresolved_modifier_and_internal_call_are_unknown) ... ok
+test_comments_strings_and_other_function_do_not_protect_target (test_program_facts.ProgramFactsTest.test_comments_strings_and_other_function_do_not_protect_target) ... ok
+test_extracts_state_caller_checks_and_call_write_order (test_program_facts.ProgramFactsTest.test_extracts_state_caller_checks_and_call_write_order) ... ok
+test_malformed_or_unsupported_source_never_becomes_complete_empty (test_program_facts.ProgramFactsTest.test_malformed_or_unsupported_source_never_becomes_complete_empty) ... ok
+test_modifiers_expand_in_execution_order_not_source_order (test_program_facts.ProgramFactsTest.test_modifiers_expand_in_execution_order_not_source_order) ... ok
+test_overloads_on_same_line_have_distinct_scopes_and_fact_ids (test_program_facts.ProgramFactsTest.test_overloads_on_same_line_have_distinct_scopes_and_fact_ids) ... ok
+test_rhs_call_shadowed_state_and_member_alias_are_not_definite (test_program_facts.ProgramFactsTest.test_rhs_call_shadowed_state_and_member_alias_are_not_definite) ... ok
+test_wrong_subject_late_check_and_wrong_resource_remain_distinct (test_program_facts.ProgramFactsTest.test_wrong_subject_late_check_and_wrong_resource_remain_distinct) ... ok
+
+======================================================================
+FAIL: test_alias_tuple_and_unrecognized_writes_do_not_imply_absence (test_program_facts.ProgramFactsTest.test_alias_tuple_and_unrecognized_writes_do_not_imply_absence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/tests/test_program_facts.py", line 78, in test_alias_tuple_and_unrecognized_writes_do_not_imply_absence
+    self.assertEqual("PARTIAL", self.facts(body)["status"])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'PARTIAL' != 'COMPLETE'
+- PARTIAL
++ COMPLETE
+
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.001s
+
+FAILED (failures=1)

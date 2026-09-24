@@ -1,0 +1,1 @@
+contract Target { address owner; uint funds; function update() external { require(msg.sender == owner); funds = 0; } }

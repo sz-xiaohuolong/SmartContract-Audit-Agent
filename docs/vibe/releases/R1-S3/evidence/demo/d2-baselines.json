@@ -1,0 +1,41 @@
+[
+  {
+    "hypothesisId": "synthetic-vulnerable",
+    "guardPresence": "ABSENT",
+    "guardLine": "UNKNOWN",
+    "judgment": "UNKNOWN",
+    "truth": "TRUE",
+    "guardEvidence": [],
+    "obligations": {
+      "actor": "UNKNOWN",
+      "resource": "UNKNOWN",
+      "beforeRisk": "UNKNOWN",
+      "entryCoverage": "UNKNOWN",
+      "stateVersion": "UNKNOWN",
+      "bypass": "UNKNOWN"
+    },
+    "usage": null
+  },
+  {
+    "hypothesisId": "synthetic-defense",
+    "guardPresence": "PRESENT",
+    "guardLine": "PRESENT",
+    "judgment": "UNKNOWN",
+    "truth": "FALSE",
+    "guardEvidence": [
+      [
+        1,
+        "contract Defense { address owner; uint balance; function withdraw() public { require(msg.sender == owner); balance = 0; } }"
+      ]
+    ],
+    "obligations": {
+      "actor": "UNKNOWN",
+      "resource": "UNKNOWN",
+      "beforeRisk": "UNKNOWN",
+      "entryCoverage": "UNKNOWN",
+      "stateVersion": "UNKNOWN",
+      "bypass": "UNKNOWN"
+    },
+    "usage": null
+  }
+]

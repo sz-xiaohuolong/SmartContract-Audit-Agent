@@ -1,0 +1,50 @@
+[
+  {
+    "name": "com.xhl.audit.AuditCliTest",
+    "tests": "2",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.023"
+  },
+  {
+    "name": "com.xhl.audit.AuditServiceTest",
+    "tests": "3",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.022"
+  },
+  {
+    "name": "com.xhl.audit.CliIntegrationTest",
+    "tests": "3",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.039"
+  },
+  {
+    "name": "com.xhl.audit.GatewayTest",
+    "tests": "2",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.586"
+  },
+  {
+    "name": "com.xhl.audit.ProcessRunnerTest",
+    "tests": "4",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "1.118"
+  },
+  {
+    "name": "com.xhl.audit.ToolAnalyzerTest",
+    "tests": "5",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.07"
+  }
+]

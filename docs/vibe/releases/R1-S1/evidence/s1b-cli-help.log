@@ -1,0 +1,17 @@
+usage: s1b.py [-h]
+              {validate-splits,snapshot-build,snapshot-verify,snapshot-activate,run,resume,replay} ...
+
+审核划分、知识快照与实验断点恢复
+
+positional arguments:
+  {validate-splits,snapshot-build,snapshot-verify,snapshot-activate,run,resume,replay}
+    validate-splits     离线检查人工审核清单的组隔离
+    snapshot-build      从审核文档和已有向量构建离线快照
+    snapshot-verify     校验快照
+    snapshot-activate   原子激活本地完整快照
+    run                 显式执行或恢复批处理；会调用所选模型
+    resume              显式执行或恢复批处理；会调用所选模型
+    replay              只读重算日志报告，不调用模型
+
+options:
+  -h, --help            show this help message and exit

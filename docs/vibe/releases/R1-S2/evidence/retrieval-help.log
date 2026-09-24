@@ -1,0 +1,2 @@
+用法：--retrieval --source 合约.sol --request 检索请求.json --worker program_facts.py [--python python3] [--strategy dense|hybrid|contrastive|d1|compare]
+仅提取事实和比较检索，不调用模型；预算单位为实际上下文 UTF-8 字节。

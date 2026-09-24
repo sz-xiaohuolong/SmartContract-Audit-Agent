@@ -1,0 +1,1 @@
+{"candidateCount":2,"collection":"s1b_cc0f294bd80b4ec7960fb8c17e7277c4","image":"milvusdb/milvus:v2.6.4","limitations":["仅合成向量与机制夹具，不是论文效果数据"],"localRemotePoolEqual":true,"readback":"PASSED","snapshotId":"ad1fe2d80cc04dff16b6f3173b4fcb4ac173df47730509b600acf719be4fef7a","url":"http://127.0.0.1:29530"}

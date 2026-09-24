@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1",
+  "sources": [
+    {
+      "id": "fixture",
+      "url": "本仓库合成夹具",
+      "revision": "R1-S2",
+      "licenseStatus": "PENDING",
+      "license": null,
+      "sourceStatus": "PENDING",
+      "reportStatus": "UNAVAILABLE",
+      "patchStatus": "UNAVAILABLE"
+    }
+  ],
+  "samples": [
+    {
+      "id": "vulnerable",
+      "sourceId": "fixture",
+      "path": "docs/vibe/releases/R1-S2/evidence/demo/vulnerable.sol",
+      "sourceHash": "b9b6b9817ad5071683cbd387535b85be434874dce3763fba6d56f8b2a288682f",
+      "split": "knowledge",
+      "projectId": "synthetic-knowledge",
+      "eventId": "fixture-event",
+      "patchPairId": "synthetic-authorization-pair",
+      "cloneGroups": [],
+      "originType": "SYNTHETIC",
+      "labelStatus": "REVIEWED",
+      "artifacts": [
+        {
+          "id": "vulnerable-source",
+          "kind": "SOURCE",
+          "path": "docs/vibe/releases/R1-S2/evidence/demo/vulnerable.sol",
+          "sha256": "b9b6b9817ad5071683cbd387535b85be434874dce3763fba6d56f8b2a288682f",
+          "groupId": "synthetic-authorization-pair"
+        }
+      ]
+    },
+    {
+      "id": "defense",
+      "sourceId": "fixture",
+      "path": "docs/vibe/releases/R1-S2/evidence/demo/defense.sol",
+      "sourceHash": "499a57ff0b497743a277e938eeae5d28606e1cb2edca200363619905583eedce",
+      "split": "knowledge",
+      "projectId": "synthetic-knowledge",
+      "eventId": "fixture-event",
+      "patchPairId": "synthetic-authorization-pair",
+      "cloneGroups": [],
+      "originType": "SYNTHETIC",
+      "labelStatus": "REVIEWED",
+      "artifacts": [
+        {
+          "id": "defense-source",
+          "kind": "SOURCE",
+          "path": "docs/vibe/releases/R1-S2/evidence/demo/defense.sol",
+          "sha256": "499a57ff0b497743a277e938eeae5d28606e1cb2edca200363619905583eedce",
+          "groupId": "synthetic-authorization-pair"
+        }
+      ]
+    },
+    {
+      "id": "target",
+      "sourceId": "fixture",
+      "path": "docs/vibe/releases/R1-S2/evidence/demo/target.sol",
+      "sourceHash": "3247fdd1cd8b2ce82a12199c79c64e7112b0bbe20a4eba7856659925252afaac",
+      "split": "development",
+      "projectId": "synthetic-target",
+      "eventId": "target-event",
+      "patchPairId": "target-pair",
+      "cloneGroups": [],
+      "originType": "SYNTHETIC",
+      "labelStatus": "REVIEWED",
+      "artifacts": [
+        {
+          "id": "target-source",
+          "kind": "SOURCE",
+          "path": "docs/vibe/releases/R1-S2/evidence/demo/target.sol",
+          "sha256": "3247fdd1cd8b2ce82a12199c79c64e7112b0bbe20a4eba7856659925252afaac",
+          "groupId": "target-pair"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "left": "vulnerable",
+      "right": "defense",
+      "kind": "PATCH_PAIR",
+      "reviewed": true
+    }
+  ]
+}

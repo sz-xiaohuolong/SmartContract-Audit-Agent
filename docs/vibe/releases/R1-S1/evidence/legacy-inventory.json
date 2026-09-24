@@ -1,0 +1,4040 @@
+{
+  "schema_version": "1",
+  "count": 400,
+  "samples": [
+    {
+      "id": "e072063008b86ec132860e689d5dfb7ecb0f91c10229ab1a791a91def5a40ec3",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_1.sol",
+      "source_hash": "e6b8b2f26d0f7ecd0f63ec9345b86a271692255ddf26151b56fdfcf9890decc4",
+      "exact_group": "e6b8b2f26d0f7ecd0f63ec9345b86a271692255ddf26151b56fdfcf9890decc4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "042cadd541be90a6b02c7de857c303cbe04c4630de6d09a89b92c99d4145e365",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_10.sol",
+      "source_hash": "3e261cdff95a177472f667c51f5042fe885487c862ce513f24d93f67dc08fe9a",
+      "exact_group": "3e261cdff95a177472f667c51f5042fe885487c862ce513f24d93f67dc08fe9a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "91ec0caa48bf7213a7ef31140f638f2f4b7b7f8b656daafd910937d501f3c99e",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_11.sol",
+      "source_hash": "e13939d166e335f88d80316e64d2415ba340a35a22dee7844cb6d774585f858c",
+      "exact_group": "e13939d166e335f88d80316e64d2415ba340a35a22dee7844cb6d774585f858c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "864abad0d939be9c1ad5af8b98e8cdbba05e000232e50613337f3a970b2f974c",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_12.sol",
+      "source_hash": "5493e199a2df5de41f5a86656b9b8cd8e37cf3069594aa65bb422d70427a632d",
+      "exact_group": "5493e199a2df5de41f5a86656b9b8cd8e37cf3069594aa65bb422d70427a632d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "404ba5057be9308590620f025b164044920bfbe88146d8aa70e4d0c63a19a7be",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_13.sol",
+      "source_hash": "9d2d3cbe5589badaab37d65af8ceeb74279a49f20e0ad9b0e5dcdf3443358d73",
+      "exact_group": "9d2d3cbe5589badaab37d65af8ceeb74279a49f20e0ad9b0e5dcdf3443358d73",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "fb21b83503cd0541f517f5f3e73b78fd9bd7ef027ca3f6fd4e725e0ebdd68cfd",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_14.sol",
+      "source_hash": "531da2b28d07c525f4dcf7739c8613fa4364aa577e6a21f9d60db6cc01c1f3ac",
+      "exact_group": "531da2b28d07c525f4dcf7739c8613fa4364aa577e6a21f9d60db6cc01c1f3ac",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d8fa79cec23c7b194a413597af65f154576a09bc1536a19b5ccd806a5b3a7c28",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_15.sol",
+      "source_hash": "cd59b4e9a0a27ed1675d4fd67e7d5853e794c41cbc4d879fdc99efdff3d06f26",
+      "exact_group": "cd59b4e9a0a27ed1675d4fd67e7d5853e794c41cbc4d879fdc99efdff3d06f26",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ea33258a1c18d9c78808df97e9c33ebfe5d69cd57ed74b42af546f40c3650bda",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_16.sol",
+      "source_hash": "c7824ce3b2b8e7e592f7f31ee6244651ced2cd13a9a384d2430cafd2043b69c5",
+      "exact_group": "c7824ce3b2b8e7e592f7f31ee6244651ced2cd13a9a384d2430cafd2043b69c5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "68413255fbb82dee09b478c2896aa4d3d33173c87dc1e8e4b2715ff9b28c7b92",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_17.sol",
+      "source_hash": "6bcd95df2f869ca7d9ef09782bbe0de71378a0a869d45aa4359eeacd2be8924d",
+      "exact_group": "6bcd95df2f869ca7d9ef09782bbe0de71378a0a869d45aa4359eeacd2be8924d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "95796fed74f11df36734246daa86d94f0d83950658edf45e256f763bee9b51ad",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_18.sol",
+      "source_hash": "eb4f2e315422de9711d4e71d478354b91498e6573a2f8caf800025627f7fce4b",
+      "exact_group": "eb4f2e315422de9711d4e71d478354b91498e6573a2f8caf800025627f7fce4b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "509367fa9fe215eea5e4039c0fe5f241e694cda12487a83c6226375aefe1aa0d",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_19.sol",
+      "source_hash": "d9826efd7a96653dab6db4dc83baa9ef2ecfe1574f74998e1710ffb1fda204e8",
+      "exact_group": "d9826efd7a96653dab6db4dc83baa9ef2ecfe1574f74998e1710ffb1fda204e8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "055a0d37116457b638d7401395fdb482468a432f394e8ba8cf7540e9549bf260",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_2.sol",
+      "source_hash": "99d16be93d081e85cec67a5f55fd3758789770d79a773072ec5944d12331b378",
+      "exact_group": "99d16be93d081e85cec67a5f55fd3758789770d79a773072ec5944d12331b378",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c80561db5b7db2949afa04dd174c295f14c20979bdc2fb293752ddc6f70f0cee",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_20.sol",
+      "source_hash": "128a461d80093322828ea5ea6a947d57ad35efc1e91bbfc2f0061cc14feeea7c",
+      "exact_group": "128a461d80093322828ea5ea6a947d57ad35efc1e91bbfc2f0061cc14feeea7c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1c0dc5daa2379eca199a3c1762f0490d78f5a502258bb411ad8678d2a9171b0e",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_21.sol",
+      "source_hash": "3fbfece2cc51505be989b2fa7d6cdfa040b1b3db1d8e42df59e172eb04d75054",
+      "exact_group": "3fbfece2cc51505be989b2fa7d6cdfa040b1b3db1d8e42df59e172eb04d75054",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a5344eb2b150f69a412f222949fa2f8631ec353065a11703be0b2cdfe4171373",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_22.sol",
+      "source_hash": "a1603ce16825ca3979078d16a9f1ed4ddc6e6e3eab28dabbb0c3db73a4a485cf",
+      "exact_group": "a1603ce16825ca3979078d16a9f1ed4ddc6e6e3eab28dabbb0c3db73a4a485cf",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b0609ef6cd4cc449bc2816d584c264a7092b9a70f620138a575500b77ff6474c",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_23.sol",
+      "source_hash": "1b3ab90037389da9ffdaadbcf9fc45a464e348562847e7f46278341ed99dc75d",
+      "exact_group": "1b3ab90037389da9ffdaadbcf9fc45a464e348562847e7f46278341ed99dc75d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0b01103dbf92cb432205b579193ce43e391329fef8e58233073aab44d26a5774",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_24.sol",
+      "source_hash": "ff4804a978019918ea4636bc1c707e8709a3494a58d2c12bdd64096c7566af3d",
+      "exact_group": "ff4804a978019918ea4636bc1c707e8709a3494a58d2c12bdd64096c7566af3d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f09c3e730a8dd6237a33481976450f0cf500d190c139edd233dde5aaeabc1232",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_25.sol",
+      "source_hash": "28054567c44f89f770acda3fb2b20633210fa2b7d4837165497089ad1a1ce951",
+      "exact_group": "28054567c44f89f770acda3fb2b20633210fa2b7d4837165497089ad1a1ce951",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "03aaa228ef1d039164cc0fd19023e417ff3fe4dc7074b6aecdc605a1cf6bbb92",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_26.sol",
+      "source_hash": "5bd5da4de9b9707e1595cbbdda36ba57318cab35571085c228d133183199dbdc",
+      "exact_group": "5bd5da4de9b9707e1595cbbdda36ba57318cab35571085c228d133183199dbdc",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "39e84e87e9047bb81494572acdc6a8f195fe45c61fa15fc85de0e3c3add1e3a0",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_27.sol",
+      "source_hash": "2c4ef3ad60265c6c7043a31596ec5ee779b2b56dc0994dade5ca1d341ae00be4",
+      "exact_group": "2c4ef3ad60265c6c7043a31596ec5ee779b2b56dc0994dade5ca1d341ae00be4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4e031c4bee1d83797ed20807ed19feba235af393423fe7d18694007da93d7549",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_28.sol",
+      "source_hash": "30673142f4c6fe0fd160d17ab39229b315f69efdd881c98654c18e11ec4dd993",
+      "exact_group": "30673142f4c6fe0fd160d17ab39229b315f69efdd881c98654c18e11ec4dd993",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "477f1b578e0f5459cedc4c18a860ac840ccf48da9f4ec726b3794c85b66c9cda",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_29.sol",
+      "source_hash": "f4e2683443bfefef9bac6c8d877ebbaf90282e7ab7d4361705f2479d7f547226",
+      "exact_group": "f4e2683443bfefef9bac6c8d877ebbaf90282e7ab7d4361705f2479d7f547226",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b81a2a0de45c68bdd91b424fade70aee452411b27b698fed403bfa80a294a2f8",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_3.sol",
+      "source_hash": "03e3eb087d7467abd6f1f55d45aad3ad838867a23df92fe585767e4c074ad83a",
+      "exact_group": "03e3eb087d7467abd6f1f55d45aad3ad838867a23df92fe585767e4c074ad83a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "183fc7d97d0906b3dabd1b1decb2482c138778dacccdfa8dacd292b901531441",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_30.sol",
+      "source_hash": "7bdc7c99bfa22168ce4544d56ec86f726222da7b5421dc997f4d54fcfa6ed70b",
+      "exact_group": "7bdc7c99bfa22168ce4544d56ec86f726222da7b5421dc997f4d54fcfa6ed70b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b0a384aa470d0b1d099bcccad670e7ff2dec30e2972e290bdcbe3c415fa193a1",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_31.sol",
+      "source_hash": "ddd744f00c50c4bf7aff0df39b56e51d900070291031dc2d49defdd76b8643da",
+      "exact_group": "ddd744f00c50c4bf7aff0df39b56e51d900070291031dc2d49defdd76b8643da",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ac44bdc13ebacb8813733df4ce7767dda340582a29b48124d8c163c0c2681746",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_32.sol",
+      "source_hash": "4bd572fd492f834e5d7a0eb8b320a3714753b4436152390f4d1df5f0f4f9af77",
+      "exact_group": "4bd572fd492f834e5d7a0eb8b320a3714753b4436152390f4d1df5f0f4f9af77",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c25a9186fb540cc2728ae06c56e4bb5ac4eeef4ebfcb72acff65b2f9b517991f",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_33.sol",
+      "source_hash": "15b1ff2a865e99f6500282029e8053c823185a36c334211efac283854f6dd35f",
+      "exact_group": "15b1ff2a865e99f6500282029e8053c823185a36c334211efac283854f6dd35f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8776d39c7ae49bfc37e05aa116e4c50f1c4690fb34e4b36e177bfb3a446b2b87",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_34.sol",
+      "source_hash": "deed0eb44c563ad7531866cf3eaf75445afe0f640f8234de1b5c68991441cd68",
+      "exact_group": "deed0eb44c563ad7531866cf3eaf75445afe0f640f8234de1b5c68991441cd68",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d2a04be94aab4fd5a7936b732f44077954a6b318b55b6e0ec49881ab8bd84ed9",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_35.sol",
+      "source_hash": "9377e088266b5ace691c5139905b570413b143d20d487e53946c04b2d2130cef",
+      "exact_group": "9377e088266b5ace691c5139905b570413b143d20d487e53946c04b2d2130cef",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b67795c7e5f7e9c1c39add2f95c8fecd67a3f133b1fd926cbd5befb3b817404d",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_36.sol",
+      "source_hash": "a1603ce16825ca3979078d16a9f1ed4ddc6e6e3eab28dabbb0c3db73a4a485cf",
+      "exact_group": "a1603ce16825ca3979078d16a9f1ed4ddc6e6e3eab28dabbb0c3db73a4a485cf",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "38da4429ae477376ad8104af6405c950a1dceec22f54c3085e35ceead10d6f89",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_37.sol",
+      "source_hash": "8aff42bb75eea11d52d8c459f49a282d68cb97d66e5a2d26ab1c27512556793e",
+      "exact_group": "8aff42bb75eea11d52d8c459f49a282d68cb97d66e5a2d26ab1c27512556793e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1ffd57281d1f7b82022b91cdad47bf2e2013eab418fa0803ee02f5fff2a189b9",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_38.sol",
+      "source_hash": "f0509a016bb23acdd11152a37a412fd46b804a7d0c22e80486fc273c21e2dc77",
+      "exact_group": "f0509a016bb23acdd11152a37a412fd46b804a7d0c22e80486fc273c21e2dc77",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2fcee58a30fa2b7cad695dd5bfe177aa2f6bb86669f14705c3c623cc348b095b",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_39.sol",
+      "source_hash": "f0a55b27ba25418b24e4ba22eda6923f887167248ae7248f9d68c1d4e73fabcf",
+      "exact_group": "f0a55b27ba25418b24e4ba22eda6923f887167248ae7248f9d68c1d4e73fabcf",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d2dab5d6225d90b90196eb9f3bbfbb7b25ecb683c4cc3311e7c2bbf88f23d7e2",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_4.sol",
+      "source_hash": "c8978e262dbcde9e2bf25dd2508c386530df74113b83f6734349937fd9804a82",
+      "exact_group": "c8978e262dbcde9e2bf25dd2508c386530df74113b83f6734349937fd9804a82",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ec0c3136dbb8968e824e30509c8559ef949e1ec1ad0d0e56bd623ddfab9b231b",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_40.sol",
+      "source_hash": "af606da4c49cb8525de2e7f82f11dbc6eb5355249f848bf2953ab1f330a2be67",
+      "exact_group": "af606da4c49cb8525de2e7f82f11dbc6eb5355249f848bf2953ab1f330a2be67",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "54789f7223ad9dd35b5c1b8f737bedd4b0687f5834b711842eaa34070031a51f",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_41.sol",
+      "source_hash": "20c117a860ed34bcbc1b4da83d22481deff26a816bb9965fdd8d4a4ef9f01699",
+      "exact_group": "20c117a860ed34bcbc1b4da83d22481deff26a816bb9965fdd8d4a4ef9f01699",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f051899ce24db8b9e4e16b3e44af3f161b73ea3f1ac4d159c5101aba96d5abd4",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_42.sol",
+      "source_hash": "ea432fc01cb30acf3250caf3a2304f9c858efaef0079754d8cdfd8e0c2466fe8",
+      "exact_group": "ea432fc01cb30acf3250caf3a2304f9c858efaef0079754d8cdfd8e0c2466fe8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "02b05d7a6c320b4a50128924ef4a96c45a2a4e60c968bcb0ad29f26dc45b2f9a",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_43.sol",
+      "source_hash": "a3b63854fe3bb86ad8fb4e23c250bdf67d0ccaac86b6d359f6b8b1f57c13e532",
+      "exact_group": "a3b63854fe3bb86ad8fb4e23c250bdf67d0ccaac86b6d359f6b8b1f57c13e532",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c8c8661e4a3d1b7130af7eb34074d5742ec222c7ca8a36f0e46262e9b69b3783",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_44.sol",
+      "source_hash": "05ce5a088df12ae292d1fa009594290d41c03fa9cfb9c4e8f9bbc1deeb8401b0",
+      "exact_group": "05ce5a088df12ae292d1fa009594290d41c03fa9cfb9c4e8f9bbc1deeb8401b0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "aa0bb579532d543fe8c8d71d4b623b6b11e6cd164c83f9110cbd1c8061b3d7c1",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_45.sol",
+      "source_hash": "4320caed7fd5cd6ca7f0d0d3f5b8143dc10b7c247c274e72a7c24e2443806fa4",
+      "exact_group": "4320caed7fd5cd6ca7f0d0d3f5b8143dc10b7c247c274e72a7c24e2443806fa4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c5b213544e457bbd21883a9b21ba58a914101d0341e08425975f0d745c0b9da9",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_46.sol",
+      "source_hash": "8c846db59afbb532b4349343c2b4d0e1de4609ad5dfdf1e5d1be46b6b8160aa0",
+      "exact_group": "8c846db59afbb532b4349343c2b4d0e1de4609ad5dfdf1e5d1be46b6b8160aa0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "37456f31e401a3f66d9ba9115c8312c2e4b1717a874b42988a87af04b547b979",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_47.sol",
+      "source_hash": "b98ca530e594f2914e6148015e33ffa4426d3e5147c27c5ee7d35a0e9df7287b",
+      "exact_group": "b98ca530e594f2914e6148015e33ffa4426d3e5147c27c5ee7d35a0e9df7287b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "184b93e6e78e72afb9fc04c5f771dd3dacc6a7237dcb686df88a02352cf61c58",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_48.sol",
+      "source_hash": "fe3b460f49c5f466fc6a7a1b9fbeb5949b7e8a5bd7b82489ee2578eeb29112f8",
+      "exact_group": "fe3b460f49c5f466fc6a7a1b9fbeb5949b7e8a5bd7b82489ee2578eeb29112f8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "072c7f02b6d1a91d35d7da2b35e0fd55a37003d86866148c30071419ba8de6e9",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_49.sol",
+      "source_hash": "cf02bea53e9927ea314d0424c14cd7523896039ad3c4edc6a313461d9e301753",
+      "exact_group": "cf02bea53e9927ea314d0424c14cd7523896039ad3c4edc6a313461d9e301753",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e67d0e3133390dc3178e30e7f59b43bba2bf0eaa404ee42210a573396301ca9b",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_5.sol",
+      "source_hash": "f6231cfab25be8e086a5738146cd48eec402ba0607c108ca63ec6b92bc03e9eb",
+      "exact_group": "f6231cfab25be8e086a5738146cd48eec402ba0607c108ca63ec6b92bc03e9eb",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "07ce8e9470940a67365a67f61e1775592a81ef6db45ada5cf9a1a35aee683f02",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_50.sol",
+      "source_hash": "804cf92486fd64459b5d058010cd5f27146c69b5ba980152843dc7f36cbb58df",
+      "exact_group": "804cf92486fd64459b5d058010cd5f27146c69b5ba980152843dc7f36cbb58df",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4e9e836d7d3ef70be5c4f0ea15546ee7ef08ba3f0cc2408dee7c58bd32d3ef33",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_6.sol",
+      "source_hash": "eea528655bc829d5000435bc6fac4a0c4ed70b11d8d538137c4ba20dc211ac75",
+      "exact_group": "eea528655bc829d5000435bc6fac4a0c4ed70b11d8d538137c4ba20dc211ac75",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "96a746419283c35ed8c330221d7c32a5e035db501fb4510bf237c69c7b450bb6",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_7.sol",
+      "source_hash": "ece59d12ce13bd6aa0210db8415b5b63137465dacca54c8ee0d88533ef90bb84",
+      "exact_group": "ece59d12ce13bd6aa0210db8415b5b63137465dacca54c8ee0d88533ef90bb84",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "eb1bd4d349a905b84eb5380271023c592ea856e06fa4b866d715c2865c4d4ecf",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_8.sol",
+      "source_hash": "eb68b46a79764562dec518e1b95785637db2ebe6e7e4c698ef55844464b7990a",
+      "exact_group": "eb68b46a79764562dec518e1b95785637db2ebe6e7e4c698ef55844464b7990a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "9403f990af60dc6095ffa1628a8b2c4f7a0f980460aa7f128fc031c90d466948",
+      "path": "buggy_contracts/Overflow-Underflow/buggy_9.sol",
+      "source_hash": "37ca33f3e778606a10ebb130933f6eee2bebf7a4c885d1572fe05bd53d368f5c",
+      "exact_group": "37ca33f3e778606a10ebb130933f6eee2bebf7a4c885d1572fe05bd53d368f5c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1b5c9e7c69ae6e71df416c2135c9229cd2bf95fda4a82e4d1e2638128d9a0e7c",
+      "path": "buggy_contracts/Re-entrancy/buggy_1.sol",
+      "source_hash": "6caf2132264a4a0f7def47471ebe760459c20b707516629f77f6e2528104c4f6",
+      "exact_group": "6caf2132264a4a0f7def47471ebe760459c20b707516629f77f6e2528104c4f6",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e028764c9423150de4cc0b0a0e4ff5e4d78926490b020a6c6b16aec5c8b32dc0",
+      "path": "buggy_contracts/Re-entrancy/buggy_10.sol",
+      "source_hash": "e4fc00650f091eef9d111b1903a30574619f6379abdd0e189787edcd87c08135",
+      "exact_group": "e4fc00650f091eef9d111b1903a30574619f6379abdd0e189787edcd87c08135",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d855f4e664d7d246778ac7a2dfba0df51c715d2e00af563ae3d2e9ff4aaf82af",
+      "path": "buggy_contracts/Re-entrancy/buggy_11.sol",
+      "source_hash": "ecad8ee7cc70794da610ae66c76de0fd8f7befe9c606a2c8a33106f9bdd3cba1",
+      "exact_group": "ecad8ee7cc70794da610ae66c76de0fd8f7befe9c606a2c8a33106f9bdd3cba1",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a79ac21eefea68c2270c4c430e18588dd32e2987cda78a41a65b5706268b418c",
+      "path": "buggy_contracts/Re-entrancy/buggy_12.sol",
+      "source_hash": "14bc5655ca6bebe5876d405301de81744fb7591a756aedb936b257b555091bcc",
+      "exact_group": "14bc5655ca6bebe5876d405301de81744fb7591a756aedb936b257b555091bcc",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4707cb5c05c1070ebcffa0e738f7e828624ba173d6c3fa41eb30bfe67be4530d",
+      "path": "buggy_contracts/Re-entrancy/buggy_13.sol",
+      "source_hash": "fdac6efa46fd9880b88960f37179cc787ffbc3261416799089065c94ca529f85",
+      "exact_group": "fdac6efa46fd9880b88960f37179cc787ffbc3261416799089065c94ca529f85",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a37efbf372979709f13da36a3a82495f286be0aca1d98bf9088a022321639952",
+      "path": "buggy_contracts/Re-entrancy/buggy_14.sol",
+      "source_hash": "128974acfb3f572c403df87cfb233fe0e3a3d4062a76ed99a489a020b0f8330a",
+      "exact_group": "128974acfb3f572c403df87cfb233fe0e3a3d4062a76ed99a489a020b0f8330a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a072421a99e91baeecb5e5684fde677066150d2a1ece9781c77204ea002c22e2",
+      "path": "buggy_contracts/Re-entrancy/buggy_15.sol",
+      "source_hash": "aa10d3cb45fd0cf207123aeb6769306776fea31b44c1c381a81b2a18f40ae76e",
+      "exact_group": "aa10d3cb45fd0cf207123aeb6769306776fea31b44c1c381a81b2a18f40ae76e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "297388ec435292dafed05f35e6f2b6ba5e0e2c9e4195d0d7518602b0df66346f",
+      "path": "buggy_contracts/Re-entrancy/buggy_16.sol",
+      "source_hash": "52d8e426ad01e71771b316b6635c0116efacb7b38c19d25c7ac5d4eae561d4ea",
+      "exact_group": "52d8e426ad01e71771b316b6635c0116efacb7b38c19d25c7ac5d4eae561d4ea",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "42a6dae20ac0d6cfa549030cd75b899236e3538f24ff6b5d1ec7e1d33db78b72",
+      "path": "buggy_contracts/Re-entrancy/buggy_17.sol",
+      "source_hash": "d753deb54cffbc0c0a73eef4c79b68920d27cd10579abd2ef148fe4e989ffb79",
+      "exact_group": "d753deb54cffbc0c0a73eef4c79b68920d27cd10579abd2ef148fe4e989ffb79",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4076dac4e96d3d2e0d3f9399b14d7c26c605917a3e9a5660ad60fe0c5171b298",
+      "path": "buggy_contracts/Re-entrancy/buggy_18.sol",
+      "source_hash": "b9e23563d26a4976a295154577358f01d63bf533c67775b065a877b934bef9ec",
+      "exact_group": "b9e23563d26a4976a295154577358f01d63bf533c67775b065a877b934bef9ec",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a6e23eff5847b3e90e4d8a07f04a65a3e04941ca217271bf8670e14f36a9d77c",
+      "path": "buggy_contracts/Re-entrancy/buggy_19.sol",
+      "source_hash": "20ff5ab2123fdff3afefefc8e3c7abd3b292fe329badcd552b4c08fc10018d08",
+      "exact_group": "20ff5ab2123fdff3afefefc8e3c7abd3b292fe329badcd552b4c08fc10018d08",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f897a10a7bd1acaecd7b81d69ca5f961d37147817927c9817885ab1bca1aeec9",
+      "path": "buggy_contracts/Re-entrancy/buggy_2.sol",
+      "source_hash": "b6401bf3a4be6e2ce35cb53091fc04a306a57983e8b7e24488d619be13c27f9f",
+      "exact_group": "b6401bf3a4be6e2ce35cb53091fc04a306a57983e8b7e24488d619be13c27f9f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f7d432ec73d74ffdcd52c6f77d0513bba9ecdf9a1bc3f7cb99e1070917b8ab71",
+      "path": "buggy_contracts/Re-entrancy/buggy_20.sol",
+      "source_hash": "76d607594dc5be00d665f8948c880d9823ae65efe29e27cedb811d3abb670af5",
+      "exact_group": "76d607594dc5be00d665f8948c880d9823ae65efe29e27cedb811d3abb670af5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "6026347a47405bef8543c687b7822ce155a9359484ab12a1c9a70fcd39411120",
+      "path": "buggy_contracts/Re-entrancy/buggy_21.sol",
+      "source_hash": "7a25559a3b3670044bb18db38c2450a7ad4a2df3b88436a436922d79f4591355",
+      "exact_group": "7a25559a3b3670044bb18db38c2450a7ad4a2df3b88436a436922d79f4591355",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8a7cf222c2251faa403742bbafb96fd671f63285198d47e27f9120447d453353",
+      "path": "buggy_contracts/Re-entrancy/buggy_22.sol",
+      "source_hash": "64addaa381f3df0852487c66cc85730aa67affd7cd84f4fe616ff9d2ec9826fb",
+      "exact_group": "64addaa381f3df0852487c66cc85730aa67affd7cd84f4fe616ff9d2ec9826fb",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5a63262cc5b274443e0a399c5a365f5476e381f1e2b8c0c049dbb0a4f6f805ed",
+      "path": "buggy_contracts/Re-entrancy/buggy_23.sol",
+      "source_hash": "0ea2e8d84a5c1f18db073809e603c2c5743af4f0f139dd613c168982b339fa56",
+      "exact_group": "0ea2e8d84a5c1f18db073809e603c2c5743af4f0f139dd613c168982b339fa56",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "980bedb1a2bb80ae2dc543c8ebbcffd83f8c9ecf25748e7f9857bbd636c0cd80",
+      "path": "buggy_contracts/Re-entrancy/buggy_24.sol",
+      "source_hash": "56a65952a6be4eaf4f21d09d2e2c10d99dfebfb0cf85bf16b7e085af76197bdb",
+      "exact_group": "56a65952a6be4eaf4f21d09d2e2c10d99dfebfb0cf85bf16b7e085af76197bdb",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "471adeb8b31015b34c766e6ed170a88d35eedff3c43864902a4f5f4ea811417c",
+      "path": "buggy_contracts/Re-entrancy/buggy_25.sol",
+      "source_hash": "f6f9402e91da66253215c19f8603252a7de8b5006e38367007b82789e0f2b337",
+      "exact_group": "f6f9402e91da66253215c19f8603252a7de8b5006e38367007b82789e0f2b337",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4e824a9c5d59b52c8a8c0a79bc1f3e713a72255621e69a73f0c42187a356e262",
+      "path": "buggy_contracts/Re-entrancy/buggy_26.sol",
+      "source_hash": "c3f36ced6b7f8b8481716b60acf85e3e77f2f579e65cbb67a3255b0822025182",
+      "exact_group": "c3f36ced6b7f8b8481716b60acf85e3e77f2f579e65cbb67a3255b0822025182",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1aa15a1a5b060dea3a7fc45cd2f03e963fb00d19c8a04b6ac736825988e74a3c",
+      "path": "buggy_contracts/Re-entrancy/buggy_27.sol",
+      "source_hash": "e47d29695de23df62ebfb68db99311a6b01b28f3844f78a37936277f3efc8043",
+      "exact_group": "e47d29695de23df62ebfb68db99311a6b01b28f3844f78a37936277f3efc8043",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "14d1470b7c2afec2e20dc78c051e3370ed53b7c77d52cced2851290db0bef783",
+      "path": "buggy_contracts/Re-entrancy/buggy_28.sol",
+      "source_hash": "eb4f1a6081c6cfc9db8a514e94b40fa09c95f8979ad8d702f56f361c432cfe22",
+      "exact_group": "eb4f1a6081c6cfc9db8a514e94b40fa09c95f8979ad8d702f56f361c432cfe22",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "bc9288859a106675f165fddb988258afdc1c6d9b52159d286a229591c5b38ac0",
+      "path": "buggy_contracts/Re-entrancy/buggy_29.sol",
+      "source_hash": "118efce476d6db982437b4440bfa9dd7e7bd210c252a46c2d9c80f35f8c47bfe",
+      "exact_group": "118efce476d6db982437b4440bfa9dd7e7bd210c252a46c2d9c80f35f8c47bfe",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c7aefe7d22d91cc9294f525e6023a06c3f334a1f88b46d99a14aed45d1a1bde7",
+      "path": "buggy_contracts/Re-entrancy/buggy_3.sol",
+      "source_hash": "9eaa874f037cc6ee0f642d250d199a4722d3f8265e1654d9a33565a1237ca21a",
+      "exact_group": "9eaa874f037cc6ee0f642d250d199a4722d3f8265e1654d9a33565a1237ca21a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "204d5f864877d3e7c01bbebec1d0f9f6dc1eac0146798ffdf3ccdd87ef309d31",
+      "path": "buggy_contracts/Re-entrancy/buggy_30.sol",
+      "source_hash": "e980c9dc84521ae5f3b610bd5eb94b6114a2cddc6b77ea9b4c498582caf23464",
+      "exact_group": "e980c9dc84521ae5f3b610bd5eb94b6114a2cddc6b77ea9b4c498582caf23464",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "426af10cfd8d69212b2d3a587a7ad328120e3b5c0e85cf3586894f4705454a63",
+      "path": "buggy_contracts/Re-entrancy/buggy_31.sol",
+      "source_hash": "b8ed9c3c63b6b65af4a12efeb3acbf33ea814c96a075a2132f933514ce6f245e",
+      "exact_group": "b8ed9c3c63b6b65af4a12efeb3acbf33ea814c96a075a2132f933514ce6f245e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f5df784af551dbeca6ea09ba5ef84ca7a9c58977c525f9d870eeadd50a7f521d",
+      "path": "buggy_contracts/Re-entrancy/buggy_32.sol",
+      "source_hash": "166af0a5f958190083dbf5648012653b67c2363b494fccc4fa2ddd1af5aa7b4c",
+      "exact_group": "166af0a5f958190083dbf5648012653b67c2363b494fccc4fa2ddd1af5aa7b4c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "aff710c49fab28607e697ff036253a80ddf1cc2f4ba73909c6508c502e5c13bd",
+      "path": "buggy_contracts/Re-entrancy/buggy_33.sol",
+      "source_hash": "d60056a49d134698a9237e03297539263ca6c42d3963f1abf6c2a7678260393c",
+      "exact_group": "d60056a49d134698a9237e03297539263ca6c42d3963f1abf6c2a7678260393c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c1d68d39afeb24d37ea14b1d5fc9b15739c2db0df8be5cac6f6708257c7385db",
+      "path": "buggy_contracts/Re-entrancy/buggy_34.sol",
+      "source_hash": "2182dadd5be822e13020b02e918d2d0eddaf942f26fc11ca9c5af2104b3d6dc4",
+      "exact_group": "2182dadd5be822e13020b02e918d2d0eddaf942f26fc11ca9c5af2104b3d6dc4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "37357f72e02e0e9d48282bf20c5d0d6f812e72afe0877e18b6eadd416f944079",
+      "path": "buggy_contracts/Re-entrancy/buggy_35.sol",
+      "source_hash": "ef0be568a9870bd223f6a8665f09384d4458d3f0c41c716b6062219a131cc2a0",
+      "exact_group": "ef0be568a9870bd223f6a8665f09384d4458d3f0c41c716b6062219a131cc2a0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "7df4046016e60ade3a14dfa61792b141cb717af15584f722fb69bde4fd17f9fa",
+      "path": "buggy_contracts/Re-entrancy/buggy_36.sol",
+      "source_hash": "64addaa381f3df0852487c66cc85730aa67affd7cd84f4fe616ff9d2ec9826fb",
+      "exact_group": "64addaa381f3df0852487c66cc85730aa67affd7cd84f4fe616ff9d2ec9826fb",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "188eb3ec9d29e00078a801f39dbb99b2e9159568350a3f6e67d55702b0128bfd",
+      "path": "buggy_contracts/Re-entrancy/buggy_37.sol",
+      "source_hash": "978229aa4e620f8812c78e90f8303fe773d94b7940195e01dde5a8c0a9c0547c",
+      "exact_group": "978229aa4e620f8812c78e90f8303fe773d94b7940195e01dde5a8c0a9c0547c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e4ba85ae3f6210dba9747d5ea6e086081f19eb109a766290aaf6e3beaea3b8a8",
+      "path": "buggy_contracts/Re-entrancy/buggy_38.sol",
+      "source_hash": "b5461b7f3aabe753d730e35f6b0b091070c57108af39f1cfc97b9bafe2700f78",
+      "exact_group": "b5461b7f3aabe753d730e35f6b0b091070c57108af39f1cfc97b9bafe2700f78",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4c9a6c5ba42e4d5e9632b2d137219606f77893e98e5c9f8c3dbeec3b391be307",
+      "path": "buggy_contracts/Re-entrancy/buggy_39.sol",
+      "source_hash": "af03d51d52fb1f664863ff900a77bca268dd625276d7a9b01a60d540114481e5",
+      "exact_group": "af03d51d52fb1f664863ff900a77bca268dd625276d7a9b01a60d540114481e5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f0148519d40b0961975168d10a42028ce11947607cb88847f312a4cff81e9b58",
+      "path": "buggy_contracts/Re-entrancy/buggy_4.sol",
+      "source_hash": "340c5aa2b9f8042daeff15354682d9406bfee2e90d07ea7ce0083cca0daf0047",
+      "exact_group": "340c5aa2b9f8042daeff15354682d9406bfee2e90d07ea7ce0083cca0daf0047",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e4d2b1ef5e9fe696725caf0882ca4300881599b21956bacbec313ff9c98a680a",
+      "path": "buggy_contracts/Re-entrancy/buggy_40.sol",
+      "source_hash": "f530b30562180ec1150773025b7f45856c96a44121c5bc3bcdbf25be4cc03f64",
+      "exact_group": "f530b30562180ec1150773025b7f45856c96a44121c5bc3bcdbf25be4cc03f64",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2abca8c2f9b9a26daece0cc6e8550d00071f18cb9396d59b99e6d29d77520182",
+      "path": "buggy_contracts/Re-entrancy/buggy_41.sol",
+      "source_hash": "fc538a3d3e174d01e9afce5f983d42600ab9d9379e5cd630a8683be4d14c3b04",
+      "exact_group": "fc538a3d3e174d01e9afce5f983d42600ab9d9379e5cd630a8683be4d14c3b04",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "48f83a503e001e44397ddb030022c5c9bcfa48c61059ff51208f16b3c07769e2",
+      "path": "buggy_contracts/Re-entrancy/buggy_42.sol",
+      "source_hash": "a9fd9daea7ecd533097b164b791977b949d9a00ffc2190675df56becb4050095",
+      "exact_group": "a9fd9daea7ecd533097b164b791977b949d9a00ffc2190675df56becb4050095",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d7b1e7a1fa60a3de52cb090380b7910ce601690a0a11be1d482bcf91acffea12",
+      "path": "buggy_contracts/Re-entrancy/buggy_43.sol",
+      "source_hash": "1c5706bcd9dee3ac66c4ce60a2f396906ad830191d52fb9db7cccdf6a6c30584",
+      "exact_group": "1c5706bcd9dee3ac66c4ce60a2f396906ad830191d52fb9db7cccdf6a6c30584",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b0793c2c757af7fe13048a7ee032b28aadd005b8f5086a5aa1e9e0065ac5c01c",
+      "path": "buggy_contracts/Re-entrancy/buggy_44.sol",
+      "source_hash": "8e037273ea617a302b2db77c278ba36931dd57474df202f78aa3c4b0ba815f86",
+      "exact_group": "8e037273ea617a302b2db77c278ba36931dd57474df202f78aa3c4b0ba815f86",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "17841ca540eb3ad35fdf561e7d5bd086d1fd4ba6b2a01331f439a2387060535d",
+      "path": "buggy_contracts/Re-entrancy/buggy_45.sol",
+      "source_hash": "73fef73398990b21d8c216cbc0993d4fdce910daa7e563f6dd375ed6042f122c",
+      "exact_group": "73fef73398990b21d8c216cbc0993d4fdce910daa7e563f6dd375ed6042f122c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0bd893d123f5ac0bf430b44c5dfd0ede39c300e0d26b4a6d277ed1f0640c1d67",
+      "path": "buggy_contracts/Re-entrancy/buggy_46.sol",
+      "source_hash": "1ef28a99906c33584942851017a1dc7703f619f3ba5a27a09640038f5e1b5129",
+      "exact_group": "1ef28a99906c33584942851017a1dc7703f619f3ba5a27a09640038f5e1b5129",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "099d18c3ded327c286d22e30fdc4da859d2819332ccb89e2c9b06a04ea7185b6",
+      "path": "buggy_contracts/Re-entrancy/buggy_47.sol",
+      "source_hash": "e883200a181e6df6fb29e78558d591c539fc59d55d766c97b9174576fe67b37a",
+      "exact_group": "e883200a181e6df6fb29e78558d591c539fc59d55d766c97b9174576fe67b37a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "eab5c47c6a93a27f3a7e0eb9b0c77a7557353f36d558ce33334328291466855c",
+      "path": "buggy_contracts/Re-entrancy/buggy_48.sol",
+      "source_hash": "1eacdda7fa2de58517083454d8de92932b7a0dec0eccfa1ac3a3081c085bf887",
+      "exact_group": "1eacdda7fa2de58517083454d8de92932b7a0dec0eccfa1ac3a3081c085bf887",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0289bd890fb60c6c0fc0dfbb035088b8700149868bc3e0e123191c1ffbf2da83",
+      "path": "buggy_contracts/Re-entrancy/buggy_49.sol",
+      "source_hash": "34b8d55b27d2078ff760975a6852d30df4724553cc37f810f607e48a4b1be4e8",
+      "exact_group": "34b8d55b27d2078ff760975a6852d30df4724553cc37f810f607e48a4b1be4e8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "611ef6554d123de3fb5de08d00e0b7439d1fd97f8591203d8d9fd9fbc55df337",
+      "path": "buggy_contracts/Re-entrancy/buggy_5.sol",
+      "source_hash": "832d539af87ae196fc010dee64bd70294b7445b449cde967e4489c2fe6bc468c",
+      "exact_group": "832d539af87ae196fc010dee64bd70294b7445b449cde967e4489c2fe6bc468c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "62ac61f6373914b84241650887f18f48a45888705a2775d3a2abca76828df038",
+      "path": "buggy_contracts/Re-entrancy/buggy_50.sol",
+      "source_hash": "4264545f81c6c587e5aa384fefe13252dbb5ccaad51d73c1aa9bf71f946a9273",
+      "exact_group": "4264545f81c6c587e5aa384fefe13252dbb5ccaad51d73c1aa9bf71f946a9273",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "16c52b1d66d4a02f78e5558be83609614bbdd82ef051871b0821a82f784657ca",
+      "path": "buggy_contracts/Re-entrancy/buggy_6.sol",
+      "source_hash": "3dc08fe3140eee0e3f9d85d00a917678e30eedbcef6708a4bb10c8ec408e96e7",
+      "exact_group": "3dc08fe3140eee0e3f9d85d00a917678e30eedbcef6708a4bb10c8ec408e96e7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "eeb7a370be395aab2cc5b4868c7c54e128be7d157f4256ef90f168575d720bdb",
+      "path": "buggy_contracts/Re-entrancy/buggy_7.sol",
+      "source_hash": "4745c8d488084c7e7004857903e3b82e68753a5bf6379bc97061277bc0f2f6ec",
+      "exact_group": "4745c8d488084c7e7004857903e3b82e68753a5bf6379bc97061277bc0f2f6ec",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "476abfd3db1ab9acbd3e8b0751b5532af56aba293ea479aa6aa623271d4a1c4d",
+      "path": "buggy_contracts/Re-entrancy/buggy_8.sol",
+      "source_hash": "8d9ae38be68eec9674b6b4d52cc0834db371e6290fc0b33da9977667d3e1e5b3",
+      "exact_group": "8d9ae38be68eec9674b6b4d52cc0834db371e6290fc0b33da9977667d3e1e5b3",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "31ccf74d5ae3812a19672a44d417bb8f5c9e29df820d2e772362d0e273540dbe",
+      "path": "buggy_contracts/Re-entrancy/buggy_9.sol",
+      "source_hash": "c481e53ba0e42dcf3a226252bd390b6dc86386ee566da139a582f98a68f47d37",
+      "exact_group": "c481e53ba0e42dcf3a226252bd390b6dc86386ee566da139a582f98a68f47d37",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "7b64a73001908da8b5eb2b61aa50c169c4f0d2261d7250862c623605633fe0fd",
+      "path": "buggy_contracts/TOD/buggy_1.sol",
+      "source_hash": "9c3afe2d60817fd24a1060f5281c3447e44f1463bd679db5e2a6b7bba7f4b353",
+      "exact_group": "9c3afe2d60817fd24a1060f5281c3447e44f1463bd679db5e2a6b7bba7f4b353",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c2c80d3a91479556a018ba3f39ff839c0ac06b2c92fcac5f568314c0a9add377",
+      "path": "buggy_contracts/TOD/buggy_10.sol",
+      "source_hash": "e41ae5f9a50c2bf385aed87e063f89534795de684e3e7fa092e07c1ba3f86071",
+      "exact_group": "e41ae5f9a50c2bf385aed87e063f89534795de684e3e7fa092e07c1ba3f86071",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "97d91df789ce344772129b9bdf434f51b76d5ff12c9457c9bdf1ce17e880bfdb",
+      "path": "buggy_contracts/TOD/buggy_11.sol",
+      "source_hash": "d62a4331a8cc964a23278ae8f00db2860249f74b623e5a42800ba728860f56cf",
+      "exact_group": "d62a4331a8cc964a23278ae8f00db2860249f74b623e5a42800ba728860f56cf",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "294792d56bab2efce7b666f62203616c948e23d7debc19d08d9d7837f34946f1",
+      "path": "buggy_contracts/TOD/buggy_12.sol",
+      "source_hash": "a477075cd5bd63915c0223b9099263a4b6441b667b121943a5084d69978aa55f",
+      "exact_group": "a477075cd5bd63915c0223b9099263a4b6441b667b121943a5084d69978aa55f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "32e42485caf706e8c2762dc6551534a86e9380972dfad87efda5c353ed1e62aa",
+      "path": "buggy_contracts/TOD/buggy_13.sol",
+      "source_hash": "a87cd8ec4277481293d1e8e44d6bf29e41fadcda1fb1722628216e3392eb19fe",
+      "exact_group": "a87cd8ec4277481293d1e8e44d6bf29e41fadcda1fb1722628216e3392eb19fe",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "7376799f0afa381ada415ae59e778afac26550880db0c575dc37db88ee45a59e",
+      "path": "buggy_contracts/TOD/buggy_14.sol",
+      "source_hash": "e62b78e412e8e841ddda71c448718e17fd9f11f411c25aebb43008e4c2201197",
+      "exact_group": "e62b78e412e8e841ddda71c448718e17fd9f11f411c25aebb43008e4c2201197",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "86ba9b093e8fa1ca7e4c11a3490876ef8fffb9f5521c76e7bc52b92757c69d06",
+      "path": "buggy_contracts/TOD/buggy_15.sol",
+      "source_hash": "0b2e4e87f769fd8401d8903cc34271566868b7476d565f7d5da580c48dee77fa",
+      "exact_group": "0b2e4e87f769fd8401d8903cc34271566868b7476d565f7d5da580c48dee77fa",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3a7c397f254ad22a419f73a566f6c94557f17e502851e7da67b61327dd6ad27c",
+      "path": "buggy_contracts/TOD/buggy_16.sol",
+      "source_hash": "08f33f7e1dbdfa80084cb94abce057d3f37d46e178f294d9bd37a06e0b201d4c",
+      "exact_group": "08f33f7e1dbdfa80084cb94abce057d3f37d46e178f294d9bd37a06e0b201d4c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ee713047fd217f25209c9c3b90663ba74e5d3f302dac6e1a42ba00ffa5fd0476",
+      "path": "buggy_contracts/TOD/buggy_17.sol",
+      "source_hash": "dad97bc18e9f844527a71d2751603244a0466d2f3108efaa4185297bb815dcf4",
+      "exact_group": "dad97bc18e9f844527a71d2751603244a0466d2f3108efaa4185297bb815dcf4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "67f3d63ed063a32543f4989e3758f16341563c1e51cfe3dff0d60e1410f400fd",
+      "path": "buggy_contracts/TOD/buggy_18.sol",
+      "source_hash": "aa5ef14b446f5c24575d6628081e46227b9151f998cd7206fc91b0ecb6e74a15",
+      "exact_group": "aa5ef14b446f5c24575d6628081e46227b9151f998cd7206fc91b0ecb6e74a15",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3b4bee7f1cd8a482a6910087cf09f1631bd927d7be0444f5d25679c757100042",
+      "path": "buggy_contracts/TOD/buggy_19.sol",
+      "source_hash": "59a7d3416ebcdcb5f69038bea6cd082a30e847dcb1b78e99fd7c25f3942eff46",
+      "exact_group": "59a7d3416ebcdcb5f69038bea6cd082a30e847dcb1b78e99fd7c25f3942eff46",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "890851328d9f38cf90bee06d6968fe3cede88717be6b288433d034dd93106086",
+      "path": "buggy_contracts/TOD/buggy_2.sol",
+      "source_hash": "ed8b259d910f66e4695fb02d5ded7bbcb80b86b242891561d2a38c3397bff49e",
+      "exact_group": "ed8b259d910f66e4695fb02d5ded7bbcb80b86b242891561d2a38c3397bff49e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "29d78ba3478b27bd06c9f9a44eef92eec7a885447bcadb62c68946a23fc2b26d",
+      "path": "buggy_contracts/TOD/buggy_20.sol",
+      "source_hash": "ff19ff4b84245868ab0b97837fe05e7dfa31a84cb96312585e4525e4eafe5939",
+      "exact_group": "ff19ff4b84245868ab0b97837fe05e7dfa31a84cb96312585e4525e4eafe5939",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ebeec3bc93a1c6514fd73463ea424ab81583c0b5893b4f6a57f42058de8c1678",
+      "path": "buggy_contracts/TOD/buggy_21.sol",
+      "source_hash": "7f792d0ff8a1442400e8d748823603ae64947f5f905e7c3f2fe9c912c911eff0",
+      "exact_group": "7f792d0ff8a1442400e8d748823603ae64947f5f905e7c3f2fe9c912c911eff0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d5f5949745628019f4a1e432b6b6c87ad37dfd3604a4995c14be062d15417707",
+      "path": "buggy_contracts/TOD/buggy_22.sol",
+      "source_hash": "8635b71d6ee6e613a841408a615103274a1fef0d82feaecea4678bc5f31e2ea5",
+      "exact_group": "8635b71d6ee6e613a841408a615103274a1fef0d82feaecea4678bc5f31e2ea5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "dd2ae9e9d825d13a44b9649657f3ceb61f1bf09e1a9c30f4e7404274a14796bc",
+      "path": "buggy_contracts/TOD/buggy_23.sol",
+      "source_hash": "ec5af69a9591b122fc17701c2d50d323b304613f6ee3edd5f6b67388c2d6b02f",
+      "exact_group": "ec5af69a9591b122fc17701c2d50d323b304613f6ee3edd5f6b67388c2d6b02f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e4047743b9dbd42b3631c51b42cc49e1fc6c50f1cb7879860f5eec47f771fc5f",
+      "path": "buggy_contracts/TOD/buggy_24.sol",
+      "source_hash": "f5ffb74ca9826cfcd10767c2355319a286ddc7b0ec36bf7e8f2b3bb01a2e34a6",
+      "exact_group": "f5ffb74ca9826cfcd10767c2355319a286ddc7b0ec36bf7e8f2b3bb01a2e34a6",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c3fe2eb9db05d7dca34270025cadb7de55dbaa03cf95e82a3b2c23c898f9a90b",
+      "path": "buggy_contracts/TOD/buggy_25.sol",
+      "source_hash": "ded577f02be8f497b44c20cdf0edb5ef20046bb9e15800bc8feb8fefe7df8f1c",
+      "exact_group": "ded577f02be8f497b44c20cdf0edb5ef20046bb9e15800bc8feb8fefe7df8f1c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f81dff5f5f1d5ab7693961e64d580b2af4b971d7e4f0c60f7c02e22dac538e0a",
+      "path": "buggy_contracts/TOD/buggy_26.sol",
+      "source_hash": "55c8bf27178556c297b086b9b625eebc88d5b77ba23fd535b6323ec67ff37254",
+      "exact_group": "55c8bf27178556c297b086b9b625eebc88d5b77ba23fd535b6323ec67ff37254",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0a05ba8aeb4d64cb9e0bd49558396635688170a4e96ff8e7d75129da55b6c49c",
+      "path": "buggy_contracts/TOD/buggy_27.sol",
+      "source_hash": "033aa84d3b907d8ef7fcf72a26251d2f283b066afa82cb6d1d3f2909ce53c66d",
+      "exact_group": "033aa84d3b907d8ef7fcf72a26251d2f283b066afa82cb6d1d3f2909ce53c66d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4a73a592207b80d212a6e0243d91d21311dff2b939ba2862a43e89f4a0e27596",
+      "path": "buggy_contracts/TOD/buggy_28.sol",
+      "source_hash": "cb5797c33809ad2983fbfb02a05b71a528dfce21aaa190c40c4175b8b3add5a1",
+      "exact_group": "cb5797c33809ad2983fbfb02a05b71a528dfce21aaa190c40c4175b8b3add5a1",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "996acff7bfd42cfa79fe314d331027f2eaf2726fa050c2357dd7973a72cb5b16",
+      "path": "buggy_contracts/TOD/buggy_29.sol",
+      "source_hash": "0483a8179a32b92fed08905481351b55ff4c83004bc822dcf9a7c6a493311711",
+      "exact_group": "0483a8179a32b92fed08905481351b55ff4c83004bc822dcf9a7c6a493311711",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "20aee15f9922b70cc65cce9166ab30f9012cb70daa510bc6eb7a2cae9d9704f1",
+      "path": "buggy_contracts/TOD/buggy_3.sol",
+      "source_hash": "577277c150a70569b6f7c3c7254a9000916c96d2484129d837e97a67e468343c",
+      "exact_group": "577277c150a70569b6f7c3c7254a9000916c96d2484129d837e97a67e468343c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a7e97f41f37f0271d7df6419e0e388378a99dccfd55bb1e1d63d7b5792e549ae",
+      "path": "buggy_contracts/TOD/buggy_30.sol",
+      "source_hash": "ca6cb2882277c3bb4d00b9ed8ea28997be0c572b50a368afb49b412e7159654d",
+      "exact_group": "ca6cb2882277c3bb4d00b9ed8ea28997be0c572b50a368afb49b412e7159654d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3415e842d125260d3dc497dd6a3c4866d0b70874a54dad28109df7896d2d4120",
+      "path": "buggy_contracts/TOD/buggy_31.sol",
+      "source_hash": "bcea427d6364a6e10cbfdfa43c2dd428156ae5a12551b1e7fc5e662755eb0ccb",
+      "exact_group": "bcea427d6364a6e10cbfdfa43c2dd428156ae5a12551b1e7fc5e662755eb0ccb",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a9be58649168ed19ab385ef1058829257e79ba4a30841e0b6bf3249ad0d50c55",
+      "path": "buggy_contracts/TOD/buggy_32.sol",
+      "source_hash": "883cc8ea6d38ec48de3d828f435fd226ced5165be1e3db59ea4da3e19e3dcb41",
+      "exact_group": "883cc8ea6d38ec48de3d828f435fd226ced5165be1e3db59ea4da3e19e3dcb41",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3895bd4a91fa3a024ce82287afd6d928e31e988c69f47ea031ddd83f0eda6a4a",
+      "path": "buggy_contracts/TOD/buggy_33.sol",
+      "source_hash": "9a578ed814b82a1713ef59256df06c77d67dd6f06e689d402f294dc7ff118752",
+      "exact_group": "9a578ed814b82a1713ef59256df06c77d67dd6f06e689d402f294dc7ff118752",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e9a2bb44bf6f7861bd32337bdda25c3627abd928fb147b3a998a7fb51db219ec",
+      "path": "buggy_contracts/TOD/buggy_34.sol",
+      "source_hash": "bc11898d7f54adcce2524ad4993d07890cecb1a18d8e6cfb09756846e9f0c747",
+      "exact_group": "bc11898d7f54adcce2524ad4993d07890cecb1a18d8e6cfb09756846e9f0c747",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "829dbe5edebf60f9679d4e1212dd7b02f1cc0d19c1cfddf4d74e468b7d06e59c",
+      "path": "buggy_contracts/TOD/buggy_35.sol",
+      "source_hash": "9badfa0c6294f8e5ef03215c4eff69194954daf48e6cf4de45a9030bfcdf0ce5",
+      "exact_group": "9badfa0c6294f8e5ef03215c4eff69194954daf48e6cf4de45a9030bfcdf0ce5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c1fc567379b2a68a6d9f19fa381f3da599dca50c81a0f2fa3071b0372f9ec5de",
+      "path": "buggy_contracts/TOD/buggy_36.sol",
+      "source_hash": "8635b71d6ee6e613a841408a615103274a1fef0d82feaecea4678bc5f31e2ea5",
+      "exact_group": "8635b71d6ee6e613a841408a615103274a1fef0d82feaecea4678bc5f31e2ea5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f4590bba019bed4fcef68587cf44d883de7ba9c93733055984840bf86cbdef32",
+      "path": "buggy_contracts/TOD/buggy_37.sol",
+      "source_hash": "524d362bd7f3b82c57889a8b202a250909415c93b3f2eb4a7d6c696f260a519f",
+      "exact_group": "524d362bd7f3b82c57889a8b202a250909415c93b3f2eb4a7d6c696f260a519f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ffbb2be5a6058eda08553a0b5daf8a31839bcebfeae969b77bd3e8986474deef",
+      "path": "buggy_contracts/TOD/buggy_38.sol",
+      "source_hash": "dec0d5ab25f9fc7c76a97d7b4e2fcbb36a5c134e76a11d2dc238cb7d569775a0",
+      "exact_group": "dec0d5ab25f9fc7c76a97d7b4e2fcbb36a5c134e76a11d2dc238cb7d569775a0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "89004498e7056a56cc900c714bb4958a62e7360eb71640baf2774237f83b3c11",
+      "path": "buggy_contracts/TOD/buggy_39.sol",
+      "source_hash": "3b7a88b6a1b4ce44c573c5302b05ff2f433688144cb97b1cbd7c27ddce20d25d",
+      "exact_group": "3b7a88b6a1b4ce44c573c5302b05ff2f433688144cb97b1cbd7c27ddce20d25d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "800fd9d45492113552482f18e7c56d08f9435a175ebc64c716decf22e912171b",
+      "path": "buggy_contracts/TOD/buggy_4.sol",
+      "source_hash": "8e833dc582e73f35c342981b58aa9e96a22f3ca01f91aa7383dd5dce1c4ef74a",
+      "exact_group": "8e833dc582e73f35c342981b58aa9e96a22f3ca01f91aa7383dd5dce1c4ef74a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "bcd17bee65e2a29bcd3504a13bc5beab27213067bb976aeb2f808beade0f2a47",
+      "path": "buggy_contracts/TOD/buggy_40.sol",
+      "source_hash": "5d6c258e61fa6433cfcf3b82c0f26a01f25c124ed63036cbe7e8c240ead292ac",
+      "exact_group": "5d6c258e61fa6433cfcf3b82c0f26a01f25c124ed63036cbe7e8c240ead292ac",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c102ba6cb94db4ee246fd0c8e7de8d3740f6e880a6d6848b66042fb4fce0d9d2",
+      "path": "buggy_contracts/TOD/buggy_41.sol",
+      "source_hash": "441a01564c75fe6fa9ac4f0edab4676da09168c9f4b339371d5983b51291fb67",
+      "exact_group": "441a01564c75fe6fa9ac4f0edab4676da09168c9f4b339371d5983b51291fb67",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "cc46f9218681d70b9fea4d7330d74c5bb404da68a37677660eda5146c23ccbc3",
+      "path": "buggy_contracts/TOD/buggy_42.sol",
+      "source_hash": "eca2cf0ac467cdf1cf81d982f064ba2ae9a3170abb3f1b97e58d771fe9beca28",
+      "exact_group": "eca2cf0ac467cdf1cf81d982f064ba2ae9a3170abb3f1b97e58d771fe9beca28",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "da7d80cd9902436013c2366b0bf128d3153011eb59c16df30b381be4d80847a9",
+      "path": "buggy_contracts/TOD/buggy_43.sol",
+      "source_hash": "76c0b5dac095f92d4b51bc62c5050501152099f704a3128ee13573517b5d5b6e",
+      "exact_group": "76c0b5dac095f92d4b51bc62c5050501152099f704a3128ee13573517b5d5b6e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ebb170d0def9ad65b35978b8fa7eeb8d5b9e2239d2eb1163b8e07aeacccae1fc",
+      "path": "buggy_contracts/TOD/buggy_44.sol",
+      "source_hash": "a0ac0686b309aff92355614e82ab1b7c7a561455f737036b129bc413bae7c64e",
+      "exact_group": "a0ac0686b309aff92355614e82ab1b7c7a561455f737036b129bc413bae7c64e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "7fbbb84aa9f24f6c00c3cc28ef8d7bcb87240b4639293c295436f6a9d39e3c1f",
+      "path": "buggy_contracts/TOD/buggy_45.sol",
+      "source_hash": "a5cc4e1d44dd2084bc6c7ef2e4ac362b42a429e369ee497692473384e373dfc2",
+      "exact_group": "a5cc4e1d44dd2084bc6c7ef2e4ac362b42a429e369ee497692473384e373dfc2",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b2815f64678b7fcf3a11a389947fff3d1735a3387e7545560e94c18d855461d8",
+      "path": "buggy_contracts/TOD/buggy_46.sol",
+      "source_hash": "c87cd717fd3325f63f9bbd544e8506fe9c015bbcf4e48639c789826ebe59cb4e",
+      "exact_group": "c87cd717fd3325f63f9bbd544e8506fe9c015bbcf4e48639c789826ebe59cb4e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3c51bc54b8b6c66a88580f673a9d25dc1f9c394385d423b8b390fa82b59a713b",
+      "path": "buggy_contracts/TOD/buggy_47.sol",
+      "source_hash": "d8200f2c9c674fd1926ad44374c29bd2763640efdda10bc57b4a213f460ac641",
+      "exact_group": "d8200f2c9c674fd1926ad44374c29bd2763640efdda10bc57b4a213f460ac641",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "42db436a9dee44f40bf1d000b4c49ab9ce0be2844f021bb1cd9a4e7ccc3aac65",
+      "path": "buggy_contracts/TOD/buggy_48.sol",
+      "source_hash": "53943a30d230c066120dcaaeee11c9776d509a63bd9eec41af04b5b4d6fcab11",
+      "exact_group": "53943a30d230c066120dcaaeee11c9776d509a63bd9eec41af04b5b4d6fcab11",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "418293a5b000344765f59c842bbb03febf40521e6aa852f3a47d7cf6e46ae867",
+      "path": "buggy_contracts/TOD/buggy_49.sol",
+      "source_hash": "a750a31ce3a5147706fb3022728ab21b2de8f95336fde7dbef8e560eec23e729",
+      "exact_group": "a750a31ce3a5147706fb3022728ab21b2de8f95336fde7dbef8e560eec23e729",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "fc4ab8d5d7d4e791b6c6db3f2de6b059c8fc8c1e4e7b17d024fc3a84243fb968",
+      "path": "buggy_contracts/TOD/buggy_5.sol",
+      "source_hash": "7bf2a3a43f5edbef28d6e99c8b5b29666462ea232f0a7175db3f7878158b45fa",
+      "exact_group": "7bf2a3a43f5edbef28d6e99c8b5b29666462ea232f0a7175db3f7878158b45fa",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ea3383a44b33c24ce4d776f688c15f2ab127f1f1caf519e154669fd2d04f1bb5",
+      "path": "buggy_contracts/TOD/buggy_50.sol",
+      "source_hash": "46ee69912cd85810e2c440a31071b457eb45f43ac7e8a499533ebd8649770096",
+      "exact_group": "46ee69912cd85810e2c440a31071b457eb45f43ac7e8a499533ebd8649770096",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a70b179065cffc2df8bf1dfaa175d97bf04492f259b22ea83fac08ff00027219",
+      "path": "buggy_contracts/TOD/buggy_6.sol",
+      "source_hash": "a3f20e62dcf256e4faaed19e9c710168e08ae5ceee277b1ae980865ab048c6e0",
+      "exact_group": "a3f20e62dcf256e4faaed19e9c710168e08ae5ceee277b1ae980865ab048c6e0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "215a2451a448c8134a2fec152059eeae2e838e1175b44bd21048ec97f70988ca",
+      "path": "buggy_contracts/TOD/buggy_7.sol",
+      "source_hash": "308156de6947bc7b150ec3ef84b750231e8917e21d916110a69260cfa6f47785",
+      "exact_group": "308156de6947bc7b150ec3ef84b750231e8917e21d916110a69260cfa6f47785",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "aeea9c579871cf7739a94b4da0b14f3db1d75d5af230d62af13b222975fe732f",
+      "path": "buggy_contracts/TOD/buggy_8.sol",
+      "source_hash": "ea0bbbf1dc87b28da04831b28bd194cbf82d296d15ade6ff4b75c682b6ec22e9",
+      "exact_group": "ea0bbbf1dc87b28da04831b28bd194cbf82d296d15ade6ff4b75c682b6ec22e9",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "129d3e21a3ba023714a0eef80c2ac6f8246f39897508480b38672b765fc116c5",
+      "path": "buggy_contracts/TOD/buggy_9.sol",
+      "source_hash": "124564198402e35cf17071355ccaa0c3c4d3bfc90a75e7fcd7cfa494bd729ecc",
+      "exact_group": "124564198402e35cf17071355ccaa0c3c4d3bfc90a75e7fcd7cfa494bd729ecc",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "45a0ffb5295ce732e80bcaf6e9952fffc815e6ac540518cab8b465fac6701e5a",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_1.sol",
+      "source_hash": "bad08aa9891d1079935d69b6067e0f8cefc0f03e267a45200589fd01d3657608",
+      "exact_group": "bad08aa9891d1079935d69b6067e0f8cefc0f03e267a45200589fd01d3657608",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c85943a116edb8c33afa186aadfabc59f14c1550081a31c18e63b11271e1fdab",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_10.sol",
+      "source_hash": "ae6f145818a6dd5e55f73b43d3311c1cefa82a1973fc8b904ba193fb14c2c5b5",
+      "exact_group": "ae6f145818a6dd5e55f73b43d3311c1cefa82a1973fc8b904ba193fb14c2c5b5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e352e2a79b2f1b55bebd04b9ac16c165be348b1b22d9317aecae261408d15350",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_11.sol",
+      "source_hash": "ccf41e7903908bb4f40ce0847e50bb8b3337c48c709066deb3290efc3805b3f3",
+      "exact_group": "ccf41e7903908bb4f40ce0847e50bb8b3337c48c709066deb3290efc3805b3f3",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5cb19a66cb06b7e4082fec686ce0065b28fbb4e7a1953029aea0d63a38ba4475",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_12.sol",
+      "source_hash": "20b8015c451cfa666a2c481021d89b4af453c07b282f62662328ce5a32697c7d",
+      "exact_group": "20b8015c451cfa666a2c481021d89b4af453c07b282f62662328ce5a32697c7d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c02ff725ebe06b25bca0d67499e7539d120e1f25aba6d0c04133617530eee7d0",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_13.sol",
+      "source_hash": "b0f4fb1f4daea1f6bee34817910a726986d1de71619840a8a3a874b38bf3c4f5",
+      "exact_group": "b0f4fb1f4daea1f6bee34817910a726986d1de71619840a8a3a874b38bf3c4f5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3d33ee5063742accc66f988aecddf13c548b9ff550585bdbb1cef012303669d9",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_14.sol",
+      "source_hash": "cf7fea2ac5f45540919ab284486c57a055fda57e288622bfafd4aef49bc2b0a8",
+      "exact_group": "cf7fea2ac5f45540919ab284486c57a055fda57e288622bfafd4aef49bc2b0a8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "911a56e602748c4982398873bbd027199b72d2275d65dacab1bb8740a9b1b00c",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_15.sol",
+      "source_hash": "c079cfb5a4148de4f7813cec4327d28fdeed0d4d5a82070ad69b1ea0f96e93ff",
+      "exact_group": "c079cfb5a4148de4f7813cec4327d28fdeed0d4d5a82070ad69b1ea0f96e93ff",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "32e8324b8eb2b66819b19646b55314b622547cf911b32e3d4a6a0f091db14e5b",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_16.sol",
+      "source_hash": "ff886ca25f78b56141c66bdae0d9a32e4ace8750566b11cca4461b5f6b8235ab",
+      "exact_group": "ff886ca25f78b56141c66bdae0d9a32e4ace8750566b11cca4461b5f6b8235ab",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "eced05ce387651c793fd6979ef344f6922780fe05f3bc18eadaee42e6eb68a44",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_17.sol",
+      "source_hash": "28e20f105a3bafc8a06c957e292b6f782b38adb2522870fa5a5e9c059fc7f697",
+      "exact_group": "28e20f105a3bafc8a06c957e292b6f782b38adb2522870fa5a5e9c059fc7f697",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5a506165c79db77f650086ecf8089f61da1ce73fe50a15d6e4ed21b9fb61fa8f",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_18.sol",
+      "source_hash": "bf37b76cee6ffb3caf2463684f93f3d53956b00047890b6578b8fd63c0692a04",
+      "exact_group": "bf37b76cee6ffb3caf2463684f93f3d53956b00047890b6578b8fd63c0692a04",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2b26d6c85208ba0d1fd24b39128c04abf8644ae9e198b2d1251ceaba8908b555",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_19.sol",
+      "source_hash": "d32349b585cf9b26645c2752fd8b0888d85efad9e15d2ecc460c78a2ae4d3ed6",
+      "exact_group": "d32349b585cf9b26645c2752fd8b0888d85efad9e15d2ecc460c78a2ae4d3ed6",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2ee5ae00529129501f85b6f94052c77a951eab42af330c63b2aed1b7ec4e93b1",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_2.sol",
+      "source_hash": "5b7b9da4ae487df044a728877b37709d1233f10bff025beae1462950395b5eb4",
+      "exact_group": "5b7b9da4ae487df044a728877b37709d1233f10bff025beae1462950395b5eb4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "23fc8ec54d011ce77651eef91023ea55c21b0619a99f0915f7516a3f1f03a809",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_20.sol",
+      "source_hash": "599346db961d9f4929ae5127c41410b787ca740bbb174a2888aabb02e73a98f9",
+      "exact_group": "599346db961d9f4929ae5127c41410b787ca740bbb174a2888aabb02e73a98f9",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4c24e3989f82f4db271dc92ccfb5753c7498e503a030b0834d69fa034f5de41c",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_21.sol",
+      "source_hash": "3ec4521bbdc3322f40f48213fedac0d7540df2bd6c13f5a7ae97c29f2a19608c",
+      "exact_group": "3ec4521bbdc3322f40f48213fedac0d7540df2bd6c13f5a7ae97c29f2a19608c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5f76659d2f09b484d70461f9f7d55f66f586429b468cead05cd49541dfa03189",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_22.sol",
+      "source_hash": "82cf79b9605a537334be6891e502acbf48930364ceb8720bfaf190d0e63c35e7",
+      "exact_group": "82cf79b9605a537334be6891e502acbf48930364ceb8720bfaf190d0e63c35e7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3f80210e20c49a8f25b85344916827f9458ebc02d7cb9ee426aa6e836a2377f1",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_23.sol",
+      "source_hash": "9b0fc7439f2ac6878cf3946865766316eb85f0fbf9576d29ef5bb9ec9c5e0279",
+      "exact_group": "9b0fc7439f2ac6878cf3946865766316eb85f0fbf9576d29ef5bb9ec9c5e0279",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4f4717f2faebb223efa91c82488a94fd6fb424ee623678b71ee86c9bafa792cc",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_24.sol",
+      "source_hash": "5362fad8ffd80cd469a4d0b43a2bec0fc20c91abc0666940fb7514c427c58d0f",
+      "exact_group": "5362fad8ffd80cd469a4d0b43a2bec0fc20c91abc0666940fb7514c427c58d0f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "fbd3a27320f16cdd3d00a10a93c95c7b8ded1c028e544c9360c3debfa8976b62",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_25.sol",
+      "source_hash": "a53ee0a94e5e73eb782398d31b0edccf069e5158df154dd1e53457854fe9a42b",
+      "exact_group": "a53ee0a94e5e73eb782398d31b0edccf069e5158df154dd1e53457854fe9a42b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "cc26eb0609e4e386a31eff37af83ded1159a8eadad1237d98d3c85cc48b66786",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_26.sol",
+      "source_hash": "3d7e0e5fc809f3889ccfd77f3a0a69d36736fa0d45f684c78c32a5642d52a2f5",
+      "exact_group": "3d7e0e5fc809f3889ccfd77f3a0a69d36736fa0d45f684c78c32a5642d52a2f5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "cef9e53511b3dad4303715eefb6df46b4bac99e2cec6829407704b45aa0f2cf2",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_27.sol",
+      "source_hash": "84affba2f6762839f2f3f2f3675bbc389de847e34187311e3a5c845caf43e5f2",
+      "exact_group": "84affba2f6762839f2f3f2f3675bbc389de847e34187311e3a5c845caf43e5f2",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ca731ec6d15f4f2f5302ee7d0eadde30e09153b45a6ade5bb887c53fb344a74c",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_28.sol",
+      "source_hash": "af52fdb37d5b4688644449eddbd3dc8350ce6f0b5273b4eb02f48d5e1dbdd65a",
+      "exact_group": "af52fdb37d5b4688644449eddbd3dc8350ce6f0b5273b4eb02f48d5e1dbdd65a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f6545de88658445aa0d4a4a89ceead35e538b785d1d8b8e02c15e9828d8204d0",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_29.sol",
+      "source_hash": "5934304e8a4b6b5fe47c6207ef0f1c25f5e35f248ee345e1d0c103583a09a3d6",
+      "exact_group": "5934304e8a4b6b5fe47c6207ef0f1c25f5e35f248ee345e1d0c103583a09a3d6",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "47847c76170003457e91c9f1c57fd9289038e9dd3d6a1ed49cee5b6999692f1d",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_3.sol",
+      "source_hash": "23725c6dc1c1d7ea84941274441f8b971d1a7d6a1e2e7101f9972123bfe33afd",
+      "exact_group": "23725c6dc1c1d7ea84941274441f8b971d1a7d6a1e2e7101f9972123bfe33afd",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "84b93c20eb4cf748ec028fe7872c2b304c3c01465a95a0c62a2c32cdd5d1afe1",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_30.sol",
+      "source_hash": "d655f1ce9bd442edccc068eaf8051111ab1066c507fa4bb5dd4b442a5b8fe180",
+      "exact_group": "d655f1ce9bd442edccc068eaf8051111ab1066c507fa4bb5dd4b442a5b8fe180",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "daf2c85d411b0ceb56cbfd8fcf4ea0a8d82e8818110e6e0a5265c55c405d8a68",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_31.sol",
+      "source_hash": "5d7be62fce8efa289c017d5c3630bcf3cdcda1735b8c93757a005858b38f066d",
+      "exact_group": "5d7be62fce8efa289c017d5c3630bcf3cdcda1735b8c93757a005858b38f066d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "27647ad754a3af30284d34892eb7b40282cc5e2a2c20cd36dfbdd11b04379104",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_32.sol",
+      "source_hash": "4f0fda8466b6207ca8ee0829447f5437a28860b1be3db18c30bbae98bb68c07d",
+      "exact_group": "4f0fda8466b6207ca8ee0829447f5437a28860b1be3db18c30bbae98bb68c07d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "288e90b3a2b09ac5c296810a180b20961be620f7474672a6936697ccc050dc9b",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_33.sol",
+      "source_hash": "566b2bda9069007c70a4ab63affb901ee39865a7b08abb28a90e3b90cac159fd",
+      "exact_group": "566b2bda9069007c70a4ab63affb901ee39865a7b08abb28a90e3b90cac159fd",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "43db2489fab3379f3e55d56fd4b0c118015a3af0db64401a3ff8e9fe7a4d2c6d",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_34.sol",
+      "source_hash": "2bcc119a39b88685b55852d3fe3a27b13d4a3d6fcc91fede82404f798dcfb068",
+      "exact_group": "2bcc119a39b88685b55852d3fe3a27b13d4a3d6fcc91fede82404f798dcfb068",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "9ce3d8afaec70612030f2e6253901490b10559ea2a58bb2f969f80c655226a34",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_35.sol",
+      "source_hash": "ca6bc7d5537661bb9209158a9afa09ea70eb311850abb2534b9899f6ad549627",
+      "exact_group": "ca6bc7d5537661bb9209158a9afa09ea70eb311850abb2534b9899f6ad549627",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "95f0e126d6a9f3751b0feef83c21d26ca1e8a3a39cfb3b948e24ca3cec799f79",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_36.sol",
+      "source_hash": "82cf79b9605a537334be6891e502acbf48930364ceb8720bfaf190d0e63c35e7",
+      "exact_group": "82cf79b9605a537334be6891e502acbf48930364ceb8720bfaf190d0e63c35e7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2b0b4db3338cb099818de8061258dadb1fe0660680db66388b07f4c993034cd0",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_37.sol",
+      "source_hash": "3ec55d8e376fd86d1325d5c9cb903bcaccf1f64ec57423f93950f1143965535b",
+      "exact_group": "3ec55d8e376fd86d1325d5c9cb903bcaccf1f64ec57423f93950f1143965535b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "541de695ce7ae5a4e3525bf2ab061efa40d7102d989701b7e37364d05dc9cf80",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_38.sol",
+      "source_hash": "e4132525ee37df32aadcdb8d0ad59758d4ad1e2ba012f2afa36f4bf973041361",
+      "exact_group": "e4132525ee37df32aadcdb8d0ad59758d4ad1e2ba012f2afa36f4bf973041361",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "75827aee79980d9c01dc6700a58e8ff7a78c0ae9ef77911eb897f0ba29540309",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_39.sol",
+      "source_hash": "b6ef85285f246bff57ddc5fe541b25bb5d991365a71e224d47aeb9de71f5094d",
+      "exact_group": "b6ef85285f246bff57ddc5fe541b25bb5d991365a71e224d47aeb9de71f5094d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3a0ffe4cb8222e36ee99dad20883b90e7cc44a12f251520595cdc54b0d4db94a",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_4.sol",
+      "source_hash": "1bfa6f9395b9fac8bfaa35b729569317c177dc7060ac52f4f0cc48623f3deafd",
+      "exact_group": "1bfa6f9395b9fac8bfaa35b729569317c177dc7060ac52f4f0cc48623f3deafd",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ce32b48510b77ec5049201adc967c71928baa99c7013d4310fd63a7253f32a2e",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_40.sol",
+      "source_hash": "86e48ce664c657a1e7236d4c96d8cd1d0fff4f4e99575ea6c36cad546b054637",
+      "exact_group": "86e48ce664c657a1e7236d4c96d8cd1d0fff4f4e99575ea6c36cad546b054637",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "9232642f6047d1389297c815d575f52e15e2b2f620f39b282b6893cea1f4287c",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_41.sol",
+      "source_hash": "d1244b598fe10c81b3c6b85b75bc514d3cca3eb76f9dfe79d164a3188395937b",
+      "exact_group": "d1244b598fe10c81b3c6b85b75bc514d3cca3eb76f9dfe79d164a3188395937b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f4c4d3332ac0bf6cf5e2a07c62d50e776e0dd634440a34dad63d32fccfd20327",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_42.sol",
+      "source_hash": "fe1e7f619e1ea4adcbb93af5f41d9954248c6b0a3ce6cb4c9399aaf516a3ca5d",
+      "exact_group": "fe1e7f619e1ea4adcbb93af5f41d9954248c6b0a3ce6cb4c9399aaf516a3ca5d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "40081a5d9907e3f453c1841f93bb829747bb834219d8953c11dc54505807a22f",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_43.sol",
+      "source_hash": "7a3ae7ea2a0700116e7b948406b90c6b6900a2c205b438a67e27eaedfa19f08e",
+      "exact_group": "7a3ae7ea2a0700116e7b948406b90c6b6900a2c205b438a67e27eaedfa19f08e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "52d8906d1a06ae7461174765446d21d741509b0fd47bfb53ef41698daf01e64d",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_44.sol",
+      "source_hash": "2d2f06cef186e8c36dcb59e566c2c38848290fb9bf5f789162db29b814f2a889",
+      "exact_group": "2d2f06cef186e8c36dcb59e566c2c38848290fb9bf5f789162db29b814f2a889",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "366829cb9c589e16b63d14ab2aaaf550ac91826fd40e24329801f62fa79f8dde",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_45.sol",
+      "source_hash": "904e0efc440a1d4d99834d55caeec049186c2c1bada380f05a49f1c2e8e64fe8",
+      "exact_group": "904e0efc440a1d4d99834d55caeec049186c2c1bada380f05a49f1c2e8e64fe8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e8e134682442ed6b7259bef72cdc39782dac1c6419e21b2da30e7f6c7189cb40",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_46.sol",
+      "source_hash": "b50a8cbeed7fdf567dc6d5602d748f456e2fc30301551c22a975524519e2baf9",
+      "exact_group": "b50a8cbeed7fdf567dc6d5602d748f456e2fc30301551c22a975524519e2baf9",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "56fce0b46625bd5a52d2aaf3cca52374b7652cc09072c507d3a56d81903cfa22",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_47.sol",
+      "source_hash": "e03c10130ca63f3c21910a0d4a9d80e8080eeafaefa193353edd85aecb8b6d82",
+      "exact_group": "e03c10130ca63f3c21910a0d4a9d80e8080eeafaefa193353edd85aecb8b6d82",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3d2480322a2ee87a0886924974bcd41c07aab7f151db5072fc931371d73c1b75",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_48.sol",
+      "source_hash": "7d9fbf66df8b50015324434698014e337570e2a394e0a570af9e56cbb5187dfb",
+      "exact_group": "7d9fbf66df8b50015324434698014e337570e2a394e0a570af9e56cbb5187dfb",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "449f80caed60828963f36737335947ebbb25da707f7dd5bba9efd028bd08b360",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_49.sol",
+      "source_hash": "0f607a0a2e6aa1f0294c41a50b5d3f4f10d0cb53cfb432170b78490b2feeedf8",
+      "exact_group": "0f607a0a2e6aa1f0294c41a50b5d3f4f10d0cb53cfb432170b78490b2feeedf8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "142417d7ad2dda6339c704fa035f19beefb0de592d89eb8e027c9a06b2939df0",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_5.sol",
+      "source_hash": "00fc3e7be857d58c6be680f4f52a3644ce8ee725cd1fa28949f9d59729fe9d58",
+      "exact_group": "00fc3e7be857d58c6be680f4f52a3644ce8ee725cd1fa28949f9d59729fe9d58",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d3ee35b89cefe35d78f2942b8bc22ccd85b998a61b095f87608072bd2f1d6846",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_50.sol",
+      "source_hash": "bff5e8f152970f6c7ecfe2eeca8f255580d4151004c0cc1904e33db286622d6b",
+      "exact_group": "bff5e8f152970f6c7ecfe2eeca8f255580d4151004c0cc1904e33db286622d6b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2a6f5f310930b38884848a1ab1dd95fe9ad13b3536790dbed3906db0934e0267",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_6.sol",
+      "source_hash": "d7a0cf248db1f739785a93fa63f5c21488ab5ce86f0dd019d333fe965621f5a8",
+      "exact_group": "d7a0cf248db1f739785a93fa63f5c21488ab5ce86f0dd019d333fe965621f5a8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5dad23a985886250dd6750113d0bced7c51cd3e99cd46e279862524abfeea30a",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_7.sol",
+      "source_hash": "2206d674c7c0b126595c535335a02ecf342fee7c3f4f1717f6cc0febee957a18",
+      "exact_group": "2206d674c7c0b126595c535335a02ecf342fee7c3f4f1717f6cc0febee957a18",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "980698c5c5d42d5efc09303a5d33c1aea04b3d8cb3c559f4f6d077ec1a5085db",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_8.sol",
+      "source_hash": "43d289deb699c91fcaa5312b8dd18f3fa46697eb752e674e8c40d2e22f24adbe",
+      "exact_group": "43d289deb699c91fcaa5312b8dd18f3fa46697eb752e674e8c40d2e22f24adbe",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "84234cff2000c9692d422d9a558cb93f1d034bb8d57645513a723cc0c9347905",
+      "path": "buggy_contracts/Timestamp-Dependency/buggy_9.sol",
+      "source_hash": "686f1d78d901ee19e507a024f85f1aa210d9cf381ae0b4bf475355987f6634b7",
+      "exact_group": "686f1d78d901ee19e507a024f85f1aa210d9cf381ae0b4bf475355987f6634b7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5f18c0e15b49b2fdad38e568c8d7b8ee4b06943c042f50e257d551aec65b89e6",
+      "path": "buggy_contracts/Unchecked-Send/buggy_1.sol",
+      "source_hash": "c5e702145373acda78b0d56db28b9efedd3064cdbff8f4b084c46d29afc95516",
+      "exact_group": "c5e702145373acda78b0d56db28b9efedd3064cdbff8f4b084c46d29afc95516",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8a6f29b75415b568c18e3fdf43d26e9b00ce2debbe286ca9b41b02c7842eac69",
+      "path": "buggy_contracts/Unchecked-Send/buggy_10.sol",
+      "source_hash": "63abc70fdc1e22a0e4e1ae0a22facfca74ce63483bd503e27ace9c3efbef9995",
+      "exact_group": "63abc70fdc1e22a0e4e1ae0a22facfca74ce63483bd503e27ace9c3efbef9995",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b11d424a7ea4b378dc4922d6a71bde7e36cfb8b3935042cf26195f9d93c536ae",
+      "path": "buggy_contracts/Unchecked-Send/buggy_11.sol",
+      "source_hash": "90381a45a5fa224b122b25544dbf2b225d002b1df158c6efe7027eb15e6cc2ad",
+      "exact_group": "90381a45a5fa224b122b25544dbf2b225d002b1df158c6efe7027eb15e6cc2ad",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c9e32d7e54bda8f98b7cb368ba355d8c6057015c33616fd447e01959be9eb5e6",
+      "path": "buggy_contracts/Unchecked-Send/buggy_12.sol",
+      "source_hash": "d7ad48e99ccb650a8f4449cd915b176602e72e4edbe769093816431cc0ec455c",
+      "exact_group": "d7ad48e99ccb650a8f4449cd915b176602e72e4edbe769093816431cc0ec455c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "69092728a48982919be5cec6170128d0c5cc28229ef8300c4f22f52e403cf777",
+      "path": "buggy_contracts/Unchecked-Send/buggy_13.sol",
+      "source_hash": "7af0d6f13fed276d8495b6a8828fdb22a078615c2acfeaa530bd8131bad57ea6",
+      "exact_group": "7af0d6f13fed276d8495b6a8828fdb22a078615c2acfeaa530bd8131bad57ea6",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "9f58e548132d1f1bef8bf2a172c025f6aeaf79c66d593606ed2361456359fc7b",
+      "path": "buggy_contracts/Unchecked-Send/buggy_14.sol",
+      "source_hash": "29a8942fe2b48f16a9db54ae51bd52a1659e8c77eb4717ac9b92bfa328bff5c1",
+      "exact_group": "29a8942fe2b48f16a9db54ae51bd52a1659e8c77eb4717ac9b92bfa328bff5c1",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2a0949c9eef528b4a94c72746e88dbc3a79695f02582e5edaf066c65ba087b81",
+      "path": "buggy_contracts/Unchecked-Send/buggy_15.sol",
+      "source_hash": "eb38ae679ae85367202176cd40085e77cc654bceb3682343c3b1b6ed3e07c495",
+      "exact_group": "eb38ae679ae85367202176cd40085e77cc654bceb3682343c3b1b6ed3e07c495",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "858d42539a9ac85ce3c3ed69e1af10c807c1b69929c51c11ffb67e8ad0b43b7d",
+      "path": "buggy_contracts/Unchecked-Send/buggy_16.sol",
+      "source_hash": "eecb7dbc9b516a6168db3f1dd4efc3f458f1b910632d8f634be759f39063c16a",
+      "exact_group": "eecb7dbc9b516a6168db3f1dd4efc3f458f1b910632d8f634be759f39063c16a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b29ce236d5963d189615bc99c4f10e2069eca6633f26c220bc6e35850dd72ac9",
+      "path": "buggy_contracts/Unchecked-Send/buggy_17.sol",
+      "source_hash": "46b2a6c2b95b3e9e07f5ab07fccd9e325c7994f2ff3c6dae917acd1114df2eeb",
+      "exact_group": "46b2a6c2b95b3e9e07f5ab07fccd9e325c7994f2ff3c6dae917acd1114df2eeb",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1ee994e52da5ac4b48207e6d27b28ddaed22f4246a4bd1c88aca8521a60aec10",
+      "path": "buggy_contracts/Unchecked-Send/buggy_18.sol",
+      "source_hash": "9ffca898b4586eccb5befa7d16cd187d830b9ede9f5ce5b53e3011cc9e552585",
+      "exact_group": "9ffca898b4586eccb5befa7d16cd187d830b9ede9f5ce5b53e3011cc9e552585",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f7a2b358724cc7c007d636dc5e0f8f5a560dbc312bd8bc3b7d03910abbfc9b3e",
+      "path": "buggy_contracts/Unchecked-Send/buggy_19.sol",
+      "source_hash": "f99b2b85c7c2d0b3ebebb7689fc3f919a2bf0b7f8b1d160d4c70f209b19cac30",
+      "exact_group": "f99b2b85c7c2d0b3ebebb7689fc3f919a2bf0b7f8b1d160d4c70f209b19cac30",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "48583b82515ac76535e203a7b1dbabba3bbbfc903f225642aa6817dfdfd6336d",
+      "path": "buggy_contracts/Unchecked-Send/buggy_2.sol",
+      "source_hash": "716cbbbff99c63457d4636f36be524fbe77319f6b3306e7684d8a73969f08ed1",
+      "exact_group": "716cbbbff99c63457d4636f36be524fbe77319f6b3306e7684d8a73969f08ed1",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "dd4fe39b3cd323b413ad5e641669d126eab3cddabdd1202800f11ec562a61bcb",
+      "path": "buggy_contracts/Unchecked-Send/buggy_20.sol",
+      "source_hash": "e2ce87d3d0e91a68a79991dc9a94cebd34d52608588d4ec5ee6153bd5032562e",
+      "exact_group": "e2ce87d3d0e91a68a79991dc9a94cebd34d52608588d4ec5ee6153bd5032562e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "9c5d038f52fb4d6929087fa9cf9696d3fcb743f8ff5b446154df1176e6a354f8",
+      "path": "buggy_contracts/Unchecked-Send/buggy_21.sol",
+      "source_hash": "bd06ac27f1235c909cea27699da5eaca883c3762e5f24b9a213cb050c89a2b17",
+      "exact_group": "bd06ac27f1235c909cea27699da5eaca883c3762e5f24b9a213cb050c89a2b17",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "10aa688b7614eec6fa434064dded7157ad2ff558f1f1cda7a4846d44ec5a72fc",
+      "path": "buggy_contracts/Unchecked-Send/buggy_22.sol",
+      "source_hash": "28dcec6f89ad30e033f475aa863d0efddbbb733c7854b1fe6d4963d799394ae4",
+      "exact_group": "28dcec6f89ad30e033f475aa863d0efddbbb733c7854b1fe6d4963d799394ae4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "52e35b231f668d5eb56b51449684f7fc349e6b2dda81e162f845300711c20d0a",
+      "path": "buggy_contracts/Unchecked-Send/buggy_23.sol",
+      "source_hash": "e29bb11189c4985a3bb468ba407bd3ecfb5546b742da30db898abb371cf092cc",
+      "exact_group": "e29bb11189c4985a3bb468ba407bd3ecfb5546b742da30db898abb371cf092cc",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "fe9a11ddaa04e536fa02941d355bbd7108448bfb3b40467763f2774f5db87096",
+      "path": "buggy_contracts/Unchecked-Send/buggy_24.sol",
+      "source_hash": "b87db9d6b17b8c0d359835b63891af69416afcdd3c8ba9577b32911857d5f32d",
+      "exact_group": "b87db9d6b17b8c0d359835b63891af69416afcdd3c8ba9577b32911857d5f32d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "05ffe048d50df238d697bb7287b7f2a4c7a83ca02af3a25364978cdd6dcea529",
+      "path": "buggy_contracts/Unchecked-Send/buggy_25.sol",
+      "source_hash": "37a04e7ad0b1a97208dff4ac3744051a701466cd4b639e986ca491e1c2a46d69",
+      "exact_group": "37a04e7ad0b1a97208dff4ac3744051a701466cd4b639e986ca491e1c2a46d69",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "379fbcf304f8042ff43292ee2a39bf9948978a683dde9737ac479e5e452ed40b",
+      "path": "buggy_contracts/Unchecked-Send/buggy_26.sol",
+      "source_hash": "77072eb50f0eafe6cba1e4b73a8f29786de54cedcf01be660ac60717a5ca43d1",
+      "exact_group": "77072eb50f0eafe6cba1e4b73a8f29786de54cedcf01be660ac60717a5ca43d1",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "50cc6b2557f438dedb73940ce0ed773c5a48213a121f80db8757a4686c6796e4",
+      "path": "buggy_contracts/Unchecked-Send/buggy_27.sol",
+      "source_hash": "09978fa5647239559a1127dcc6ce81bce56559186b7d30116ca60ef2450fbfac",
+      "exact_group": "09978fa5647239559a1127dcc6ce81bce56559186b7d30116ca60ef2450fbfac",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "6bb0aec0ddd9561cddfa281b61be5cf21988c1be9467ea640f4eab6cdf0bb033",
+      "path": "buggy_contracts/Unchecked-Send/buggy_28.sol",
+      "source_hash": "33b9d8964cbda25aa353052db005cd9a328957a0a9d19b8c532f4946fa99bf64",
+      "exact_group": "33b9d8964cbda25aa353052db005cd9a328957a0a9d19b8c532f4946fa99bf64",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0d0ce46d5c20e226df07318094e613b3ebcf43221fcd8c2c3213b5f1ca95365c",
+      "path": "buggy_contracts/Unchecked-Send/buggy_29.sol",
+      "source_hash": "5cac5bab80eec938670eab80ab0d94e9566ab175932afd71a22e9b48ea36fe69",
+      "exact_group": "5cac5bab80eec938670eab80ab0d94e9566ab175932afd71a22e9b48ea36fe69",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5bab928e3df70dba24f8c72468c92ac6ab73ab3f7b1eea3b566793fd3ab21a6e",
+      "path": "buggy_contracts/Unchecked-Send/buggy_3.sol",
+      "source_hash": "db5f2503ace55124383f46eb714ba195a60d6d0103ee92c9c3f0fbae80ceeef0",
+      "exact_group": "db5f2503ace55124383f46eb714ba195a60d6d0103ee92c9c3f0fbae80ceeef0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "29a929d39c5e037700f6926b336446771a273085df3232e863f72064adf760a6",
+      "path": "buggy_contracts/Unchecked-Send/buggy_30.sol",
+      "source_hash": "317c7c1030095457cc928542fa403d655362f562b8d50c7b01cc27d3fe283b15",
+      "exact_group": "317c7c1030095457cc928542fa403d655362f562b8d50c7b01cc27d3fe283b15",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "7a1b2b26ef09b8f94ea07b307eae5f7f92252639252cb81a7d79acd51faa0a53",
+      "path": "buggy_contracts/Unchecked-Send/buggy_31.sol",
+      "source_hash": "87e257ca800fe17894743420940edcdd083dd2a31f3d1b0ef3f715284608cc48",
+      "exact_group": "87e257ca800fe17894743420940edcdd083dd2a31f3d1b0ef3f715284608cc48",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a69b4ef97d17dfd264437afc5aace0bd5769f4de65f5ebf0642c14d35ec088c9",
+      "path": "buggy_contracts/Unchecked-Send/buggy_32.sol",
+      "source_hash": "ea3ed881271a02bae01752b12dea2d54245238d1e4319c2cf3b710f52f0e2131",
+      "exact_group": "ea3ed881271a02bae01752b12dea2d54245238d1e4319c2cf3b710f52f0e2131",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0eff19aca1400a9cf32c7e6885c54f1e662faaaf082d067eab6ff22d77201ff1",
+      "path": "buggy_contracts/Unchecked-Send/buggy_33.sol",
+      "source_hash": "0ec64ef4c4b69782d07ba83093d8b9c478beac5fae6056c34d257df5cd138200",
+      "exact_group": "0ec64ef4c4b69782d07ba83093d8b9c478beac5fae6056c34d257df5cd138200",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "700d9c232d34dcb0ba0bdbcd3d092595dd3e8386529fa26d91beeb696fdcb4e3",
+      "path": "buggy_contracts/Unchecked-Send/buggy_34.sol",
+      "source_hash": "ac3a2065470e34e1a8d57acdfd514129d8de0c101c453298d4048a167017c777",
+      "exact_group": "ac3a2065470e34e1a8d57acdfd514129d8de0c101c453298d4048a167017c777",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ca0cf38d851a44fb64812471b9cf16092a54f367ac738f2c2b87c92f236dcce0",
+      "path": "buggy_contracts/Unchecked-Send/buggy_35.sol",
+      "source_hash": "0a82d9887e4a30d9711490609d1da321f3d6fea22640c1986965555c1e57a9d0",
+      "exact_group": "0a82d9887e4a30d9711490609d1da321f3d6fea22640c1986965555c1e57a9d0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3bdf13e1f39dccfcacdcd4ee4feab59720d9242c12c661193a5da29150fd5a6f",
+      "path": "buggy_contracts/Unchecked-Send/buggy_36.sol",
+      "source_hash": "28dcec6f89ad30e033f475aa863d0efddbbb733c7854b1fe6d4963d799394ae4",
+      "exact_group": "28dcec6f89ad30e033f475aa863d0efddbbb733c7854b1fe6d4963d799394ae4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1a2ae6f673a6bf49820bb7e546d043d7bc909ff3b64a641b647751884fccf9dd",
+      "path": "buggy_contracts/Unchecked-Send/buggy_37.sol",
+      "source_hash": "8e64a222a5cc2e955011b600becc337d80a31896cd64252c7ff08b3edc6f4771",
+      "exact_group": "8e64a222a5cc2e955011b600becc337d80a31896cd64252c7ff08b3edc6f4771",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "02086df0ec6b685e0bdc7933dffe7eacc87bbc169c5863e682a0cf47a37749da",
+      "path": "buggy_contracts/Unchecked-Send/buggy_38.sol",
+      "source_hash": "579c6749422fabc6a39de98158fa72efdb91de313ea98e98503761abf716222b",
+      "exact_group": "579c6749422fabc6a39de98158fa72efdb91de313ea98e98503761abf716222b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "17dc417116d11d4ab8411f6f4ac0124fe762b8393834bafe3e7a7b25cc2abb10",
+      "path": "buggy_contracts/Unchecked-Send/buggy_39.sol",
+      "source_hash": "31478296468ad2b6d41660edbc9926b68e5a1626de070983db67f53620e3fe2d",
+      "exact_group": "31478296468ad2b6d41660edbc9926b68e5a1626de070983db67f53620e3fe2d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b26a1780f4a038409af561ef6ed17e5aefa7224c894b8b4f64467c902f8259f7",
+      "path": "buggy_contracts/Unchecked-Send/buggy_4.sol",
+      "source_hash": "88697ed357259de07e955386d3d790faacc77f41a8f04d86735b3ab9a90a599c",
+      "exact_group": "88697ed357259de07e955386d3d790faacc77f41a8f04d86735b3ab9a90a599c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "12192b305d39a507bf45def2dda7c32a9d6cf56d184cc8e9f21bd5ee544b162b",
+      "path": "buggy_contracts/Unchecked-Send/buggy_40.sol",
+      "source_hash": "2571d8dfaf04f871c697f17f1b27b81ce844fbd877db898ac8829ad4779eba16",
+      "exact_group": "2571d8dfaf04f871c697f17f1b27b81ce844fbd877db898ac8829ad4779eba16",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a1d572f0ad4a460bbeefac42f6e9f99bba2d04c19d921bea68c640070bab6d18",
+      "path": "buggy_contracts/Unchecked-Send/buggy_41.sol",
+      "source_hash": "cac8064fea58965abefc966251084394f0e39ecf55cf097fd108638e94d6d42f",
+      "exact_group": "cac8064fea58965abefc966251084394f0e39ecf55cf097fd108638e94d6d42f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ba4fd8b8f91220c6f77bfa8044d31cd28f983d08c18ee8786cbe9aed637c21e5",
+      "path": "buggy_contracts/Unchecked-Send/buggy_42.sol",
+      "source_hash": "3ddc73462918f88cc48ad884b243b0b08d9ae92330eb22c891bfad3d259056f4",
+      "exact_group": "3ddc73462918f88cc48ad884b243b0b08d9ae92330eb22c891bfad3d259056f4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "bfcdbfee311d1345864bbfd4ee1f5e38f30095d9aa83e308f862136ee08de5a8",
+      "path": "buggy_contracts/Unchecked-Send/buggy_43.sol",
+      "source_hash": "695475291306362d2c5ec207df41f62b41981bd3967c9a67aaf288bc4e0d8fb7",
+      "exact_group": "695475291306362d2c5ec207df41f62b41981bd3967c9a67aaf288bc4e0d8fb7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "fc9634066db8fa621953f27e0b59af6f6cbba98ac8075c19264b773b9df2224b",
+      "path": "buggy_contracts/Unchecked-Send/buggy_44.sol",
+      "source_hash": "2a285a67dc5029b0c73e3cc1d8946034375d22c275a0176a61f422e778428632",
+      "exact_group": "2a285a67dc5029b0c73e3cc1d8946034375d22c275a0176a61f422e778428632",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "df39b49a7e880498fd587e4b86c6450d30bac49bf7fe096eda63690609aeb129",
+      "path": "buggy_contracts/Unchecked-Send/buggy_45.sol",
+      "source_hash": "d7a94c725784e998ec18a07b0a04102c19a2bf45c7e695bb8e8530970a9f64a7",
+      "exact_group": "d7a94c725784e998ec18a07b0a04102c19a2bf45c7e695bb8e8530970a9f64a7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f26b5bb436d8df8d3b0eaa5a6b422daa49d8dce9900c438174992b9b0d0c9b68",
+      "path": "buggy_contracts/Unchecked-Send/buggy_46.sol",
+      "source_hash": "8c36e7622aa69979b1f6df86e109ee91d257f5bd3d5468597c8e93bd553d91d9",
+      "exact_group": "8c36e7622aa69979b1f6df86e109ee91d257f5bd3d5468597c8e93bd553d91d9",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1dbaacf44754057c06d9c45709b607b5712d982a4fdca6f0ca31fccc3d74220e",
+      "path": "buggy_contracts/Unchecked-Send/buggy_47.sol",
+      "source_hash": "e9523699162c12fcc8ee68bc7306faebbee0497b3d0703ccde3e331771cb8f4e",
+      "exact_group": "e9523699162c12fcc8ee68bc7306faebbee0497b3d0703ccde3e331771cb8f4e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "fc97f64d6eedec0509dc9e4813c5f159889715b3a75d00989125fc4f591b719b",
+      "path": "buggy_contracts/Unchecked-Send/buggy_48.sol",
+      "source_hash": "dc2a83ef726e05167b68f1957ec93076c19da0b614da0d31fd68aa51a6dd1196",
+      "exact_group": "dc2a83ef726e05167b68f1957ec93076c19da0b614da0d31fd68aa51a6dd1196",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "bbbf956e996627cb77bb1ebe3f86e3e83b433e069e8f0e384ccc87d07df7b433",
+      "path": "buggy_contracts/Unchecked-Send/buggy_49.sol",
+      "source_hash": "e2c81981c350278ac368dfd9713c0a1c5cd1925c204f90a7e0be42684e8cfd7a",
+      "exact_group": "e2c81981c350278ac368dfd9713c0a1c5cd1925c204f90a7e0be42684e8cfd7a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "98afc212bd7b4aa840b5e4364b1a57311f6ed5506a22ba124e2093076c2f51ed",
+      "path": "buggy_contracts/Unchecked-Send/buggy_5.sol",
+      "source_hash": "fa819b8ef91eda5363e3327273708b3ebb6e5d7236036746076f19e59db82a53",
+      "exact_group": "fa819b8ef91eda5363e3327273708b3ebb6e5d7236036746076f19e59db82a53",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ed1a9bd02772b64244322fab1bcc37dbd1feae761b68d95cbf37b157d088a698",
+      "path": "buggy_contracts/Unchecked-Send/buggy_50.sol",
+      "source_hash": "43599440fd7d3464325734aa5ec2b314529bea30c4e13bac9570d13729e4c0cb",
+      "exact_group": "43599440fd7d3464325734aa5ec2b314529bea30c4e13bac9570d13729e4c0cb",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "18101821cd4cd0ae25f5c6a88305850090886b970fd466be3de5a31dddfac82a",
+      "path": "buggy_contracts/Unchecked-Send/buggy_6.sol",
+      "source_hash": "4a96a62deb8fc5b105be7d10e3012b127ef621066d39d0694d56f1a3aa5b39f3",
+      "exact_group": "4a96a62deb8fc5b105be7d10e3012b127ef621066d39d0694d56f1a3aa5b39f3",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5c9c7b030ffdfca1662a97f3f5ccf89d8509f3e2fd7acbd29f58debdde0e77ed",
+      "path": "buggy_contracts/Unchecked-Send/buggy_7.sol",
+      "source_hash": "63f9ae03da0791615b4ad5ab509b7d0576e4d5584ff7918757799854b952e74c",
+      "exact_group": "63f9ae03da0791615b4ad5ab509b7d0576e4d5584ff7918757799854b952e74c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "aba4a56f82510d80304fb6741dad59aa751c1c812ebecf4758886572f6e4a20a",
+      "path": "buggy_contracts/Unchecked-Send/buggy_8.sol",
+      "source_hash": "fbef90658d30e72422ca7a81b3903d22953bf97a0c536d041143ed19858d84b2",
+      "exact_group": "fbef90658d30e72422ca7a81b3903d22953bf97a0c536d041143ed19858d84b2",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "01af98cc8049027c0a1129a83e3e6e167ea184e813360114be33119bdb8fc331",
+      "path": "buggy_contracts/Unchecked-Send/buggy_9.sol",
+      "source_hash": "c41c039d1d3d695153c520fc1ef29b03dc456137ac40dda72f4b00e8bf6a8727",
+      "exact_group": "c41c039d1d3d695153c520fc1ef29b03dc456137ac40dda72f4b00e8bf6a8727",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8b07b719da04f33524c7be62b9ddf61b799e815d06ef5687e72616e58e889031",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_1.sol",
+      "source_hash": "fe93fcde4182059398eb620dbf5492bec6417374ccedc6e8270a2ac610ef0049",
+      "exact_group": "fe93fcde4182059398eb620dbf5492bec6417374ccedc6e8270a2ac610ef0049",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b953d576520b8974adf64cbce103cbfe04ca9e193a28d3306203cedfc3b5178d",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_10.sol",
+      "source_hash": "e85be941ab2ac36945a6030862a224413a79dc926a5d58f5d9e8081699af1b49",
+      "exact_group": "e85be941ab2ac36945a6030862a224413a79dc926a5d58f5d9e8081699af1b49",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "800dd7122c119e7bf984d600f9d48e9bd46ffd07512dc0329763550d9bebae62",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_11.sol",
+      "source_hash": "1a1333c90d7ecae6a05ab1abcff019b1036ea88106b687624528c9fd936f37ad",
+      "exact_group": "1a1333c90d7ecae6a05ab1abcff019b1036ea88106b687624528c9fd936f37ad",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "da21e12ce07174aa3c2a9b7d39d1fca4a4b5cd096f9a80eb110b4def8f5ab77f",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_12.sol",
+      "source_hash": "0018abe74f5bfb9eea5ddb83dfeacb1a6c738d44a9bed0276890a5cd9845eff2",
+      "exact_group": "0018abe74f5bfb9eea5ddb83dfeacb1a6c738d44a9bed0276890a5cd9845eff2",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d5863c8c4c47cb42e13d692717392537ea508ec1f370e49211a38ca781325430",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_13.sol",
+      "source_hash": "a9e9eaab018b50ebde77e5942247e7c8f3a6d2a769675e597f31ed3afa6e4c0c",
+      "exact_group": "a9e9eaab018b50ebde77e5942247e7c8f3a6d2a769675e597f31ed3afa6e4c0c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2f4a175d3f8b9a6fc350ffeb9f670c086c3f21daf1189f4ac4d8a874f864cb2b",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_14.sol",
+      "source_hash": "a82698f33c1e156d64e4b1355a2eed883ad2d36b975080675b7337095929f0c1",
+      "exact_group": "a82698f33c1e156d64e4b1355a2eed883ad2d36b975080675b7337095929f0c1",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d3303403d731981fd29281643e322715fb30f6c5532e2f78b8374c2681f370e2",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_15.sol",
+      "source_hash": "bebb40b170b01bd527806b53667ea8998165814748ef6eb2fc5195417f24c840",
+      "exact_group": "bebb40b170b01bd527806b53667ea8998165814748ef6eb2fc5195417f24c840",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e185ed9c267c0a287dfc9fae02239b1bf64f30db3b9bf7edd900f7745e62001d",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_16.sol",
+      "source_hash": "b330232626dd9cd80f589284d7d471c9657102f305102168e4e0dd82ded7ba68",
+      "exact_group": "b330232626dd9cd80f589284d7d471c9657102f305102168e4e0dd82ded7ba68",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4ee9f01fc5e1f8f4d46db092d02e4686b976005d3e2ba348c13a0b981093202c",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_17.sol",
+      "source_hash": "391fc2b4a92a4f15f102bcd37b493194ef897a8ca89451814d85c4c78ae5f6c4",
+      "exact_group": "391fc2b4a92a4f15f102bcd37b493194ef897a8ca89451814d85c4c78ae5f6c4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1f04da106a9238f8a1199246957b628552de3a98494fa87e11c1ff357aaf8cbb",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_18.sol",
+      "source_hash": "6da795b471816bf4814356990620bec5f64178d03fd7626e043b6ccb335b50b8",
+      "exact_group": "6da795b471816bf4814356990620bec5f64178d03fd7626e043b6ccb335b50b8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "244863c542d147f87e05f742725320f17c6dbe03d14e40a258c71908a827b6c7",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_19.sol",
+      "source_hash": "3ed01a52d867cde0403955221e53abc3416f05ab84c958a679e9f231ee6d5520",
+      "exact_group": "3ed01a52d867cde0403955221e53abc3416f05ab84c958a679e9f231ee6d5520",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "75116be9dec21d029cf30371ec5907ecf3ddc3ab5891d8470a758170e0f3f4e8",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_2.sol",
+      "source_hash": "daa21e9bbbd90de778dd864cadd9cdf5b796d7168196bdf02b5ce670a66ccdaf",
+      "exact_group": "daa21e9bbbd90de778dd864cadd9cdf5b796d7168196bdf02b5ce670a66ccdaf",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "95b9fc4bfc29cec2a7308159bc6ab3810ccf3f596e8aef27a186c68631c794c1",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_20.sol",
+      "source_hash": "21009eb6cdd8698fd8c92bea12de485f2a248585686c8092ee1987d182ed9af3",
+      "exact_group": "21009eb6cdd8698fd8c92bea12de485f2a248585686c8092ee1987d182ed9af3",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "7a0c0f0f776f81b55487bc91e2724ec8bf5420bee2fdf82d64ce97844c0e42f0",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_21.sol",
+      "source_hash": "b6d19919827bc6870df32a172d3a7f3e637c477a4f79201307c0cdf6dd8be2ee",
+      "exact_group": "b6d19919827bc6870df32a172d3a7f3e637c477a4f79201307c0cdf6dd8be2ee",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ab2795ebd8c589e935495ae4dc288513f0f3221e64dcc18fe464a2e46a1e6865",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_22.sol",
+      "source_hash": "0e1a5c1f6c13a24348243ed4cd101acd3cbacfa5374873a421ac9f399a1cea5c",
+      "exact_group": "0e1a5c1f6c13a24348243ed4cd101acd3cbacfa5374873a421ac9f399a1cea5c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5e8eea6a81e2910028bef00e837160fbc6836e6fe9ef7d71f987fae61d6d811f",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_23.sol",
+      "source_hash": "3897137853f804028fc8c0c98b1d8cc0055092a58ce490aa75a6c6ec6f71d587",
+      "exact_group": "3897137853f804028fc8c0c98b1d8cc0055092a58ce490aa75a6c6ec6f71d587",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0cfb1d47abe0adf57b633ee26ff6a05342fa2a1651fbb529e42c6dc7210b90d3",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_24.sol",
+      "source_hash": "88e6c19a372777adb2ef0da741fd9aeb6041f040e92c5828d1c99b629b757fd7",
+      "exact_group": "88e6c19a372777adb2ef0da741fd9aeb6041f040e92c5828d1c99b629b757fd7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d19a33c965c544b361612642bcdb88e3902c03fcf95b17e11bb7bed4b0895fdd",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_25.sol",
+      "source_hash": "46a6ba80803726f58ed778e453bb74ed2c428d801cc98ee0cc4175151ebead55",
+      "exact_group": "46a6ba80803726f58ed778e453bb74ed2c428d801cc98ee0cc4175151ebead55",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "82cc85cd8a941419496952e028d9c86db00e59c828b2773492caac7c8030c030",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_26.sol",
+      "source_hash": "f84f7f6b527cb392aa88563ecc3d21b6c22b5401bed00f576975c5379c93369b",
+      "exact_group": "f84f7f6b527cb392aa88563ecc3d21b6c22b5401bed00f576975c5379c93369b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0f14636dd133ebc6d0a9ae2036186e5261088ad29ee1fe934c8b2f65b6984ccc",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_27.sol",
+      "source_hash": "18b175e61a491ae7bc0874abb0c8d0fbaaa6c33fa6332ccf1b175e7edcaa16f1",
+      "exact_group": "18b175e61a491ae7bc0874abb0c8d0fbaaa6c33fa6332ccf1b175e7edcaa16f1",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e98342b1193a76072b178682896e32fb842fc058d9e6bebf2f661f9e700788f1",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_28.sol",
+      "source_hash": "88d536f42175a94563b043021e09e119a1ac8777b0c51dc71b6eec44d028841c",
+      "exact_group": "88d536f42175a94563b043021e09e119a1ac8777b0c51dc71b6eec44d028841c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "96bfc567f0abcc5dd4fd5c547d65406d72aa72aa1c5df2080a6cf4b107861db9",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_29.sol",
+      "source_hash": "1406ab204da1b704f9318be3433324040d2298fc2a8743707da7b39de4a3f828",
+      "exact_group": "1406ab204da1b704f9318be3433324040d2298fc2a8743707da7b39de4a3f828",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "92541f7b4ea3a0955598aa3a622a0b95f7e3b126c999344de0d11e747212132b",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_3.sol",
+      "source_hash": "00683eb3e2b97693a42e8bd1c6cfad32b82ac4eebb0f400a7a86e5ef9f24f821",
+      "exact_group": "00683eb3e2b97693a42e8bd1c6cfad32b82ac4eebb0f400a7a86e5ef9f24f821",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "cc844218283201c0302b9ae429dce77188b69d5e1c6def586986e0cadbfc574a",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_30.sol",
+      "source_hash": "2e3348f37a5dd6e2c019669243538e57d0823baa616931371e4f372ca7551db0",
+      "exact_group": "2e3348f37a5dd6e2c019669243538e57d0823baa616931371e4f372ca7551db0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "738744e099744a16a763d180c4d34c78762e4647fb02f659065ea06d8b6e6914",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_31.sol",
+      "source_hash": "3f568a7076b2bc2ec9579bb252fa29f0db9cba4413dd147d41cd74a8dde1bf97",
+      "exact_group": "3f568a7076b2bc2ec9579bb252fa29f0db9cba4413dd147d41cd74a8dde1bf97",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "6577a65a0f2cacb38ec32de9696669248a94839ade7e33175a942caa787bda7a",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_32.sol",
+      "source_hash": "cc0ff588c556d9363b0d5be2b69c643b9aea57618366893100787b90677b80f1",
+      "exact_group": "cc0ff588c556d9363b0d5be2b69c643b9aea57618366893100787b90677b80f1",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a13f9a05482064ce0a8068b1cee157ecd3b9f3c55cc50cbdd2091c2559cb0d7a",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_33.sol",
+      "source_hash": "b77308946ff2f375df3bf49d6d160779a1cba70c3811f3a931498eac956beee5",
+      "exact_group": "b77308946ff2f375df3bf49d6d160779a1cba70c3811f3a931498eac956beee5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "634dc6709fed53acc25dd90bc0b29c2dd454355ba6051e999976e76de7bf21a0",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_34.sol",
+      "source_hash": "d3878da6c657b0becf340dc2f8c667bf62852bb6830868683a6ec1bbac94f694",
+      "exact_group": "d3878da6c657b0becf340dc2f8c667bf62852bb6830868683a6ec1bbac94f694",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "87e83a892e23ce4b7ed06189328c99f3000308b7f4f0611314af2aa903cd762b",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_35.sol",
+      "source_hash": "6fb0757e5a280bc4bd877b6e1ade0f9f9d922c7a9c8a5bbf0ae8e2e86767fd5e",
+      "exact_group": "6fb0757e5a280bc4bd877b6e1ade0f9f9d922c7a9c8a5bbf0ae8e2e86767fd5e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "73eec4f29d31fd8f08909d0c3edca06c9dba1eeeb2d59cacf6ae864174fe3db1",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_36.sol",
+      "source_hash": "0e1a5c1f6c13a24348243ed4cd101acd3cbacfa5374873a421ac9f399a1cea5c",
+      "exact_group": "0e1a5c1f6c13a24348243ed4cd101acd3cbacfa5374873a421ac9f399a1cea5c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4c5e19d7ece5f3a32ae20173db540bb47f1cc3feca5e9940918766382f2593a8",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_37.sol",
+      "source_hash": "18e6c8a35172f0c1044ee63a4971bf5286db773bd598a1db30c0238cff16be2a",
+      "exact_group": "18e6c8a35172f0c1044ee63a4971bf5286db773bd598a1db30c0238cff16be2a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "40a7eff2e53000bd6111e605baac6bd1942b3fc15fd5390b2fe07de5bdab1edd",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_38.sol",
+      "source_hash": "8be9af0db9d6c218fb7d3be731f479ffe79f2a0edb92490ad9461eca06b6ea6b",
+      "exact_group": "8be9af0db9d6c218fb7d3be731f479ffe79f2a0edb92490ad9461eca06b6ea6b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8b30226cf1d3f286cae35b140477b8aaf36ec2fb5adea72f9885f6469360165a",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_39.sol",
+      "source_hash": "3edde3665c74c77b707d317f8d2183760b23175d24e5994020cc45be22aa947e",
+      "exact_group": "3edde3665c74c77b707d317f8d2183760b23175d24e5994020cc45be22aa947e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1a00602648f3bf27c4b8a1a67ca1f7c61ae2894661c459751ec392438e70f4cf",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_4.sol",
+      "source_hash": "902357bfae6f15995fd088ea7a4840fac933f26e107e82b5f63a65ecc03d3297",
+      "exact_group": "902357bfae6f15995fd088ea7a4840fac933f26e107e82b5f63a65ecc03d3297",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "21f0687fd17bae691ff46d7e5b2bcb7e73f2699b3fee141e9c9338ca58e9b424",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_40.sol",
+      "source_hash": "425425e698ada36cca105fa9e2bd525287e2b94ab39aeeda30ba65468957cac9",
+      "exact_group": "425425e698ada36cca105fa9e2bd525287e2b94ab39aeeda30ba65468957cac9",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1c703678357695465523652493c7548da4912e7b2af682ec73902ac2f3222200",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_41.sol",
+      "source_hash": "c8672656f2760d8e54f758a2cf190a7b6368758bff3db2ed970ca184f61ed027",
+      "exact_group": "c8672656f2760d8e54f758a2cf190a7b6368758bff3db2ed970ca184f61ed027",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "12619fdd514ab56099dfddc9ffa8d01b83d5bd65f39dd9a1b380f3d2987f9df8",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_42.sol",
+      "source_hash": "b6f754770d62486531ce0971d448c99ccbe7889cf5c6ced9d96a785cba49433b",
+      "exact_group": "b6f754770d62486531ce0971d448c99ccbe7889cf5c6ced9d96a785cba49433b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c3fed2cea26edcd6a29c4462eb0c150df54867fd49f1e054fb83f768f61af6a7",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_43.sol",
+      "source_hash": "bf4e4c344e2ab3b92ab4a27f4314a6e365b7b9474da69bdbdad51ab9fa05e44e",
+      "exact_group": "bf4e4c344e2ab3b92ab4a27f4314a6e365b7b9474da69bdbdad51ab9fa05e44e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "baee5f048d8c7995f2db7016cb7c793ea9128f26d37a86b92152c092fcfb40b1",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_44.sol",
+      "source_hash": "e31e9675cb64e68769210515949637893c611307fddffd352c72b2d2bbae018d",
+      "exact_group": "e31e9675cb64e68769210515949637893c611307fddffd352c72b2d2bbae018d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "6d5675b4ba6cc9882cc332dfaed783a75434ff7bd9c8e4cc6653b86e2c88b5f5",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_45.sol",
+      "source_hash": "ab2a3f001f70d5a33dc0d6e3f85a204a87deb93aff01511fc2a4a5e2a57af9c2",
+      "exact_group": "ab2a3f001f70d5a33dc0d6e3f85a204a87deb93aff01511fc2a4a5e2a57af9c2",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e01b797c083827943dae0e5fa775b1b4bac743ef3d66a718333b503907a8e7e7",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_46.sol",
+      "source_hash": "b9cba639dea947af48663364f9f062d5c7228b639841b41fd7e7094a3351b0b9",
+      "exact_group": "b9cba639dea947af48663364f9f062d5c7228b639841b41fd7e7094a3351b0b9",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "383cfde7e6299b31aac90108952aadd802415709bf92b3405a59db380b653a06",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_47.sol",
+      "source_hash": "9844988f80f92be1c268999cb7de70d9eb381f5834084c543456636c55c4dfcd",
+      "exact_group": "9844988f80f92be1c268999cb7de70d9eb381f5834084c543456636c55c4dfcd",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "9f5991be39740bf6e8b9bec648135899c40a9a56654bb52ab8cbc822c1e3f5af",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_48.sol",
+      "source_hash": "b56594e0c0af982b7f095a9c28f46f424ce0c2a40cbf99ae6a29a37ee5e38c41",
+      "exact_group": "b56594e0c0af982b7f095a9c28f46f424ce0c2a40cbf99ae6a29a37ee5e38c41",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "501eea7a1e050576ababc938f4b02654df525fcf167ba38d9a2b540944c05484",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_49.sol",
+      "source_hash": "48928f001d0849ee4c302c91554dbe047b383bd6477046a7136270a718fd1950",
+      "exact_group": "48928f001d0849ee4c302c91554dbe047b383bd6477046a7136270a718fd1950",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c8c561dc8c9402ae942d2b8d8252b36e264300139fd53b361eb4cfe8f27cb0ff",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_5.sol",
+      "source_hash": "fa7b3f56fbfc7cf18715ccc2533b6041e99ea4564ab7ac1022b98bb3f0e22b6e",
+      "exact_group": "fa7b3f56fbfc7cf18715ccc2533b6041e99ea4564ab7ac1022b98bb3f0e22b6e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "112ae983f2c627abb776f73d2b66cb1ec177d08e91cfcdbdc71c2e7085d8a92a",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_50.sol",
+      "source_hash": "d727d72bc72bd44ef4205ffd8aefbbdec3635ce3120ba76c3b5c4fec98b5c264",
+      "exact_group": "d727d72bc72bd44ef4205ffd8aefbbdec3635ce3120ba76c3b5c4fec98b5c264",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "f878031b69bf54095eb7664db2f97012b04a5be7663112dd38d2d3d0559bfd14",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_6.sol",
+      "source_hash": "5e7273242086f9e2963fc81546b98c5dc5b1dec7a27e4d4b135ac7745e6c8256",
+      "exact_group": "5e7273242086f9e2963fc81546b98c5dc5b1dec7a27e4d4b135ac7745e6c8256",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "02c7a271d317e8055492367a9e2b4e40bd5d26139ec4d69c5ea0fae0d20967e6",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_7.sol",
+      "source_hash": "06b27eed63ec8096eea3807420da561891eb54e34950e455d2e306c3124dfcfa",
+      "exact_group": "06b27eed63ec8096eea3807420da561891eb54e34950e455d2e306c3124dfcfa",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "520f68b3ca377dc7eda1d00b3fc16a8e803a5c223c5123dc2602659bd0db8b2b",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_8.sol",
+      "source_hash": "21c9d30ebdaffd0c291dbbf895177992f61dcf298d1c53627ba0c126319b84ea",
+      "exact_group": "21c9d30ebdaffd0c291dbbf895177992f61dcf298d1c53627ba0c126319b84ea",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "602e85228e0df752fd2ff7ba623cb926872589e02df8c974ec83a3ea85771ffd",
+      "path": "buggy_contracts/Unhandled-Exceptions/buggy_9.sol",
+      "source_hash": "6828619b26adea0f3f0bc86459cb8a85b1c20e1c429dc159d22f3d4dbc26ba9a",
+      "exact_group": "6828619b26adea0f3f0bc86459cb8a85b1c20e1c429dc159d22f3d4dbc26ba9a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c8e6bef34b720d435ac438df812582170488c94bfa4a53c9151712b3b76354fa",
+      "path": "buggy_contracts/tx.origin/buggy_1.sol",
+      "source_hash": "ccdcc72101bf751de5f209bb319478b9e55628d6f8168810cb8b1fa3b874825e",
+      "exact_group": "ccdcc72101bf751de5f209bb319478b9e55628d6f8168810cb8b1fa3b874825e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b3038a4bef133e95a169a51539359a81645eac57626115a1680c34769261d2de",
+      "path": "buggy_contracts/tx.origin/buggy_10.sol",
+      "source_hash": "86652dde9e48a8c20df3efabf9cba4700130cfd0410a7731889c4b1ff9339426",
+      "exact_group": "86652dde9e48a8c20df3efabf9cba4700130cfd0410a7731889c4b1ff9339426",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b17ac5ad6fc9cc6285cf3965a4b4861008f10c8d3c85b74f6a4c3e7cc9abb5e3",
+      "path": "buggy_contracts/tx.origin/buggy_11.sol",
+      "source_hash": "aabee3c6133c918ae01260a4742b4867903b6d089e052e9da2d55280d3135952",
+      "exact_group": "aabee3c6133c918ae01260a4742b4867903b6d089e052e9da2d55280d3135952",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d173c9811a9764cc3cb58b622862026a199c3a455063231c843670c7e5229b7e",
+      "path": "buggy_contracts/tx.origin/buggy_12.sol",
+      "source_hash": "9c0c61eac0e9687e27eb2b6163ec2d027edd46e9cc6901777ac47cff71bb577a",
+      "exact_group": "9c0c61eac0e9687e27eb2b6163ec2d027edd46e9cc6901777ac47cff71bb577a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "196ebf4095a3474b01c10b6625235b94fddd0500ba8c83076876a6202448d192",
+      "path": "buggy_contracts/tx.origin/buggy_13.sol",
+      "source_hash": "ef93bb9c4ecd3319a32617ec364642d8219f2279fd3d8f87976542034830d33a",
+      "exact_group": "ef93bb9c4ecd3319a32617ec364642d8219f2279fd3d8f87976542034830d33a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c82af68872613a8ff6dd10f0fca433efc694dfd3cfed099166f4bda04fdb6ee8",
+      "path": "buggy_contracts/tx.origin/buggy_14.sol",
+      "source_hash": "517678c7d648e6db9c9f7ac1bed663d03db126847a055db5735f090c684ad422",
+      "exact_group": "517678c7d648e6db9c9f7ac1bed663d03db126847a055db5735f090c684ad422",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3e9758223c8954d3678df39438ec09e78e881f15d48ce67c35e3604c537da886",
+      "path": "buggy_contracts/tx.origin/buggy_15.sol",
+      "source_hash": "5b114255f8da2572ff28770d772ba9f6b7404f2e1544ea45ce89d71c51869520",
+      "exact_group": "5b114255f8da2572ff28770d772ba9f6b7404f2e1544ea45ce89d71c51869520",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "edd68c710a31827dd77e345a145b130ab2e131b4466055b7cbdd153ab7c58c4d",
+      "path": "buggy_contracts/tx.origin/buggy_16.sol",
+      "source_hash": "01c1a4b4748a9ba2dd811115a23b1a772511b5fb3d8f2d3eb270016af602b561",
+      "exact_group": "01c1a4b4748a9ba2dd811115a23b1a772511b5fb3d8f2d3eb270016af602b561",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "6560d036c3457a628b27638f2ceb3fb579515ff8c5b534d6c9b7914a045f633e",
+      "path": "buggy_contracts/tx.origin/buggy_17.sol",
+      "source_hash": "788160484c1842be9e759d3902f425af925f0299c39ac61e876a765430d296da",
+      "exact_group": "788160484c1842be9e759d3902f425af925f0299c39ac61e876a765430d296da",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "268cfebfb5cbf9b832440ae584c63aa86618956b2d2c3681600cf315e0ba94a1",
+      "path": "buggy_contracts/tx.origin/buggy_18.sol",
+      "source_hash": "d8505eecd2d5acd06a30006b1e163a08e5bc3a7918c69c86f809c4e9bdeb8ad4",
+      "exact_group": "d8505eecd2d5acd06a30006b1e163a08e5bc3a7918c69c86f809c4e9bdeb8ad4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "23eb1a866da3e6dabccee953d1aad30b2d35d91cd7963cd9c38b5c34e215152d",
+      "path": "buggy_contracts/tx.origin/buggy_19.sol",
+      "source_hash": "4acf0d793c74383045ccc83d6b8da68992a1fe3a9970975f4ef5601686d2fa43",
+      "exact_group": "4acf0d793c74383045ccc83d6b8da68992a1fe3a9970975f4ef5601686d2fa43",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a7f3ff5a19c10dbacdd1a9cb479d638546fede174ec9144a321d9c516d58f379",
+      "path": "buggy_contracts/tx.origin/buggy_2.sol",
+      "source_hash": "2e1677e0a51e74bc0bcbc21bd83dfb29625521c56d2c8e1568cbbf10ed1f2bc3",
+      "exact_group": "2e1677e0a51e74bc0bcbc21bd83dfb29625521c56d2c8e1568cbbf10ed1f2bc3",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "11a430fae06940d2f6c841229bd6078279aa144583ffd9bc15e4e4e816e3ac23",
+      "path": "buggy_contracts/tx.origin/buggy_20.sol",
+      "source_hash": "05c8e66580eea0f1c776a153e2ca3cbda486d4e70d5b8ed5689ba3479940ffc9",
+      "exact_group": "05c8e66580eea0f1c776a153e2ca3cbda486d4e70d5b8ed5689ba3479940ffc9",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d25f634db68d307cde61aa2c94eb5ebb31c8a8f7cce9118da0adb2f5bc40ec76",
+      "path": "buggy_contracts/tx.origin/buggy_21.sol",
+      "source_hash": "a56027eab5cd86b394c4af105aa36f7fc91f24aefa636eaa2b640eb164a0402f",
+      "exact_group": "a56027eab5cd86b394c4af105aa36f7fc91f24aefa636eaa2b640eb164a0402f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3297dea811f46d4a3b9fed6de7155fd9a21b10a5fbed35c0b0c796835b82960c",
+      "path": "buggy_contracts/tx.origin/buggy_22.sol",
+      "source_hash": "fe9c3fddfc9d98c90437e2fba629dd60d1f3c7216c0f8986a638676bfd9771b4",
+      "exact_group": "fe9c3fddfc9d98c90437e2fba629dd60d1f3c7216c0f8986a638676bfd9771b4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "69f3e6e4be840da19bca9285e8a3e7b5b823f3924424c62254011f96537abfbd",
+      "path": "buggy_contracts/tx.origin/buggy_23.sol",
+      "source_hash": "4493ccbe224cf58cfe829b21c7c9e479132f4b0d1a14dc4a857c7a7f95bbe9d6",
+      "exact_group": "4493ccbe224cf58cfe829b21c7c9e479132f4b0d1a14dc4a857c7a7f95bbe9d6",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8bb11ff582d631d107bf4cdf1c140f6d46ae04d3042c5a9e19f85cd17ee42f70",
+      "path": "buggy_contracts/tx.origin/buggy_24.sol",
+      "source_hash": "1c5ac378add0c2d531237ca87366e49101a7002528c81a90f8355d9bc66c2a4b",
+      "exact_group": "1c5ac378add0c2d531237ca87366e49101a7002528c81a90f8355d9bc66c2a4b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c2e9282c2fb41b6fe6479cd116447e18504c9f927b892a8ce5dba043daf0f2ba",
+      "path": "buggy_contracts/tx.origin/buggy_25.sol",
+      "source_hash": "884076f2a6ba0ab1ba98ff433d50a65e7b629991cf8e8541092a97d6c37faa02",
+      "exact_group": "884076f2a6ba0ab1ba98ff433d50a65e7b629991cf8e8541092a97d6c37faa02",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "9d92ca71f450d96b153fba540e6d78b5184cced434fd3400895bb4160bb84093",
+      "path": "buggy_contracts/tx.origin/buggy_26.sol",
+      "source_hash": "129a0b4301ccaaba94cb50772fbfefe574f59ee088373a03380faa25ea0f6d74",
+      "exact_group": "129a0b4301ccaaba94cb50772fbfefe574f59ee088373a03380faa25ea0f6d74",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "6c6c68f5953ac9c51c05f623d9b8676eecde288ca9ee9eef3da0a38a7771fa0a",
+      "path": "buggy_contracts/tx.origin/buggy_27.sol",
+      "source_hash": "9303069fc1046277df405eae6053f9a09e8bd536e2859702de1edce333c76e23",
+      "exact_group": "9303069fc1046277df405eae6053f9a09e8bd536e2859702de1edce333c76e23",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a51af8bf016f2adcad4ce0431e6b14c07223547397168f37e7f13b7dccf4196e",
+      "path": "buggy_contracts/tx.origin/buggy_28.sol",
+      "source_hash": "491b8f8cc3f11bdea6b745a5e878ac6ea9f84cc61739456456a031a339b7af44",
+      "exact_group": "491b8f8cc3f11bdea6b745a5e878ac6ea9f84cc61739456456a031a339b7af44",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e1e2ad7b11d370fa93b45d4b5caacbf364243a19241eac0612c09f7474bf6316",
+      "path": "buggy_contracts/tx.origin/buggy_29.sol",
+      "source_hash": "ca020711c077a3052a10499a2f49209f52e39384409016f57d06e767020fbdb8",
+      "exact_group": "ca020711c077a3052a10499a2f49209f52e39384409016f57d06e767020fbdb8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "386ca9d8ac0364c2b5106c9fdcd1db1f3f6114b67413988cb37c44c391d0f698",
+      "path": "buggy_contracts/tx.origin/buggy_3.sol",
+      "source_hash": "b5b60378a837403ab39cdfd51c276a4312225acf42f73cbda52f5f4d06449f3a",
+      "exact_group": "b5b60378a837403ab39cdfd51c276a4312225acf42f73cbda52f5f4d06449f3a",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0ea3980e99cb982b2ce5e19f57a22551a02142f6acdc8788ff5d07e8f9e5791a",
+      "path": "buggy_contracts/tx.origin/buggy_30.sol",
+      "source_hash": "afbb76650f23d7e9fc5ba07e735c08c4ff6a80ca914ae5fc33491a4f47ef05a9",
+      "exact_group": "afbb76650f23d7e9fc5ba07e735c08c4ff6a80ca914ae5fc33491a4f47ef05a9",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "78dc2efe47d261bb8d955c383d66e079725d2ad4ef25db3d58b7736d14ed3210",
+      "path": "buggy_contracts/tx.origin/buggy_31.sol",
+      "source_hash": "8d5abfe19c1199891fdc34853d92b7cef9cab4bc9859c66cfea281fc765cedad",
+      "exact_group": "8d5abfe19c1199891fdc34853d92b7cef9cab4bc9859c66cfea281fc765cedad",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b0fd69efa5b5aecd6f9dd63eebecee832fa2958785e7b9cff2ffa59492adb1cb",
+      "path": "buggy_contracts/tx.origin/buggy_32.sol",
+      "source_hash": "850f1b2de2a4bea0030726cee6cc81eeba108af2b53f129d5b7f4755ba15e674",
+      "exact_group": "850f1b2de2a4bea0030726cee6cc81eeba108af2b53f129d5b7f4755ba15e674",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8a474f187ebea5eef73c1a68e751e6ee6e1aba5e1ca30e10ad50dee4e0dc0e43",
+      "path": "buggy_contracts/tx.origin/buggy_33.sol",
+      "source_hash": "5df3b24de3ddded0edafe8a337916892b86f0d87ab78ffa15fd0618588594bc0",
+      "exact_group": "5df3b24de3ddded0edafe8a337916892b86f0d87ab78ffa15fd0618588594bc0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0a2b081e189fbab2952dc24a71326bcede6e8082fe4f2f4ce5266378bc9a2527",
+      "path": "buggy_contracts/tx.origin/buggy_34.sol",
+      "source_hash": "afe641e5e3e75ae90778bb8e27ca9b0af76c4d3f30ec4615b051a718f4646eb2",
+      "exact_group": "afe641e5e3e75ae90778bb8e27ca9b0af76c4d3f30ec4615b051a718f4646eb2",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b20f846971474e3ccbc49e618dedf4220854920f06726d1ff1d412858c9bb2f1",
+      "path": "buggy_contracts/tx.origin/buggy_35.sol",
+      "source_hash": "cbceb18bb70b1400dee01790610b829e7eae7b6be8588d39b75b16aefbb6d209",
+      "exact_group": "cbceb18bb70b1400dee01790610b829e7eae7b6be8588d39b75b16aefbb6d209",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2988006ab216636af82fcd5e065a464018f63b7239efdb4be25b8b29bebec6da",
+      "path": "buggy_contracts/tx.origin/buggy_36.sol",
+      "source_hash": "fe9c3fddfc9d98c90437e2fba629dd60d1f3c7216c0f8986a638676bfd9771b4",
+      "exact_group": "fe9c3fddfc9d98c90437e2fba629dd60d1f3c7216c0f8986a638676bfd9771b4",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "df41bf15c235b6c2e6d376bf6fef2cab4fbbf82b9b7aa0666c474b32900478bd",
+      "path": "buggy_contracts/tx.origin/buggy_37.sol",
+      "source_hash": "955056ee312363bf1c972827fb2911a63ff6c6377a92151dcf367085a739447b",
+      "exact_group": "955056ee312363bf1c972827fb2911a63ff6c6377a92151dcf367085a739447b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b3e34e7d0db9635abb24b0d44867efbf840bbc24289e07e147eeb05007029074",
+      "path": "buggy_contracts/tx.origin/buggy_38.sol",
+      "source_hash": "1a63d09fb31eb3da0b0e68a24454a99057f08702f46608db6260e26ab18cb45c",
+      "exact_group": "1a63d09fb31eb3da0b0e68a24454a99057f08702f46608db6260e26ab18cb45c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "90a6ea24122d06a631d66683400b7ce1ea3d08e268265b77b04727bae17fd7ed",
+      "path": "buggy_contracts/tx.origin/buggy_39.sol",
+      "source_hash": "3c836a6e9654d1ba27d00371886fbef0cc6f47a3b6c52bb394bf776ab5d52651",
+      "exact_group": "3c836a6e9654d1ba27d00371886fbef0cc6f47a3b6c52bb394bf776ab5d52651",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e86686262f6c7f7f167d4172a0ef61ac087e908764e50e87221e9975e9745995",
+      "path": "buggy_contracts/tx.origin/buggy_4.sol",
+      "source_hash": "1c963c08a66e6516d74a296676631091f82a275d88a8a1539eb7de6ba119114e",
+      "exact_group": "1c963c08a66e6516d74a296676631091f82a275d88a8a1539eb7de6ba119114e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "925faa6d531fe675e5a2de3e5719e0dc888c113313fb551e3aa1ae97931a8d8c",
+      "path": "buggy_contracts/tx.origin/buggy_40.sol",
+      "source_hash": "41b0d0180a5e0d00a61616c6cf79c387f0fd5aa685d44b87bc3c455eb007d7d3",
+      "exact_group": "41b0d0180a5e0d00a61616c6cf79c387f0fd5aa685d44b87bc3c455eb007d7d3",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "0468c7d5946d1206093bf2faa23d2783e0f2cb2b850c27d86aee716e7de9ce08",
+      "path": "buggy_contracts/tx.origin/buggy_41.sol",
+      "source_hash": "aad0e6bc93b30cfeea527ceba324a6f95ff4e9bbe9c1d17623a9c1cc6f7fe4a7",
+      "exact_group": "aad0e6bc93b30cfeea527ceba324a6f95ff4e9bbe9c1d17623a9c1cc6f7fe4a7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "1739c9fedc34fa488dc7fd2523d523be0d18d711693031b00fefc9d77e3ebedc",
+      "path": "buggy_contracts/tx.origin/buggy_42.sol",
+      "source_hash": "f9ec7afaadb98c06f45626eb4d7db54062c283e6a58e6586bdd3c5146ec41a12",
+      "exact_group": "f9ec7afaadb98c06f45626eb4d7db54062c283e6a58e6586bdd3c5146ec41a12",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8aa367a5bd1dec31e482a890430e124bac2fda9dc179493a36b2f7ff2b8fe2c5",
+      "path": "buggy_contracts/tx.origin/buggy_43.sol",
+      "source_hash": "7e0232977cf6d105598c2b137ffa185bd4bac95da9cf4e40925957c4744f77f2",
+      "exact_group": "7e0232977cf6d105598c2b137ffa185bd4bac95da9cf4e40925957c4744f77f2",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "91bd03eeb333d994f2758bb73033034ce855f84d45872057706559c7198281ca",
+      "path": "buggy_contracts/tx.origin/buggy_44.sol",
+      "source_hash": "7b51aea36e514688b8459c71546cd3f241b423a6e016ec6786651de84cd685e8",
+      "exact_group": "7b51aea36e514688b8459c71546cd3f241b423a6e016ec6786651de84cd685e8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "6fb1adf34bd1543334adbb26ee20c0be8c9c39744d4b89a90b195744533e8507",
+      "path": "buggy_contracts/tx.origin/buggy_45.sol",
+      "source_hash": "20a5500adf14cb8eeeb3edb432413408ede4b46cba01d459f1ca6ef24cd25382",
+      "exact_group": "20a5500adf14cb8eeeb3edb432413408ede4b46cba01d459f1ca6ef24cd25382",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "979b70cb79071668cf885235d781a3266abe7ae0a551f59564d6155c13c4629b",
+      "path": "buggy_contracts/tx.origin/buggy_46.sol",
+      "source_hash": "e15b2f94a241d14be5e9ee4f0a4c15d011ab629179d5a796cca47a49468eaa69",
+      "exact_group": "e15b2f94a241d14be5e9ee4f0a4c15d011ab629179d5a796cca47a49468eaa69",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "fe3e7aecd73c7675b35ee834e96a0921b5fd0651c104c424ea99414aa101d161",
+      "path": "buggy_contracts/tx.origin/buggy_47.sol",
+      "source_hash": "eac2fdbab5e24c8d8e6889afc0e4d8d9c1dfb6b8181c6ffd9c0e84dfe5d4d348",
+      "exact_group": "eac2fdbab5e24c8d8e6889afc0e4d8d9c1dfb6b8181c6ffd9c0e84dfe5d4d348",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e4affcddf7b32db55c433a1b66c3b96edbc13f705311554d4d1ba42ba4bd27ae",
+      "path": "buggy_contracts/tx.origin/buggy_48.sol",
+      "source_hash": "f59bf750df27f14f4657dce4b7876fd4308f5d6202974962c6bd55393bea07e1",
+      "exact_group": "f59bf750df27f14f4657dce4b7876fd4308f5d6202974962c6bd55393bea07e1",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "06c5a8ccce86a810e1e61cf2a82806ba02c01ec361d950589a67069fe0605e21",
+      "path": "buggy_contracts/tx.origin/buggy_49.sol",
+      "source_hash": "00fdccd8d219a6a854ccee41e813bff6c8a1a8aaf98177c9be40a3036400e23d",
+      "exact_group": "00fdccd8d219a6a854ccee41e813bff6c8a1a8aaf98177c9be40a3036400e23d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a5d253ebb686ca38bf942970c1b0b5e1cec50e2b4de01d5fd52386b7d3d20167",
+      "path": "buggy_contracts/tx.origin/buggy_5.sol",
+      "source_hash": "6e6ca60a060f717efc7afb29066aef575969f71e4e38b9ecb90e0426e5fce19d",
+      "exact_group": "6e6ca60a060f717efc7afb29066aef575969f71e4e38b9ecb90e0426e5fce19d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "63b9445f8234cf6056486ce6162012839e05c8ce43791f72589a810e6dfe72a2",
+      "path": "buggy_contracts/tx.origin/buggy_50.sol",
+      "source_hash": "c90006c8a348d37e9fca70098a17e57bcccf6e314a4f6cc640d2e32d887dcf26",
+      "exact_group": "c90006c8a348d37e9fca70098a17e57bcccf6e314a4f6cc640d2e32d887dcf26",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "50e42fe926c0f73f205ecb1fb0c8ee449c804fedb69dfc2f1c7fb502f7b3e29e",
+      "path": "buggy_contracts/tx.origin/buggy_6.sol",
+      "source_hash": "42ff356fd98fd142cec6d65382226a716f579e5465ad72b78b295e1cee0ec948",
+      "exact_group": "42ff356fd98fd142cec6d65382226a716f579e5465ad72b78b295e1cee0ec948",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b96ce54cf9f1636d08d4664e2fafe9a1d3ed3a072bd4717e8c7c0f5b53d71409",
+      "path": "buggy_contracts/tx.origin/buggy_7.sol",
+      "source_hash": "0a5d21c387405e2a5ad6ac20dfa11099fc3eaf41c87cc3e35c9e73d3a08b0b9e",
+      "exact_group": "0a5d21c387405e2a5ad6ac20dfa11099fc3eaf41c87cc3e35c9e73d3a08b0b9e",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "23a43dc86d5e8536edf62d1bbf3bc18e37c8051387a6e5c47b82c580022eda57",
+      "path": "buggy_contracts/tx.origin/buggy_8.sol",
+      "source_hash": "3179382f23e8c27530de75de60ad6ec31d70cacf44bb8d7c961fd5b6fc4c5eee",
+      "exact_group": "3179382f23e8c27530de75de60ad6ec31d70cacf44bb8d7c961fd5b6fc4c5eee",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "010f75fc4406a0e9a0fe8baa688d1210cd68289fe217656e577594d16b58468a",
+      "path": "buggy_contracts/tx.origin/buggy_9.sol",
+      "source_hash": "232c39bd535fbc8bbc17bdde5d9a7fc748a86a2658096e5612700f79ee1c0c65",
+      "exact_group": "232c39bd535fbc8bbc17bdde5d9a7fc748a86a2658096e5612700f79ee1c0c65",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "051e3e38560147ece2b202975716722e314d9433d12475ecf0cb3d1be22ba30e",
+      "path": "safe_contracts/safe_01_ERC20.sol",
+      "source_hash": "070a12c720cc801e977c72d6fcf63aa842c8d210b42f31f2748fe17a747d549f",
+      "exact_group": "070a12c720cc801e977c72d6fcf63aa842c8d210b42f31f2748fe17a747d549f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "da740229299c24b1537536d0f0c24ace0e2074f3a6e20c46e80e453f68e7655a",
+      "path": "safe_contracts/safe_02_ERC20Burnable.sol",
+      "source_hash": "4813528f28e227b1b56e9360607eaeab80087322c20b00fe1b0771a0209633e6",
+      "exact_group": "4813528f28e227b1b56e9360607eaeab80087322c20b00fe1b0771a0209633e6",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "071b116c2c37f5defa4a788783e9e163471e829b473adc12db89faa1dbb52a4c",
+      "path": "safe_contracts/safe_03_ERC20Capped.sol",
+      "source_hash": "179daa04ef8f92a2ad789cf18042d913d913c09bc1b6b803e6e26c4d57ce3db5",
+      "exact_group": "179daa04ef8f92a2ad789cf18042d913d913c09bc1b6b803e6e26c4d57ce3db5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "992ba516f562aef11715edb4a9def83c81d912c1ed94e84e9321e0c2d8df22b6",
+      "path": "safe_contracts/safe_04_ERC20Pausable.sol",
+      "source_hash": "1d7efe0b8c4312df658116ec9d256d2de58e9f7a18029b78a1a4834f913999b6",
+      "exact_group": "1d7efe0b8c4312df658116ec9d256d2de58e9f7a18029b78a1a4834f913999b6",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "7d90d0ef34251ba069be0efdfddfbea31ed081d061d8346be2be6bd64ea0b78d",
+      "path": "safe_contracts/safe_05_ERC20Votes.sol",
+      "source_hash": "c7c588e198b66be1c4b0aef8fd13ee9d7c49a5fede0dd54a7028ee9661d96f56",
+      "exact_group": "c7c588e198b66be1c4b0aef8fd13ee9d7c49a5fede0dd54a7028ee9661d96f56",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e20c403cbb0268f69ca96ee69fd01187670969628f19e6f9d2fd5b16b7b0639a",
+      "path": "safe_contracts/safe_06_ERC20FlashMint.sol",
+      "source_hash": "432f93a589060706a004d6990d782fec254a32a35fa4a79ff84e6a152ae9953c",
+      "exact_group": "432f93a589060706a004d6990d782fec254a32a35fa4a79ff84e6a152ae9953c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "33091484286969f73253092533c33b16dc9d27efb13f8f5bc8461c8de74515a7",
+      "path": "safe_contracts/safe_07_ERC20Wrapper.sol",
+      "source_hash": "c7969d8008799f7168bd465aaf30aad6cf83e05a51a4a2e78a087c97548f1904",
+      "exact_group": "c7969d8008799f7168bd465aaf30aad6cf83e05a51a4a2e78a087c97548f1904",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "7bfee677acb28d6da7450b2cc06ed5cd26ac9f80f882358f315cb9e5fe0a8dfd",
+      "path": "safe_contracts/safe_08_ERC4626.sol",
+      "source_hash": "ca5a5ec2ef6eab445e9dc0022a43dc6b2fb6ea2cc0fa7c04ca41a7ff803186c7",
+      "exact_group": "ca5a5ec2ef6eab445e9dc0022a43dc6b2fb6ea2cc0fa7c04ca41a7ff803186c7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "df04c9cf3d15849ade7c45dbd4fe531eda6f718541b60a3faa525a27fd394c1b",
+      "path": "safe_contracts/safe_09_IERC20.sol",
+      "source_hash": "78ab3144a811409a2aac10182baf44af38c909ed28dde25fa91b7c961b946717",
+      "exact_group": "78ab3144a811409a2aac10182baf44af38c909ed28dde25fa91b7c961b946717",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d513001151281684916397e19936e8b4385c3e96cd66b61ea136e50478967c8d",
+      "path": "safe_contracts/safe_10_ERC20Permit.sol",
+      "source_hash": "0935eebdb001eb106dfdd4de36baa55ad54625cc19d65dde24b0da80aff22480",
+      "exact_group": "0935eebdb001eb106dfdd4de36baa55ad54625cc19d65dde24b0da80aff22480",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8c1b41b9bb02b1d9ea7c712c52a879d89c88a6b517aca1aa06338d436acc67f5",
+      "path": "safe_contracts/safe_11_ERC721.sol",
+      "source_hash": "e8b43493d9e36b915387b413417314560a3b671cc4a9f0759616215d03807d46",
+      "exact_group": "e8b43493d9e36b915387b413417314560a3b671cc4a9f0759616215d03807d46",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c36f91fd1f3e14856c7bd3e67e6c696147645b6c059085af8b86445c046daa99",
+      "path": "safe_contracts/safe_12_ERC721Burnable.sol",
+      "source_hash": "6ca248dfe86d1c0ce15e8aa7bb0ca64645b547ad578fe37166483d145421e6c7",
+      "exact_group": "6ca248dfe86d1c0ce15e8aa7bb0ca64645b547ad578fe37166483d145421e6c7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "19716c3a521ceedae73a057f4905fde80feeb44d9c36975ffaa3a20e2f30e183",
+      "path": "safe_contracts/safe_13_ERC721Pausable.sol",
+      "source_hash": "85e5e348a1efc0c4f9376c82a2f808f75e9dc60439ce67a299439bdfbf3091c7",
+      "exact_group": "85e5e348a1efc0c4f9376c82a2f808f75e9dc60439ce67a299439bdfbf3091c7",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "d36964894525063fb4814574d6c2fde934e0d89b1f65671a7b752482087bb04c",
+      "path": "safe_contracts/safe_14_ERC721URIStorage.sol",
+      "source_hash": "bed9ebcf6b257595aa0c1b0e6af069104262972bba0cc2dc349793babec9d100",
+      "exact_group": "bed9ebcf6b257595aa0c1b0e6af069104262972bba0cc2dc349793babec9d100",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "8c2fe3b723336a2ff0d8d25b83c9911c40a603b85c35e2e08e0540f90516b646",
+      "path": "safe_contracts/safe_15_ERC721Enumerable.sol",
+      "source_hash": "bfc07ea6b4afc7db6ac1e28502c7430f169f0b395009da00c5f99bad3919bd94",
+      "exact_group": "bfc07ea6b4afc7db6ac1e28502c7430f169f0b395009da00c5f99bad3919bd94",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "db317592a13061638abf9fefe069cb922d134e8f4fbd5e85ef9a9232c314604c",
+      "path": "safe_contracts/safe_16_ERC721Royalty.sol",
+      "source_hash": "e9ebdc41dfab4177ec93a3541a407f34a3b1e7631165b7d5f96b7c94275c0743",
+      "exact_group": "e9ebdc41dfab4177ec93a3541a407f34a3b1e7631165b7d5f96b7c94275c0743",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "19a1c65ca3fd92ed4d3f87baa064cca674fc308c5c5a3959379b57a5cf60442c",
+      "path": "safe_contracts/safe_17_ERC721Consecutive.sol",
+      "source_hash": "02254a5ba74e89195aa6d808780ddd1ddb5013dda9cc1a1eb140aea6d24aff42",
+      "exact_group": "02254a5ba74e89195aa6d808780ddd1ddb5013dda9cc1a1eb140aea6d24aff42",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ad27e8674467ca6492e86a08d239d8e0e911d6fb0213ed370954c984bada9b93",
+      "path": "safe_contracts/safe_18_IERC721.sol",
+      "source_hash": "8d164ab2320f4635fe400690e801cf203206211ff03beed0d562d775421df926",
+      "exact_group": "8d164ab2320f4635fe400690e801cf203206211ff03beed0d562d775421df926",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "05cfe1e9ab485377e997bafaf58b1573aae2ac7ff79f5e32980faca794d695ed",
+      "path": "safe_contracts/safe_19_ERC1155.sol",
+      "source_hash": "9625066398e46e51cd5b7020bb284507c1f14445060aa1ce2f1ab03442baf3ec",
+      "exact_group": "9625066398e46e51cd5b7020bb284507c1f14445060aa1ce2f1ab03442baf3ec",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "711443d5a7123853f7f3665f6a2880d7c9bac1e3028fe3a3188e17862713cd36",
+      "path": "safe_contracts/safe_20_ERC1155Burnable.sol",
+      "source_hash": "8c9b33d36e3a050c5e05d33fdc79f67daf937921e324d07948eb5045031c2f22",
+      "exact_group": "8c9b33d36e3a050c5e05d33fdc79f67daf937921e324d07948eb5045031c2f22",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "a69914402ad0e1be6493d41c5bf011d7366b9dad91cb99770dfda8b2691c96c1",
+      "path": "safe_contracts/safe_21_ERC1155Pausable.sol",
+      "source_hash": "eb72d0162e063ff524f4eaee7d3f4b7af392f1acfa4c6525ec03403b8ef6d57f",
+      "exact_group": "eb72d0162e063ff524f4eaee7d3f4b7af392f1acfa4c6525ec03403b8ef6d57f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "6fbb7961e4f6129ac789ae3590191d513303b64a6fe541e3be4347dd40b46b2f",
+      "path": "safe_contracts/safe_22_ERC1155Supply.sol",
+      "source_hash": "aa1023eac540453abc1e440b4fb10d0677da24a9b6ed10f81eafe9d33e257617",
+      "exact_group": "aa1023eac540453abc1e440b4fb10d0677da24a9b6ed10f81eafe9d33e257617",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "012765e588affc92fe0fe662ddf409461bbb8c86552ff1b2fd06ec947cb7530a",
+      "path": "safe_contracts/safe_23_Ownable.sol",
+      "source_hash": "5c09d8187f108928625539dafa18e3df2ac0fd8bac43cb13d2d1d071926132c8",
+      "exact_group": "5c09d8187f108928625539dafa18e3df2ac0fd8bac43cb13d2d1d071926132c8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "b94a4d98d0258a8fdff156bf13306c90dd7dd6bdbd55f1a686937a9ed1c2610e",
+      "path": "safe_contracts/safe_24_Ownable2Step.sol",
+      "source_hash": "c77b1376d27ffdb641b175cd115eb651ed5fa8bf573dda46e3eb08b0ba1bf5ea",
+      "exact_group": "c77b1376d27ffdb641b175cd115eb651ed5fa8bf573dda46e3eb08b0ba1bf5ea",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "31f0b59a8d4ae44195cbc16f82ceb30a790c6dc3a000eb51cab85c90724577fa",
+      "path": "safe_contracts/safe_25_AccessControl.sol",
+      "source_hash": "91eed0f4ff216148846c3f0b51ff3058218abe726c3087adc893c5065b4872a0",
+      "exact_group": "91eed0f4ff216148846c3f0b51ff3058218abe726c3087adc893c5065b4872a0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "20a2b6907bed08a5df818242fd14a6ec27676d44605e6b9092ce7a779f1d5229",
+      "path": "safe_contracts/safe_26_IAccessControl.sol",
+      "source_hash": "164e8abce155919e340be7149e50603a288577aaa3450706b17b5ebf233c86fb",
+      "exact_group": "164e8abce155919e340be7149e50603a288577aaa3450706b17b5ebf233c86fb",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c8891b19573cc9db06eceee5525a328afe3f1f2af53ff7ef24e427885c1cc0b0",
+      "path": "safe_contracts/safe_27_AccessControlDefaultAdminRules.sol",
+      "source_hash": "9efb020a65d48972f8b8e3af2bd01e24735a21964cbc6c8f551f0857209883ab",
+      "exact_group": "9efb020a65d48972f8b8e3af2bd01e24735a21964cbc6c8f551f0857209883ab",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "25b7a77da6598cff0ddba098538d94799d80ef90c15b3999b8451193d84be828",
+      "path": "safe_contracts/safe_28_AccessControlEnumerable.sol",
+      "source_hash": "eca11f4c6708159b978f60fc21abf8da70192a3b98fbd62ed683cb37956f3771",
+      "exact_group": "eca11f4c6708159b978f60fc21abf8da70192a3b98fbd62ed683cb37956f3771",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "e48d020be79f5a585c148902d026094db62c833cd62f22e878de67a8fefe5ce7",
+      "path": "safe_contracts/safe_29_ReentrancyGuard.sol",
+      "source_hash": "440078f7646b8d3d368f6fd854a892ab7eb77b1455202108b3b17d63dd7e59a0",
+      "exact_group": "440078f7646b8d3d368f6fd854a892ab7eb77b1455202108b3b17d63dd7e59a0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "05b5ec8c1fc46d5183457fed7a3f6708bf1e51e2dedb746b1b3fc18ac985a61d",
+      "path": "safe_contracts/safe_30_Pausable.sol",
+      "source_hash": "7aa3d82bea8dc5ba1121ddb4bb3a2930c9e313f63a128574ffbe093f0e0c94a0",
+      "exact_group": "7aa3d82bea8dc5ba1121ddb4bb3a2930c9e313f63a128574ffbe093f0e0c94a0",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "2d3d29fa02e5aacb030a6628a8eed1473cb629cc80b1ff0a7b64db3a178cc392",
+      "path": "safe_contracts/safe_31_Address.sol",
+      "source_hash": "9482d8b903f12ba87e1c2b6451e0c7b763d23ed968e8536f65826b58aa48c0bc",
+      "exact_group": "9482d8b903f12ba87e1c2b6451e0c7b763d23ed968e8536f65826b58aa48c0bc",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "6cb222e3f3790715ba3912d40ce5e90dbbc1be1ae5dbd17dae5c5e50404d8a17",
+      "path": "safe_contracts/safe_32_Multicall.sol",
+      "source_hash": "6b00e6f265f39e6b9d24166fdd221ebf3d49b811846f72c4cc8ebb0577a4db63",
+      "exact_group": "6b00e6f265f39e6b9d24166fdd221ebf3d49b811846f72c4cc8ebb0577a4db63",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4b5df9c1b31ad57322cb9bb32dd39c9f3a5d6bbb317580e3a615b430a334a0ef",
+      "path": "safe_contracts/safe_33_Context.sol",
+      "source_hash": "2f0ded3bd5142d4d8e2ee4bb83408ec2885143b0551a729ee138e2a5271c2f2d",
+      "exact_group": "2f0ded3bd5142d4d8e2ee4bb83408ec2885143b0551a729ee138e2a5271c2f2d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "fa0d5cb9582c3eef6d501192d4340a43872c30417ea31e9c90b92580c061dcdf",
+      "path": "safe_contracts/safe_34_ShortStrings.sol",
+      "source_hash": "b2afa1972e26562f3b277bcb7bc0b21a9c29088848038794b79fdb76256fd652",
+      "exact_group": "b2afa1972e26562f3b277bcb7bc0b21a9c29088848038794b79fdb76256fd652",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "cc37cbd9c6476ca865447f482338e2adb1847b2388cc55bf8ce34bd70cf105c4",
+      "path": "safe_contracts/safe_35_EIP712.sol",
+      "source_hash": "309e10e3e40ce81de7639a612c656ec2c6e394c832b369f7ea0f3932edebc56d",
+      "exact_group": "309e10e3e40ce81de7639a612c656ec2c6e394c832b369f7ea0f3932edebc56d",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "5908440596c567980311a24800effbf0617fb367d7c8bc7bea6930e64ad02c7e",
+      "path": "safe_contracts/safe_36_ECDSA.sol",
+      "source_hash": "968dc42cb08662a9e41ec454d2e446d25defc89f9b5cfa17e335a2d2ab013c46",
+      "exact_group": "968dc42cb08662a9e41ec454d2e446d25defc89f9b5cfa17e335a2d2ab013c46",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "7ad9b53094086a4861bcbdcf5140af60400423639e3d9b2fb47323a68552d41b",
+      "path": "safe_contracts/safe_37_Governor.sol",
+      "source_hash": "be0fa8caccc4c351f9e7c5e55211369a354c2b6d1b8d1cf51dce9890c0bdeab6",
+      "exact_group": "be0fa8caccc4c351f9e7c5e55211369a354c2b6d1b8d1cf51dce9890c0bdeab6",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "71b301d44ae666ec7c3765ea7febbdca5f74b4d7d79eeb3f9c864b5039be9c94",
+      "path": "safe_contracts/safe_38_TimelockController.sol",
+      "source_hash": "a288526b6526796837dd8638c00c976edd2416d90f86139eb8e66d1f35db43d2",
+      "exact_group": "a288526b6526796837dd8638c00c976edd2416d90f86139eb8e66d1f35db43d2",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "c63611fbaddd53ad655c4b1f0925e15635dfd2a4aa6cc7b4539cb9fbb7340e53",
+      "path": "safe_contracts/safe_39_GovernorCountingSimple.sol",
+      "source_hash": "ccd37e488e08f41a1b3fa8fd22fe8a3e3d087671cc2feb91af5da3d3300c9307",
+      "exact_group": "ccd37e488e08f41a1b3fa8fd22fe8a3e3d087671cc2feb91af5da3d3300c9307",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "53c196eb353dc5e2a4437097c7aa1b2e99a658dc970d7b672fd1dbda42d778da",
+      "path": "safe_contracts/safe_40_GovernorVotes.sol",
+      "source_hash": "0553ea7d4be0391dcf93b7de369a48a603d59f8b5dfbe3cc91ac58a9ebda119c",
+      "exact_group": "0553ea7d4be0391dcf93b7de369a48a603d59f8b5dfbe3cc91ac58a9ebda119c",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "995ebf2dd9624dbba97b3f54072f81c49c64b8de1188c6023a3e8606451cff93",
+      "path": "safe_contracts/safe_41_GovernorTimelockControl.sol",
+      "source_hash": "800946ec2bd10c107af9a3c25bfff893c6b44184ff932add12016a406d760687",
+      "exact_group": "800946ec2bd10c107af9a3c25bfff893c6b44184ff932add12016a406d760687",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "ffcefe5301152a4a6fe2137963ccda91e45cae6cd730014d055b6b40b2361086",
+      "path": "safe_contracts/safe_42_Votes.sol",
+      "source_hash": "a466e0acad6c80db2ff52cf255e664bea30bbfdbe8f5ab92553c28aa25ce967b",
+      "exact_group": "a466e0acad6c80db2ff52cf255e664bea30bbfdbe8f5ab92553c28aa25ce967b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "99f3c153ce4f953555d8d4d47e07d6fb0bf11e1a93ae2ea9fb8a312d9cdff98e",
+      "path": "safe_contracts/safe_43_VestingWalletCliff.sol",
+      "source_hash": "a8209615214339113406608d58579ec600a718edb27931a2a325e46a4947eef8",
+      "exact_group": "a8209615214339113406608d58579ec600a718edb27931a2a325e46a4947eef8",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4ddf7bb7591d963e54e2ee12eee156ff246d435889ce1f524a67ace9b7b80f6c",
+      "path": "safe_contracts/safe_44_VestingWallet.sol",
+      "source_hash": "f5779b9b773d81d28f9bbe307d7afee6e1c62b7a010dcd6efe5bfb0e90d96013",
+      "exact_group": "f5779b9b773d81d28f9bbe307d7afee6e1c62b7a010dcd6efe5bfb0e90d96013",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "bcad07f673dac757b15ccce179368ebc9b03b00f898874daf3626301c8ebfe36",
+      "path": "safe_contracts/safe_45_AccessManaged.sol",
+      "source_hash": "cba5086fd6d70f49c11e179f501a0d5b208328a2b9f8328cd57b5a02c37e7345",
+      "exact_group": "cba5086fd6d70f49c11e179f501a0d5b208328a2b9f8328cd57b5a02c37e7345",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3aaead3ac865c6c54b3e7f416c9271fa46b2b5896c6b545977dcd05a7908bf1f",
+      "path": "safe_contracts/safe_46_AccessManager.sol",
+      "source_hash": "2d7daee15e468c641f3947c4b08e77a9f40dcd43876d850d3cd61dcc37776884",
+      "exact_group": "2d7daee15e468c641f3947c4b08e77a9f40dcd43876d850d3cd61dcc37776884",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "91327e65212f9e4489ca9e8098a809b4138a1730ebcf116b254ab012c9253fa4",
+      "path": "safe_contracts/safe_47_Erc1967Proxy.sol",
+      "source_hash": "f06fb91d8d94f2bdf2d0dc0c799520a7e8cc92df31dd1609072907f08e375d2b",
+      "exact_group": "f06fb91d8d94f2bdf2d0dc0c799520a7e8cc92df31dd1609072907f08e375d2b",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "3f129bbe24460167c49111c67a5bb8dad6d79544112d00fe1d3dc397942f9aee",
+      "path": "safe_contracts/safe_48_TransparentUpgradeableProxy.sol",
+      "source_hash": "3b678b2b644d2853875410a92c6786bbbcac29caceeaebce79ebf29bd06eff5f",
+      "exact_group": "3b678b2b644d2853875410a92c6786bbbcac29caceeaebce79ebf29bd06eff5f",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "39c2df9ab2fd62091ba703485127afd19ecacad6551e4344a5bfe16c6fc9c351",
+      "path": "safe_contracts/safe_49_ProxyAdmin.sol",
+      "source_hash": "646db28cacda2d9447b7dddfc6c0779034891e00bd9e5bea658a785673278294",
+      "exact_group": "646db28cacda2d9447b7dddfc6c0779034891e00bd9e5bea658a785673278294",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "id": "4570830661d4e2fb894bf435732f50edafebb2a02891691ca26c796511e2a967",
+      "path": "safe_contracts/safe_50_UUPSUpgradeable.sol",
+      "source_hash": "137e37d30e0321d244e0db6d23a59e970c8ad32e13852e6740d02d41f47a1dc5",
+      "exact_group": "137e37d30e0321d244e0db6d23a59e970c8ad32e13852e6740d02d41f47a1dc5",
+      "project_group": null,
+      "types": null,
+      "split": null,
+      "review_status": "UNREVIEWED"
+    }
+  ],
+  "duplicate_groups": {
+    "a1603ce16825ca3979078d16a9f1ed4ddc6e6e3eab28dabbb0c3db73a4a485cf": [
+      "a5344eb2b150f69a412f222949fa2f8631ec353065a11703be0b2cdfe4171373",
+      "b67795c7e5f7e9c1c39add2f95c8fecd67a3f133b1fd926cbd5befb3b817404d"
+    ],
+    "64addaa381f3df0852487c66cc85730aa67affd7cd84f4fe616ff9d2ec9826fb": [
+      "8a7cf222c2251faa403742bbafb96fd671f63285198d47e27f9120447d453353",
+      "7df4046016e60ade3a14dfa61792b141cb717af15584f722fb69bde4fd17f9fa"
+    ],
+    "8635b71d6ee6e613a841408a615103274a1fef0d82feaecea4678bc5f31e2ea5": [
+      "d5f5949745628019f4a1e432b6b6c87ad37dfd3604a4995c14be062d15417707",
+      "c1fc567379b2a68a6d9f19fa381f3da599dca50c81a0f2fa3071b0372f9ec5de"
+    ],
+    "82cf79b9605a537334be6891e502acbf48930364ceb8720bfaf190d0e63c35e7": [
+      "5f76659d2f09b484d70461f9f7d55f66f586429b468cead05cd49541dfa03189",
+      "95f0e126d6a9f3751b0feef83c21d26ca1e8a3a39cfb3b948e24ca3cec799f79"
+    ],
+    "28dcec6f89ad30e033f475aa863d0efddbbb733c7854b1fe6d4963d799394ae4": [
+      "10aa688b7614eec6fa434064dded7157ad2ff558f1f1cda7a4846d44ec5a72fc",
+      "3bdf13e1f39dccfcacdcd4ee4feab59720d9242c12c661193a5da29150fd5a6f"
+    ],
+    "0e1a5c1f6c13a24348243ed4cd101acd3cbacfa5374873a421ac9f399a1cea5c": [
+      "ab2795ebd8c589e935495ae4dc288513f0f3221e64dcc18fe464a2e46a1e6865",
+      "73eec4f29d31fd8f08909d0c3edca06c9dba1eeeb2d59cacf6ae864174fe3db1"
+    ],
+    "fe9c3fddfc9d98c90437e2fba629dd60d1f3c7216c0f8986a638676bfd9771b4": [
+      "3297dea811f46d4a3b9fed6de7155fd9a21b10a5fbed35c0b0c796835b82960c",
+      "2988006ab216636af82fcd5e065a464018f63b7239efdb4be25b8b29bebec6da"
+    ]
+  },
+  "limitations": [
+    "仅字节去重，未完成项目谱系和近似克隆审计",
+    "标签和划分待审核"
+  ]
+}

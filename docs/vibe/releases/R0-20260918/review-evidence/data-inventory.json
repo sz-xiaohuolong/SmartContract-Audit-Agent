@@ -1,0 +1,53 @@
+{
+  "captured_at": "2026-09-18T13:54:29.021775+08:00",
+  "test_files": 400,
+  "test_unique_byte_hashes": 393,
+  "category_counts": {
+    "safe_contracts": 50,
+    "buggy_contracts/TOD": 50,
+    "buggy_contracts/tx.origin": 50,
+    "buggy_contracts/Timestamp-Dependency": 50,
+    "buggy_contracts/Re-entrancy": 50,
+    "buggy_contracts/Overflow-Underflow": 50,
+    "buggy_contracts/Unhandled-Exceptions": 50,
+    "buggy_contracts/Unchecked-Send": 50
+  },
+  "kb_documents": 143,
+  "kb_code_blocks_extracted": 143,
+  "duplicate_groups": [
+    [
+      "src/main/resources/testset/buggy_contracts/TOD/buggy_36.sol",
+      "src/main/resources/testset/buggy_contracts/TOD/buggy_22.sol"
+    ],
+    [
+      "src/main/resources/testset/buggy_contracts/tx.origin/buggy_36.sol",
+      "src/main/resources/testset/buggy_contracts/tx.origin/buggy_22.sol"
+    ],
+    [
+      "src/main/resources/testset/buggy_contracts/Timestamp-Dependency/buggy_36.sol",
+      "src/main/resources/testset/buggy_contracts/Timestamp-Dependency/buggy_22.sol"
+    ],
+    [
+      "src/main/resources/testset/buggy_contracts/Re-entrancy/buggy_36.sol",
+      "src/main/resources/testset/buggy_contracts/Re-entrancy/buggy_22.sol"
+    ],
+    [
+      "src/main/resources/testset/buggy_contracts/Overflow-Underflow/buggy_36.sol",
+      "src/main/resources/testset/buggy_contracts/Overflow-Underflow/buggy_22.sol"
+    ],
+    [
+      "src/main/resources/testset/buggy_contracts/Unhandled-Exceptions/buggy_36.sol",
+      "src/main/resources/testset/buggy_contracts/Unhandled-Exceptions/buggy_22.sol"
+    ],
+    [
+      "src/main/resources/testset/buggy_contracts/Unchecked-Send/buggy_36.sol",
+      "src/main/resources/testset/buggy_contracts/Unchecked-Send/buggy_22.sol"
+    ]
+  ],
+  "kb_test_trimmed_exact_matches": [],
+  "limitations": [
+    "未做近似克隆检查",
+    "未做全项目谱系隔离",
+    "不证明排除模型训练污染"
+  ]
+}

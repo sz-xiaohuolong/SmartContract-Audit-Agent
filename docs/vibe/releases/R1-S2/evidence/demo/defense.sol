@@ -1,0 +1,1 @@
+contract Defense { address owner; uint balance; function withdraw() public { require(msg.sender == owner); balance = 0; } }

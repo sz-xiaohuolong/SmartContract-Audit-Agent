@@ -1,0 +1,70 @@
+[
+  {
+    "poolHash": "353ade2e4a03f569bcfbb0c240a421518959097a834c396407668cfb55cdf01f",
+    "selected": [
+      [
+        "vulnerable",
+        "RETRIEVED",
+        "CONTRADICTED"
+      ],
+      [
+        "defense",
+        "RETRIEVED",
+        "SUPPORTED"
+      ]
+    ],
+    "strategy": "DENSE",
+    "usedBytes": 282
+  },
+  {
+    "poolHash": "353ade2e4a03f569bcfbb0c240a421518959097a834c396407668cfb55cdf01f",
+    "selected": [
+      [
+        "vulnerable",
+        "RETRIEVED",
+        "CONTRADICTED"
+      ],
+      [
+        "defense",
+        "RETRIEVED",
+        "SUPPORTED"
+      ]
+    ],
+    "strategy": "HYBRID",
+    "usedBytes": 282
+  },
+  {
+    "poolHash": "353ade2e4a03f569bcfbb0c240a421518959097a834c396407668cfb55cdf01f",
+    "selected": [
+      [
+        "vulnerable",
+        "RETRIEVED",
+        "CONTRADICTED"
+      ],
+      [
+        "defense",
+        "RETRIEVED",
+        "SUPPORTED"
+      ]
+    ],
+    "strategy": "CONTRASTIVE",
+    "usedBytes": 282
+  },
+  {
+    "poolHash": "353ade2e4a03f569bcfbb0c240a421518959097a834c396407668cfb55cdf01f",
+    "selected": [
+      [
+        "defense",
+        "SUPPORT",
+        "SUPPORTED"
+      ],
+      [
+        "vulnerable",
+        "CONTRAST",
+        "CONTRADICTED"
+      ]
+    ],
+    "strategy": "D1",
+    "usedBytes": 282
+  }
+]

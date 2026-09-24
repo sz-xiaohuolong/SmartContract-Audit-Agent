@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-21",
+  "python": "3.14.7",
+  "git_base": "66161d5b74a6df980425f37c913e63591d246d2a",
+  "scope": "S1b 本地工作产物，未提交；历史日志不作为当前代码验证替代",
+  "files": {
+    "tools/experiment/batch.py": "707d7d1a0288e65f0f5ba3da78d90a2390e612156ea469297798754f1a64c80d",
+    "tools/experiment/isolation.py": "5816ddaa05fcfaae941c8baca5a9d21a490fed84dea6bfbcd24f4a10a4860737",
+    "tools/experiment/java_adapter.py": "9a8377a4211fd287cafd73e92c9f608df946eb7a33ade8da5137099cbebc4d73",
+    "tools/experiment/offline.py": "862720f535a5a52c3e004e51aab9dc45c71af86aa840775fb1ac30e2611d2c3a",
+    "tools/experiment/s1b.py": "8dbd8badaa2028bed2356bb6a5cfb16534da18f420bd87dccd70e1fbab5341f1",
+    "tools/experiment/snapshots.py": "92369a9b35d6fac946ffd08c55c608f23bed874fec7038045ea9ca93ec9cd0bd",
+    "tools/experiment/storage.py": "40a98a58375e8d4884e92e60b98c8a79634b8ffc89cae80a22ad301ae260a99e",
+    "tools/experiment/tests/test_batch.py": "85b92350b57a7bb110c3f77485ed9745b1eb0b4f64dad73e7223f538f55af4c6",
+    "tools/experiment/tests/test_isolation.py": "612c15100f50c8fd1a7aa5140e34d9a3abd5da96ca12153660ba364d504f99b3",
+    "tools/experiment/tests/test_offline.py": "e91b21b71e73e848e24b96442789a95fa1a40e1e34423805c454e4a1fb3ce4a6",
+    "tools/experiment/tests/test_s1b_cli.py": "1e6927b5ec503519f7b2fa1b72211b671c5aa66169e0fcf5665c70158e5233ed",
+    "tools/experiment/tests/test_snapshots.py": "03c6af627c4a9ee43159c5b69ade6b47bb60979bdffeba3138a57b80e47b9ca3",
+    "tools/experiment/README.md": "f33eec9e4e594fafb5736951b9f2f8a1e634e414106a98f672d008ebd3e093b3",
+    "docs/vibe/PROJECT.md": "50686e8bfaa4f94fa8db486866430cb784514a54c6edae03ab23ec20f2340e3f",
+    "docs/vibe/PROGRESS.md": "e39182b0b0671e6a1934dd4fcd4e630db70b5947ff5a31346921fca1ab839765",
+    "docs/vibe/releases/R1-S1/IMPLEMENTATION_PLAN.md": "94ce6e082a5f8d0a7f4968531f1d22a8a9104e95e588629bb8e4658baf094a61",
+    "docs/vibe/releases/R1-S1/S1B_REVIEW.md": "f3b6e7dfd3e19e34826c26b7060c95fef026f40f132b30c4a7a8fd51bb7bc3cf",
+    "docs/vibe/releases/R1-S1/SPEC.md": "37e256a3ab3177f99ea1de42e355e8994656610470338906f20a68cd3823f2e8",
+    "docs/vibe/releases/R1-S1/VERIFICATION.md": "8e3d7cf52d9eb3975da702f4bd67066c5b076274ad1e934f1fed705a79890b0a"
+  }
+}

@@ -1,0 +1,1 @@
+contract Vulnerable { address owner; uint balance; function withdraw() public { balance = 0; } }

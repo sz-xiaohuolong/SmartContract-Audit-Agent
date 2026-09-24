@@ -1,0 +1,66 @@
+{
+  "captured_at": "2026-09-18T13:56:24.657811+08:00",
+  "markdown_documents": 9,
+  "broken_links": [],
+  "source_files_compared": 49,
+  "changed_source_files": [],
+  "requirement_count": 16,
+  "acceptance_count": 16,
+  "unique_requirement_ids": 16,
+  "unique_acceptance_ids": 16,
+  "requirements_missing_from_stage_proposal": [],
+  "verification_matrix_unverified_rows": 16,
+  "template_placeholders": [],
+  "limitations": [
+    "这是文档结构及源码未变更检查，不是运行测试或研究有效性验证",
+    "主 Agent 自审，不是独立复审"
+  ],
+  "documents": [
+    {
+      "path": "docs/vibe/PROGRESS.md",
+      "sha256": "d9109b722178e03f5774d0c021cb67617b2ca139a9f2dce0eddfe242b7f9f87e",
+      "characters": 1597
+    },
+    {
+      "path": "docs/vibe/PROJECT.md",
+      "sha256": "6e32222eb253d935f4ef2bc788a23c29d74422d37678904248998c3e1f2e01ba",
+      "characters": 1676
+    },
+    {
+      "path": "docs/vibe/TECH_DESIGN.md",
+      "sha256": "d003c96e8468ef9844077e71eb327452b1360b524539d9892388b44526e8e568",
+      "characters": 6790
+    },
+    {
+      "path": "docs/vibe/releases/R0-20260918/DELIVERY_PLAN_PROPOSAL.md",
+      "sha256": "7af369d683255c4e0056c8cbb2709af3ebd8b5c485d501dd7a8d2d1df3308257",
+      "characters": 3522
+    },
+    {
+      "path": "docs/vibe/releases/R0-20260918/EXPERIMENT_PROTOCOL.md",
+      "sha256": "04cc79ec56c1de93e7521e2884b841d1d8559082e74df99f5311b2b93bd69363",
+      "characters": 4647
+    },
+    {
+      "path": "docs/vibe/releases/R0-20260918/PROJECT_BRIEF.md",
+      "sha256": "6c03be2bf46056609a993da558356f9847063c1789b33786411ea7f6a921b19a",
+      "characters": 3393
+    },
+    {
+      "path": "docs/vibe/releases/R0-20260918/PROPOSED_DESIGN.md",
+      "sha256": "016e654d29c6b7522025a0e20a5ccda724e6b68f7f489184e7d9c0baaf8bfd5b",
+      "characters": 8092
+    },
+    {
+      "path": "docs/vibe/releases/R0-20260918/REVIEW.md",
+      "sha256": "1e6560c7bbec5740dd5c23eb26f7f450f90fd3f6706d3e9cd424497282d7b35d",
+      "characters": 2197
+    },
+    {
+      "path": "docs/vibe/releases/R0-20260918/VERIFICATION.md",
+      "sha256": "19a0abe0524fab8bdf051b51a93ee1f1aed5380dcede438f6d0a6a67d7be2510",
+      "characters": 2321
+    }
+  ],
+  "pass": true
+}

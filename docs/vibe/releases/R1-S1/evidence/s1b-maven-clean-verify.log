@@ -1,0 +1,78 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] verirag-research                                                   [pom]
+[INFO] audit-mvp                                                          [jar]
+[INFO] 
+[INFO] ----------------------< com.xhl:verirag-research >----------------------
+[INFO] Building verirag-research 0.1.0-SNAPSHOT                           [1/2]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.5.0:clean (default-clean) @ verirag-research ---
+[INFO] 
+[INFO] -------------------------< com.xhl:audit-mvp >--------------------------
+[INFO] Building audit-mvp 0.1.0-SNAPSHOT                                  [2/2]
+[INFO]   from audit-mvp/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.5.0:clean (default-clean) @ audit-mvp ---
+[INFO] Deleting /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/target
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ audit-mvp ---
+[INFO] skip non existing resourceDirectory /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/main/resources
+[INFO] skip non existing resourceDirectory /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ audit-mvp ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 9 source files with javac [debug parameters release 21] to target/classes
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ audit-mvp ---
+[INFO] skip non existing resourceDirectory /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ audit-mvp ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 6 source files with javac [debug parameters release 21] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ audit-mvp ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.xhl.audit.AuditCliTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.020 s -- in com.xhl.audit.AuditCliTest
+[INFO] Running com.xhl.audit.ToolAnalyzerTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.064 s -- in com.xhl.audit.ToolAnalyzerTest
+[INFO] Running com.xhl.audit.AuditServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.022 s -- in com.xhl.audit.AuditServiceTest
+[INFO] Running com.xhl.audit.GatewayTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.549 s -- in com.xhl.audit.GatewayTest
+[INFO] Running com.xhl.audit.ProcessRunnerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.169 s -- in com.xhl.audit.ProcessRunnerTest
+[INFO] Running com.xhl.audit.CliIntegrationTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.039 s -- in com.xhl.audit.CliIntegrationTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 19, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.5.1:jar (default-jar) @ audit-mvp ---
+[INFO] Building jar: /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot:4.1.1:repackage (repackage) @ audit-mvp ---
+[INFO] Replacing main artifact /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for verirag-research 0.1.0-SNAPSHOT:
+[INFO] 
+[INFO] verirag-research ................................... SUCCESS [  0.038 s]
+[INFO] audit-mvp .......................................... SUCCESS [  3.556 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.714 s
+[INFO] Finished at: 2026-09-21T12:42:11+08:00
+[INFO] ------------------------------------------------------------------------

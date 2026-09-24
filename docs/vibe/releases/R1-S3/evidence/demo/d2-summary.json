@@ -1,0 +1,13 @@
+{
+  "planned": 2,
+  "falseAccept": 0,
+  "falseReject": 0,
+  "unknown": 2,
+  "failed": 0,
+  "unknownTruthDecisions": 0,
+  "knownDecisions": 0,
+  "knownTrueDecisions": 0,
+  "knownFalseDecisions": 0,
+  "falseAcceptRate": null,
+  "falseRejectRate": null
+}

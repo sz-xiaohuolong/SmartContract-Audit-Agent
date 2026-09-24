@@ -1,0 +1,252 @@
+{
+  "captured_on": "2026-09-18",
+  "head": "66161d5b74a6df980425f37c913e63591d246d2a",
+  "branch": "main",
+  "files": [
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/XhlAiAgentApplication.java",
+      "lines": 16,
+      "sha256": "f52ef419e25efe0c109883a40ba70197f069ef6b5a9148cf4a0b6e1918b95a40"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/advisor/MyLoggerAdvisor.java",
+      "lines": 46,
+      "sha256": "2e42d2596eefa598b381d65507d241ebadaa5730aedba10f3d211c2cef2c4bc3"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/advisor/JsonNormalizationAdvisor.java",
+      "lines": 201,
+      "sha256": "101077f88263014698c2f2a4c4cb85453c42f0817af8c239a27fcb5e942208cf"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/advisor/ReReadingAdvisor.java",
+      "lines": 49,
+      "sha256": "c67f768951de72b22ba748f6b7ac9eeb8491cc672c543b95a54b70ea27d9b737"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/tools/FileOperationTool.java",
+      "lines": 37,
+      "sha256": "0d3291a6e6978471b020698afc1d5634c5e599734b34fc21b6d98dfc1e19a320"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/tools/SlitherTool.java",
+      "lines": 188,
+      "sha256": "4daf69843b9d3f200a36bc7368e5e1509e7303143eddf70e4082ee8553ebe3ee"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/tools/ToolRegistration.java",
+      "lines": 36,
+      "sha256": "c0e62c8c24fb87b8ba6e864b859f8b784c7602edfbca8915f678bcd52e549faf"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/tools/ResourceDownloadTool.java",
+      "lines": 28,
+      "sha256": "74da4171631b7bdab99c6e8e7a55b3204ac442e86ad1d1d41814ac14bb8e718e"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/tools/MythrilTool.java",
+      "lines": 167,
+      "sha256": "92d5595d6287a06cbc00a653e3c7df15fff613d3a71122dc8bd44c825cbc1d59"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/tools/PDFGenerationTool.java",
+      "lines": 51,
+      "sha256": "f278b07d1a8b2fa0e902c3086d833a24c0eeed495343ea83a10a2480b57f7abd"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/app/SmartContractDetect.java",
+      "lines": 406,
+      "sha256": "d216c597b8659840f30e812e66c13c8e72501bfe0183c5bcbb72670824005cba"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/config/DefaultConfig.java",
+      "lines": 19,
+      "sha256": "e7162e330c3a3605c83e3c173feaf1d7ec6d4f007eed7e35e665d959e18d5439"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/config/CodingPlanConfig.java",
+      "lines": 96,
+      "sha256": "e67360e6b06a6676619f15429619cd85487a2cd6b9cd5f62a3e05897a371968a"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/config/DashscopeEmbeddingConfig.java",
+      "lines": 55,
+      "sha256": "3f82739d2fdab28c0e0cc6fa628f3689dcb4b072a046fa1b2cd2c678b8708321"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/config/CorsConfig.java",
+      "lines": 25,
+      "sha256": "8b272e4ffe2a775aac48ba1025e27fab2d084139abf0bc43bd2416196335f094"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/utils/SimpleLengthSplitter.java",
+      "lines": 63,
+      "sha256": "aab4f6c635a98c28cb5ffc3ef6213d5f0baa582ac8a738fa7214fd4411befe3c"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/utils/ContractReaderUtils.java",
+      "lines": 54,
+      "sha256": "633ff380b21760a9b99ad0c4d5e693978650460d283b571ba89477bb35cd9d71"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/chatmemory/FileBasedChatMemory.java",
+      "lines": 88,
+      "sha256": "f74fa065f127048e8d0a112cd1cab72ff61076530bd8d52422fd09dabf4ce3b6"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/rag/MilvusVectorStoreConfig.java",
+      "lines": 136,
+      "sha256": "688b2e910a21dbb7b20c106a798b42e0979d3ab0c72932ca84d1cc149edd5ed7"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/rag/SafeQuestionAnswerAdvisor.java",
+      "lines": 185,
+      "sha256": "a7f8c72eac27f9bb2b683b32313f23ac17beebd807ab319205f8cc8598c87328"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/rag/ContractAppDocumentLoader.java",
+      "lines": 185,
+      "sha256": "a19377cbd88debf2a6a1d3dccdc99153b1918c6e2530c9ff90b271799248c2f9"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/rag/LoveAppRagCloudAdvisorConfig.java",
+      "lines": 33,
+      "sha256": "4cf58bbe33e4cb20d15025adc443475cc3f0b128ebcb1948d3d74134b2749010"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/rag/LoveAppRagCustomAdvisorFactory.java",
+      "lines": 36,
+      "sha256": "a4ac380c703047044dc336f79e4adb4ca24cd56b275dd416485288786d095505"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/rag/QueryRewriter.java",
+      "lines": 30,
+      "sha256": "54761a47099a2deb6e680cdff4189acf179a637269620b7b70d7b363b2900f0e"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/rag/LoveAppContextualQueryAugmenterFactory.java",
+      "lines": 19,
+      "sha256": "2f07949f50d3c83c03be12efb73abaef9a97fd83ca568e33a9ad8b1b2ae2c19a"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/rag/MyKeywordEnricher.java",
+      "lines": 21,
+      "sha256": "1ad924adfd6123cf518c57a808053a05a7ac77074f484596639e91017645c405"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/constant/FileConstant.java",
+      "lines": 10,
+      "sha256": "20ecd113ed1f85870b489f77ed1af4bc64334a8aa8efae3c01d7028e780dc8dc"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/rag/model/SmartContractAnalysisResult.java",
+      "lines": 31,
+      "sha256": "96377919513097d44cfa40cbb76f4952d45ea51d35446def5062e4dbb77a0f96"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/app/model/ContractAuditHypothesis.java",
+      "lines": 39,
+      "sha256": "95c9bd1295aedb19447cd9c06b61b197be51ef521fc4fc0a74198bafb4e21363"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/demo/invoke/SdkAiInvoke.java",
+      "lines": 49,
+      "sha256": "a523388e53ad5a1447691cec2b9ded6c095de979808e0b9e845bf6214b2d1f0a"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/demo/invoke/PictureSdk.java",
+      "lines": 46,
+      "sha256": "edeb2cc7905c107348c0beb6212dd963b8693da1934223b1a2604e29965a46c2"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/demo/invoke/TestApiKey.java",
+      "lines": 6,
+      "sha256": "d207ee094250fcafae25353edb6448429d465ef95c067dfa14359bae644a9b3b"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/demo/invoke/SpringAiAiInvoke.java",
+      "lines": 26,
+      "sha256": "b370352039ea36c7595e153bd3541bcc16ecc4a54d2c8154506c23b2ca48566d"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/demo/invoke/LangChainAiInvoke.java",
+      "lines": 16,
+      "sha256": "b9a50fbf76aa7fa84d9b1ca2d8b8c1213f467932c07f8c0f83b0095a7e483164"
+    },
+    {
+      "path": "src/main/java/com/xhl/xhlaiagent/demo/invoke/HttpAiInvoke.java",
+      "lines": 59,
+      "sha256": "a813c44cb58514888f424fda23e25bd1d7822e3d110ad375bdf13d8c1d398a73"
+    },
+    {
+      "path": "src/test/java/com/xhl/xhlaiagent/XhlAiAgentApplicationTests.java",
+      "lines": 13,
+      "sha256": "aa0021e36c431c7c03f3968b3086625204557fca493bcaa7e5ce3746d32f7c6a"
+    },
+    {
+      "path": "src/test/java/com/xhl/xhlaiagent/tools/ResourceDownloadToolTest.java",
+      "lines": 19,
+      "sha256": "f179d11fd683586e48c05e6aa483b3e0f709ca8dec9e1043b449f4c6eb72e2c2"
+    },
+    {
+      "path": "src/test/java/com/xhl/xhlaiagent/tools/PDFGenerationToolTest.java",
+      "lines": 19,
+      "sha256": "f6e53abc222abd5bf3f762e4424ae55b8213d699126770eb79c6f08e42a4e5e4"
+    },
+    {
+      "path": "src/test/java/com/xhl/xhlaiagent/tools/FileOperationToolTest.java",
+      "lines": 27,
+      "sha256": "7dbf68406c731cb959ff1d159baec6b84d7aeab01b01349a77c9984c4ce85b77"
+    },
+    {
+      "path": "src/test/java/com/xhl/xhlaiagent/tools/MythrilToolTest.java",
+      "lines": 47,
+      "sha256": "b416d1de10628bfd40ac327608ae3cc02f531821c1b6aa0178bf2822aa73214f"
+    },
+    {
+      "path": "src/test/java/com/xhl/xhlaiagent/app/SmartContractDetectTest.java",
+      "lines": 31,
+      "sha256": "6e72289b37c34481643c25ebf36b0a81175b167890dcef6c1aa89dd0592f980e"
+    },
+    {
+      "path": "src/test/java/com/xhl/xhlaiagent/experiment/PilotExperimentTest_old.java",
+      "lines": 295,
+      "sha256": "3235b7757b934008427d83aaa2371d430a60260039a47caa099875fc32a9f9ad"
+    },
+    {
+      "path": "src/test/java/com/xhl/xhlaiagent/experiment/VeriRAGExperimentTest.java",
+      "lines": 765,
+      "sha256": "c0acefd706909d89ac685f7af096bf0adec074e0ffe7686507ef29ab883dd88d"
+    },
+    {
+      "path": "scripts/setup_pilot_data_local.py",
+      "lines": 69,
+      "sha256": "45697c32f1b5bd790abfe3fbaac8082d6951829ac28d45959c5c0d49ae07e11c"
+    },
+    {
+      "path": "scripts/build_smartbugs_kb.py",
+      "lines": 214,
+      "sha256": "25169dfa0b7d5f18fef6a6d380f9c154930b1bc57645e9ec5e3da14ba76265fa"
+    },
+    {
+      "path": "scripts/flatten_oz.py",
+      "lines": 325,
+      "sha256": "dc471e4f5cec939f04b3a9f3049c58fb55cc7024be3bd77b578801ddf98079a9"
+    },
+    {
+      "path": "pom.xml",
+      "lines": 189,
+      "sha256": "12254d285fff1aacbd5b5e05e335df51204d62e3569d4e2c750afec76980a3fe"
+    },
+    {
+      "path": "README.md",
+      "lines": 229,
+      "sha256": "ccdcbc8ce026fc2eb38d67b97732ae0799126f96452bd4968641d8a30bf2761e"
+    },
+    {
+      "path": "AGENTS.md",
+      "lines": 97,
+      "sha256": "3c172bc0e528809536989ad1258608e31d3257ade13b948bc17b61fd9f212027"
+    }
+  ]
+}

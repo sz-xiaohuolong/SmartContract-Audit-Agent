@@ -1,0 +1,39 @@
+[ERROR] Tests run: 10, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 0.170 s <<< FAILURE! -- in com.xhl.audit.retrieval.RetrievalTest
+[ERROR] com.xhl.audit.retrieval.RetrievalTest.duplicateConditionPairsDoNotConsumeExtraContextBudget -- Time elapsed: 0.119 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <2> but was: <4>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:147)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:558)
+	at com.xhl.audit.retrieval.RetrievalTest.duplicateConditionPairsDoNotConsumeExtraContextBudget(RetrievalTest.java:116)
+
+[ERROR] com.xhl.audit.retrieval.RetrievalTest.dynamicIndexMismatchIsUnknownRatherThanProvenDifferentResource -- Time elapsed: 0 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <UNKNOWN> but was: <CONTRADICTED>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:179)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1188)
+	at com.xhl.audit.retrieval.RetrievalTest.dynamicIndexMismatchIsUnknownRatherThanProvenDifferentResource(RetrievalTest.java:109)
+
+[ERROR] Failures: 
+[ERROR]   RetrievalTest.duplicateConditionPairsDoNotConsumeExtraContextBudget:116 expected: <2> but was: <4>
+[ERROR]   RetrievalTest.dynamicIndexMismatchIsUnknownRatherThanProvenDifferentResource:109 expected: <UNKNOWN> but was: <CONTRADICTED>
+[ERROR] Tests run: 10, Failures: 2, Errors: 0, Skipped: 0
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project audit-mvp: There are test failures.
+[ERROR] 
+[ERROR] See /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/target/surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :audit-mvp

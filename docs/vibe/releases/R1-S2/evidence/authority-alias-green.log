@@ -1,0 +1,41 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------------< com.xhl:audit-mvp >--------------------------
+[INFO] Building audit-mvp 0.1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ audit-mvp ---
+[INFO] skip non existing resourceDirectory /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/main/resources
+[INFO] skip non existing resourceDirectory /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ audit-mvp ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 19 source files with javac [debug parameters release 21] to target/classes
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ audit-mvp ---
+[INFO] skip non existing resourceDirectory /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ audit-mvp ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 9 source files with javac [debug parameters release 21] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ audit-mvp ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.xhl.audit.retrieval.RetrievalTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.160 s -- in com.xhl.audit.retrieval.RetrievalTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.865 s
+[INFO] Finished at: 2026-09-22T15:03:59+08:00
+[INFO] ------------------------------------------------------------------------

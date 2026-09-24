@@ -1,0 +1,12 @@
+test_empty_denominators_are_undefined (test_offline.OfflineTest.test_empty_denominators_are_undefined) ... ok
+test_inventory_groups_duplicates_without_assigning_labels (test_offline.OfflineTest.test_inventory_groups_duplicates_without_assigning_labels) ... ok
+test_missing_positive_is_false_negative (test_offline.OfflineTest.test_missing_positive_is_false_negative) ... ok
+test_multilabel_deduplicates_type_predictions (test_offline.OfflineTest.test_multilabel_deduplicates_type_predictions) ... ok
+test_partial_undefined_does_not_change_macro_denominator (test_offline.OfflineTest.test_partial_undefined_does_not_change_macro_denominator) ... ok
+test_rejects_duplicate_unknown_and_failed_predictions (test_offline.OfflineTest.test_rejects_duplicate_unknown_and_failed_predictions) ... ok
+test_wrong_type_counts_both_sides_and_failed_safe_is_not_correct (test_offline.OfflineTest.test_wrong_type_counts_both_sides_and_failed_safe_is_not_correct) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.002s
+
+OK

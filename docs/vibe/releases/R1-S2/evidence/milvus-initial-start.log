@@ -1,0 +1,207 @@
+2026/09/21 13:36:56 jemalloc memory profiling option is not enabled, cgomemprof http handler will not be registered
+[2026/09/21 13:36:56.480 +00:00] [DEBUG] [runtime/asm_arm64.s:1223] ["start refreshing configurations"] [source=FileSource]
+panic: embedded etcd can not be used under distributed mode
+
+goroutine 1 gp=0x40000021c0 m=0 mp=0xa4c9d40 [running]:
+panic({0x5fca200?, 0x73da9d0?})
+	/usr/local/go/src/runtime/panic.go:811 +0x154 fp=0x400007f970 sp=0x400007f8c0 pc=0x26c6de4
+github.com/milvus-io/milvus/pkg/v2/util/paramtable.(*EtcdConfig).Init(0x400120aa88, 0x400154a320)
+	/workspace/source/pkg/util/paramtable/service_param.go:142 +0x8f4 fp=0x400007f9c0 sp=0x400007f970 pc=0x3583f74
+github.com/milvus-io/milvus/pkg/v2/util/paramtable.(*BaseTable).initConfigsFromRemote(0x400154a320)
+	/workspace/source/pkg/util/paramtable/base_table.go:196 +0x48 fp=0x400007fb70 sp=0x400007f9c0 pc=0x355e518
+github.com/milvus-io/milvus/pkg/v2/util/paramtable.(*BaseTable).init(0x400154a320)
+	/workspace/source/pkg/util/paramtable/base_table.go:163 +0x1ac fp=0x400007fc60 sp=0x400007fb70 pc=0x355dd4c
+github.com/milvus-io/milvus/pkg/v2/util/paramtable.NewBaseTable({0x400136fd08, 0x0, 0x400136fcf8?})
+	/workspace/source/pkg/util/paramtable/base_table.go:131 +0x120 fp=0x400007fcb0 sp=0x400007fc60 pc=0x355db70
+github.com/milvus-io/milvus/pkg/v2/util/paramtable.Init.func1()
+	/workspace/source/pkg/util/paramtable/runtime.go:54 +0x180 fp=0x400007fd70 sp=0x400007fcb0 pc=0x35879d0
+sync.(*Once).doSlow(0x5fca200?, 0x40015395f0?)
+	/usr/local/go/src/sync/once.go:78 +0xf0 fp=0x400007fdc0 sp=0x400007fd70 pc=0x26ec5d0
+sync.(*Once).Do(...)
+	/usr/local/go/src/sync/once.go:69
+github.com/milvus-io/milvus/pkg/v2/util/paramtable.Init()
+	/workspace/source/pkg/util/paramtable/runtime.go:46 +0x40 fp=0x400007fde0 sp=0x400007fdc0 pc=0x3583210
+github.com/milvus-io/milvus/pkg/v2/util/paramtable.Get(...)
+	/workspace/source/pkg/util/paramtable/runtime.go:72
+github.com/milvus-io/milvus/internal/querycoordv2/params.init()
+	/workspace/source/internal/querycoordv2/params/params.go:31 +0x1c fp=0x400007fe10 sp=0x400007fde0 pc=0x5520e7c
+runtime.doInit1(0xa3174b0)
+	/usr/local/go/src/runtime/proc.go:7410 +0xd4 fp=0x400007ff40 sp=0x400007fe10 pc=0x269f9f4
+runtime.doInit(...)
+	/usr/local/go/src/runtime/proc.go:7377
+runtime.main()
+	/usr/local/go/src/runtime/proc.go:254 +0x340 fp=0x400007ffd0 sp=0x400007ff40 pc=0x268f970
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x400007ffd0 sp=0x400007ffd0 pc=0x26d0784
+
+goroutine 18 gp=0x4000102380 m=nil [force gc (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x4000096790 sp=0x4000096770 pc=0x26c79c8
+runtime.goparkunlock(...)
+	/usr/local/go/src/runtime/proc.go:441
+runtime.forcegchelper()
+	/usr/local/go/src/runtime/proc.go:348 +0xb8 fp=0x40000967d0 sp=0x4000096790 pc=0x268fc08
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x40000967d0 sp=0x40000967d0 pc=0x26d0784
+created by runtime.init.7 in goroutine 1
+	/usr/local/go/src/runtime/proc.go:336 +0x24
+
+goroutine 19 gp=0x4000102540 m=nil [GC sweep wait]:
+runtime.gopark(0x1?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x4000096f60 sp=0x4000096f40 pc=0x26c79c8
+runtime.goparkunlock(...)
+	/usr/local/go/src/runtime/proc.go:441
+runtime.bgsweep(0x4000112000)
+	/usr/local/go/src/runtime/mgcsweep.go:316 +0x108 fp=0x4000096fb0 sp=0x4000096f60 pc=0x2676078
+runtime.gcenable.gowrap1()
+	/usr/local/go/src/runtime/mgc.go:204 +0x28 fp=0x4000096fd0 sp=0x4000096fb0 pc=0x2669c68
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x4000096fd0 sp=0x4000096fd0 pc=0x26d0784
+created by runtime.gcenable in goroutine 1
+	/usr/local/go/src/runtime/mgc.go:204 +0x6c
+
+goroutine 20 gp=0x4000102700 m=nil [GC scavenge wait]:
+runtime.gopark(0x10000?, 0x73c9480?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x4000097760 sp=0x4000097740 pc=0x26c79c8
+runtime.goparkunlock(...)
+	/usr/local/go/src/runtime/proc.go:441
+runtime.(*scavengerState).park(0xa4c61c0)
+	/usr/local/go/src/runtime/mgcscavenge.go:425 +0x5c fp=0x4000097790 sp=0x4000097760 pc=0x2673a0c
+runtime.bgscavenge(0x4000112000)
+	/usr/local/go/src/runtime/mgcscavenge.go:658 +0xac fp=0x40000977b0 sp=0x4000097790 pc=0x2673fac
+runtime.gcenable.gowrap2()
+	/usr/local/go/src/runtime/mgc.go:205 +0x28 fp=0x40000977d0 sp=0x40000977b0 pc=0x2669c08
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x40000977d0 sp=0x40000977d0 pc=0x26d0784
+created by runtime.gcenable in goroutine 1
+	/usr/local/go/src/runtime/mgc.go:205 +0xac
+
+goroutine 21 gp=0x4000102c40 m=nil [finalizer wait]:
+runtime.gopark(0x0?, 0x6e318f8?, 0x0?, 0xa0?, 0x2000000020?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x4000097d90 sp=0x4000097d70 pc=0x26c79c8
+runtime.runfinq()
+	/usr/local/go/src/runtime/mfinal.go:196 +0x108 fp=0x4000097fd0 sp=0x4000097d90 pc=0x2668bf8
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x4000097fd0 sp=0x4000097fd0 pc=0x26d0784
+created by runtime.createfing in goroutine 1
+	/usr/local/go/src/runtime/mfinal.go:166 +0x80
+
+goroutine 22 gp=0x4000102e00 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x4000098710 sp=0x40000986f0 pc=0x26c79c8
+runtime.gcBgMarkWorker(0x400011a0e0)
+	/usr/local/go/src/runtime/mgc.go:1423 +0xdc fp=0x40000987b0 sp=0x4000098710 pc=0x266c0fc
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/usr/local/go/src/runtime/mgc.go:1339 +0x28 fp=0x40000987d0 sp=0x40000987b0 pc=0x266bfe8
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x40000987d0 sp=0x40000987d0 pc=0x26d0784
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/usr/local/go/src/runtime/mgc.go:1339 +0x140
+
+goroutine 23 gp=0x4000102fc0 m=nil [GC worker (idle)]:
+runtime.gopark(0x296a6fb8ddd89?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x4000098f10 sp=0x4000098ef0 pc=0x26c79c8
+runtime.gcBgMarkWorker(0x400011a0e0)
+	/usr/local/go/src/runtime/mgc.go:1423 +0xdc fp=0x4000098fb0 sp=0x4000098f10 pc=0x266c0fc
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/usr/local/go/src/runtime/mgc.go:1339 +0x28 fp=0x4000098fd0 sp=0x4000098fb0 pc=0x266bfe8
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x4000098fd0 sp=0x4000098fd0 pc=0x26d0784
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/usr/local/go/src/runtime/mgc.go:1339 +0x140
+
+goroutine 2 gp=0x4000003340 m=nil [GC worker (idle)]:
+runtime.gopark(0x296a6fb869353?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x400009af10 sp=0x400009aef0 pc=0x26c79c8
+runtime.gcBgMarkWorker(0x400011a0e0)
+	/usr/local/go/src/runtime/mgc.go:1423 +0xdc fp=0x400009afb0 sp=0x400009af10 pc=0x266c0fc
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/usr/local/go/src/runtime/mgc.go:1339 +0x28 fp=0x400009afd0 sp=0x400009afb0 pc=0x266bfe8
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x400009afd0 sp=0x400009afd0 pc=0x26d0784
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/usr/local/go/src/runtime/mgc.go:1339 +0x140
+
+goroutine 34 gp=0x40001d0000 m=nil [GC worker (idle)]:
+runtime.gopark(0x296a6fb8d9c44?, 0x3?, 0xcb?, 0x1?, 0xa4c9d40?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x400009a710 sp=0x400009a6f0 pc=0x26c79c8
+runtime.gcBgMarkWorker(0x400011a0e0)
+	/usr/local/go/src/runtime/mgc.go:1423 +0xdc fp=0x400009a7b0 sp=0x400009a710 pc=0x266c0fc
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/usr/local/go/src/runtime/mgc.go:1339 +0x28 fp=0x400009a7d0 sp=0x400009a7b0 pc=0x266bfe8
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x400009a7d0 sp=0x400009a7d0 pc=0x26d0784
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/usr/local/go/src/runtime/mgc.go:1339 +0x140
+
+goroutine 35 gp=0x4000103880 m=nil [select]:
+runtime.gopark(0x4000170f68?, 0x2?, 0x8?, 0x1?, 0x4000170f24?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x4000170db0 sp=0x4000170d90 pc=0x26c79c8
+runtime.selectgo(0x4000170f68, 0x4000170f20, 0x73f02d0?, 0x0, 0x0?, 0x1)
+	/usr/local/go/src/runtime/select.go:351 +0x6c4 fp=0x4000170ee0 sp=0x4000170db0 pc=0x26a3984
+github.com/panjf2000/ants/v2.(*poolCommon).purgeStaleWorkers(0x4000f00270)
+	/go/pkg/mod/github.com/panjf2000/ants/v2@v2.11.3/ants.go:253 +0xbc fp=0x4000170fb0 sp=0x4000170ee0 pc=0x482321c
+github.com/panjf2000/ants/v2.(*poolCommon).goPurge.gowrap1()
+	/go/pkg/mod/github.com/panjf2000/ants/v2@v2.11.3/ants.go:317 +0x28 fp=0x4000170fd0 sp=0x4000170fb0 pc=0x48236f8
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x4000170fd0 sp=0x4000170fd0 pc=0x26d0784
+created by github.com/panjf2000/ants/v2.(*poolCommon).goPurge in goroutine 1
+	/go/pkg/mod/github.com/panjf2000/ants/v2@v2.11.3/ants.go:317 +0xb4
+
+goroutine 36 gp=0x4000f6afc0 m=nil [select]:
+runtime.gopark(0x4000f9a768?, 0x2?, 0x8?, 0x1?, 0x4000f9a72c?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x4000f9a5b0 sp=0x4000f9a590 pc=0x26c79c8
+runtime.selectgo(0x4000f9a768, 0x4000f9a728, 0x0?, 0x0, 0x0?, 0x1)
+	/usr/local/go/src/runtime/select.go:351 +0x6c4 fp=0x4000f9a6e0 sp=0x4000f9a5b0 pc=0x26a3984
+github.com/panjf2000/ants/v2.(*poolCommon).ticktock(0x4000f00270)
+	/go/pkg/mod/github.com/panjf2000/ants/v2@v2.11.3/ants.go:296 +0xfc fp=0x4000f9a7b0 sp=0x4000f9a6e0 pc=0x482351c
+github.com/panjf2000/ants/v2.(*poolCommon).goTicktock.gowrap1()
+	/go/pkg/mod/github.com/panjf2000/ants/v2@v2.11.3/ants.go:323 +0x28 fp=0x4000f9a7d0 sp=0x4000f9a7b0 pc=0x4823868
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x4000f9a7d0 sp=0x4000f9a7d0 pc=0x26d0784
+created by github.com/panjf2000/ants/v2.(*poolCommon).goTicktock in goroutine 1
+	/go/pkg/mod/github.com/panjf2000/ants/v2@v2.11.3/ants.go:323 +0xe8
+
+goroutine 37 gp=0x4000f6b340 m=nil [chan receive]:
+runtime.gopark(0x4000fa85a0?, 0x400154c4e0?, 0x48?, 0xaf?, 0x283dfc8?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x4000f9aef0 sp=0x4000f9aed0 pc=0x26c79c8
+runtime.chanrecv(0x400011a690, 0x0, 0x1)
+	/usr/local/go/src/runtime/chan.go:664 +0x42c fp=0x4000f9af70 sp=0x4000f9aef0 pc=0x265a39c
+runtime.chanrecv1(0x0?, 0x0?)
+	/usr/local/go/src/runtime/chan.go:506 +0x14 fp=0x4000f9afa0 sp=0x4000f9af70 pc=0x2659f34
+runtime.unique_runtime_registerUniqueMapCleanup.func2(...)
+	/usr/local/go/src/runtime/mgc.go:1797
+runtime.unique_runtime_registerUniqueMapCleanup.gowrap1()
+	/usr/local/go/src/runtime/mgc.go:1800 +0x3c fp=0x4000f9afd0 sp=0x4000f9afa0 pc=0x266ce8c
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x4000f9afd0 sp=0x4000f9afd0 pc=0x26d0784
+created by unique.runtime_registerUniqueMapCleanup in goroutine 1
+	/usr/local/go/src/runtime/mgc.go:1795 +0x78
+
+goroutine 3 gp=0x4001228700 m=nil [select]:
+runtime.gopark(0x4000099f40?, 0x3?, 0x0?, 0x0?, 0x4000099efa?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x40000add80 sp=0x40000add60 pc=0x26c79c8
+runtime.selectgo(0x40000adf40, 0x4000099ef4, 0x0?, 0x0, 0x0?, 0x1)
+	/usr/local/go/src/runtime/select.go:351 +0x6c4 fp=0x40000adeb0 sp=0x40000add80 pc=0x26a3984
+mosn.io/pkg/log.(*Logger).handler(0x40000fcc80)
+	/go/pkg/mod/mosn.io/pkg@v0.0.0-20211217101631-d914102d1baf/log/logger.go:225 +0xa0 fp=0x40000adfb0 sp=0x40000adeb0 pc=0x54ad1a0
+mosn.io/pkg/log.(*Logger).start.gowrap1()
+	/go/pkg/mod/mosn.io/pkg@v0.0.0-20211217101631-d914102d1baf/log/logger.go:211 +0x28 fp=0x40000adfd0 sp=0x40000adfb0 pc=0x54ad0c8
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x40000adfd0 sp=0x40000adfd0 pc=0x26d0784
+created by mosn.io/pkg/log.(*Logger).start in goroutine 1
+	/go/pkg/mod/mosn.io/pkg@v0.0.0-20211217101631-d914102d1baf/log/logger.go:211 +0x24c
+
+goroutine 124 gp=0x40001d1180 m=nil [select]:
+runtime.gopark(0x40000acf48?, 0x2?, 0xc6?, 0x4?, 0x40000ace94?)
+	/usr/local/go/src/runtime/proc.go:435 +0xc8 fp=0x40000acd10 sp=0x40000accf0 pc=0x26c79c8
+runtime.selectgo(0x40000acf48, 0x40000ace90, 0x0?, 0x0, 0x1?, 0x1)
+	/usr/local/go/src/runtime/select.go:351 +0x6c4 fp=0x40000ace40 sp=0x40000acd10 pc=0x26a3984
+github.com/milvus-io/milvus/pkg/v2/config.(*refresher).refreshPeriodically(0x40011f6820, {0x6b97678, 0xa})
+	/workspace/source/pkg/config/refresher.go:71 +0x198 fp=0x40000acfa0 sp=0x40000ace40 pc=0x333c5c8
+github.com/milvus-io/milvus/pkg/v2/config.(*refresher).start.func1.gowrap1()
+	/workspace/source/pkg/config/refresher.go:52 +0x30 fp=0x40000acfd0 sp=0x40000acfa0 pc=0x333c330
+runtime.goexit({})
+	/usr/local/go/src/runtime/asm_arm64.s:1223 +0x4 fp=0x40000acfd0 sp=0x40000acfd0 pc=0x26d0784
+created by github.com/milvus-io/milvus/pkg/v2/config.(*refresher).start.func1 in goroutine 1
+	/workspace/source/pkg/config/refresher.go:52 +0x98

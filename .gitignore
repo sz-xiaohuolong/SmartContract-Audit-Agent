@@ -60,3 +60,4 @@ paper/**/*.toc
 ### Local Only Documents & Reports ###
 paper/
 experiment-reports/
+thesis/

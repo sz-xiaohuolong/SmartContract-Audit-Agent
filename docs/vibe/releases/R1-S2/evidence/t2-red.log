@@ -1,0 +1,336 @@
+[ERROR] COMPILATION ERROR : 
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[7,38] 找不到符号
+  符号:   类 RetrievalData
+  位置: 程序包 com.xhl.audit.retrieval
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[11,19] 找不到符号
+  符号:   类 Scope
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[12,13] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[13,37] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[13,13] 找不到符号
+  符号:   类 ProgramFacts
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[18,13] 找不到符号
+  符号:   类 Target
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[19,13] 找不到符号
+  符号:   类 Candidate
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[24,32] 找不到符号
+  符号:   类 Candidate
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[24,13] 找不到符号
+  符号:   类 CandidatePool
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[11,37] 找不到符号
+  符号:   类 Scope
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[12,30] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[14,20] 找不到符号
+  符号:   类 ProgramFacts
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[15,25] 找不到符号
+  符号:   类 StateVariable
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[15,61] 找不到符号
+  符号:   类 StateVariable
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[16,25] 找不到符号
+  符号:   类 Scope
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[18,41] 找不到符号
+  符号:   类 Target
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[20,20] 找不到符号
+  符号:   类 Candidate
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[21,25] 找不到符号
+  符号:   类 Condition
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[24,63] 找不到符号
+  符号:   类 CandidatePool
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[28,26] 找不到符号
+  符号:   类 ConditionBinder
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[29,38] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[30,37] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[31,37] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[32,37] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[43,25] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[44,111] 找不到符号
+  符号:   类 Budget
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[44,26] 找不到符号
+  符号:   类 D1Retriever
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[55,22] 找不到符号
+  符号:   类 D1Retriever
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[56,139] 找不到符号
+  符号:   类 Budget
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[60,83] 找不到符号
+  符号:   类 Budget
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[61,60] 找不到符号
+  符号:   类 Budget
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[66,29] 找不到符号
+  符号:   类 Candidate
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,55] 找不到符号
+  符号:   类 DenseRetriever
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,77] 找不到符号
+  符号:   类 HybridRetriever
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,100] 找不到符号
+  符号:   类 ContrastiveRetriever
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,128] 找不到符号
+  符号:   类 D1Retriever
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,14] 找不到符号
+  符号:   类 RetrievalStrategy
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[70,99] 找不到符号
+  符号:   类 Budget
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[75,107] 找不到符号
+  符号:   类 Budget
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[80,27] 找不到符号
+  符号:   类 Candidate
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[81,25] 找不到符号
+  符号:   类 Condition
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[82,145] 找不到符号
+  符号:   类 Budget
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[82,64] 找不到符号
+  符号:   类 D1Retriever
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[83,27] 找不到符号
+  符号:   类 Target
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[84,178] 找不到符号
+  符号:   类 Budget
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[84,64] 找不到符号
+  符号:   类 DenseRetriever
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[88,24] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[89,24] 找不到符号
+  符号:   类 Candidate
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[90,25] 找不到符号
+  符号:   类 Condition
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[91,25] 找不到符号
+  符号:   类 Target
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[92,39] 找不到符号
+  符号:   类 ConditionBinder
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[92,80] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[93,42] 找不到符号
+  符号:   类 ConditionBinder
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[93,83] 找不到符号
+  符号:   类 Fact
+  位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.15.0:testCompile (default-testCompile) on project audit-mvp: Compilation failure: Compilation failure: 
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[7,38] 找不到符号
+[ERROR]   符号:   类 RetrievalData
+[ERROR]   位置: 程序包 com.xhl.audit.retrieval
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[11,19] 找不到符号
+[ERROR]   符号:   类 Scope
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[12,13] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[13,37] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[13,13] 找不到符号
+[ERROR]   符号:   类 ProgramFacts
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[18,13] 找不到符号
+[ERROR]   符号:   类 Target
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[19,13] 找不到符号
+[ERROR]   符号:   类 Candidate
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[24,32] 找不到符号
+[ERROR]   符号:   类 Candidate
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[24,13] 找不到符号
+[ERROR]   符号:   类 CandidatePool
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[11,37] 找不到符号
+[ERROR]   符号:   类 Scope
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[12,30] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[14,20] 找不到符号
+[ERROR]   符号:   类 ProgramFacts
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[15,25] 找不到符号
+[ERROR]   符号:   类 StateVariable
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[15,61] 找不到符号
+[ERROR]   符号:   类 StateVariable
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[16,25] 找不到符号
+[ERROR]   符号:   类 Scope
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[18,41] 找不到符号
+[ERROR]   符号:   类 Target
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[20,20] 找不到符号
+[ERROR]   符号:   类 Candidate
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[21,25] 找不到符号
+[ERROR]   符号:   类 Condition
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[24,63] 找不到符号
+[ERROR]   符号:   类 CandidatePool
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[28,26] 找不到符号
+[ERROR]   符号:   类 ConditionBinder
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[29,38] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[30,37] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[31,37] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[32,37] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[43,25] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[44,111] 找不到符号
+[ERROR]   符号:   类 Budget
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[44,26] 找不到符号
+[ERROR]   符号:   类 D1Retriever
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[55,22] 找不到符号
+[ERROR]   符号:   类 D1Retriever
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[56,139] 找不到符号
+[ERROR]   符号:   类 Budget
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[60,83] 找不到符号
+[ERROR]   符号:   类 Budget
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[61,60] 找不到符号
+[ERROR]   符号:   类 Budget
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[66,29] 找不到符号
+[ERROR]   符号:   类 Candidate
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,55] 找不到符号
+[ERROR]   符号:   类 DenseRetriever
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,77] 找不到符号
+[ERROR]   符号:   类 HybridRetriever
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,100] 找不到符号
+[ERROR]   符号:   类 ContrastiveRetriever
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,128] 找不到符号
+[ERROR]   符号:   类 D1Retriever
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[69,14] 找不到符号
+[ERROR]   符号:   类 RetrievalStrategy
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[70,99] 找不到符号
+[ERROR]   符号:   类 Budget
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[75,107] 找不到符号
+[ERROR]   符号:   类 Budget
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[80,27] 找不到符号
+[ERROR]   符号:   类 Candidate
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[81,25] 找不到符号
+[ERROR]   符号:   类 Condition
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[82,145] 找不到符号
+[ERROR]   符号:   类 Budget
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[82,64] 找不到符号
+[ERROR]   符号:   类 D1Retriever
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[83,27] 找不到符号
+[ERROR]   符号:   类 Target
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[84,178] 找不到符号
+[ERROR]   符号:   类 Budget
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[84,64] 找不到符号
+[ERROR]   符号:   类 DenseRetriever
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[88,24] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[89,24] 找不到符号
+[ERROR]   符号:   类 Candidate
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[90,25] 找不到符号
+[ERROR]   符号:   类 Condition
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[91,25] 找不到符号
+[ERROR]   符号:   类 Target
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[92,39] 找不到符号
+[ERROR]   符号:   类 ConditionBinder
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[92,80] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[93,42] 找不到符号
+[ERROR]   符号:   类 ConditionBinder
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java:[93,83] 找不到符号
+[ERROR]   符号:   类 Fact
+[ERROR]   位置: 类 com.xhl.audit.retrieval.RetrievalTest
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :audit-mvp

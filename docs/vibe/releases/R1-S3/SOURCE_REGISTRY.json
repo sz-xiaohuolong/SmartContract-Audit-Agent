@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1",
+  "checkedAt": "2026-09-24",
+  "sources": [
+    {
+      "id": "SCRUBD",
+      "url": "https://github.com/sujeetc/SCRUBD",
+      "revision": "9dba1928d4aea9a5d27014e5f31a8ed0b703f711",
+      "licenseStatus": "PENDING",
+      "license": null,
+      "sourceStatus": "PENDING",
+      "reportStatus": "PENDING",
+      "patchStatus": "UNAVAILABLE",
+      "labelStatus": "PENDING",
+      "evidence": [
+        "https://github.com/sujeetc/SCRUBD/tree/9dba1928d4aea9a5d27014e5f31a8ed0b703f711/SCRUBD-CD/data",
+        "https://doi.org/10.1109/MSR66628.2025.00033"
+      ],
+      "notes": "仓库含真实/合成重入样本、labels.csv 与评论；GitHub API 未报告仓库许可。逐函数原始报告、链上源码版本及可验证补丁对尚未逐条核对。RE=0 不自动作为安全负例。"
+    },
+    {
+      "id": "SmartBugs-Curated",
+      "url": "https://github.com/smartbugs/smartbugs-curated",
+      "revision": "230e649123477eff332742a59a1c7cc6dc286cab",
+      "licenseStatus": "VERIFIED",
+      "license": "Apache-2.0",
+      "sourceStatus": "PENDING",
+      "reportStatus": "PENDING",
+      "patchStatus": "UNAVAILABLE",
+      "labelStatus": "PENDING",
+      "evidence": [
+        "https://github.com/smartbugs/smartbugs-curated/blob/main/LICENSE",
+        "https://github.com/smartbugs/smartbugs-curated/blob/main/README.md",
+        "https://github.com/smartbugs/smartbugs-curated/blob/main/vulnerabilities.json"
+      ],
+      "notes": "仓库声明 Apache-2.0，源码注释和 vulnerabilities.json 提供漏洞类别/位置；未证明每个样本原始报告、项目谱系或安全补丁。可作待审知识候选，不将其标作安全负例。"
+    },
+    {
+      "id": "ASE-AC-2025",
+      "url": "https://github.com/HelayLiu/AccessControlVulnerabilities",
+      "revision": "a96ad42a1a974b635f9ddecc9025c74f8a9a566f",
+      "licenseStatus": "VERIFIED",
+      "license": "MIT",
+      "sourceStatus": "PENDING",
+      "reportStatus": "PENDING",
+      "patchStatus": "PENDING",
+      "labelStatus": "PENDING",
+      "evidence": [
+        "https://github.com/HelayLiu/AccessControlVulnerabilities/blob/main/LICENSE",
+        "https://github.com/HelayLiu/AccessControlVulnerabilities/tree/main/datasets",
+        "https://conf.researchr.org/details/ase-2025/ase-2025-papers/77/Have-We-Solved-Access-Control-Vulnerability-Detection-in-Smart-Contracts-A-Benchmark"
+      ],
+      "notes": "仓库含 datasets.xlsx、DeFiHackLabsCVEs 与 Code4rena 材料及源码；逐事件报告、漏洞源码 commit、修复 commit、负例语义尚未建立逐项对应。"
+    },
+    {
+      "id": "ACFix",
+      "url": "https://github.com/zly123987/Repair-Access-Control-C",
+      "revision": "869bc83976333e5eb722844dfced6505e7b4839c",
+      "licenseStatus": "PENDING",
+      "license": null,
+      "sourceStatus": "PENDING",
+      "reportStatus": "PENDING",
+      "patchStatus": "PENDING",
+      "labelStatus": "PENDING",
+      "evidence": [
+        "https://github.com/zly123987/Repair-Access-Control-C/blob/main/README.md",
+        "https://github.com/zly123987/Repair-Access-Control-C/tree/main/data",
+        "https://doi.org/10.1109/TSE.2025.3590108"
+      ],
+      "notes": "README 标注 ACFix，仓库 data 与测试日志含 original/modified 线索；GitHub API 未报告许可证。尚未逐对核对真实人工补丁、漏洞报告、版本和真值，不把模型生成 modified 直接认作安全。"
+    }
+  ]
+}

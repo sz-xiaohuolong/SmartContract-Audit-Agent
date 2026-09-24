@@ -1,0 +1,177 @@
+{
+  "date": "2026-09-22",
+  "pythonVersion": "3.14.7",
+  "gitBase": "66161d5b74a6df980425f37c913e63591d246d2a",
+  "workspace": "本地主目录，保留已有未提交修改",
+  "javaTests": {
+    "tests": 35,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "pythonTests": 52,
+  "whitespace": "git diff --check 与新增文件逐项检查通过；no-index 退出码 1 为内容差异，无错误输出",
+  "independentReview": "独立代理 s2_final_review 复审通过；五项问题已修复并通过离线回归，无剩余已知工程阻断",
+  "files": [
+    {
+      "path": "tools/experiment/batch.py",
+      "sha256": "707d7d1a0288e65f0f5ba3da78d90a2390e612156ea469297798754f1a64c80d"
+    },
+    {
+      "path": "tools/experiment/isolation.py",
+      "sha256": "5816ddaa05fcfaae941c8baca5a9d21a490fed84dea6bfbcd24f4a10a4860737"
+    },
+    {
+      "path": "tools/experiment/java_adapter.py",
+      "sha256": "9a8377a4211fd287cafd73e92c9f608df946eb7a33ade8da5137099cbebc4d73"
+    },
+    {
+      "path": "tools/experiment/milvus_rest.py",
+      "sha256": "4854a8d4b5d0659a27b01729253d7d5c898e7271db369f175515b4f231d4e181"
+    },
+    {
+      "path": "tools/experiment/offline.py",
+      "sha256": "862720f535a5a52c3e004e51aab9dc45c71af86aa840775fb1ac30e2611d2c3a"
+    },
+    {
+      "path": "tools/experiment/program_facts.py",
+      "sha256": "e75101cb50ab8bb9423f480dce7656967d99b381c204b00ff99676a9a7e58100"
+    },
+    {
+      "path": "tools/experiment/recall.py",
+      "sha256": "88b58fe2d3dd4a3c9528ad0b8b89b0f71978eb90a0fd32935178ba32f6693afe"
+    },
+    {
+      "path": "tools/experiment/s1b.py",
+      "sha256": "8dbd8badaa2028bed2356bb6a5cfb16534da18f420bd87dccd70e1fbab5341f1"
+    },
+    {
+      "path": "tools/experiment/snapshots.py",
+      "sha256": "92369a9b35d6fac946ffd08c55c608f23bed874fec7038045ea9ca93ec9cd0bd"
+    },
+    {
+      "path": "tools/experiment/storage.py",
+      "sha256": "40a98a58375e8d4884e92e60b98c8a79634b8ffc89cae80a22ad301ae260a99e"
+    },
+    {
+      "path": "tools/experiment/tests/test_batch.py",
+      "sha256": "85b92350b57a7bb110c3f77485ed9745b1eb0b4f64dad73e7223f538f55af4c6"
+    },
+    {
+      "path": "tools/experiment/tests/test_isolation.py",
+      "sha256": "612c15100f50c8fd1a7aa5140e34d9a3abd5da96ca12153660ba364d504f99b3"
+    },
+    {
+      "path": "tools/experiment/tests/test_milvus_rest.py",
+      "sha256": "ef5e9a5b66bb741abd272347fa5040480f2d0a33d47c0fd9f6a8a9514ded55a3"
+    },
+    {
+      "path": "tools/experiment/tests/test_offline.py",
+      "sha256": "e91b21b71e73e848e24b96442789a95fa1a40e1e34423805c454e4a1fb3ce4a6"
+    },
+    {
+      "path": "tools/experiment/tests/test_program_facts.py",
+      "sha256": "97fefdd4ad693fac450d7857db42c4810ca49e7826d78d14d60cb73a79b66902"
+    },
+    {
+      "path": "tools/experiment/tests/test_recall.py",
+      "sha256": "ebbefbd7571adaa1101b874a8624b434e27f7f1728eabfb61116238c8fdb9efc"
+    },
+    {
+      "path": "tools/experiment/tests/test_s1b_cli.py",
+      "sha256": "1e6927b5ec503519f7b2fa1b72211b671c5aa66169e0fcf5665c70158e5233ed"
+    },
+    {
+      "path": "tools/experiment/tests/test_snapshots.py",
+      "sha256": "03c6af627c4a9ee43159c5b69ade6b47bb60979bdffeba3138a57b80e47b9ca3"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/ConditionBinder.java",
+      "sha256": "484740308a783eb32b13c0cb135df3b2129adad66b3e1c352c4366ccdf5f0a1e"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/ContrastiveRetriever.java",
+      "sha256": "9e2eefe6f305624381ad66da73ad73572849af10eba3c70e36c6457b169f6ee5"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/D1Retriever.java",
+      "sha256": "b208baedbd1427f6f47379694d70fb760144a8df4535b6552f63725f50c812f3"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/DenseRetriever.java",
+      "sha256": "2910c62ce1111acf1169a9b71b61c6dea0c2139f120087e8e98bb8838285edcd"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/HybridRetriever.java",
+      "sha256": "57fad389be20c53663c0bf0c4785e39e39f34755bb1125939bde20eb9e5f76e4"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/PythonFactsExtractor.java",
+      "sha256": "53b4e30ad1fc022db7e47033ca2eae95ab5f476295adebc460629cb1e4fe7511"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/RetrievalCli.java",
+      "sha256": "106cd2c550614c6ffd11b4ed74ffbd1710282b559087905a384876e2128ab874"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/RetrievalData.java",
+      "sha256": "6a02fdbeb67898b438c8c1ad31cc826da58550f8fee6bc83cd2a210173816299"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/RetrievalStrategy.java",
+      "sha256": "d0141ac8d7abc77a31fefe3dc1114cd3263c174da3a881f5000360c511589abd"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/retrieval/RetrievalSupport.java",
+      "sha256": "a12f1f432177689819725daa9274be6491d6133ecf00c5d11bd047ed6c1f2397"
+    },
+    {
+      "path": "audit-mvp/src/test/java/com/xhl/audit/retrieval/FactsAdapterTest.java",
+      "sha256": "d55a0c4f3360054ec4c42d0c82f0260be8fa700d0a04630a6b3c68fe1a78e9c4"
+    },
+    {
+      "path": "audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalCliTest.java",
+      "sha256": "b35024969e80d1e48d2cd9ad0c43d2969cec7137978893ec8440da73cb8e10d2"
+    },
+    {
+      "path": "audit-mvp/src/test/java/com/xhl/audit/retrieval/RetrievalTest.java",
+      "sha256": "daabbfb3fb9625db3e558247c2b7259f32cb14436408a49387eda93ec86ed349"
+    },
+    {
+      "path": "audit-mvp/src/main/java/com/xhl/audit/AuditCli.java",
+      "sha256": "c4ffe2d9bba782acd55558ed115e6dddfd544ec9bf211400b58b37fb898ddb44"
+    },
+    {
+      "path": "tools/experiment/README.md",
+      "sha256": "443f167f2b0027e2f407a0d79bc01a6ef07665ca02f305afec4af8bc728ca7f6"
+    },
+    {
+      "path": "docs/vibe/PROJECT.md",
+      "sha256": "39429e92ce2173cb51b1f9a3928c6fcc88e95586c030c868c2d4bf29f22521f9"
+    },
+    {
+      "path": "docs/vibe/PROGRESS.md",
+      "sha256": "631d9205990dd40257238f21cf5d4b3ef8ffe88b77f231829ee21d39c1b193b2"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S2/DESIGN.md",
+      "sha256": "0dbf7c4d84483fd243d4a8ae972e8c1a6bbb714baaba6674720e0614efc7ba6e"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S2/IMPLEMENTATION_PLAN.md",
+      "sha256": "c08b80b470cec712cc3a63ef86a77d5d4be83c6f644b7647840e7c0460bcd88d"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S2/REVIEW.md",
+      "sha256": "927854c8e05e9371b42de56c12a9c8e48178e6cd9f6a24668642a308a517895c"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S2/SPEC.md",
+      "sha256": "951753bf60ac6a0705405eb7492ea643cae290eb39a8b407c363acfcd9cc8234"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S2/VERIFICATION.md",
+      "sha256": "72bbdb1dc0fac8cdd66b87a48f258972daa76ca9d707e5fcbaaf439b69202b9d"
+    }
+  ]
+}

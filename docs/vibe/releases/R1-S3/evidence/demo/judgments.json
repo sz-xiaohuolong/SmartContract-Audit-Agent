@@ -1,0 +1,34 @@
+[
+  {
+    "targetId": "target",
+    "caseId": "vulnerable",
+    "reviewStatus": "REVIEWED",
+    "reviewer": "合成夹具作者（非独立专家）",
+    "evidence": [
+      "target.sol:1",
+      "vulnerable.sol:1"
+    ],
+    "applicability": 2,
+    "support": "NO",
+    "contrast": "YES",
+    "pairId": "synthetic-authorization-pair",
+    "reviewerType": "FIXTURE",
+    "labelVersion": "s3-fixture-v1"
+  },
+  {
+    "targetId": "target",
+    "caseId": "defense",
+    "reviewStatus": "REVIEWED",
+    "reviewer": "合成夹具作者（非独立专家）",
+    "evidence": [
+      "target.sol:1",
+      "defense.sol:1"
+    ],
+    "applicability": 3,
+    "support": "YES",
+    "contrast": "NO",
+    "pairId": "synthetic-authorization-pair",
+    "reviewerType": "FIXTURE",
+    "labelVersion": "s3-fixture-v1"
+  }
+]

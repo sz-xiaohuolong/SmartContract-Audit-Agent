@@ -1,0 +1,90 @@
+{
+  "date": "2026-09-24",
+  "gitBase": "66161d5b74a6df980425f37c913e63591d246d2a",
+  "workspace": "当前主目录，保留全部未提交修改",
+  "mavenTests": 35,
+  "pythonTests": 72,
+  "review": "推送前工程回归：Maven 35 项、Python 72 项，旧模块离线编译；真实研究 G1 未通过，S3 整体仍未验收",
+  "files": [
+    {
+      "path": "docs/vibe/PROGRESS.md",
+      "sha256": "caad7accd552cb11b74bfe47bf11e88148991561d551cbe49ab426d7bc7c957b"
+    },
+    {
+      "path": "docs/vibe/PROJECT.md",
+      "sha256": "bdcdd7073d765aa29b2eb0abcb6bbd604be412d10d0fd21f4d603c025053245c"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/DESIGN.md",
+      "sha256": "92176199aaf3ebcf7e02373c557b43084328c8e0326de85bd5cb39647b7ac4c0"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/IMPLEMENTATION_PLAN.md",
+      "sha256": "0cf77dff9eab88d0831df2525939a4c30160c13f8ceefe5d956e9822f99fa005"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/SOURCE_REGISTRY.json",
+      "sha256": "4839940cc4fe2027edecbbe99dbb79bab002e0a5516bdfa1861b33de974522f1"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/SPEC.md",
+      "sha256": "8dea661051476695b8194682215a426ad76b597e6bceb721c19b6565b9f60aad"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/VERIFICATION.md",
+      "sha256": "5d38e5896dc021954150e5b81a3ce5f84b5379c3c42ea92f92cad3a713494117"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/evidence/demo/codepoint_tokenizer.py",
+      "sha256": "7da5e7eaac57d1f52c2d166936a1a721092b09d8f3b23b727417e0686f0afc6d"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/evidence/demo/d2-baselines.json",
+      "sha256": "ba2fac92d5483053aff1321249c3f270aacc5896f67f0dd0bd643e9fe15122e4"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/evidence/demo/d2-challenges.json",
+      "sha256": "1c04b18962d85ce812e8aaf43afbf56f3b32c617ac1577366d3a085a5eccc52b"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/evidence/demo/d2-summary.json",
+      "sha256": "a7509d2cdc2ed6add71a40a7bc865cda4f7c6d2a1c6258d1222f74e08660b978"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/evidence/demo/judgments.json",
+      "sha256": "7abeda17b0a4938dfad9902be2334460cb037465656a521b2e35fb93cfd5e8ba"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/evidence/demo/leakage-report.json",
+      "sha256": "dc55c678146cf72423f875514cf8b7bf83e11723677ae0618b87d606f991e4f5"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/evidence/demo/ledger.json",
+      "sha256": "6394475c81f9b496bc67afb2e27a0c3b14f82afe9f83afd52e5831bd8006349c"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/evidence/demo/pilot.json",
+      "sha256": "5a39c963bd37d1ac45172f90dd8315f23f3242232d933ae1ab0c05f19ba0cdef"
+    },
+    {
+      "path": "docs/vibe/releases/R1-S3/evidence/demo/plan.json",
+      "sha256": "3725d1aca74f67088343f3d6deb4237a3a76d4aadb8c078d9f4798007bd9592c"
+    },
+    {
+      "path": "tools/experiment/README.md",
+      "sha256": "df4743f7123ed82545a6f5ba2915a9a15229fe0af81a751717a1dc6762ca050a"
+    },
+    {
+      "path": "tools/experiment/s3.py",
+      "sha256": "7106cb3c8402969bba55c4e78063f099cd036c6912726a2b6d4a5e43e48fae50"
+    },
+    {
+      "path": "tools/experiment/s3_pilot.py",
+      "sha256": "99c43379fba587df807b201fc215337c34db3834c59ae6fc5a923deb6b11ad57"
+    },
+    {
+      "path": "tools/experiment/tests/test_s3.py",
+      "sha256": "48d91d2768f7ef85526ab153aaf36bc360d1078d85610071d2e751239d7458be"
+    }
+  ]
+}

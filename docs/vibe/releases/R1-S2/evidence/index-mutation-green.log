@@ -1,0 +1,16 @@
+test_alias_tuple_and_unrecognized_writes_do_not_imply_absence (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_alias_tuple_and_unrecognized_writes_do_not_imply_absence) ... ok
+test_branch_bypass_unresolved_modifier_and_internal_call_are_unknown (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_branch_bypass_unresolved_modifier_and_internal_call_are_unknown) ... ok
+test_comments_strings_and_other_function_do_not_protect_target (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_comments_strings_and_other_function_do_not_protect_target) ... ok
+test_extracts_state_caller_checks_and_call_write_order (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_extracts_state_caller_checks_and_call_write_order) ... ok
+test_malformed_or_unsupported_source_never_becomes_complete_empty (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_malformed_or_unsupported_source_never_becomes_complete_empty) ... ok
+test_modifiers_expand_in_execution_order_not_source_order (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_modifiers_expand_in_execution_order_not_source_order) ... ok
+test_mutated_index_and_nested_assignment_keep_data_flow_unknown (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_mutated_index_and_nested_assignment_keep_data_flow_unknown) ... ok
+test_overloads_on_same_line_have_distinct_scopes_and_fact_ids (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_overloads_on_same_line_have_distinct_scopes_and_fact_ids) ... ok
+test_rhs_call_shadowed_state_and_member_alias_are_not_definite (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_rhs_call_shadowed_state_and_member_alias_are_not_definite) ... ok
+test_short_circuit_and_nested_mapping_cannot_prove_write_presence_or_absence (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_short_circuit_and_nested_mapping_cannot_prove_write_presence_or_absence) ... ok
+test_wrong_subject_late_check_and_wrong_resource_remain_distinct (tools.experiment.tests.test_program_facts.ProgramFactsTest.test_wrong_subject_late_check_and_wrong_resource_remain_distinct) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.002s
+
+OK
