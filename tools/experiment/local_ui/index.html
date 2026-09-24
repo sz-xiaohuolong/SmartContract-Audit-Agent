@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>离线实验台 | 智能合约审计</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail" aria-label="页面导航">
+      <div class="brand"><span class="brand-mark">V</span><span>VeriRAG<span class="brand-sub">研究实验台</span></span></div>
+      <nav>
+        <a href="#overview" class="active">实验概览</a>
+        <a href="#comparison">策略比较</a>
+        <a href="#evidence">案例证据</a>
+        <a href="#history">运行记录</a>
+      </nav>
+      <div class="rail-foot"><span class="foot-label">运行边界</span><strong>仅本机 · 完全离线</strong><span>此页面不连接模型供应商。</span></div>
+    </aside>
+
+    <main id="overview" class="main">
+      <header class="topline"><span>R1 / 数据与检索实验</span><span id="connection">正在连接本地服务</span></header>
+      <section class="intro">
+        <div>
+          <p class="kicker">实验工作区</p>
+          <h1>看清每一种检索选择</h1>
+          <p class="lede">用同一份合成合约与候选池，直接比较 D1 和六种对照方法。每次运行都留下可重放结果。</p>
+        </div>
+        <div class="intro-action">
+          <button id="runButton" class="primary" type="button" disabled>重新运行离线对照 <span aria-hidden="true">↗</span></button>
+          <span id="runStatus" role="status" aria-live="polite">正在加载演示数据</span>
+        </div>
+      </section>
+
+      <div class="notice" role="note"><strong>演示数据</strong><span>这是人工构造的流程样例，不是真实论文结果。真实样本尚未通过来源与标签审核；此页面不会使用你配置的 API Key。</span></div>
+
+      <section class="summary" aria-label="实验摘要">
+        <div><span>样本</span><strong id="sampleCount">…</strong><small>固定合成目标</small></div>
+        <div><span>检索策略</span><strong id="strategyCount">…</strong><small>共享候选池</small></div>
+        <div><span>可用预算</span><strong id="tokenBudget">…</strong><small>合成计数单位</small></div>
+        <div><span>研究可用样本</span><strong id="eligibleCount">…</strong><small>真实样本仍待审</small></div>
+      </section>
+
+      <section id="comparison" class="section comparison">
+        <div class="section-head"><div><h2>策略比较</h2><p>点击一行，查看它选中的案例和条件判断。</p></div><span id="runLabel" class="quiet">仓库内演示结果</span></div>
+        <div class="table-scroll"><table><thead><tr><th scope="col">检索方法</th><th scope="col">入选顺序</th><th scope="col">Recall@2</th><th scope="col">nDCG@2</th><th scope="col">互补证据</th><th scope="col">预算使用</th></tr></thead><tbody id="strategyRows"></tbody></table></div>
+        <p class="table-note">数值仅说明这组人工构造案例的排序表现。合成码点计数不等于真实模型 token 计数。</p>
+      </section>
+
+      <section id="evidence" class="section evidence">
+        <div class="section-head"><div><h2>案例证据</h2><p id="selectedDescription">选择一种策略查看证据。</p></div><span id="poolId" class="mono"></span></div>
+        <div class="evidence-grid"><div class="source-panel"><div class="panel-head"><strong>目标合约</strong><span>development / 合成</span></div><pre id="targetSource" tabindex="0"></pre><div class="question" id="targetQuestion"></div></div><div id="selectedCases" class="case-list"></div></div>
+      </section>
+
+      <section id="history" class="section history">
+        <div class="section-head"><div><h2>运行记录</h2><p>重新打开历史结果不会再次运行实验。</p></div><button id="demoButton" class="text-button" type="button">查看仓库演示</button></div>
+        <div id="historyList" class="history-list"><p class="empty">本机还没有新的运行记录。</p></div>
+      </section>
+      <footer>所有结果只在你的电脑上生成。锁定测试集与真实模型实验仍未开放。</footer>
+    </main>
+  </div>
+</body>
+</html>

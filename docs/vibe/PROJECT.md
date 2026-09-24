@@ -37,4 +37,4 @@ PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tes
 java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help
 ```
 
-默认测试完全离线。真实模型、embedding、Milvus 和工具环境验证需显式配置；不自动批量实验、换端点或重建旧知识库。凭证只通过环境变量提供。
+默认测试完全离线。真实模型、embedding、Milvus 和工具环境验证需显式配置；不自动批量实验、换端点或重建旧知识库。凭证可通过环境变量或被 Git 忽略的 `config/providers.local.properties` 提供，不得提交真实密钥。

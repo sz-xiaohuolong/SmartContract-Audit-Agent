@@ -1,5 +1,7 @@
 # 数据与实验工具（S1a / S1b）
 
+本地可视化验收：先运行 `mvn clean verify` 生成 Java 检索 JAR，再运行 `python3 tools/experiment/local_ui.py --port 8765`，打开 `http://127.0.0.1:8765/`。前后端由同一服务提供，仅运行固定合成样例，不读取模型密钥。界面、历史结果与研究限制见 [本地页面说明](../../docs/vibe/releases/R1-S3/LOCAL_UI.md)。
+
 离线清单、评估、快照和重放使用 Python 3 标准库，无额外依赖。只有 S1b 的 run/resume 命令会显式调用所选模型；单写者锁和进程组控制面向本项目的 macOS/Linux 环境。
 
 ```bash

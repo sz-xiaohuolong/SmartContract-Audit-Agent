@@ -1,6 +1,7 @@
 application-local.yml
 application-coding-plan.yml
 /config/providers.local.properties
+/.local/experiment-ui/
 tmp/
 
 HELP.md
