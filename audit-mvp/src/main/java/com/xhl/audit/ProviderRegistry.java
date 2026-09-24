@@ -23,8 +23,12 @@ public final class ProviderRegistry {
         if (uri.getHost() == null || uri.getUserInfo() != null || uri.getQuery() != null || uri.getFragment() != null
             || !("https".equals(uri.getScheme()) || ("http".equals(uri.getScheme()) && loopback)))
             throw new IllegalArgumentException("供应商需 HTTPS 地址；仅本地测试允许 HTTP");
-        String key = environment.get(required(prefix + "api-key-env"));
-        if (key == null || key.isBlank()) throw new IllegalArgumentException("所选供应商缺少 API Key 环境变量");
+        String key = properties.getProperty(prefix + "api-key");
+        if (key == null || key.isBlank()) {
+            String variable = properties.getProperty(prefix + "api-key-env");
+            if (variable != null && !variable.isBlank()) key = environment.get(variable.trim());
+        }
+        if (key == null || key.isBlank()) throw new IllegalArgumentException("所选供应商缺少 API Key");
         return new Provider(selected, base.replaceAll("/+$", ""), required(prefix + "model"), key,
             Duration.ofSeconds(positive(prefix + "timeout-seconds", 60, 600)), positive(prefix + "max-output-tokens", 2048, 32768));
     }

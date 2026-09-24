@@ -46,7 +46,7 @@ public final class AuditCli {
             out.println(new ObjectMapper().writeValueAsString(result));
             return result.status() == AuditResult.Status.COMPLETED ? 0 : 1;
         } catch (Exception e) {
-            err.println("输入或配置无效：请检查参数、UTF-8 源码（不超过 1 MiB）、供应商配置和密钥环境变量。");
+            err.println("输入或配置无效：请检查参数、UTF-8 源码（不超过 1 MiB）、供应商配置和 API Key。");
             return 2;
         }
     }

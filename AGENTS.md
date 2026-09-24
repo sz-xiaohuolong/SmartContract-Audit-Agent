@@ -11,7 +11,7 @@
 - 默认验证：`mvn clean verify`；命令行：`java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help`。
 - 测试不得依赖真实 API、Milvus 或工具环境；使用本地 HTTP 与子进程夹具。
 - 不将调用异常、解析错误、超时或缺失工具结果映射为安全；usage 缺失必须保留 null。
-- 凭证仅环境变量；真实模型调用须显式选择配置，不自动批量实验或更换计费端点。
+- 凭证可来自环境变量或被 Git 忽略的 `config/providers.local.properties`；不得提交真实密钥。真实模型调用须显式选择配置，不自动批量实验或更换计费端点。
 - 旧 `src/` 通过 `legacy/pom.xml` 单独构建；以下旧架构说明仅适用于该历史代码，不是新模块规范。
 
 ---

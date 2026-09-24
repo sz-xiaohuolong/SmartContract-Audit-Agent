@@ -15,16 +15,16 @@ java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help
 
 默认测试仅使用本机 HTTP 服务和 Java 子进程夹具，不要求 Milvus、Slither、Mythril 或模型凭证。首次构建仍需下载 Maven 依赖。
 
-真实单合约调用前，复制 `config/providers.example.properties` 到自己的配置文件，核对账户模型标识和端点，并在运行环境设置 `ARK_API_KEY`。配置文件只引用环境变量名称。示例使用 Agent Plan 的 `/api/plan/v3`；不能混用 Coding Plan 或按量计费端点。
+真实单合约调用前，在本机的 `config/providers.local.properties` 中找到 `providers.ark.api-key=`，把**火山方舟 Agent Plan** 的 Key 填在等号后面，不加引号。该文件已加入 `.gitignore`，不会随代码提交；请核对账户可用的模型标识和端点。示例使用 Agent Plan 的 `/api/plan/v3`；不能混用 Coding Plan 或按量计费端点。若仍想从环境变量读取，可使用 `config/providers.example.properties` 中的 `ARK_API_KEY` 配置。
 
 ```bash
 java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar \
   --source /绝对路径/Contract.sol \
-  --config config/providers.example.properties \
+  --config config/providers.local.properties \
   --provider ark
 ```
 
-上述命令会向所选供应商发送源码并调用一次模型。`deepseek-v4.1-flash` 是用户目标配置，尚未通过实际账户验证。`--provider custom` 可切换到另一个已配置的 OpenAI Chat Completions 兼容接口；不支持未经适配的供应商原生协议。SDK 重试关闭，超时及输出 token 上限可配置。
+上述命令会向所选供应商发送源码并调用一次模型。`deepseek-v4.1-flash` 是用户目标配置，尚未通过实际账户验证。`--provider custom` 可切换到另一个已配置的 OpenAI Chat Completions 兼容接口；不支持未经适配的供应商原生协议。SDK 重试关闭，超时及输出 token 上限可配置。程序优先读取本地配置中的 `providers.<名称>.api-key`；该值为空时才读取 `providers.<名称>.api-key-env` 指向的环境变量。错误信息和结果不会打印 Key。
 
 无参数只显示帮助。源码必须为 UTF-8，最大 1 MiB。退出码：`0` 审计完成、`1` 模型调用或输出失败、`2` 输入/配置无效。标准输出为单条 JSON，可重定向保存。
 
