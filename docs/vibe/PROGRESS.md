@@ -6,7 +6,7 @@
 
 - 当前 Release：`R1-S3` 首个工程切片；[SPEC](releases/R1-S3/SPEC.md) 的本轮工程范围 FROZEN。S2 工程历史状态仍为 READY_TO_SHIP，不能当成 D1 科研效果。
 - Workflow State：`VERIFYING`（S3 整体，工程部分可重放）；Operational Status：`ACTIVE`。Maven 35 项与 Python 72 项离线测试通过，旧模块离线编译成功；真实数据 G1 **未通过**，D1/D2 研究效果 `UNVERIFIED`。用户已授权本次代码推送，但不改变研究验证状态。
-- 当前目录：`/Users/daiyifei/Documents/code/SmartContract-agent`，分支 `main`，推送前 Git 基点 `66161d5b74a6df980425f37c913e63591d246d2a`。保留研究原件；本轮未调用付费模型。
+- 当前目录：`/Users/daiyifei/Documents/code/SmartContract-agent`，分支 `main`。S0–S3 工程基线与离线证据已提交并同步 `origin/main`，以远程 Git 历史为准；保留研究原件，本轮未调用付费模型。
 - [S3 来源登记](releases/R1-S3/SOURCE_REGISTRY.json)：SCRUBD 与 ACFix 未核实许可；SmartBugs Curated/ASE AC 仓库分别声明 Apache-2.0/MIT，但逐事件报告、源码、补丁和标签尚未完成核对。真实安全负例数为 0。
 - [S3 验证](releases/R1-S3/VERIFICATION.md)：项目/事件/补丁/精确重复/近克隆和衍生材料跨划分门禁；锁定集直接拒绝、未打开。标签含 UNKNOWN 分母；同池四策略、字段过滤与两消融在合成夹具跑通；完整提示预算用合成计数器验证机制，真实模型 tokenizer/chat 模板仍未锁定。
 - 推送前复审修正来源准入空材料、反证基线遗漏、超时失败分母和 D2 未知真值计数；合成夹具里 D1 与字段过滤 Recall@2 同为 1。旧源码硬编码凭证已改为环境读取，但历史中旧值仍需供应商侧轮换。

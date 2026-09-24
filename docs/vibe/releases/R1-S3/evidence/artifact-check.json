@@ -8,7 +8,7 @@
   "files": [
     {
       "path": "docs/vibe/PROGRESS.md",
-      "sha256": "caad7accd552cb11b74bfe47bf11e88148991561d551cbe49ab426d7bc7c957b"
+      "sha256": "63e23a256fe506981d8fd0194c8e046490e6e63ee1f796ddce1095853ed710a8"
     },
     {
       "path": "docs/vibe/PROJECT.md",
@@ -32,7 +32,7 @@
     },
     {
       "path": "docs/vibe/releases/R1-S3/VERIFICATION.md",
-      "sha256": "5d38e5896dc021954150e5b81a3ce5f84b5379c3c42ea92f92cad3a713494117"
+      "sha256": "e163e73b3cb6b16546222f25f83e37dcda77abb7f38a5a769dd1c90ea2f9a5e0"
     },
     {
       "path": "docs/vibe/releases/R1-S3/evidence/demo/codepoint_tokenizer.py",
