@@ -68,6 +68,22 @@
         "https://doi.org/10.1109/TSE.2025.3590108"
       ],
       "notes": "README 标注 ACFix，仓库 data 与测试日志含 original/modified 线索；GitHub API 未报告许可证。尚未逐对核对真实人工补丁、漏洞报告、版本和真值，不把模型生成 modified 直接认作安全。"
+    },
+    {
+      "id": "Proof-of-Patch",
+      "url": "https://github.com/ASSERT-KTH/Proof-of-Patch",
+      "revision": "eca2a566326d7636665c45c670698e05ea12a3ac",
+      "licenseStatus": "PENDING",
+      "license": null,
+      "sourceStatus": "PENDING",
+      "reportStatus": "PENDING",
+      "patchStatus": "PENDING",
+      "labelStatus": "PENDING",
+      "evidence": [
+        "https://github.com/ASSERT-KTH/Proof-of-Patch/tree/eca2a566326d7636665c45c670698e05ea12a3ac",
+        "https://github.com/ASSERT-KTH/Proof-of-Patch/blob/eca2a566326d7636665c45c670698e05ea12a3ac/dataset_metadata.json"
+      ],
+      "notes": "仅作原始审计报告与维护者补丁的追溯线索；仓库未声明许可证。部分元数据类别与原始报告不符，个别补丁链接当前不可访问，逐事件必须复核。"
     }
   ]
 }

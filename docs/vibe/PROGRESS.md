@@ -2,14 +2,14 @@
 
 更新：2026-09-25。
 
-2026-09-25 已完成[第一批真实案例来源选择提案](releases/R1-S3/DATASET_SELECTION_PROPOSAL.md)，等待用户审核。建议以 ASE 2025 访问控制基准和 SCRUBD V6.0 为待审事件索引、SmartBugs Curated 为待审知识候选，并沿原始审计及维护者提交追溯真实修复对。此轮仅完成公开论文与仓库资料核验；没有准入真实样本、激活正式知识快照或运行付费实验，G1 仍未通过。
+2026-09-25 用户已批准[第一批真实案例来源选择提案](releases/R1-S3/DATASET_SELECTION_PROPOSAL.md)的访问控制／重入范围、ASE 2025 与 SCRUBD V6.0 事件索引、Proof-of-Patch 修复线索，并限定先导为 10～15 个高质量样本；字节码案例和 ACFix 模型修复暂缓。[首次核验记录](releases/R1-S3/FIRST_BATCH_AUDIT.md)固定十项待审候选、源码摘要与阻塞项，排除发现的标签映射疑点。合格准入仍为 0，尚未分组划分、激活正式知识快照或运行付费实验，G1 仍未通过。
 
 **研究方向更新：**2026-09-24 二轮定向查新后，D1 仅保留可证伪的受约束命题；D2 宽版本创新主张撤回。见[第二轮裁决](../../thesis/D1_D2第二轮查新与立题裁决_20260924.md)。
 
 - 当前 Release：`R1-S3` 首个工程切片；[SPEC](releases/R1-S3/SPEC.md) 的本轮工程范围 FROZEN。S2 工程历史状态仍为 READY_TO_SHIP，不能当成 D1 科研效果。
 - Workflow State：`VERIFYING`（S3 整体，工程部分可重放）；Operational Status：`ACTIVE`。Maven 36 项与 Python 76 项离线测试通过，旧模块离线编译成功；真实数据 G1 **未通过**，D1/D2 研究效果 `UNVERIFIED`。用户已授权完成的小版本同步远程，但不改变研究验证状态。
 - 当前目录：`/Users/daiyifei/Documents/code/SmartContract-agent`，分支 `main`。S0–S3 工程基线与离线证据已提交并同步 `origin/main`，以远程 Git 历史为准；保留研究原件，本轮未调用付费模型。
-- [S3 来源登记](releases/R1-S3/SOURCE_REGISTRY.json)：SCRUBD 与 ACFix 未核实许可；SmartBugs Curated/ASE AC 仓库分别声明 Apache-2.0/MIT，但逐事件报告、源码、补丁和标签尚未完成核对。真实安全负例数为 0。
+- [S3 来源登记](releases/R1-S3/SOURCE_REGISTRY.json)：SCRUBD、Proof-of-Patch 与 ACFix 未核实仓库许可；SmartBugs Curated/ASE AC 仓库分别声明 Apache-2.0/MIT，但逐事件报告、源码、补丁和标签尚未完成核对。真实安全负例数为 0。
 - [S3 验证](releases/R1-S3/VERIFICATION.md)：项目/事件/补丁/精确重复/近克隆和衍生材料跨划分门禁；锁定集直接拒绝、未打开。标签含 UNKNOWN 分母；同池四策略、字段过滤与两消融在合成夹具跑通；完整提示预算用合成计数器验证机制，真实模型 tokenizer/chat 模板仍未锁定。
 - 推送前复审修正来源准入空材料、反证基线遗漏、超时失败分母和 D2 未知真值计数；合成夹具里 D1 与字段过滤 Recall@2 同为 1。旧源码硬编码凭证已改为环境读取，但历史中旧值仍需供应商侧轮换。
 - 本地凭证配置：`audit-mvp` 可从 `config/providers.local.properties` 读取 API Key，空值时回退到原有环境变量；该本地文件被 Git 忽略，示例文件不含密钥。只用本地 HTTP 夹具验证了文件读取与输出脱敏，未调用真实模型。此项仅改善人工使用方式，不构成 D1/D2 效果证据。

@@ -1,0 +1,249 @@
+{
+  "schemaVersion": "1",
+  "checkedAt": "2026-09-25",
+  "selectionLimit": {
+    "minimum": 10,
+    "maximum": 15
+  },
+  "status": "待审，不得用于正式知识快照或真实效果报告",
+  "admittedCount": 0,
+  "cases": [
+    {
+      "id": "AC-ASE-003",
+      "direction": "访问控制",
+      "index": "ASE-AC-2025",
+      "projectId": "traitforge-2024",
+      "eventId": "traitforge-H06",
+      "function": "initializeAlphaIndices",
+      "sourceUrl": "https://github.com/code-423n4/2024-07-traitforge/blob/279b2887e3d38bc219a05d332cbcb0655b2dc644/contracts/EntropyGenerator/EntropyGenerator.sol",
+      "sourceSha256": "4c12b65620836b90acd98af538df0743334d878461e5d6a63b36226f0587a984",
+      "reportUrl": "https://code4rena.com/reports/2024-07-traitforge",
+      "patchUrl": null,
+      "blockers": [
+        "源码文件声明 MIT，报告再利用及仓库整体许可范围待审",
+        "真实修复提交未定位",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": "MIT",
+      "licenseEvidenceUrl": "https://github.com/code-423n4/2024-07-traitforge/blob/279b2887e3d38bc219a05d332cbcb0655b2dc644/contracts/EntropyGenerator/EntropyGenerator.sol"
+    },
+    {
+      "id": "AC-ASE-006",
+      "direction": "访问控制",
+      "index": "ASE-AC-2025",
+      "projectId": "basin-2024",
+      "eventId": "basin-H01",
+      "function": "_authorizeUpgrade",
+      "sourceUrl": "https://github.com/code-423n4/2024-07-basin/blob/7d5aacbb144d0ba0bc358dfde6e0cc913d25310e/src/WellUpgradeable.sol",
+      "sourceSha256": "fb264eadf05348fdbf4ab8a8c340236d55c2cf165a8d24a26e9c327d5bdc5bd5",
+      "reportUrl": "https://code4rena.com/reports/2024-07-basin",
+      "patchUrl": null,
+      "blockers": [
+        "真实修复提交与覆盖未核实",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": "MIT",
+      "licenseEvidenceUrl": "https://github.com/code-423n4/2024-07-basin/blob/7d5aacbb144d0ba0bc358dfde6e0cc913d25310e/src/WellUpgradeable.sol"
+    },
+    {
+      "id": "AC-ASE-009",
+      "direction": "访问控制",
+      "index": "ASE-AC-2025",
+      "projectId": "gondi-2024",
+      "eventId": "gondi-H03",
+      "function": "distribute",
+      "sourceUrl": "https://github.com/code-423n4/2024-04-gondi/blob/b9863d73c08fcdd2337dc80a8b5e0917e18b036c/src/lib/LiquidationDistributor.sol",
+      "sourceSha256": "c41d5598d66712493a2e81b55dfc50913fe1f42cad4d9b2d2e694548585f584b",
+      "reportUrl": "https://code4rena.com/reports/2024-04-gondi",
+      "patchUrl": null,
+      "blockers": [
+        "源码文件声明 AGPL-3.0，报告再利用及仓库整体许可范围待审",
+        "真实修复提交未定位",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": "AGPL-3.0",
+      "licenseEvidenceUrl": "https://github.com/code-423n4/2024-04-gondi/blob/b9863d73c08fcdd2337dc80a8b5e0917e18b036c/src/lib/LiquidationDistributor.sol"
+    },
+    {
+      "id": "AC-ASE-030",
+      "direction": "访问控制",
+      "index": "ASE-AC-2025",
+      "projectId": "maia-2023",
+      "eventId": "maia-H01",
+      "function": "payableCall",
+      "sourceUrl": "https://github.com/code-423n4/2023-09-maia/blob/f5ba4de628836b2a29f9b5fff59499690008c463/src/VirtualAccount.sol",
+      "sourceSha256": "adca74b8b692dd708c5259602a857e38f87ca044d000f853b343784417d3d2e0",
+      "reportUrl": "https://code4rena.com/reports/2023-09-maia",
+      "patchUrl": null,
+      "blockers": [
+        "源码文件声明 MIT，报告再利用及仓库整体许可范围待审",
+        "真实修复提交未定位",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": "MIT",
+      "licenseEvidenceUrl": "https://github.com/code-423n4/2023-09-maia/blob/f5ba4de628836b2a29f9b5fff59499690008c463/src/VirtualAccount.sol"
+    },
+    {
+      "id": "AC-ASE-040",
+      "direction": "访问控制",
+      "index": "ASE-AC-2025",
+      "projectId": "pooltogether-v5-2023",
+      "eventId": "pooltogether-H04",
+      "function": "mintYieldFee",
+      "sourceUrl": "https://github.com/GenerationSoftware/pt-v5-vault/blob/b1deb5d494c25f885c34c83f014c8a855c5e2749/src/Vault.sol",
+      "sourceSha256": "88a1ece0cf91937751d6aff6ee0a289987ff77e4d394fed7caf1a93c27475151",
+      "reportUrl": "https://code4rena.com/reports/2023-07-pooltogether",
+      "patchUrl": "https://github.com/GenerationSoftware/pt-v5-vault/pull/7",
+      "blockers": [
+        "修复差异与报告漏洞的逐行对应未复核",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": "MIT",
+      "licenseEvidenceUrl": "https://github.com/GenerationSoftware/pt-v5-vault/blob/b1deb5d494c25f885c34c83f014c8a855c5e2749/src/Vault.sol"
+    },
+    {
+      "id": "RE-POP-048",
+      "direction": "重入",
+      "index": "Proof-of-Patch修复线索及Code4rena报告",
+      "projectId": "caviar-2023",
+      "eventId": "caviar-H01",
+      "function": "buy",
+      "sourceUrl": "https://github.com/code-423n4/2023-04-caviar/blob/5c87f7d69c6fac29eb253b5c7b2fb4a9f23f8750/src/PrivatePool.sol",
+      "sourceSha256": "2a05311f15fb92b646e976de7884fc3750063947ab37ff0bc9d197a3bf347caa",
+      "reportUrl": "https://code4rena.com/reports/2023-04-caviar",
+      "patchUrl": "https://github.com/outdoteth/caviar-private-pools/pull/12",
+      "blockers": [
+        "Proof-of-Patch仓库许可未声明，须沿原项目逐文件核实",
+        "修复差异与重入路径未独立复核",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": "MIT",
+      "licenseEvidenceUrl": "https://github.com/code-423n4/2023-04-caviar/blob/5c87f7d69c6fac29eb253b5c7b2fb4a9f23f8750/src/PrivatePool.sol"
+    },
+    {
+      "id": "RE-POP-077",
+      "direction": "重入",
+      "index": "Proof-of-Patch修复线索及Code4rena报告",
+      "projectId": "ai-arena-2024",
+      "eventId": "ai-arena-H08",
+      "function": "claimRewards",
+      "sourceUrl": "https://github.com/code-423n4/2024-02-ai-arena/blob/b05b54a9eb5b0964bde9825f75305caa2d943155/src/MergingPool.sol",
+      "sourceSha256": "b0c5b90a1f1ec659047238063433f52cc69fa95091df9af76d155f69a75ab5dd",
+      "reportUrl": "https://code4rena.com/reports/2024-02-ai-arena",
+      "patchUrl": "https://github.com/ArenaX-Labs/2024-02-ai-arena-mitigation/pull/6",
+      "blockers": [
+        "修复仓库当前API返回404，补丁原件未核实",
+        "Proof-of-Patch仓库许可未声明",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": "MIT",
+      "licenseEvidenceUrl": "https://github.com/code-423n4/2024-02-ai-arena/blob/b05b54a9eb5b0964bde9825f75305caa2d943155/src/MergingPool.sol"
+    },
+    {
+      "id": "RE-SCRUBD-001",
+      "direction": "重入",
+      "index": "SCRUBD-V6.0",
+      "projectId": "dexblue-0x000000000000541e251335090ac5b47176af4f7e",
+      "eventId": "dexblue-matchOrderWithReserve",
+      "function": "dexBlueSettlementModule.matchOrderWithReserve",
+      "sourceUrl": "https://github.com/sujeetc/SCRUBD/blob/9dba1928d4aea9a5d27014e5f31a8ed0b703f711/SCRUBD-CD/data/solidity_codes/0x000000000000541e251335090ac5b47176af4f7e.sol",
+      "sourceSha256": "cb276f79ed99e252d09914ef5c9aab36b4fe21a8281f1acd1b2f6c6844fa8ef6",
+      "reportUrl": null,
+      "patchUrl": null,
+      "blockers": [
+        "SCRUBD及原项目源码许可未核实",
+        "缺逐事件原始漏洞报告和修复",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": null,
+      "licenseEvidenceUrl": null
+    },
+    {
+      "id": "RE-SCRUBD-002",
+      "direction": "重入",
+      "index": "SCRUBD-V6.0",
+      "projectId": "monkeyscam-0x06ef66ab59919e1c3b25ad4732a002f644fe0f8e",
+      "eventId": "monkeyscam-determinePID",
+      "function": "MonkeyScam.determinePID",
+      "sourceUrl": "https://github.com/sujeetc/SCRUBD/blob/9dba1928d4aea9a5d27014e5f31a8ed0b703f711/SCRUBD-CD/data/solidity_codes/0x06ef66ab59919e1c3b25ad4732a002f644fe0f8e.sol",
+      "sourceSha256": "25dc88f0199e4925f395ee78aee49af60b1601bd958f76c40f0515800309bb57",
+      "reportUrl": null,
+      "patchUrl": null,
+      "blockers": [
+        "SCRUBD及原项目源码许可未核实",
+        "缺逐事件原始漏洞报告和修复",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": null,
+      "licenseEvidenceUrl": null
+    },
+    {
+      "id": "RE-SCRUBD-003",
+      "direction": "重入",
+      "index": "SCRUBD-V6.0",
+      "projectId": "vivico-0x0bc95951bb59d6fd063ce7ad5c3b3dcaace98132",
+      "eventId": "vivico-contribute",
+      "function": "ViVICO.contribute",
+      "sourceUrl": "https://github.com/sujeetc/SCRUBD/blob/9dba1928d4aea9a5d27014e5f31a8ed0b703f711/SCRUBD-CD/data/solidity_codes/0x0bc95951bb59d6fd063ce7ad5c3b3dcaace98132.sol",
+      "sourceSha256": "32835937897cccbeae288389af18d0f5cbe2b8eb845fb69f5aba359d424cd6db",
+      "reportUrl": null,
+      "patchUrl": null,
+      "blockers": [
+        "SCRUBD及原项目源码许可未核实",
+        "缺逐事件原始漏洞报告和修复",
+        "独立标签复核未完成"
+      ],
+      "reviewStatus": "待审",
+      "split": null,
+      "cloneGroup": null,
+      "sourceFileSpdx": null,
+      "licenseEvidenceUrl": null
+    }
+  ],
+  "excluded": [
+    {
+      "index": "ASE-AC-2025",
+      "entry": "Yaxis 表格第 77 项",
+      "reason": "表格将 addStrategy 指为 M3，原始报告对应 M13；不在本轮先导中修正后直接使用",
+      "evidence": [
+        "https://code4rena.com/reports/2021-09-yaxis"
+      ]
+    },
+    {
+      "index": "Proof-of-Patch",
+      "entry": "054、098",
+      "reason": "数据目录将其列为重入，原始报告描述的是转账返回值或假余额，暂不按重入使用",
+      "evidence": [
+        "https://github.com/code-423n4/2022-05-cally-findings/issues/89",
+        "https://github.com/code-423n4/2022-05-cally-findings/issues/225"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "checkedAt": "2026-09-25",
+  "sourceCount": 10,
+  "sourceHashMismatches": 0,
+  "scrubdLabelChecks": [
+    {
+      "id": "RE-SCRUBD-001",
+      "label": "RE=1",
+      "isStudent": "0",
+      "matches": true
+    },
+    {
+      "id": "RE-SCRUBD-002",
+      "label": "RE=1",
+      "isStudent": "0",
+      "matches": true
+    },
+    {
+      "id": "RE-SCRUBD-003",
+      "label": "RE=1",
+      "isStudent": "0",
+      "matches": true
+    }
+  ],
+  "sources": [
+    {
+      "id": "AC-ASE-003",
+      "bytes": 7562,
+      "sha256": "4c12b65620836b90acd98af538df0743334d878461e5d6a63b36226f0587a984",
+      "matches": true
+    },
+    {
+      "id": "AC-ASE-006",
+      "bytes": 5807,
+      "sha256": "fb264eadf05348fdbf4ab8a8c340236d55c2cf165a8d24a26e9c327d5bdc5bd5",
+      "matches": true
+    },
+    {
+      "id": "AC-ASE-009",
+      "bytes": 5075,
+      "sha256": "c41d5598d66712493a2e81b55dfc50913fe1f42cad4d9b2d2e694548585f584b",
+      "matches": true
+    },
+    {
+      "id": "AC-ASE-030",
+      "bytes": 6000,
+      "sha256": "adca74b8b692dd708c5259602a857e38f87ca044d000f853b343784417d3d2e0",
+      "matches": true
+    },
+    {
+      "id": "AC-ASE-040",
+      "bytes": 44347,
+      "sha256": "88a1ece0cf91937751d6aff6ee0a289987ff77e4d394fed7caf1a93c27475151",
+      "matches": true
+    },
+    {
+      "id": "RE-POP-048",
+      "bytes": 36801,
+      "sha256": "2a05311f15fb92b646e976de7884fc3750063947ab37ff0bc9d197a3bf347caa",
+      "matches": true
+    },
+    {
+      "id": "RE-POP-077",
+      "bytes": 9255,
+      "sha256": "b0c5b90a1f1ec659047238063433f52cc69fa95091df9af76d155f69a75ab5dd",
+      "matches": true
+    },
+    {
+      "id": "RE-SCRUBD-001",
+      "bytes": 148261,
+      "sha256": "cb276f79ed99e252d09914ef5c9aab36b4fe21a8281f1acd1b2f6c6844fa8ef6",
+      "matches": true
+    },
+    {
+      "id": "RE-SCRUBD-002",
+      "bytes": 60294,
+      "sha256": "25dc88f0199e4925f395ee78aee49af60b1601bd958f76c40f0515800309bb57",
+      "matches": true
+    },
+    {
+      "id": "RE-SCRUBD-003",
+      "bytes": 13938,
+      "sha256": "32835937897cccbeae288389af18d0f5cbe2b8eb845fb69f5aba359d424cd6db",
+      "matches": true
+    }
+  ],
+  "scope": "仅验证固定上游源码字节和SCRUBD行一致性，不验证漏洞真值、许可或补丁"
+}
