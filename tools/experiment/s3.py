@@ -10,7 +10,7 @@ from storage import decode, encode, fingerprint
 
 SPLITS = {'knowledge', 'development', 'validation', 'locked-test'}
 SOLIDITY_KEYWORDS = {'contract','function','public','external','internal','private','view','pure','payable','returns','return','if','else','for','while','require','assert','address','uint','int','bool','string','bytes','mapping','memory','storage','calldata','msg','sender','tx','origin','call','send','transfer','modifier','event','error','true','false'}
-ORIGINS = {'REAL_PATCH', 'MANUAL_VARIANT', 'SYNTHETIC'}
+ORIGINS = {'REAL_PATCH', 'REAL_UNPAIRED', 'MANUAL_VARIANT', 'SYNTHETIC'}
 KINDS = {'SOURCE', 'REPORT', 'SUMMARY', 'KNOWLEDGE', 'TEMPLATE', 'PATCH'}
 
 

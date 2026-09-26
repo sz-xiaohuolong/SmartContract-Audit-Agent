@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1",
+  "intake": "first-batch-intake.json",
+  "assignments": [
+    {"id": "AC-ASE-003", "split": "excluded", "reason": "原始 H-06 为错误修饰器导致功能失败，暂不作为未经授权调用样本"},
+    {"id": "AC-ASE-006", "split": "development", "reason": "访问控制检测目标"},
+    {"id": "AC-ASE-009", "split": "development", "reason": "访问控制检测目标"},
+    {"id": "AC-ASE-030", "split": "validation", "reason": "访问控制独立验证目标"},
+    {"id": "AC-ASE-040", "split": "knowledge", "reason": "访问控制知识候选；已固定原始报告和修复源码，独立标签仍待审", "reportEvidence": {"url": "https://github.com/code-423n4/2023-07-pooltogether-findings/issues/396", "path": ".local/first-batch/reports/AC-ASE-040.md", "sha256": "c8765072eb107dc21408f9998406d83dbda470cccad3b076a1b4847a2d9cb48d"}, "patchEvidence": {"url": "https://github.com/GenerationSoftware/pt-v5-vault/commit/50bd158089d890eb759da67282bf5b5238a3a22a", "path": ".local/first-batch/patches/AC-ASE-040.sol", "sha256": "1ee2f664dda115d58367eee8e5da632d0a3584f6c99b7472f14667ec9c4c3a76"}},
+    {"id": "RE-POP-048", "split": "excluded", "reason": "原始 H-01 为版税接收方抽干资金，关联 PR 12 是版税计算修复，不能作为重入补丁对"},
+    {"id": "RE-POP-077", "split": "knowledge", "reason": "重入知识候选；修复对尚不可取得"},
+    {"id": "RE-SCRUBD-001", "split": "development", "reason": "重入检测目标；逐事件原始报告缺失"},
+    {"id": "RE-SCRUBD-002", "split": "development", "reason": "重入检测目标；逐事件原始报告缺失"},
+    {"id": "RE-SCRUBD-003", "split": "validation", "reason": "重入独立验证目标；逐事件原始报告缺失"}
+  ]
+}

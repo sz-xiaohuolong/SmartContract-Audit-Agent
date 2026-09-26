@@ -2,6 +2,8 @@
 
 更新：2026-09-26。
 
+2026-09-26 首批真实案例已完成[项目级预分配与固定源码隔离](releases/R1-S3/FIRST_BATCH_SPLIT.md)：十份源码摘要全部吻合；原始报告复核排除两项类别误配，余下知识候选 2、开发检测 4、验证 2。八项源码的项目、事件、字节与当前近克隆门禁无跨划分冲突；PoolTogether 的 finding 与修复源码已固定并绑定同一事件组。八项仍缺足够的独立标签／修复对证据，正式知识快照与 Milvus **未激活**，真实 D1 效果没有计算。用户要求非商业毕设实验，后续把许可作为来源记录处理，优先排除标签和修复误配。
+
 2026-09-26 用户确认首批十项候选审核通过；[核验记录](releases/R1-S3/FIRST_BATCH_AUDIT.md)与名单已记录该意见。原始许可、逐事件报告／补丁及独立标签依据仍有缺口，科研准入保持 0，不能由审核意见自动改写。工程上已扩展[本地实验台](releases/R1-S3/LOCAL_UI.md)：一次离线运行会生成逐样本 JSONL 和汇总报告，并通过页面链接下载；正式数据与付费模型仍不开放。[验收记录](releases/R1-S3/VERIFICATION.md)显示 `mvn clean verify` 的 36 项测试与 Python 离线 80 项测试全部通过，浏览器已核对本机报告入口。
 
 2026-09-25 用户已批准[第一批真实案例来源选择提案](releases/R1-S3/DATASET_SELECTION_PROPOSAL.md)的访问控制／重入范围、ASE 2025 与 SCRUBD V6.0 事件索引、Proof-of-Patch 修复线索，并限定先导为 10～15 个高质量样本；字节码案例和 ACFix 模型修复暂缓。[首次核验记录](releases/R1-S3/FIRST_BATCH_AUDIT.md)固定十项待审候选、源码摘要与阻塞项，排除发现的标签映射疑点。合格准入仍为 0，尚未分组划分、激活正式知识快照或运行付费实验，G1 仍未通过。
@@ -9,7 +11,7 @@
 **研究方向更新：**2026-09-24 二轮定向查新后，D1 仅保留可证伪的受约束命题；D2 宽版本创新主张撤回。见[第二轮裁决](../../thesis/D1_D2第二轮查新与立题裁决_20260924.md)。
 
 - 当前 Release：`R1-S3` 首个工程切片；[SPEC](releases/R1-S3/SPEC.md) 的本轮工程范围 FROZEN。S2 工程历史状态仍为 READY_TO_SHIP，不能当成 D1 科研效果。
-- Workflow State：`VERIFYING`（S3 整体，工程部分可重放）；Operational Status：`ACTIVE`。Maven 36 项与 Python 76 项离线测试通过，旧模块离线编译成功；真实数据 G1 **未通过**，D1/D2 研究效果 `UNVERIFIED`。用户已授权完成的小版本同步远程，但不改变研究验证状态。
+- Workflow State：`VERIFYING`（S3 整体，工程部分可重放）；Operational Status：`ACTIVE`。Maven 36 项与 Python 85 项离线测试通过，旧模块离线编译成功；真实数据 G1 **未通过**，D1/D2 研究效果 `UNVERIFIED`。用户已授权完成的小版本同步远程，但不改变研究验证状态。
 - 当前目录：`/Users/daiyifei/Documents/code/SmartContract-agent`，分支 `main`。S0–S3 工程基线与离线证据已提交并同步 `origin/main`，以远程 Git 历史为准；保留研究原件，本轮未调用付费模型。
 - [S3 来源登记](releases/R1-S3/SOURCE_REGISTRY.json)：SCRUBD、Proof-of-Patch 与 ACFix 未核实仓库许可；SmartBugs Curated/ASE AC 仓库分别声明 Apache-2.0/MIT，但逐事件报告、源码、补丁和标签尚未完成核对。真实安全负例数为 0。
 - [S3 验证](releases/R1-S3/VERIFICATION.md)：项目/事件/补丁/精确重复/近克隆和衍生材料跨划分门禁；锁定集直接拒绝、未打开。标签含 UNKNOWN 分母；同池四策略、字段过滤与两消融在合成夹具跑通；完整提示预算用合成计数器验证机制，真实模型 tokenizer/chat 模板仍未锁定。

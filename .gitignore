@@ -2,6 +2,7 @@ application-local.yml
 application-coding-plan.yml
 /config/providers.local.properties
 /.local/experiment-ui/
+/.local/first-batch/
 tmp/
 
 HELP.md

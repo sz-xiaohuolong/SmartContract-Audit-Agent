@@ -93,3 +93,11 @@ D1 裁决：**谨慎保留离线证伪方案，暂停效果结论**。下一步�
 本地实验台的固定合成对照运行现在生成独立报告目录：每个样本一行写入 `samples.jsonl`，并保存 `summary.json` 与完整运行记录。页面展示报告目录，提供 JSONL 下载入口；历史回看读取已存结果，不重跑实验。若执行器返回无效逐样本结构，接口报错且不发布运行记录。此闭环仍只运行合成夹具，不读取 API Key，也不调用真实模型或 Milvus；它不是正式实验的断点续跑入口。
 
 验证：`mvn clean verify` 成功，Java 测试 36 项；`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v` 成功，Python 离线测试 80 项，其中本地页面测试 8 项。浏览器实际打开 `http://127.0.0.1:8766/` 并回看运行 `33abfca768aa4b458c89ac00adb213bd`，页面显示报告链接及目录；报告接口返回 HTTP 200、`application/x-ndjson` 和下载文件名 `samples.jsonl`。本次运行分母：计划 1、完成 1、失败 0、科研合格 0；报告位于 `.local/experiment-ui/reports/33abfca768aa4b458c89ac00adb213bd/`，只在本机保存。
+
+## 2026-09-26 真实候选预分配与源码隔离
+
+[分配表](evidence/first-batch-assignment.json)覆盖十项固定候选；[分组说明](FIRST_BATCH_SPLIT.md)记录来源角色、两项经原始报告核对后剔除的类别误配，以及知识 2／开发 4／验证 2 的项目级分配。十份固定源码再次下载，SHA-256 均与原名单一致。八项未剔除源码运行 `first_batch.py audit` 和 S3 `lineage`，两者均返回 `ok=true`、跨划分错误 0、已发现近克隆候选 0；[机器报告](evidence/first-batch-leakage-report.json)保留分组 ID、清单摘要及待审分母。PoolTogether 的原始 finding 396 和修复提交 `50bd158` 源码已在本机按 SHA-256 固定为 REPORT/PATCH 原件，并与源文件继承同一事件组；改动后原件摘要不匹配会拒绝运行。
+
+此结论只覆盖已取得的源码及一对报告／补丁。八项仍为 `pendingSamples`，真实安全负例 0，锁定测试 0，正式知识快照和 Milvus 激活 0；近克隆扫描不能证明不存在语义克隆。D1 两个方向尚无足够的经独立审核的真实正反例对，不报告真实效果。新的离线回归覆盖源码漂移、分配缺失、同项目跨划分、近克隆跨划分与原件摘要／组继承。完整重放命令见[分组说明](FIRST_BATCH_SPLIT.md)。
+
+本轮重新运行 `mvn clean verify`：Java 36 项通过，BUILD SUCCESS；`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`：Python 85 项通过，OK，其中首批数据门禁新增 5 项。首批本机目录没有 `active.json`，没有创建或激活 Milvus 集合，也未调用付费模型。
