@@ -85,3 +85,11 @@ D1 裁决：**谨慎保留离线证伪方案，暂停效果结论**。下一步�
 ## 2026-09-25 第一批真实案例核验增量
 
 用户批准访问控制／重入范围与 10～15 项上限。当前[核验记录](FIRST_BATCH_AUDIT.md)和[十项待审名单](evidence/first-batch-intake.json)由 ASE 基准、SCRUBD V6.0 固定提交及 Proof-of-Patch 原始修复线索形成；[重新下载复核](evidence/first-batch-source-check.json)确认十项源码 SHA-256 一致、三项 SCRUBD `RE=1` 且 `is_student=0` 行定位一致，五个访问控制、五个重入项目暂不重复。此检查不证明标签正确。原始报告／许可／补丁仍有缺口，因此 **待审 10、准入 0、安全负例 0**。用户尚未审核逐事件标签，未运行真实隔离门禁、快照激活、D1 真实对照或付费模型。Yaxis finding 编号和 Proof-of-Patch 两项类别的疑点均已排除，不能用候选数替代高质量准入数。
+
+## 2026-09-26 候选审核与本地报告闭环
+
+用户回复「全部审核通过」，已记为对首批十项候选选择的确认；这不代替逐事件的原始许可、报告、补丁和独立标签凭据。十项继续标为待审，科研准入 0，正式 Milvus 快照未激活，锁定测试集未打开，D1 真实效果未计算。
+
+本地实验台的固定合成对照运行现在生成独立报告目录：每个样本一行写入 `samples.jsonl`，并保存 `summary.json` 与完整运行记录。页面展示报告目录，提供 JSONL 下载入口；历史回看读取已存结果，不重跑实验。若执行器返回无效逐样本结构，接口报错且不发布运行记录。此闭环仍只运行合成夹具，不读取 API Key，也不调用真实模型或 Milvus；它不是正式实验的断点续跑入口。
+
+验证：`mvn clean verify` 成功，Java 测试 36 项；`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v` 成功，Python 离线测试 80 项，其中本地页面测试 8 项。浏览器实际打开 `http://127.0.0.1:8766/` 并回看运行 `33abfca768aa4b458c89ac00adb213bd`，页面显示报告链接及目录；报告接口返回 HTTP 200、`application/x-ndjson` 和下载文件名 `samples.jsonl`。本次运行分母：计划 1、完成 1、失败 0、科研合格 0；报告位于 `.local/experiment-ui/reports/33abfca768aa4b458c89ac00adb213bd/`，只在本机保存。

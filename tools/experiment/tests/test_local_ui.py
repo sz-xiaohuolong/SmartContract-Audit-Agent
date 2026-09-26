@@ -1,6 +1,7 @@
 """本地实验页面的离线接口回归。"""
 import http.client
 import json
+from copy import deepcopy
 import threading
 import unittest
 from pathlib import Path
@@ -64,6 +65,64 @@ class LocalUiTest(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)['runs'][0]['runId'], run_id)
         self.assertEqual(len(self.calls), 1)
+        report = Path(self.directory.name) / 'reports' / run_id
+        lines = (report / 'samples.jsonl').read_text(encoding='utf-8').splitlines()
+        self.assertEqual([json.loads(line) for line in lines], DEMO['samples'])
+        summary = json.loads((report / 'summary.json').read_text(encoding='utf-8'))
+        self.assertEqual(summary['denominators'], DEMO['denominators'])
+        self.assertEqual(result['report']['sampleCount'], len(lines))
+        status, headers, body = self.request('GET', '/api/runs/' + run_id + '/report')
+        self.assertEqual(status, 200)
+        self.assertIn('application/x-ndjson', headers['Content-Type'])
+        self.assertIn('samples.jsonl', headers['Content-Disposition'])
+        self.assertEqual([json.loads(line) for line in body.splitlines()], DEMO['samples'])
+        self.assertEqual(len(self.calls), 1)
+
+    def test_invalid_sample_result_does_not_publish_partial_report(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+        invalid = dict(DEMO, samples=[])
+        self.server = create_server(ROOT, 0, Path(self.directory.name), lambda: invalid)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.port = self.server.server_port
+        status, _, _ = self.request('POST', '/api/runs', b'{}', {'Content-Type': 'application/json'})
+        self.assertEqual(status, 500)
+        self.assertEqual(list(Path(self.directory.name).glob('*.json')), [])
+        self.assertEqual(list((Path(self.directory.name) / 'reports').glob('*')), [])
+
+    def test_multiple_samples_get_separate_report_lines(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+        result = deepcopy(DEMO)
+        second = deepcopy(result['samples'][0])
+        second['id'] = 'target-2'
+        result['samples'].append(second)
+        result['denominators']['planned'] = 2
+        result['denominators']['completed'] = 2
+        self.server = create_server(ROOT, 0, Path(self.directory.name), lambda: result)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.port = self.server.server_port
+        status, _, body = self.request('POST', '/api/runs', b'{}', {'Content-Type': 'application/json'})
+        self.assertEqual(status, 201)
+        run_id = json.loads(body)['runId']
+        lines = (Path(self.directory.name) / 'reports' / run_id / 'samples.jsonl').read_text(encoding='utf-8').splitlines()
+        self.assertEqual([json.loads(line)['id'] for line in lines], ['target', 'target-2'])
+
+    def test_malformed_runner_result_is_reported_without_server_crash(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+        self.server = create_server(ROOT, 0, Path(self.directory.name), lambda: {'tokenProfile': {'purpose': 'FIXTURE'}, 'denominators': None})
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.port = self.server.server_port
+        status, _, body = self.request('POST', '/api/runs', b'{}', {'Content-Type': 'application/json'})
+        self.assertEqual(status, 500)
+        self.assertIn('离线运行失败'.encode(), body)
 
     def test_rejects_untrusted_origin_and_unknown_routes(self):
         status, _, _ = self.request('POST', '/api/runs', b'{}', {'Origin': 'https://elsewhere.example', 'Content-Type': 'application/json'})
@@ -78,6 +137,17 @@ class LocalUiTest(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn('text/html', headers['Content-Type'])
         self.assertIn('离线实验台'.encode(), body)
+
+    def test_history_uses_run_time_instead_of_random_file_name(self):
+        old_id = 'f' * 32
+        new_id = '0' * 32
+        for identifier, created_at in [(old_id, '2026-09-24T00:00:00+00:00'),
+                                       (new_id, '2026-09-26T00:00:00+00:00')]:
+            (Path(self.directory.name) / (identifier + '.json')).write_text(json.dumps({
+                'runId': identifier, 'kind': 'SYNTHETIC_DEMO', 'createdAt': created_at}))
+        status, _, body = self.request('GET', '/api/runs')
+        self.assertEqual(status, 200)
+        self.assertEqual([row['runId'] for row in json.loads(body)['runs']], [new_id, old_id])
 
 
 if __name__ == '__main__':

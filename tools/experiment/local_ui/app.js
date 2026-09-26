@@ -37,6 +37,10 @@ function renderSummary() {
   $('eligibleCount').textContent = String(data.denominators.researchEligible);
   $('poolId').textContent = `候选池 ${compact(sample()?.poolHash)}`;
   $('runLabel').textContent = record.createdAt ? `本机运行 ${new Date(record.createdAt).toLocaleString('zh-CN')}` : '仓库内演示结果';
+  const link = $('reportLink');
+  link.hidden = !record.report;
+  link.href = record.report ? `/api/runs/${record.runId}/report` : '#';
+  $('reportPath').textContent = record.report ? `报告目录：${record.report.directory}` : '';
 }
 
 function renderComparison() {

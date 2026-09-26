@@ -1,7 +1,9 @@
 """仅监听本机的合成样例实验页面；不会读取供应商凭证。"""
 import argparse
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -11,7 +13,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from storage import durable_write, encode
+from storage import atomic_json, durable_write, encode, sync_directory
 
 
 DEMO = Path('docs/vibe/releases/R1-S3/evidence/demo')
@@ -57,6 +59,38 @@ def run_demo(root):
         return _json(output)
 
 
+def publish_report(store, record):
+    result = record['result']
+    samples = result.get('samples')
+    if (not isinstance(samples, list) or not samples or
+            result.get('denominators', {}).get('planned') != len(samples) or
+            any(not isinstance(row, dict) or not isinstance(row.get('id'), str) or not row['id'] for row in samples) or
+            len({row['id'] for row in samples}) != len(samples)):
+        raise ValueError('逐样本结果无效')
+    reports = store / 'reports'
+    reports.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix='.pending-', dir=reports))
+    final = reports / record['runId']
+    try:
+        with (temporary / 'samples.jsonl').open('xb') as output:
+            for sample in samples:
+                output.write(encode(sample) + b'\n')
+                output.flush()
+                os.fsync(output.fileno())
+        atomic_json(temporary / 'summary.json', {
+            'runId': record['runId'], 'kind': record['kind'], 'createdAt': record['createdAt'],
+            'denominators': result['denominators'], 'planHash': result['planHash'],
+            'ledgerHash': result['ledgerHash'], 'tokenProfile': result['tokenProfile']})
+        os.replace(temporary, final)
+        sync_directory(reports)
+        record['report'] = {'directory': str(final), 'sampleCount': len(samples)}
+        durable_write(store / (record['runId'] + '.json'), encode(record) + b'\n')
+        sync_directory(store)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+
+
 def create_server(root, port=8765, store=None, runner=None):
     root = Path(root).resolve()
     store = Path(store) if store is not None else root / '.local/experiment-ui'
@@ -64,13 +98,15 @@ def create_server(root, port=8765, store=None, runner=None):
     run_lock = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
-        def _send(self, status, data, content_type='application/json; charset=utf-8'):
+        def _send(self, status, data, content_type='application/json; charset=utf-8', filename=None):
             body = encode(data) if content_type.startswith('application/json') else data
             self.send_response(status)
             self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(body)))
             self.send_header('Cache-Control', 'no-store')
             self.send_header('X-Content-Type-Options', 'nosniff')
+            if filename:
+                self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
             if content_type.startswith('text/html'):
                 self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'")
             self.end_headers()
@@ -92,17 +128,26 @@ def create_server(root, port=8765, store=None, runner=None):
                 self._send(200, demo_context(root))
             elif self.path == '/api/runs':
                 rows = []
-                for path in sorted(store.glob('*.json'), reverse=True)[:20]:
+                for path in store.glob('*.json'):
                     if RUN_ID.fullmatch(path.stem):
                         try:
                             row = _json(path)
-                            rows.append({k: row[k] for k in ('runId', 'kind', 'createdAt')})
+                            if isinstance(row['createdAt'], str):
+                                rows.append({k: row[k] for k in ('runId', 'kind', 'createdAt')})
                         except (OSError, ValueError, KeyError):
                             continue
-                self._send(200, {'runs': rows})
+                rows.sort(key=lambda row: (row['createdAt'], row['runId']), reverse=True)
+                self._send(200, {'runs': rows[:20]})
             elif self.path.startswith('/api/runs/'):
                 identifier = self.path.removeprefix('/api/runs/')
-                if not RUN_ID.fullmatch(identifier) or not (store / (identifier + '.json')).is_file():
+                if identifier.endswith('/report'):
+                    identifier = identifier.removesuffix('/report')
+                    path = store / 'reports' / identifier / 'samples.jsonl'
+                    if not RUN_ID.fullmatch(identifier) or not (store / (identifier + '.json')).is_file() or not path.is_file():
+                        self._not_found()
+                    else:
+                        self._send(200, path.read_bytes(), 'application/x-ndjson; charset=utf-8', 'samples.jsonl')
+                elif not RUN_ID.fullmatch(identifier) or not (store / (identifier + '.json')).is_file():
                     self._not_found()
                 else:
                     self._send(200, _json(store / (identifier + '.json')))
@@ -134,15 +179,18 @@ def create_server(root, port=8765, store=None, runner=None):
                 return
             try:
                 result = runner()
-                if result.get('tokenProfile', {}).get('purpose') != 'FIXTURE' or result.get('denominators', {}).get('researchEligible') != 0:
+                if (not isinstance(result, dict) or not isinstance(result.get('tokenProfile'), dict) or
+                        not isinstance(result.get('denominators'), dict) or
+                        result['tokenProfile'].get('purpose') != 'FIXTURE' or
+                        result['denominators'].get('researchEligible') != 0):
                     raise ValueError('演示结果不是合成样例')
                 identifier = uuid.uuid4().hex
                 record = {'runId': identifier, 'kind': 'SYNTHETIC_DEMO',
                           'createdAt': datetime.now(timezone.utc).isoformat(), 'result': result}
                 store.mkdir(parents=True, exist_ok=True)
-                durable_write(store / (identifier + '.json'), encode(record) + b'\n')
+                publish_report(store, record)
                 self._send(201, record)
-            except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired):
+            except (OSError, ValueError, RuntimeError, KeyError, TypeError, subprocess.TimeoutExpired):
                 self._send(500, {'error': '离线运行失败，请检查本机 Java 构建与固定演示样例。'})
             finally:
                 run_lock.release()

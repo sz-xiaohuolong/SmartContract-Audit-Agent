@@ -245,5 +245,10 @@
         "https://github.com/code-423n4/2022-05-cally-findings/issues/225"
       ]
     }
-  ]
+  ],
+  "userReview": {
+    "reviewedAt": "2026-09-26",
+    "decision": "全部审核通过",
+    "scope": "十项候选选择；不替代缺失的原始材料、许可和逐事件证据"
+  }
 }
