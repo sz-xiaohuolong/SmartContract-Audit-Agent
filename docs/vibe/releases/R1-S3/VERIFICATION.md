@@ -101,3 +101,20 @@ D1 裁决：**谨慎保留离线证伪方案，暂停效果结论**。下一步�
 此结论只覆盖已取得的源码及一对报告／补丁。八项仍为 `pendingSamples`，真实安全负例 0，锁定测试 0，正式知识快照和 Milvus 激活 0；近克隆扫描不能证明不存在语义克隆。D1 两个方向尚无足够的经独立审核的真实正反例对，不报告真实效果。新的离线回归覆盖源码漂移、分配缺失、同项目跨划分、近克隆跨划分与原件摘要／组继承。完整重放命令见[分组说明](FIRST_BATCH_SPLIT.md)。
 
 本轮重新运行 `mvn clean verify`：Java 36 项通过，BUILD SUCCESS；`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`：Python 85 项通过，OK，其中首批数据门禁新增 5 项。首批本机目录没有 `active.json`，没有创建或激活 Milvus 集合，也未调用付费模型。
+
+## 2026-09-26 本机 Milvus 与真实 API 工程 MVP 增量
+
+用户明确要求先建立一版向量数据库并接入真实 API，跑通 MVP。此增量使用独立的 `mvp_` Milvus 集合和 `ENGINEERING_MVP` 指针，与上述尚未激活的**正式科研知识快照**区分。知识 2 个项目组、3 个片段；检测目标是开发划分固定样本 `AC-ASE-006`。构建前复核本机固定原件与首批隔离，写入后完整读回才激活；页面状态接口和每次运行重新校验快照。详细启动与边界见 [工程试跑说明](MVP_MILVUS_RUN.md)。该词法哈希向量库只为联调，不是正式知识库，也不产生 D1 研究证据。
+
+最新离线验证：[Maven 日志](evidence/mvp-maven-clean-verify.log)记录 `mvn clean verify` 成功、Java 38 项通过，新增本地 HTTP 回归核对 DeepSeek 请求只发送 `max_completion_tokens`；[Python 日志](evidence/mvp-python-unittest.log)记录 `PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v` 共 89 项，全部通过。Milvus v2.6.4 本机容器健康检查通过；快照 `beeb199c96ff11df6fe7416b02e2d327cc8bdc76da00df61a7eead5772ef8806`，集合 `mvp_b51c012b788548a6bca40e3ca91d67ae`，片段 3 条。浏览器实际打开 `http://127.0.0.1:8767/mvp.html`，看到快照就绪、四条运行历史，并点开最后一次成功结果；页面显示模型结论、证据片段、用量和报告目录。每个报告在本机 `.local/mvp-runs/<runId>/` 保存计划、启动标记与结果；上述本机路径被 Git 忽略。
+
+本轮真实请求记录如下，均固定同一开发样本、同一快照、一次请求、无自动重试；另有一次 16-token 短提示诊断请求确认 Agent Plan 端点、密钥和型号可用，返回 HTTP 200、输入 86、输出 8 token。
+
+| 运行编号 | 请求边界 | 结果 | 实际用量 |
+|---|---|---|---|
+| `7c29aa76c84247cfa2d460e63c584952` | 旧 `max_tokens=512`，等待 60 秒 | 约 60 秒调用失败，`UNRESOLVED` | usage 缺失，保持 null |
+| `d5208d517e2642d7b52317aa8771fc52` | 旧 `max_tokens=512`，等待 180 秒 | 完成；报告了未授权升级疑点 | 输入 1945、输出 917；输出超过 512，原因是该字段不包含全部推理 token |
+| `c285f720b3b94aa8931a8548852a8262` | `max_completion_tokens=1024` | 输出到达 1024 后 JSON 不完整，`UNRESOLVED` | 输入 1945、输出 1024 |
+| `9dc58487b1ad458386d72ccc516b7f78` | `max_completion_tokens=2048`，等待 180 秒；当前实现 | 完成；报告了初始化权限疑点 | 输入 1945、输出 1770 |
+
+`max_completion_tokens` 同时限制回答与推理内容，依据[火山方舟 Chat API 文档](https://docs.volcengine.com/docs/ark/chat-api?lang=zh)。最后一次实际用量低于请求上限。固定源码用户消息 7250 UTF-8 字节；真实 token 上限仍未由独立 tokenizer 锁定，故不把该字节数宣称为科研预算公平。两次成功结果对同一目标给出不同解释，且目标标签、知识适用性仍待独立审核：本次仅证明工程链路可运行，**没有检测准确率、D1 增益或安全负例结论**。失败两次、完成两次；失败均保持 `UNRESOLVED`，不存在自动重试或“失败即安全”。

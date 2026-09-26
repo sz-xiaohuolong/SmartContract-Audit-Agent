@@ -19,13 +19,13 @@ public final class AuditCli {
         if (args.length > 0 && "--retrieval".equals(args[0]))
             return com.xhl.audit.retrieval.RetrievalCli.run(java.util.Arrays.copyOfRange(args, 1, args.length), out, err);
         if (args.length == 0 || (args.length == 1 && "--help".equals(args[0]))) {
-            out.println("用法：java -jar audit-mvp.jar --source 合约.sol --config providers.properties [--provider ark]");
+            out.println("用法：java -jar audit-mvp.jar --source 合约.sol --config providers.properties [--provider ark] [--context 检索案例.txt]");
             out.println("仅显式执行时调用一次模型；退出码：0 完成，1 审计失败，2 输入或配置无效。");
             return 0;
         }
         try {
             Map<String, String> options = new HashMap<>();
-            Set<String> allowed = Set.of("--source", "--config", "--provider");
+            Set<String> allowed = Set.of("--source", "--config", "--provider", "--context");
             for (int i = 0; i < args.length; i += 2) {
                 if (!allowed.contains(args[i]) || i + 1 >= args.length || options.putIfAbsent(args[i], args[i + 1]) != null)
                     throw new IllegalArgumentException();
@@ -38,11 +38,18 @@ public final class AuditCli {
             if (bytes.length > 1_048_576) throw new IllegalArgumentException();
             String source = StandardCharsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(bytes)).toString();
             if (source.isBlank()) throw new IllegalArgumentException();
+            String context = null;
+            if (options.containsKey("--context")) {
+                byte[] contextBytes;
+                try (var input = Files.newInputStream(Path.of(options.get("--context")))) { contextBytes = input.readNBytes(2_049); }
+                if (contextBytes.length > 2_048) throw new IllegalArgumentException();
+                context = StandardCharsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(contextBytes)).toString();
+            }
             Properties properties = new Properties();
             try (var reader = Files.newBufferedReader(Path.of(options.get("--config")), StandardCharsets.UTF_8)) { properties.load(reader); }
             var registry = new ProviderRegistry(properties, environment);
             var provider = registry.resolve(options.get("--provider"));
-            var result = new AuditService(new SpringAiGateway(registry)).audit(source, provider.name());
+            var result = new AuditService(new SpringAiGateway(registry)).audit(source, provider.name(), context);
             out.println(new ObjectMapper().writeValueAsString(result));
             return result.status() == AuditResult.Status.COMPLETED ? 0 : 1;
         } catch (Exception e) {

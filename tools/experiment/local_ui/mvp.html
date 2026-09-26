@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>真实链路试跑 | VeriRAG</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/mvp.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail" aria-label="页面导航">
+      <div class="brand"><span class="brand-mark">V</span><span>VeriRAG<span class="brand-sub">工程试跑台</span></span></div>
+      <nav><a href="/">离线策略比较</a><a href="/mvp.html" class="active">真实链路试跑</a></nav>
+      <div class="rail-foot"><span class="foot-label">运行边界</span><strong>仅本机 · 显式付费请求</strong><span>每点击一次最多发起一次模型请求。</span></div>
+    </aside>
+    <main class="main">
+      <header class="topline"><span>R1 / Milvus + 模型工程联调</span><span id="connection">正在检查本机知识库</span></header>
+      <section class="intro"><div><p class="kicker">工程 MVP</p><h1>让一条真实案例跑完整条链路</h1><p class="lede">从本机 Milvus 检索固定知识片段，调用一次已配置的模型，并把结果保存在本机报告目录。这里验证系统能否工作，不评价 D1 的研究效果。</p></div></section>
+      <div class="notice"><strong>运行范围</strong><span>固定检测样本 AC-ASE-006；知识候选 2 项、片段 3 条；每次点击最多 1 次模型请求、回答与推理合计请求上限 2048 token、无自动重试。输入用户消息最多 10000 字节，实际 token 数以供应商返回为准。原始标签仍待审，模型结论不能当作安全真值。</span></div>
+      <section class="summary" aria-label="运行准备状态">
+        <div><span>知识快照</span><strong id="snapshotState">…</strong><small id="snapshotId">正在核对</small></div>
+        <div><span>向量片段</span><strong id="documentCount">…</strong><small>本机 Milvus</small></div>
+        <div><span>检测样本</span><strong>1</strong><small>AC-ASE-006</small></div>
+        <div><span>最多请求</span><strong>1</strong><small>每次点击；无重试</small></div>
+      </section>
+      <section class="section"><div class="section-head"><div><h2>执行一次试跑</h2><p>点击按钮即会使用本地配置的火山 Agent Plan 凭证。请勿连续重复点击。</p></div></div>
+        <button id="runMvp" class="primary" type="button" disabled>调用真实模型并保存结果 <span aria-hidden="true">↗</span></button>
+        <p id="runMessage" role="status" aria-live="polite" class="table-note">正在检查快照</p>
+      </section>
+      <section class="section"><div class="section-head"><div><h2>本次结果</h2><p>错误、超时与解析失败均保持未决；缺失用量保持空值。</p></div></div><div id="result" class="case-card"><p>尚未运行。历史记录可在下方打开，不会再次调用模型。</p></div></section>
+      <section class="section"><div class="section-head"><div><h2>本机运行记录</h2><p>每次运行分别保存计划、启动标记和结果。</p></div></div><div id="history" class="history-list"><p class="empty">正在加载</p></div></section>
+      <footer>工程试跑使用词法哈希向量作本地召回；正式论文知识快照与独立标签仍未完成。</footer>
+    </main>
+  </div>
+</body>
+</html>

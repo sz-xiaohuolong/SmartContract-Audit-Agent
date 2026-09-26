@@ -11,6 +11,31 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 class GatewayTest {
+    @Test void deepseekRequestCapsReasoningAndAnswerTogether() throws Exception {
+        var request = new AtomicReference<String>();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/api/plan/v3/chat/completions", exchange -> {
+            request.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            byte[] body = """
+                {"id":"test","object":"chat.completion","created":1,"model":"deepseek-v4-flash","choices":[{"index":0,"message":{"role":"assistant","content":"ok"},"finish_reason":"stop"}]}
+                """.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body); exchange.close();
+        });
+        server.start();
+        try {
+            var props = new Properties();
+            props.setProperty("providers.ark.base-url", "http://127.0.0.1:" + server.getAddress().getPort() + "/api/plan/v3");
+            props.setProperty("providers.ark.model", "deepseek-v4-flash");
+            props.setProperty("providers.ark.api-key", "fixture");
+            props.setProperty("providers.ark.max-output-tokens", "512");
+            new SpringAiGateway(new ProviderRegistry(props, Map.of())).complete("ark", "系统", "测试");
+            var json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(request.get());
+            assertEquals(512, json.path("max_completion_tokens").asInt());
+            assertFalse(json.has("max_tokens"));
+        } finally { server.stop(0); }
+    }
     @Test void usesSelectedProviderPathModelAndPreservesUsage() throws Exception {
         var request = new AtomicReference<String>();
         var auth = new AtomicReference<String>();

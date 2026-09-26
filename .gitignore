@@ -3,6 +3,9 @@ application-coding-plan.yml
 /config/providers.local.properties
 /.local/experiment-ui/
 /.local/first-batch/
+/.local/mvp-milvus/
+/.local/mvp-kb/
+/.local/mvp-runs/
 tmp/
 
 HELP.md

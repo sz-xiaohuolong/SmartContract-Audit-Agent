@@ -1,4 +1,4 @@
-"""仅监听本机的合成样例实验页面；不会读取供应商凭证。"""
+"""仅监听本机的实验页面；真实工程试跑须点击独立入口。"""
 import argparse
 import json
 import os
@@ -14,6 +14,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from storage import atomic_json, durable_write, encode, sync_directory
+import mvp_runtime
 
 
 DEMO = Path('docs/vibe/releases/R1-S3/evidence/demo')
@@ -91,10 +92,12 @@ def publish_report(store, record):
             shutil.rmtree(temporary)
 
 
-def create_server(root, port=8765, store=None, runner=None):
+def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp_status=None):
     root = Path(root).resolve()
     store = Path(store) if store is not None else root / '.local/experiment-ui'
     runner = runner or (lambda: run_demo(root))
+    mvp_runner = mvp_runner or (lambda: mvp_runtime.run_once(root))
+    mvp_status = mvp_status or (lambda: mvp_runtime.active(root)[0])
     run_lock = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
@@ -124,6 +127,33 @@ def create_server(root, port=8765, store=None, runner=None):
                 return
             if self.path == '/api/demo':
                 self._send(200, demo_record(root))
+            elif self.path == '/api/mvp/status':
+                try:
+                    self._send(200, {'ready': True, 'snapshot': mvp_status(),
+                                     'sampleId': 'AC-ASE-006', 'maxRequestsPerClick': 1,
+                                     'maxOutputTokens': 2048, 'researchEligible': False})
+                except (OSError, ValueError, KeyError, RuntimeError):
+                    self._send(200, {'ready': False, 'researchEligible': False})
+            elif self.path == '/api/mvp/runs':
+                directory = root / '.local/mvp-runs'
+                rows = []
+                for path in directory.glob('*/result.json'):
+                    if RUN_ID.fullmatch(path.parent.name):
+                        try:
+                            result = _json(path)
+                            rows.append({'runId': path.parent.name, 'status': result['status'],
+                                         'sampleId': result['plan']['sampleId'], 'time': path.stat().st_mtime_ns})
+                        except (OSError, ValueError, KeyError):
+                            continue
+                rows.sort(key=lambda row: row['time'], reverse=True)
+                self._send(200, {'runs': rows[:20]})
+            elif self.path.startswith('/api/mvp/runs/'):
+                identifier = self.path.removeprefix('/api/mvp/runs/')
+                path = root / '.local/mvp-runs' / identifier / 'result.json'
+                if not RUN_ID.fullmatch(identifier) or not path.is_file():
+                    self._not_found()
+                else:
+                    self._send(200, _json(path))
             elif self.path == '/api/context':
                 self._send(200, demo_context(root))
             elif self.path == '/api/runs':
@@ -153,6 +183,10 @@ def create_server(root, port=8765, store=None, runner=None):
                     self._send(200, _json(store / (identifier + '.json')))
             elif self.path in ('/', '/index.html'):
                 self._send(200, (FRONTEND / 'index.html').read_bytes(), 'text/html; charset=utf-8')
+            elif self.path == '/mvp.html':
+                self._send(200, (FRONTEND / 'mvp.html').read_bytes(), 'text/html; charset=utf-8')
+            elif self.path == '/mvp.js':
+                self._send(200, (FRONTEND / 'mvp.js').read_bytes(), 'text/javascript; charset=utf-8')
             elif self.path == '/app.js':
                 self._send(200, (FRONTEND / 'app.js').read_bytes(), 'text/javascript; charset=utf-8')
             elif self.path == '/style.css':
@@ -168,16 +202,22 @@ def create_server(root, port=8765, store=None, runner=None):
             if origin and origin != f'http://127.0.0.1:{self.server.server_port}':
                 self._send(403, {'error': '请求来源不允许'})
                 return
-            if self.path != '/api/runs':
+            if self.path not in ('/api/runs', '/api/mvp/run'):
                 self._not_found()
                 return
             if self.headers.get('Content-Type') != 'application/json' or self.headers.get('Content-Length') != '2' or self.rfile.read(2) != b'{}':
-                self._send(400, {'error': '本页只能运行固定的离线演示样例'})
+                self._send(400, {'error': '只能运行固定样本，且请求内容必须是空对象'})
                 return
             if not run_lock.acquire(blocking=False):
-                self._send(409, {'error': '已有离线实验正在运行'})
+                self._send(409, {'error': '已有实验正在运行'})
                 return
             try:
+                if self.path == '/api/mvp/run':
+                    result = mvp_runner()
+                    if result.get('researchEligible') is not False or result.get('plan', {}).get('maxRequests') != 1:
+                        raise ValueError('工程试跑结果无效')
+                    self._send(201, result)
+                    return
                 result = runner()
                 if (not isinstance(result, dict) or not isinstance(result.get('tokenProfile'), dict) or
                         not isinstance(result.get('denominators'), dict) or
@@ -191,7 +231,7 @@ def create_server(root, port=8765, store=None, runner=None):
                 publish_report(store, record)
                 self._send(201, record)
             except (OSError, ValueError, RuntimeError, KeyError, TypeError, subprocess.TimeoutExpired):
-                self._send(500, {'error': '离线运行失败，请检查本机 Java 构建与固定演示样例。'})
+                self._send(500, {'error': '工程试跑失败；请检查本机快照、模型配置和运行记录。' if self.path == '/api/mvp/run' else '离线运行失败，请检查本机 Java 构建与固定演示样例。'})
             finally:
                 run_lock.release()
 

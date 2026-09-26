@@ -149,6 +149,32 @@ class LocalUiTest(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual([row['runId'] for row in json.loads(body)['runs']], [new_id, old_id])
 
+    def test_mvp_is_explicit_and_history_does_not_call_model(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+        model_calls = []
+        report = {'plan': {'runId': 'a' * 32, 'maxRequests': 1, 'sampleId': 'AC-ASE-006'},
+                  'result': {'status': 'FAILED', 'conclusion': 'UNRESOLVED',
+                             'inputTokens': None, 'outputTokens': None},
+                  'status': 'FAILED', 'researchEligible': False}
+        self.server = create_server(ROOT, 0, Path(self.directory.name), lambda: DEMO,
+                                    lambda: model_calls.append(1) or report,
+                                    lambda: {'snapshotId': 's', 'documentCount': 3})
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.port = self.server.server_port
+        self.assertEqual(self.request('GET', '/api/mvp/status')[0], 200)
+        self.assertEqual(self.request('GET', '/mvp.html')[0], 200)
+        self.assertEqual(self.request('GET', '/api/mvp/runs')[0], 200)
+        self.assertEqual(model_calls, [])
+        self.assertEqual(self.request('POST', '/api/mvp/run', b'{"sample":"other"}', {'Content-Type': 'application/json'})[0], 400)
+        self.assertEqual(model_calls, [])
+        status, _, body = self.request('POST', '/api/mvp/run', b'{}', {'Content-Type': 'application/json'})
+        self.assertEqual(status, 201)
+        self.assertEqual(json.loads(body)['result']['conclusion'], 'UNRESOLVED')
+        self.assertEqual(model_calls, [1])
+
 
 if __name__ == '__main__':
     unittest.main()

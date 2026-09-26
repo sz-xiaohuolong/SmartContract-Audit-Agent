@@ -28,4 +28,18 @@ class AuditServiceTest {
         assertEquals(AuditResult.Status.FAILED, result.status());
         assertFalse(result.toString().contains("secret-key-sensitive"));
     }
+    @Test void retrievedContextDoesNotChangeTargetHashAndMissingUsageStaysNull() {
+        var userText = new java.util.concurrent.atomic.AtomicReference<String>();
+        var service = new AuditService((p, system, user) -> {
+            userText.set(user);
+            return new GatewayReply("{\"hasVulnerability\":true,\"vulnerabilityType\":\"访问控制\",\"vulnerabilityReason\":\"待核对\"}",
+                "fixture", "fixture", null, null, 1);
+        });
+        var source = "contract Target {}";
+        var result = service.audit(source, "fixture", "案例：合约中的权限检查仅供参考");
+        assertTrue(userText.get().contains(source));
+        assertTrue(userText.get().contains("检索案例"));
+        assertEquals(service.audit(source, "fixture").sourceHash(), result.sourceHash());
+        assertNull(result.inputTokens());
+    }
 }

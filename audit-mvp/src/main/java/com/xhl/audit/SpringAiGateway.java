@@ -20,9 +20,13 @@ public final class SpringAiGateway implements ModelGateway {
         var client = OpenAiSetup.setupSyncClient(p.baseUrl(), p.apiKey(), null, null, null, null,
             false, false, p.model(), p.timeout(), 0, null, null, ObservationRegistry.NOOP, null, List.of());
         try {
-        var model = OpenAiChatModel.builder().openAiClient(client).openAiClientAsync(client.async()).options(OpenAiChatOptions.builder()
-            .baseUrl(p.baseUrl()).apiKey(p.apiKey()).model(p.model())
-            .timeout(p.timeout()).maxRetries(0).maxTokens(p.maxOutputTokens()).build()).build();
+        var options = OpenAiChatOptions.builder().baseUrl(p.baseUrl()).apiKey(p.apiKey()).model(p.model())
+            .timeout(p.timeout()).maxRetries(0);
+        // 此类模型的推理 token 也需纳入请求上限。
+        if (p.name().equals("ark") && p.model().startsWith("deepseek-v4"))
+            options.maxCompletionTokens(p.maxOutputTokens());
+        else options.maxTokens(p.maxOutputTokens());
+        var model = OpenAiChatModel.builder().openAiClient(client).openAiClientAsync(client.async()).options(options.build()).build();
         long start = System.nanoTime();
         var response = model.call(new Prompt(List.of(new SystemMessage(system), new UserMessage(user))));
         if (response == null || response.getResult() == null || response.getResult().getOutput() == null)

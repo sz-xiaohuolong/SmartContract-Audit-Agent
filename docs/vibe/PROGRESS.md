@@ -2,6 +2,8 @@
 
 更新：2026-09-26。
 
+2026-09-26 新增[本机 Milvus＋真实模型工程试跑](releases/R1-S3/MVP_MILVUS_RUN.md)：隔离的工程集合收录两组固定知识候选的 3 个片段，完整读回才激活；固定开发目标经 Milvus 检索后调用一次火山 Agent Plan `deepseek-v4-flash`，结果写入 `.local/mvp-runs/`，在本机 [页面](http://127.0.0.1:8767/mvp.html)回看。最后一次完成记录为 `9dc58487b1ad458386d72ccc516b7f78`，输入 1945、输出 1770 token；两次失败记录仍为未决，没有自动重试。Java 构建及 Python 89 项离线测试通过，[验证详情](releases/R1-S3/VERIFICATION.md)已记录。这个集合及词法哈希向量仅供工程联调，正式科研知识快照仍未激活；同一目标的两次成功解释不一致，D1 效果和检测准确率仍未验证。
+
 2026-09-26 首批真实案例已完成[项目级预分配与固定源码隔离](releases/R1-S3/FIRST_BATCH_SPLIT.md)：十份源码摘要全部吻合；原始报告复核排除两项类别误配，余下知识候选 2、开发检测 4、验证 2。八项源码的项目、事件、字节与当前近克隆门禁无跨划分冲突；PoolTogether 的 finding 与修复源码已固定并绑定同一事件组。八项仍缺足够的独立标签／修复对证据，正式知识快照与 Milvus **未激活**，真实 D1 效果没有计算。用户要求非商业毕设实验，后续把许可作为来源记录处理，优先排除标签和修复误配。
 
 2026-09-26 用户确认首批十项候选审核通过；[核验记录](releases/R1-S3/FIRST_BATCH_AUDIT.md)与名单已记录该意见。原始许可、逐事件报告／补丁及独立标签依据仍有缺口，科研准入保持 0，不能由审核意见自动改写。工程上已扩展[本地实验台](releases/R1-S3/LOCAL_UI.md)：一次离线运行会生成逐样本 JSONL 和汇总报告，并通过页面链接下载；正式数据与付费模型仍不开放。[验收记录](releases/R1-S3/VERIFICATION.md)显示 `mvn clean verify` 的 36 项测试与 Python 离线 80 项测试全部通过，浏览器已核对本机报告入口。
@@ -12,12 +14,12 @@
 
 - 当前 Release：`R1-S3` 首个工程切片；[SPEC](releases/R1-S3/SPEC.md) 的本轮工程范围 FROZEN。S2 工程历史状态仍为 READY_TO_SHIP，不能当成 D1 科研效果。
 - Workflow State：`VERIFYING`（S3 整体，工程部分可重放）；Operational Status：`ACTIVE`。Maven 36 项与 Python 85 项离线测试通过，旧模块离线编译成功；真实数据 G1 **未通过**，D1/D2 研究效果 `UNVERIFIED`。用户已授权完成的小版本同步远程，但不改变研究验证状态。
-- 当前目录：`/Users/daiyifei/Documents/code/SmartContract-agent`，分支 `main`。S0–S3 工程基线与离线证据已提交并同步 `origin/main`，以远程 Git 历史为准；保留研究原件，本轮未调用付费模型。
+- 当前目录：`/Users/daiyifei/Documents/code/SmartContract-agent`，分支 `main`。S0–S3 工程基线与离线证据以 Git 历史为准；保留研究原件。本次工程 MVP 已显式调用真实模型并逐次记录用量，未开展付费批量研究实验。
 - [S3 来源登记](releases/R1-S3/SOURCE_REGISTRY.json)：SCRUBD、Proof-of-Patch 与 ACFix 未核实仓库许可；SmartBugs Curated/ASE AC 仓库分别声明 Apache-2.0/MIT，但逐事件报告、源码、补丁和标签尚未完成核对。真实安全负例数为 0。
 - [S3 验证](releases/R1-S3/VERIFICATION.md)：项目/事件/补丁/精确重复/近克隆和衍生材料跨划分门禁；锁定集直接拒绝、未打开。标签含 UNKNOWN 分母；同池四策略、字段过滤与两消融在合成夹具跑通；完整提示预算用合成计数器验证机制，真实模型 tokenizer/chat 模板仍未锁定。
 - 推送前复审修正来源准入空材料、反证基线遗漏、超时失败分母和 D2 未知真值计数；合成夹具里 D1 与字段过滤 Recall@2 同为 1。旧源码硬编码凭证已改为环境读取，但历史中旧值仍需供应商侧轮换。
-- 本地凭证配置：`audit-mvp` 可从 `config/providers.local.properties` 读取 API Key，空值时回退到原有环境变量；该本地文件被 Git 忽略，示例文件不含密钥。只用本地 HTTP 夹具验证了文件读取与输出脱敏，未调用真实模型。此项仅改善人工使用方式，不构成 D1/D2 效果证据。
-- 本地可视化验收台：按用户确认的下一步加入 `tools/experiment/local_ui.py` 与静态页面。只在 `127.0.0.1` 展示固定合成目标、七策略对照、条件证据和历史结果；点击运行会重新执行 S3 离线流水线，产物留在被 Git 忽略的 `.local/experiment-ui/`。页面不读取 API Key、不调用付费模型、不开放真实数据或锁定集。验收与启动见 [本地页面记录](releases/R1-S3/LOCAL_UI.md)。
+- 本地凭证配置：`audit-mvp` 可从 `config/providers.local.properties` 读取 API Key，空值时回退到原有环境变量；该本地文件被 Git 忽略，示例文件不含密钥。文件读取和输出脱敏经本地 HTTP 夹具验证；本次另按用户要求完成固定样本真实 API 工程试跑，不构成 D1/D2 效果证据。
+- 本地可视化验收台：`/` 页面继续展示固定合成目标、七策略离线对照及 `.local/experiment-ui/` 报告，详见 [离线页面记录](releases/R1-S3/LOCAL_UI.md)。独立的 `/mvp.html` 页面仅在明确点击时调用已配置的真实模型，展示本机 Milvus 快照和 `.local/mvp-runs/` 结果，详见 [工程试跑说明](releases/R1-S3/MVP_MILVUS_RUN.md)。两个页面都只监听 `127.0.0.1`，均不开放锁定集。
 
 ## 当前可用能力
 
