@@ -83,3 +83,9 @@ class D1KnowledgeTest(unittest.TestCase):
         self.pairs[0] = '无效配对'
         with self.assertRaises(ValueError):
             self.stage()
+
+    def test_existing_catalog_tamper_is_not_silently_overwritten(self):
+        result = self.stage()
+        Path(result['catalogPath']).write_text('{"tampered":true}')
+        with self.assertRaisesRegex(ValueError, '元数据'):
+            self.stage()

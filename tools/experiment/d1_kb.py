@@ -97,7 +97,11 @@ def stage_snapshot(ledger, root, pairs, vectors, embedding, snapshot_root):
     catalog = {'snapshotId': identifier, 'cases': cases}
     catalog_path = Path(snapshot_root) / 'catalogs' / (identifier + '.json')
     catalog_path.parent.mkdir(parents=True, exist_ok=True)
-    atomic_json(catalog_path, catalog)
+    if catalog_path.exists():
+        if catalog_path.is_symlink() or decode(catalog_path.read_bytes()) != catalog:
+            raise ValueError('既有 D1 案例元数据与快照不一致，禁止覆盖')
+    else:
+        atomic_json(catalog_path, catalog)
     return {'snapshotId': identifier, 'catalog': catalog, 'catalogPath': str(catalog_path),
             'documentCount': len(documents), 'lineageHash': audit['ledgerHash']}
 
