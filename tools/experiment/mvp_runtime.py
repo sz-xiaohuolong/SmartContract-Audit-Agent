@@ -13,7 +13,7 @@ from pathlib import Path
 from first_batch import prepare
 from milvus_rest import MilvusRestIndex
 from snapshots import _check_index, vector32
-from storage import atomic_json, decode, encode, fingerprint
+from storage import atomic_json, decode, encode, fingerprint, durable_write
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -175,7 +175,8 @@ def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=
             'selected': selected, 'provider': 'ark', 'model': values['providers.ark.model'],
             'baseUrl': values['providers.ark.base-url'], 'maxRequests': 1,
             'maxInputBytes': 10000, 'actualUserMessageBytes': prompt_bytes,
-            'maxOutputTokens': 2048, 'retries': 0}
+            'maxOutputTokens': 2048, 'responseFormat': 'json_schema_strict',
+            'thinking': 'disabled', 'retries': 0}
     atomic_json(directory / 'plan.json', plan)
     atomic_json(directory / 'started.json', {'planHash': fingerprint(plan), 'status': 'STARTED'})
     result = None
@@ -184,10 +185,12 @@ def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=
             temporary = Path(temporary)
             (temporary / 'source.sol').write_text(source, encoding='utf-8')
             (temporary / 'context.txt').write_text(context, encoding='utf-8')
-            (temporary / 'providers.properties').write_text(config.read_text(encoding='utf-8') + '\nproviders.ark.max-output-tokens=2048\nproviders.ark.timeout-seconds=180\n', encoding='utf-8')
+            (temporary / 'providers.properties').write_text(config.read_text(encoding='utf-8') +
+                '\nproviders.ark.max-output-tokens=2048\nproviders.ark.timeout-seconds=180\n'
+                'providers.ark.response-format=json_schema\nproviders.ark.thinking=disabled\n', encoding='utf-8')
             command = ['java', '-jar', str(jar), '--source', str(temporary / 'source.sol'),
                        '--context', str(temporary / 'context.txt'), '--config', str(temporary / 'providers.properties'),
-                       '--provider', 'ark']
+                       '--provider', 'ark', '--diagnostic-output', str(temporary / 'raw-response.txt')]
             if executor is None:
                 completed = subprocess.run(command, cwd=root, capture_output=True, timeout=210)
             else:
@@ -197,6 +200,8 @@ def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=
             result = decode(completed.stdout)
             if result.get('status') != ('COMPLETED' if completed.returncode == 0 else 'FAILED') or result.get('sourceHash') != target['sourceSha256']:
                 raise ValueError('模型结果与目标源码不一致')
+            if result['status'] == 'FAILED' and (temporary / 'raw-response.txt').is_file():
+                durable_write(directory / 'raw-response.txt', (temporary / 'raw-response.txt').read_bytes())
     except (OSError, ValueError, subprocess.TimeoutExpired):
         result = {'status': 'FAILED', 'conclusion': 'UNRESOLVED', 'errorCategory': 'MVP_CALL_ERROR',
                   'inputTokens': None, 'outputTokens': None, 'sourceHash': target['sourceSha256']}

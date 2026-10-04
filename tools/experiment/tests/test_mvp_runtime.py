@@ -1,6 +1,11 @@
 """工程 MVP 的离线、确定性回归。"""
 import unittest
 from unittest.mock import patch
+import hashlib
+import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 
 import mvp_runtime
 
@@ -26,6 +31,40 @@ class FakeIndex:
 
 
 class MvpRuntimeTest(unittest.TestCase):
+    def test_failed_reply_keeps_local_raw_diagnostic_without_retry(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'sources').mkdir()
+            source = 'contract C {}'
+            (root / 'sources/AC-ASE-006.sol').write_text(source, encoding='utf-8')
+            source_hash = hashlib.sha256(source.encode()).hexdigest()
+            (root / 'intake.json').write_text(json.dumps({'cases': [{'id': 'AC-ASE-006', 'sourceSha256': source_hash}]}))
+            config = root / 'config.properties'
+            config.write_text('fixture=value\n')
+            calls = []
+            def executor(command):
+                calls.append(1)
+                provider_config = Path(command[command.index('--config') + 1]).read_text()
+                self.assertIn('providers.ark.response-format=json_schema', provider_config)
+                self.assertIn('providers.ark.thinking=disabled', provider_config)
+                diagnostic = Path(command[command.index('--diagnostic-output') + 1])
+                diagnostic.write_text('{"hasVulnerability":false}', encoding='utf-8')
+                result = {'status': 'FAILED', 'conclusion': 'UNRESOLVED', 'sourceHash': source_hash,
+                          'inputTokens': 12, 'outputTokens': 8, 'errorCategory': 'MODEL_OUTPUT_INVALID'}
+                return SimpleNamespace(returncode=1, stdout=json.dumps(result).encode())
+            with patch.object(mvp_runtime, 'INTAKE', mvp_runtime.ROOT / 'intake.json'), \
+                    patch.object(mvp_runtime, 'SOURCE_DIR', 'sources'), \
+                    patch.object(mvp_runtime, '_config_values', return_value={
+                        'providers.ark.model': 'deepseek-v4-flash',
+                        'providers.ark.base-url': 'https://ark.cn-beijing.volces.com/api/plan/v3'}), \
+                    patch.object(mvp_runtime, 'active', return_value=({'snapshotId': 's', 'collection': 'c'}, {}, None)), \
+                    patch.object(mvp_runtime, 'select_context', return_value=('案例', ['d'])):
+                report = mvp_runtime.run_once(root=root, config=config, jar=root / 'fake.jar', executor=executor)
+            self.assertEqual(calls, [1])
+            self.assertEqual(report['status'], 'FAILED')
+            self.assertEqual(report['plan']['responseFormat'], 'json_schema_strict')
+            self.assertEqual((root / '.local/mvp-runs' / report['plan']['runId'] / 'raw-response.txt').read_text(),
+                             '{"hasVulnerability":false}')
     def test_embedding_is_deterministic_and_normalized(self):
         first = mvp_runtime.embed('function claimRewards address sender')
         self.assertEqual(first, mvp_runtime.embed('function claimRewards address sender'))

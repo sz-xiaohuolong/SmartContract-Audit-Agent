@@ -118,3 +118,11 @@ D1 裁决：**谨慎保留离线证伪方案，暂停效果结论**。下一步�
 | `9dc58487b1ad458386d72ccc516b7f78` | `max_completion_tokens=2048`，等待 180 秒；当前实现 | 完成；报告了初始化权限疑点 | 输入 1945、输出 1770 |
 
 `max_completion_tokens` 同时限制回答与推理内容，依据[火山方舟 Chat API 文档](https://docs.volcengine.com/docs/ark/chat-api?lang=zh)。最后一次实际用量低于请求上限。固定源码用户消息 7250 UTF-8 字节；真实 token 上限仍未由独立 tokenizer 锁定，故不把该字节数宣称为科研预算公平。两次成功结果对同一目标给出不同解释，且目标标签、知识适用性仍待独立审核：本次仅证明工程链路可运行，**没有检测准确率、D1 增益或安全负例结论**。失败两次、完成两次；失败均保持 `UNRESOLVED`，不存在自动重试或“失败即安全”。
+
+## 2026-10-04 结构化输出稳定性修正
+
+用户指出页面中 `AC-ASE-006` 的运行 `1b5b52e352154857974b763e9aa2880b` 失败且输出 token 恰为 2048。排查确认：原请求只在提示词里要求 JSON，没有设置服务端 `response_format`。增加严格 JSON Schema 后，Java 本地 HTTP 测试核对请求包含三个必填字段、`additionalProperties=false`、`strict=true`；解析器继续拒绝缺字段、空理由及非 JSON，不能把失败转成“安全”。另用供应商文档核对 [JSON Schema 与最大输出字段](https://docs.volcengine.com/docs/ark/chat-api?lang=zh) 和 [DeepSeek V4 思考开关](https://docs.volcengine.com/docs/ark/deep-thinking?lang=zh)。
+
+本次显式试跑的四个新运行均只发一次请求、没有自动重试。`6043e1496bbc4341a82e429d478fa60d` 使用严格 Schema＋关闭思考，输出 103 token 但字段校验未通过；该次尚未启用原文诊断，具体字段无法追溯。`3d2ab656d0e54534bf966d6aa75273b0` 使用同配置，输出 26 token 且结构化解析完成，但结论为“未发现”，与早前同一源码的其他回答不一致，不能证明检测正确。低强度思考的 `ff03d009e2054fa588eb40d1d2d2b72b` 与 `d65ddce0c5e749be86bd1c49271fc980` 分别耗尽 2048、4096 输出 token，均没有生成任何最终回答；前者的本机 `raw-response.txt` 为 0 字节。增加总预算不能可靠解决该型号的思考耗尽问题，因此最终工程配置回到关闭显式思考和 2048 上限。最终修改后没有再发起付费请求，**不能把一次成功当作已测得低失败率**。
+
+最终离线验证：[Maven 日志](evidence/mvp-structured-maven.log)的 `mvn clean verify` 通过 Java 40 项，[Python 日志](evidence/mvp-structured-python.log)的离线测试 90 项通过。新增测试覆盖显式配置时发送的 JSON Schema/思考参数、普通 DeepSeek 请求不继承 MVP 开关、`finish_reason=LENGTH` 的未决映射、无效原文仅写本机诊断文件以及失败时不重试。工程页面保留原失败历史，新运行的输出截断会显示为明确原因；已保存的旧记录不会被改写。科研标签、D1 效果和检测准确率仍未验证。

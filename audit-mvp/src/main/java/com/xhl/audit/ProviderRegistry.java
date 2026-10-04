@@ -29,8 +29,14 @@ public final class ProviderRegistry {
             if (variable != null && !variable.isBlank()) key = environment.get(variable.trim());
         }
         if (key == null || key.isBlank()) throw new IllegalArgumentException("所选供应商缺少 API Key");
+        String responseFormat = properties.getProperty(prefix + "response-format", "text").trim();
+        String thinking = properties.getProperty(prefix + "thinking", "default").trim();
+        if (!(responseFormat.equals("text") || responseFormat.equals("json_schema"))
+            || !(thinking.equals("default") || thinking.equals("disabled")))
+            throw new IllegalArgumentException("供应商输出配置无效");
         return new Provider(selected, base.replaceAll("/+$", ""), required(prefix + "model"), key,
-            Duration.ofSeconds(positive(prefix + "timeout-seconds", 60, 600)), positive(prefix + "max-output-tokens", 2048, 32768));
+            Duration.ofSeconds(positive(prefix + "timeout-seconds", 60, 600)),
+            positive(prefix + "max-output-tokens", 2048, 32768), responseFormat, thinking);
     }
     private String required(String key) {
         String value = properties.getProperty(key);
@@ -44,7 +50,8 @@ public final class ProviderRegistry {
         if (value < 1 || value > max) throw new IllegalArgumentException("数值配置超出范围：" + key);
         return value;
     }
-    public record Provider(String name, String baseUrl, String model, String apiKey, Duration timeout, int maxOutputTokens) {
+    public record Provider(String name, String baseUrl, String model, String apiKey, Duration timeout,
+                           int maxOutputTokens, String responseFormat, String thinking) {
         @Override public String toString() {return "Provider[name="+name+", model="+model+", apiKey=<redacted>]";}
     }
 }

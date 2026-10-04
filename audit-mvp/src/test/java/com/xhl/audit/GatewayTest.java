@@ -17,7 +17,7 @@ class GatewayTest {
         server.createContext("/api/plan/v3/chat/completions", exchange -> {
             request.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
             byte[] body = """
-                {"id":"test","object":"chat.completion","created":1,"model":"deepseek-v4-flash","choices":[{"index":0,"message":{"role":"assistant","content":"ok"},"finish_reason":"stop"}]}
+                {"id":"test","object":"chat.completion","created":1,"model":"deepseek-v4-flash","choices":[{"index":0,"message":{"role":"assistant","content":"ok"},"finish_reason":"length"}]}
                 """.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, body.length);
@@ -30,10 +30,24 @@ class GatewayTest {
             props.setProperty("providers.ark.model", "deepseek-v4-flash");
             props.setProperty("providers.ark.api-key", "fixture");
             props.setProperty("providers.ark.max-output-tokens", "512");
-            new SpringAiGateway(new ProviderRegistry(props, Map.of())).complete("ark", "系统", "测试");
+            props.setProperty("providers.ark.response-format", "json_schema");
+            props.setProperty("providers.ark.thinking", "disabled");
+            var reply = new SpringAiGateway(new ProviderRegistry(props, Map.of())).complete("ark", "系统", "测试");
+            assertEquals("LENGTH", reply.finishReason());
             var json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(request.get());
             assertEquals(512, json.path("max_completion_tokens").asInt());
             assertFalse(json.has("max_tokens"));
+            assertEquals("json_schema", json.path("response_format").path("type").asText());
+            assertTrue(json.path("response_format").path("json_schema").path("strict").asBoolean());
+            assertEquals(3, json.path("response_format").path("json_schema").path("schema").path("required").size(), json.path("response_format").toString());
+            assertEquals("disabled", json.path("thinking").path("type").asText());
+            assertFalse(json.has("reasoning_effort"));
+            props.remove("providers.ark.response-format");
+            props.remove("providers.ark.thinking");
+            new SpringAiGateway(new ProviderRegistry(props, Map.of())).complete("ark", "系统", "测试");
+            var ordinary = new com.fasterxml.jackson.databind.ObjectMapper().readTree(request.get());
+            assertFalse(ordinary.has("response_format"));
+            assertFalse(ordinary.has("thinking"));
         } finally { server.stop(0); }
     }
     @Test void usesSelectedProviderPathModelAndPreservesUsage() throws Exception {
@@ -77,6 +91,9 @@ class GatewayTest {
             assertEquals(7, reply.inputTokens()); assertEquals(2, reply.outputTokens());
             assertEquals("ark", reply.provider()); assertEquals("Bearer local-test", auth.get());
             assertTrue(request.get().contains("model-a"));
+            var defaultRequest = new com.fasterxml.jackson.databind.ObjectMapper().readTree(request.get());
+            assertFalse(defaultRequest.has("response_format"));
+            assertFalse(defaultRequest.has("thinking"));
             var other = gateway.complete("other", "系统提示", "测试");
             assertEquals("other", other.content()); assertEquals(1, second.get());
             assertNull(other.inputTokens(), "缺失 usage 不应被记成零");

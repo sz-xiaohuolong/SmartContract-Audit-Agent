@@ -37,6 +37,9 @@ public final class AuditService {
             return new AuditResult("1", hash, AuditResult.Status.FAILED, AuditResult.Conclusion.UNRESOLVED,
                 null, null, provider, null, null, null, elapsed(start), "MODEL_CALL_ERROR");
         }
+        if ("length".equalsIgnoreCase(reply.finishReason()))
+            return new AuditResult("1", hash, AuditResult.Status.FAILED, AuditResult.Conclusion.UNRESOLVED,
+                null, null, reply.provider(), reply.model(), reply.inputTokens(), reply.outputTokens(), elapsed(start), "MODEL_OUTPUT_TRUNCATED");
         try {
             var node = mapper.readTree(reply.content());
             if (node == null || !node.isObject() || node.size()!=3 || !node.path("hasVulnerability").isBoolean()

@@ -22,10 +22,28 @@ public final class SpringAiGateway implements ModelGateway {
         try {
         var options = OpenAiChatOptions.builder().baseUrl(p.baseUrl()).apiKey(p.apiKey()).model(p.model())
             .timeout(p.timeout()).maxRetries(0);
+        boolean deepseekV4 = p.name().equals("ark") && p.model().startsWith("deepseek-v4");
         // 此类模型的推理 token 也需纳入请求上限。
-        if (p.name().equals("ark") && p.model().startsWith("deepseek-v4"))
-            options.maxCompletionTokens(p.maxOutputTokens());
+        if (deepseekV4) options.maxCompletionTokens(p.maxOutputTokens());
         else options.maxTokens(p.maxOutputTokens());
+        if (p.responseFormat().equals("json_schema")) {
+            if (!deepseekV4) throw new IllegalArgumentException("当前模型未启用严格结构化输出");
+            options.responseFormat(OpenAiChatModel.ResponseFormat.builder()
+                .type(OpenAiChatModel.ResponseFormat.Type.JSON_SCHEMA)
+                .jsonSchema("""
+                    {"type":"object","properties":{
+                    "hasVulnerability":{"type":"boolean"},
+                    "vulnerabilityType":{"type":"string"},
+                    "vulnerabilityReason":{"type":"string"}},
+                    "required":["hasVulnerability","vulnerabilityType","vulnerabilityReason"],
+                    "additionalProperties":false}
+                    """).strict(true).build());
+        }
+        if (p.thinking().equals("disabled")) {
+            if (!deepseekV4) throw new IllegalArgumentException("当前模型未启用思考开关");
+            // 工程试跑关闭显式思考，避免推理阶段独占总输出预算。
+            options.extraBody(java.util.Map.of("thinking", java.util.Map.of("type", "disabled")));
+        }
         var model = OpenAiChatModel.builder().openAiClient(client).openAiClientAsync(client.async()).options(options.build()).build();
         long start = System.nanoTime();
         var response = model.call(new Prompt(List.of(new SystemMessage(system), new UserMessage(user))));
@@ -34,8 +52,9 @@ public final class SpringAiGateway implements ModelGateway {
         var usage = response.getMetadata().getUsage();
         Integer input = usage == null || usage instanceof EmptyUsage ? null : usage.getPromptTokens();
         Integer output = usage == null || usage instanceof EmptyUsage ? null : usage.getCompletionTokens();
+        var metadata = response.getResult().getMetadata();
         return new GatewayReply(response.getResult().getOutput().getText(), p.name(), p.model(), input, output,
-            (System.nanoTime()-start)/1_000_000);
+            (System.nanoTime()-start)/1_000_000, metadata == null ? null : metadata.getFinishReason());
         } finally { client.close(); }
     }
 }

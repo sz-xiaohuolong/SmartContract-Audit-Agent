@@ -17,6 +17,33 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CliIntegrationTest {
     @TempDir Path directory;
+    @Test void invalidStructuredReplyCanBeInspectedLocallyWithoutChangingVerdict() throws Exception {
+        var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        var raw = "{\"hasVulnerability\":false}";
+        server.createContext("/api/plan/v3/chat/completions", exchange -> {
+            exchange.getRequestBody().readAllBytes();
+            byte[] body = new ObjectMapper().writeValueAsBytes(Map.of(
+                "id", "local", "object", "chat.completion", "created", 1, "model", "fixture",
+                "choices", java.util.List.of(Map.of("index", 0, "message", Map.of("role", "assistant", "content", raw), "finish_reason", "stop"))));
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body); exchange.close();
+        });
+        server.start();
+        try {
+            Path source = directory.resolve("Contract.sol"), config = directory.resolve("providers.properties");
+            Path diagnostic = directory.resolve("raw-response.txt");
+            Files.writeString(source, "contract C {}");
+            Files.writeString(config, "providers.ark.base-url=http://127.0.0.1:" + server.getAddress().getPort() +
+                "/api/plan/v3\nproviders.ark.model=fixture\nproviders.ark.api-key=fixture-key\n");
+            var out = new ByteArrayOutputStream();
+            assertEquals(1, AuditCli.run(new String[]{"--source", source.toString(), "--config", config.toString(),
+                "--diagnostic-output", diagnostic.toString()}, Map.of(), new PrintStream(out), System.err));
+            assertEquals(raw, Files.readString(diagnostic));
+            assertEquals("UNRESOLVED", new ObjectMapper().readTree(out.toString()).get("conclusion").asText());
+            assertFalse(out.toString().contains("fixture-key"));
+        } finally { server.stop(0); }
+    }
     @Test void completesThroughRealGatewayAndPreservesZeroUsage() throws Exception { check(200, 0); }
     @Test void unauthorizedResponseFailsWithoutRetryOrSecretOutput() throws Exception { check(401, 1); }
     @Test void transientServerFailureDoesNotRetry() throws Exception { check(500, 1); }

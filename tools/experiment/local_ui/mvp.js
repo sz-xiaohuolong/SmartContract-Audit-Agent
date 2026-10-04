@@ -1,5 +1,11 @@
 const $ = id => document.getElementById(id);
 const show = value => value === null || value === undefined ? '未返回' : String(value);
+const errorLabel = code => ({
+  MODEL_OUTPUT_TRUNCATED: '输出预算耗尽，未生成完整结果',
+  MODEL_OUTPUT_INVALID: '模型返回内容不符合规定格式',
+  MODEL_CALL_ERROR: '模型调用失败或超时',
+  MVP_CALL_ERROR: '本机执行或结果校验失败'
+})[code] || show(code);
 const request = async (path, options) => {
   const response = await fetch(path, options);
   const body = await response.json();
@@ -16,7 +22,7 @@ function renderResult(report) {
   container.append(title);
   for (const [label, value] of [
     ['模型结论', show(result.conclusion)], ['漏洞类型', show(result.vulnerabilityType)],
-    ['理由', show(result.reason)], ['错误类别', show(result.errorCategory)],
+    ['理由', show(result.reason)], ['错误类别', errorLabel(result.errorCategory)],
     ['输入 token', show(result.inputTokens)], ['输出 token', show(result.outputTokens)],
     ['入选知识片段', report.selectedEvidence.join('、')], ['运行编号', plan.runId],
     ['结果目录', `.local/mvp-runs/${plan.runId}/`]

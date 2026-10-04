@@ -42,4 +42,14 @@ class AuditServiceTest {
         assertEquals(service.audit(source, "fixture").sourceHash(), result.sourceHash());
         assertNull(result.inputTokens());
     }
+    @Test void outputLimitNeverProducesACompletedVerdict() {
+        var service = new AuditService((p, system, user) -> new GatewayReply(
+            "{\"hasVulnerability\":false,\"vulnerabilityType\":\"none\",\"vulnerabilityReason\":\"未发现\"}",
+            "fixture", "fixture", 12, 2048, 1, "length"));
+        var result = service.audit("contract C {}", "fixture");
+        assertEquals(AuditResult.Status.FAILED, result.status());
+        assertEquals(AuditResult.Conclusion.UNRESOLVED, result.conclusion());
+        assertEquals("MODEL_OUTPUT_TRUNCATED", result.errorCategory());
+        assertEquals(2048, result.outputTokens());
+    }
 }

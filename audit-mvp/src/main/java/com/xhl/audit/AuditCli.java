@@ -25,7 +25,7 @@ public final class AuditCli {
         }
         try {
             Map<String, String> options = new HashMap<>();
-            Set<String> allowed = Set.of("--source", "--config", "--provider", "--context");
+            Set<String> allowed = Set.of("--source", "--config", "--provider", "--context", "--diagnostic-output");
             for (int i = 0; i < args.length; i += 2) {
                 if (!allowed.contains(args[i]) || i + 1 >= args.length || options.putIfAbsent(args[i], args[i + 1]) != null)
                     throw new IllegalArgumentException();
@@ -49,7 +49,22 @@ public final class AuditCli {
             try (var reader = Files.newBufferedReader(Path.of(options.get("--config")), StandardCharsets.UTF_8)) { properties.load(reader); }
             var registry = new ProviderRegistry(properties, environment);
             var provider = registry.resolve(options.get("--provider"));
-            var result = new AuditService(new SpringAiGateway(registry)).audit(source, provider.name(), context);
+            ModelGateway gateway = new SpringAiGateway(registry);
+            if (options.containsKey("--diagnostic-output")) {
+                Path diagnostic = Path.of(options.get("--diagnostic-output"));
+                ModelGateway original = gateway;
+                gateway = (name, system, user) -> {
+                    var reply = original.complete(name, system, user);
+                    // 原文仅写入调用者指定的新文件；诊断写入失败不改变模型结论。
+                    try {
+                        if (reply.content() != null && reply.content().length() <= 16_384)
+                            Files.writeString(diagnostic, reply.content(), StandardCharsets.UTF_8,
+                                java.nio.file.StandardOpenOption.CREATE_NEW, java.nio.file.StandardOpenOption.WRITE);
+                    } catch (java.io.IOException ignored) { }
+                    return reply;
+                };
+            }
+            var result = new AuditService(gateway).audit(source, provider.name(), context);
             out.println(new ObjectMapper().writeValueAsString(result));
             return result.status() == AuditResult.Status.COMPLETED ? 0 : 1;
         } catch (Exception e) {
