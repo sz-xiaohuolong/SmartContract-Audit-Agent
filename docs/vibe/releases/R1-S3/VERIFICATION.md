@@ -1,5 +1,17 @@
 # R1-S3 工程交付与研究门禁验证记录
 
+## 2026-10-04 D1 首版正式知识库增量
+
+本轮按[准入裁决](evidence/d1-kb-v1-decisions.json)从 8 项未排除候选中准入 3 项：知识 Maia `AC-ASE-030` 与 Atomic Loans `RE-ATOMIC-001`，验证 PoolTogether `AC-ASE-040`。PoolTogether 修复为固定接收方，不符合现有 `CHECK_BEFORE` 防护字段，因此从知识侧转出。Basin、Gondi 和 3 个 SCRUBD 候选仍待审，未把它们从原始候选清单抹掉。Atomic Loans 审计范围 `Loans.sol` SHA-1 与提交 `3632e622e0b3fedf468866db0b878b7b74dd757e` 完全一致；到 PR #23 基线只变化 ERC20 返回值检查，重入关键状态顺序未变。外部原始审计与真实补丁支撑漏洞事件真值；**没有把外部报告冒充对本项目目标—案例适用性的独立打分**。
+
+[首版谱系报告](evidence/d1-kb-v1-leakage-report.json)：知识 2、验证 1、开发 0、锁定 0；`errors=[]`、`nearCloneCandidates=[]`、首版 `pendingSamples=[]`，另外 5 项候选见 `excludedFromV1`。实际生成[知识配对](evidence/d1-kb-v1-pairs.json)各有漏洞与修复片段，访问控制要求补丁新增修饰器见证，重入要求状态更新与外部调用顺序反转。模型十个本地文件按[固定摘要](../../../../tools/experiment/d1-embedding-model.json)验证，离线编码四条 384 维向量；候选向量包的正文摘要与快照正文绑定，避免误把旧向量用于新文本。
+
+[Milvus 收据](evidence/d1-kb-v1-snapshot-receipt.json)：快照 `9fc63d0e8828a8caa78145e133b8f954f9fedaf79469ea0927434d7dbef725c8`，集合 `s1b_612ad26b068c4b64842463a633d6d1ba`，强一致性全量读回 4/4 后激活；随后 `active_snapshot` 再次读回一致。四条向量自检索均命中自身，PoolTogether 目标的本地与 Milvus 候选排序一致。此项是技术冒烟，不是 Recall@K、nDCG 或准确率的科研验证。Attu 本地 `http://127.0.0.1:3000` 可查看集合。
+
+新增 Java 契约回归确认访问控制可以以 `CALL` 为风险操作；Maia 知识元数据据实标为 `CALL`。真实 Maia 原版与修复版经现有 `program_facts.py` 提取均为 `PARTIAL`，`payableCall` 作用域 `complete=false`，因此 D1 条件绑定保持 `UNKNOWN`，不能把该案例计作已证明的 D1 适用性。快照 ID 同时绑定案例元数据摘要；错误 `WRITE` 版本的旧集合未被改写，当前激活指针仅指向上述 `CALL` 版本。
+
+本轮 `mvn clean verify` 的 41 项 Java 测试通过、`BUILD SUCCESS`，见[Maven 日志](evidence/d1-kb-v1-maven.log)；`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v` 的 106 项 Python 测试通过，见[Python 日志](evidence/d1-kb-v1-python.log)。新增回归覆盖错误防护字段、重入顺序、模型权重摘要、报告版本、许可证摘要和候选向量正文摘要。所有自动测试离线；真实 Milvus 仅作单独人工环境集成校验，未调用付费 API。完整重放命令见[知识库记录](D1_KB_READINESS.md)。D1 的独立目标—案例价值标签、真实开发先导、完整提示 token 公平尚未完成，故 G1 的**知识来源部分**可审，G1 对研究先导整体仍未通过；D1 效果保持 `UNVERIFIED`，D2 未变。
+
 日期：2026-09-24。范围：来源准入、谱系隔离与 D1 离线证伪流水线，以及 D2 固定候选最小契约。开发在当前主目录完成；真实模型未调用。工程交付与研究效果分别验收，后者仍受 G1–G3 门禁约束。
 
 ## 2026-10-04 首批原件增量复核

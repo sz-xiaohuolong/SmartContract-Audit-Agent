@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1",
+  "project": "AtomicLoans/atomicloans-eth-contracts",
+  "report": "https://github.com/ConsenSysDiligence/atomic-loans-audit-report-2019-07#66-reentrancy-attack-on-loanspull-can-lead-to-draining-funds",
+  "auditedSource": {
+    "commit": "3632e622e0b3fedf468866db0b878b7b74dd757e",
+    "path": "contracts/Loans.sol",
+    "sha1": "72400480e986cbf206ef249bd14aca6c28833df3",
+    "sha256": "87a433f891cd0706916c3cd0ec651e9ce0998a3bdd77494d37a0f4c0fcc0f7c2"
+  },
+  "patchBase": {
+    "commit": "697f12d3eb0772a059a165ec50f02c265bd3dd43",
+    "path": "contracts/Loans.sol",
+    "sha256": "0cd122c4ed263d72ea98c2ae2a91790cf6b2a4d7ce8d00cd833aa4b62315f2c3"
+  },
+  "patchHead": {
+    "commit": "17adcc19c977c77273f07be3bd73123bf46e18a0",
+    "path": "contracts/Loans.sol",
+    "sha256": "6f3a1d1934b41d498d56631a43db8dfbf368b76141316946c5f321478c180167"
+  },
+  "comparison": "审计版到修复基线仅在 pull 中加入 ERC20 返回值检查，外部调用仍早于 off 状态更新；PR #23 将 off 状态更新移到转账之前。",
+  "pullRequest": "https://github.com/AtomicLoans/atomicloans-eth-contracts/pull/23"
+}

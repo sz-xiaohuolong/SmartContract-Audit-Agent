@@ -1,57 +1,63 @@
-# D1 正式知识库候选与准入状态
+# D1 首版正式知识快照与数据划分
 
-更新：2026-10-04。**已形成访问控制与重入各一组真实漏洞—修复知识候选，正式知识快照和 `s1b_` Milvus 集合尚未激活。**本轮把 AI Arena 从正式重入知识位置移出，换入经用户批准的 Atomic Loans；原有 AI Arena 工程演示资料保持原样。正式候选清单为 11 项，排除 3 项，剩余知识 2、开发检测 4、验证 2。谱系检查发现跨划分冲突 0、近克隆候选 0；八项仍为待审，不能据此报告 D1 效果。
+更新：2026-10-04。首版正式知识快照已在本机 Milvus 激活。它包含两个独立项目的真实漏洞—修复对，共四条语义向量：访问控制 Maia `VirtualAccount.payableCall`、重入 Atomic Loans `Loans.pull`。PoolTogether `Vault.mintYieldFee` 仅列入独立验证侧，不进入知识库。这个结果证明数据准入、向量入库、全量读回和召回链路可用；**尚无独立审核的目标—案例适用性标签，不报告 D1 效果提升**。
 
-## 知识配对和原件
+## 为什么这样选
 
-| 方向 | 漏洞案例 | 原始报告 | 修复对 | 待复核事项 |
+| 用途 | 项目与事件 | 原始证据 | 固定修复 | 准入判断 |
 |---|---|---|---|---|
-| 访问控制 | `AC-ASE-040` PoolTogether `Vault.mintYieldFee`，原版第 394–402 行 | [Code4rena H-04 finding #396](https://github.com/code-423n4/2023-07-pooltogether-findings/issues/396)，含项目方确认标签 | [维护者 PR #7](https://github.com/GenerationSoftware/pt-v5-vault/pull/7)，修复版删除调用者可控接收方，改用 `_yieldFeeRecipient` | 原始报告有建议代码笔误；必须以真实修复源码判断这条路径的覆盖，不把整份合约视为安全。 |
-| 重入 | `RE-ATOMIC-001` Atomic Loans `Loans.pull`，原版第 298–316 行 | [ConsenSys Diligence 审计报告 6.6](https://github.com/ConsenSysDiligence/atomic-loans-audit-report-2019-07#66-reentrancy-attack-on-loanspull-can-lead-to-draining-funds) | [维护者 PR #23](https://github.com/AtomicLoans/atomicloans-eth-contracts/pull/23)，把 `bools[loan].off = true` 移到外部转账之前 | 报告列出的审计范围文件 SHA-1 为 `72400480e986cbf206ef249bd14aca6c28833df3`，PR 修复前固定版本为 `433dafd38f49abef191e0defc00420c83e0621c1`。两版整文件不同，报告所述关键函数顺序与修复前版本一致；逐行版本对应仍须独立审核。 |
+| 知识：访问控制 | `AC-ASE-030`，Maia H-01 | [Code4rena finding #885](https://github.com/code-423n4/2023-09-maia-findings/issues/885)，包含复现和项目方确认 | [维护者修复提交](https://github.com/Maia-DAO/2023-09-maia-remediations/commit/2209d6e96af986fa0960aacc356ba2be070fdc85)在 `payableCall` 加入 `requiresApprovedCaller` | 原版第 85 行无该修饰器；修复版第 89 行加入。条件字段 `CHECK_BEFORE` 可由两版源码直接核对。 |
+| 知识：重入 | `RE-ATOMIC-001`，Atomic Loans 审计第 6.6 节 | [ConsenSys Diligence 原报告](https://github.com/ConsenSysDiligence/atomic-loans-audit-report-2019-07#66-reentrancy-attack-on-loanspull-can-lead-to-draining-funds) | [已合并 PR #23](https://github.com/AtomicLoans/atomicloans-eth-contracts/pull/23)将 `bools[loan].off = true` 移到外部转账之前 | 报告审计范围 `Loans.sol` 的 SHA-1 `72400480e986cbf206ef249bd14aca6c28833df3`，与上游提交 `3632e622e0b3fedf468866db0b878b7b74dd757e` 的文件**完全一致**；从该提交到 PR 基线 `697f12d3eb0772a059a165ec50f02c265bd3dd43`，`pull` 中只增加 ERC20 返回值检查，风险顺序未变；PR 头提交 `17adcc19c977c77273f07be3bd73123bf46e18a0` 修正顺序。 |
+| 验证候选：访问控制 | `AC-ASE-040`，PoolTogether H-04 | [Code4rena finding #396](https://github.com/code-423n4/2023-07-pooltogether-findings/issues/396)，包含项目方确认 | [维护者 PR #7](https://github.com/GenerationSoftware/pt-v5-vault/pull/7)将任意指定接收方改为固定 `_yieldFeeRecipient` | 它的防护机理是**固定接收方**，不是加入调用权限修饰器。现有 D1 `CHECK_BEFORE` 字段不能诚实描述其防御侧，因此不作该条件的知识对；仅保留为隔离的目标候选。 |
 
-Atomic Loans 的源码、补丁、报告和仓库 MIT 许可证均固定在 Git 提交，分别由[候选清单](evidence/d1-kb-intake.json)、[划分清单](evidence/d1-kb-assignment.json)及本机 `.local/first-batch/` 原件保存 SHA-256。报告仓库没有可核对的独立许可声明；仅保留来源引用并用于非商业论文内部核验。修复后的片段只表示该报告所述风险路径获得相应防护，不构造“整份合约安全”的负例。
+[准入裁决](evidence/d1-kb-v1-decisions.json)固定源码摘要、漏洞位置、原始报告正文摘要、MIT 许可证原件和修复配对行号；Atomic 的[审计版—修复版版本链](evidence/d1-kb-v1-atomic-version-chain.json)单独保留；[准入清单](evidence/d1-kb-v1-ledger.json)与[知识配对](evidence/d1-kb-v1-pairs.json)由脚本生成。`INDEPENDENT` 在本版指**相对于本项目的外部原始审计裁决**，不是声称外部审计方重新审核了本项目的 D1 字段或目标—案例相关性。对 PoolTogether 与 Maia，源码文件声明 MIT；Atomic Loans 使用固定提交的仓库 MIT 许可证。报告正文保留来源引用，不把修复片段当作“整份合约安全”负例。
 
-[成对片段审查表](evidence/d1-kb-pairs-review.json)记录指定函数、源码和补丁行号、条件字段与证据 ID，`reviewed=false`。这些条件是供复核的提议，尚未成为 D1 正式案例元数据。开发与验证中的 Gondi 和 SCRUBD 项仍缺真实补丁或逐事件原始报告；Basin 只有后续修复审查版，并非精确修复提交。[泄漏报告](evidence/d1-kb-leakage-report.json)的 `pendingSamples` 完整列出八项。
+原始 11 项候选排除 3 项；余下 8 项中仅上述 3 项满足首版原件与标签准入。Basin、Gondi 和 3 个 SCRUBD 案例继续待审，**没有为凑数量制造标签**。首版 [泄漏报告](evidence/d1-kb-v1-leakage-report.json)为知识 2、验证 1、开发 0、锁定测试 0，跨划分冲突 0、已发现近克隆候选 0、首版待审 0。`pendingSamples=0` 仅针对这 3 个准入项；其余 5 项的待审状态见原[候选泄漏报告](evidence/d1-kb-leakage-report.json)。近克隆扫描不能证明不存在未发现的语义克隆。
 
-## 建库机制与阻塞
+## 向量、Milvus 与当前结果
 
-新增 `tools/experiment/d1_kb.py` 复用 S3 谱系审计与 S1b 原子快照：仅当**所有参与样本**的来源、补丁、报告、独立标签均审核通过，且知识配对审查表精确覆盖知识样本时，生成每组漏洞／修复两个文档、S1b 全量清单和 D1 条件 catalog。文档继承同一 `sample_id`、项目组和补丁对 ID。向量必须逐文档提供，写入后通过原有快照校验；此命令只构建，不激活。激活仍需 Milvus 全量读回完全一致。
+使用 [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5) 的固定提交 `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`，384 维，本地离线编码。文件从 [BAAI ModelScope 镜像](https://modelscope.cn/models/BAAI/bge-small-en-v1.5)获取，十个文件逐一按[模型摘要清单](../../../../tools/experiment/d1-embedding-model.json)校验；权重 `model.safetensors` 的 SHA-256 为 `3c9f31665447c8911517620762200d2245a2518d6e7208acc78cd9db317e21ad`。依赖版本见 [`d1-embedding-requirements.lock`](../../../../tools/experiment/d1-embedding-requirements.lock)。不使用此前工程演示库的词法哈希向量，也没有调用付费模型 API。
 
-当前不可运行正式构建的原因有两个：八项独立标签未完成，其中部分原始报告或补丁缺失；尚未生成**真实语义向量**。本机工程演示用的 128 维词法哈希向量不能转成正式向量。本轮选用 [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5) 作为候选本地模型，官方模型卡声明 MIT，模型提交固定为 `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`；Python 3.12.13 环境的依赖版本见 [`d1-embedding-requirements.lock`](../../../../tools/experiment/d1-embedding-requirements.lock)。依赖已在 Git 忽略的本机环境安装，但从 Hugging Face 获取权重时 TLS 连接报错，**没有生成向量**。模型本身尚未通过本机编码与检索核验。
+[快照收据](evidence/d1-kb-v1-snapshot-receipt.json)记录快照 `9fc63d0e8828a8caa78145e133b8f954f9fedaf79469ea0927434d7dbef725c8`，本机 Milvus 集合 `s1b_612ad26b068c4b64842463a633d6d1ba`，四条文档。S1b 原子激活先构建新集合、强一致性读回每个 ID／正文／向量，再更新 `.local/d1-kb-snapshots/active.json`。四条向量的自检索均命中自身；对 PoolTogether 验证目标的本地和 Milvus 召回排序完全一致。这只是**技术链路冒烟检查**，排序不代表适用性或漏洞检测准确率。Attu 在本机 `http://127.0.0.1:3000`，可查看该集合；原 `mvp_` 工程演示集合没有被覆盖。
 
-## 本机重放
+D1 检索契约已允许访问控制风险操作为对外调用，Maia 案例的元数据据实标为 `CALL`。但现有轻量事实提取器对 Maia 的继承、分支和修饰器返回 `PARTIAL`，其 `payableCall` 条件绑定仍应为 `UNKNOWN`；**不能因为补丁中出现修饰器字样，就报告自动事实证明或 D1 适用性成功**。早期试建的 `s1b_2f8522116d6b43e693092c303947be6a` 集合未被修改，但已退出激活指针；在 Attu 中以本节收据所列集合为准。
 
-原有八份源码及六份报告／补丁的获取方式见[首批复核记录](FIRST_BATCH_EVIDENCE_REVIEW.md)。Atomic Loans 固定原件可用以下命令下载，随后运行隔离审计；所有原件写入 Git 忽略目录，任何已存在文件应先核对摘要，不可覆盖不一致版本。
+## 重放
 
-```bash
-mkdir -p .local/first-batch/{sources,reports,patches,licenses}
-curl -fsSL https://raw.githubusercontent.com/AtomicLoans/atomicloans-eth-contracts/697f12d3eb0772a059a165ec50f02c265bd3dd43/contracts/Loans.sol -o .local/first-batch/sources/RE-ATOMIC-001.sol
-curl -fsSL https://raw.githubusercontent.com/AtomicLoans/atomicloans-eth-contracts/17adcc19c977c77273f07be3bd73123bf46e18a0/contracts/Loans.sol -o .local/first-batch/patches/RE-ATOMIC-001.sol
-curl -fsSL https://raw.githubusercontent.com/ConsenSysDiligence/atomic-loans-audit-report-2019-07/987823cd198eef4119e57b12e42385e8799a7142/README.md -o .local/first-batch/reports/RE-ATOMIC-001.md
-curl -fsSL https://raw.githubusercontent.com/AtomicLoans/atomicloans-eth-contracts/697f12d3eb0772a059a165ec50f02c265bd3dd43/LICENSE.md -o .local/first-batch/licenses/RE-ATOMIC-001.md
-PYTHONPATH=tools/experiment python3 tools/experiment/first_batch.py audit --intake docs/vibe/releases/R1-S3/evidence/d1-kb-intake.json --assignment docs/vibe/releases/R1-S3/evidence/d1-kb-assignment.json --root . --output-dir .local/d1-kb-candidates
-```
-
-`d1_kb.py` 的 `--ledger` 指向上述审计生成的清单；`--pairs` 指向审查完成后的配对表，`--vectors` 与 `--embedding` 必须来自同一固定真实模型，`--snapshot-root` 为专用本机目录。**当前命令会因待审标签拒绝构建；不得把 `reviewed` 改成 `true` 作为运行捷径。**
-
-候选向量可先用以下命令离线计算（首次获取模型权重需要网络）。它只写入 `.local/d1-kb-candidates/`，输出标记 `candidateOnly=true`，不会调用模型审计 API、建立快照或激活 Milvus。2026-10-04 本机权重下载尝试在 `huggingface.co` 的 `modules.json` 请求发生 `SSL: UNEXPECTED_EOF_WHILE_READING`，命令未完成；应在网络恢复后重试，并核对模型修订、文档摘要及 384 维输出。
+从项目根目录执行。首批固定源码、报告、补丁的获取与摘要见[原件复核](FIRST_BATCH_EVIDENCE_REVIEW.md)；缺少这些原件时，应先按该文档下载并验证。所有生成文件写入 Git 忽略的 `.local/`。首版决策与候选清单摘要绑定；若重取源码后摘要不一致，准入会拒绝。
 
 ```bash
+PYTHONPATH=tools/experiment python3 tools/experiment/first_batch.py audit \
+  --intake docs/vibe/releases/R1-S3/evidence/d1-kb-intake.json \
+  --assignment docs/vibe/releases/R1-S3/evidence/d1-kb-assignment.json \
+  --root . --output-dir .local/d1-kb-candidates
+
+PYTHONPATH=tools/experiment python3 tools/experiment/d1_admission.py \
+  --candidate-ledger .local/d1-kb-candidates/ledger.json \
+  --decisions docs/vibe/releases/R1-S3/evidence/d1-kb-v1-decisions.json \
+  --root . --output-dir .local/d1-kb-v1
+
 uv venv .local/d1-embed-venv --python 3.12
 uv pip install --python .local/d1-embed-venv/bin/python -r tools/experiment/d1-embedding-requirements.lock
-PYTHONPATH=tools/experiment .local/d1-embed-venv/bin/python tools/experiment/d1_embed.py \
-  --ledger .local/d1-kb-candidates/ledger.json \
-  --pairs docs/vibe/releases/R1-S3/evidence/d1-kb-pairs-review.json \
-  --root . --output-dir .local/d1-kb-candidates
-```
+PYTHONPATH=tools/experiment python3 tools/experiment/d1_model.py --model-dir .local/d1-embedding-model
+PYTHONPATH=tools/experiment HF_HUB_OFFLINE=1 .local/d1-embed-venv/bin/python tools/experiment/d1_embed.py \
+  --ledger .local/d1-kb-v1/ledger.json --pairs .local/d1-kb-v1/pairs.json \
+  --root . --output-dir .local/d1-kb-v1 --model-dir .local/d1-embedding-model
 
-```bash
 PYTHONPATH=tools/experiment python3 tools/experiment/d1_kb.py \
-  --ledger .local/d1-kb-candidates/ledger.json \
-  --pairs docs/vibe/releases/R1-S3/evidence/d1-kb-pairs-review.json \
-  --vectors .local/d1-kb-candidates/vectors.json \
-  --embedding .local/d1-kb-candidates/embedding.json \
+  --ledger .local/d1-kb-v1/ledger.json --pairs .local/d1-kb-v1/pairs.json \
+  --vector-bundle .local/d1-kb-v1/candidate-vectors.json \
   --root . --snapshot-root .local/d1-kb-snapshots
+
+PYTHONPATH=tools/experiment python3 tools/experiment/s1b.py snapshot-verify \
+  --root .local/d1-kb-snapshots \
+  --id 9fc63d0e8828a8caa78145e133b8f954f9fedaf79469ea0927434d7dbef725c8
 ```
 
-下一步先补齐独立逐事件复核与缺失原件，剔除仍无法确认的检测项；再锁定本地 embedding 运行环境，计算文档和目标同模型向量，通过完整读回后才激活 `s1b_` 集合。D1 真实对照应复用同一快照、候选池和完整提示 token 预算；不打开锁定测试集调参。
+在**新环境首次**构建并激活本机 Milvus 集合时，调用 `snapshots.activate_snapshot(root, id, MilvusRestIndex('http://127.0.0.1:29531'))`；已有集合用 `active_snapshot(root, index)` 只读校验，避免重复建立新集合。`recall.py` 通过 `--milvus-url http://127.0.0.1:29531` 从已激活集合生成同一候选池；目标向量必须由上述同一模型编码。完整命令、输出摘要和测试见 [验证记录](VERIFICATION.md)。
+
+Atomic 版本链可在独立上游克隆中核对：`git show 3632e622e0b3fedf468866db0b878b7b74dd757e:contracts/Loans.sol | shasum -a 1` 应返回报告所列 SHA-1；`git diff 3632e622e0b3fedf468866db0b878b7b74dd757e 697f12d3eb0772a059a165ec50f02c265bd3dd43 -- contracts/Loans.sol` 可核对 PR 前风险顺序未变。
+
+## 下一步研究边界
+
+需要让独立审核员逐一标注**目标—案例适用性、支持与反证价值及 UNKNOWN**，并补充其他项目的真实开发目标；目前首版开发准入为 0。只有这些标签齐备、固定真实 tokenizer 与完整提示预算后，才能在相同快照和候选池下运行 D1 与简单条件字段过滤等强基线并解释差异。不得用这次自检索排序或 PoolTogether 的单个冒烟目标推断 D1 科研效果；锁定测试集未打开。

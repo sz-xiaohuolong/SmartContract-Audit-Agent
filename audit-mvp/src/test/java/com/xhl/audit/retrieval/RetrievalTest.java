@@ -142,4 +142,13 @@ class RetrievalTest {
         assertEquals("SUPPORTED", new ConditionBinder().bind(facts(List.of(new Fact("w", scope.id(), "WRITE", "msg.sender", "balance", 0, 2), call), true), query, safe).applicability());
         assertEquals("CONTRADICTED", new ConditionBinder().bind(facts(List.of(new Fact("w", scope.id(), "WRITE", "msg.sender", "owner", 0, 2), call), true), query, safe).applicability());
     }
+
+    @Test void accessControlCanBindGuardBeforeExternalCall() {
+        var call = new Fact("risk", scope.id(), "CALL", "target", "", 1, 4);
+        var check = new Fact("check", scope.id(), "CHECK", "msg.sender", "owner", 0, 2);
+        var query = new Target("ACCESS_CONTROL", "risk", Map.of("actor", "msg.sender", "authority", "owner"));
+        var defense = new Candidate("safe", "safe-chunk", "p", "DEFENSE", "ACCESS_CONTROL", "CALL", "案例",
+            List.of(new Condition("CHECK_BEFORE", "$actor", "$authority", true)), true, "fixture", 1, 1);
+        assertEquals("SUPPORTED", new ConditionBinder().bind(facts(List.of(check, call), true), query, defense).applicability());
+    }
 }

@@ -33,14 +33,16 @@ final class RetrievalSupport {
         }
         for (StateVariable variable : facts.stateVariables()) require(variable != null && text(variable.contract()) && text(variable.name()) && variable.line() > 0);
         Fact risk = facts.facts().stream().filter(f -> f.id().equals(target.riskFactId())).findFirst().orElseThrow(() -> new IllegalArgumentException("风险位置不存在"));
-        require(risk.kind().equals(target.mechanism().equals("REENTRANCY") ? "CALL" : "WRITE"));
+        require(target.mechanism().equals("REENTRANCY") ? risk.kind().equals("CALL")
+            : Set.of("WRITE", "CALL").contains(risk.kind()));
         if (risk.kind().equals("WRITE")) require(risk.resource().equals(target.bindings().get("resource")));
     }
     static void validateCandidate(Candidate candidate) {
         require(candidate != null && text(candidate.caseId()) && text(candidate.chunkId()) && text(candidate.pairId())
             && Set.of("VULNERABLE", "DEFENSE").contains(candidate.role())
             && Set.of("REENTRANCY", "ACCESS_CONTROL").contains(candidate.mechanism())
-            && candidate.riskKind().equals(candidate.mechanism().equals("REENTRANCY") ? "CALL" : "WRITE")
+            && (candidate.mechanism().equals("REENTRANCY") ? candidate.riskKind().equals("CALL")
+                : Set.of("WRITE", "CALL").contains(candidate.riskKind()))
             && text(candidate.text()) && text(candidate.provenance()) && candidate.reviewed()
             && Double.isFinite(candidate.denseScore()) && Double.isFinite(candidate.lexicalScore())
             && candidate.conditions() != null && !candidate.conditions().isEmpty());

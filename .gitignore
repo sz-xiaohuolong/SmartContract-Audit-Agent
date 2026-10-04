@@ -4,7 +4,9 @@ application-coding-plan.yml
 /.local/experiment-ui/
 /.local/first-batch/
 /.local/d1-kb-candidates/
+/.local/d1-kb-v1/
 /.local/d1-kb-snapshots/
+/.local/atomicloans-upstream/
 /.local/d1-embed-venv/
 /.local/d1-embedding-model/
 /.local/mvp-milvus/

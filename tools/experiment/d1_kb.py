@@ -8,11 +8,11 @@ from pathlib import Path
 from isolation import validate_documents
 from s3 import audit_lineage
 from snapshots import build_snapshot
-from storage import atomic_json, decode
+from storage import atomic_json, decode, fingerprint
 
 
-MECHANISMS = {'ACCESS_CONTROL': ('CHECK_BEFORE', 'WRITE'),
-              'REENTRANCY': ('STATE_WRITE_BEFORE', 'CALL')}
+MECHANISMS = {'ACCESS_CONTROL': ('CHECK_BEFORE', ('WRITE', 'CALL')),
+              'REENTRANCY': ('STATE_WRITE_BEFORE', ('CALL',))}
 
 
 def _excerpt(root, artifact, bounds, function):
@@ -37,7 +37,22 @@ def _excerpt(root, artifact, bounds, function):
     return text
 
 
-def stage_snapshot(ledger, root, pairs, vectors, embedding, snapshot_root):
+def _check_pair_witness(spec, original, patch):
+    if spec['mechanism'] == 'ACCESS_CONTROL':
+        witness = spec.get('guardWitness')
+        if (not isinstance(witness, str) or not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', witness)
+                or re.search(r'\b' + re.escape(witness) + r'\b', original)
+                or not re.search(r'\b' + re.escape(witness) + r'\b', patch)):
+            raise ValueError('访问控制知识对缺少修复前后可核对的防护见证')
+    else:
+        state, call = spec.get('stateWitness'), spec.get('callWitness')
+        if (not isinstance(state, str) or not isinstance(call, str) or not state.strip() or not call.strip()
+                or original.find(call) < 0 or original.find(state) <= original.find(call)
+                or patch.find(state) < 0 or patch.find(call) <= patch.find(state)):
+            raise ValueError('重入知识对缺少状态更新与外部调用顺序见证')
+
+
+def stage_snapshot(ledger, root, pairs, vectors, embedding, snapshot_root, vector_bundle=None):
     """仅在全部谱系与成对标签通过审核时构建快照和元数据。"""
     audit = audit_lineage(ledger, root)
     if not audit['ok'] or audit['pendingSamples']:
@@ -56,7 +71,7 @@ def stage_snapshot(ledger, root, pairs, vectors, embedding, snapshot_root):
         if (spec.get('reviewed') is not True or spec.get('reviewerType') != 'INDEPENDENT'
                 or not isinstance(spec.get('reviewer'), str) or not spec['reviewer'].strip()
                 or mechanism != row['vulnerabilityType'] or expected is None
-                or (spec.get('predicate'), spec.get('riskKind')) != expected
+                or spec.get('predicate') != expected[0] or spec.get('riskKind') not in expected[1]
                 or spec.get('subject') != '$actor'
                 or spec.get('resource') != ('$authority' if mechanism == 'ACCESS_CONTROL' else '$resource')
                 or not isinstance(spec.get('function'), str) or not spec['function'].strip()):
@@ -70,17 +85,26 @@ def stage_snapshot(ledger, root, pairs, vectors, embedding, snapshot_root):
             raise ValueError('知识配对证据引用不匹配')
         if artifacts['SOURCE']['sha256'] != row['sourceHash'] or artifacts['SOURCE']['path'] != row['path']:
             raise ValueError('知识源码与谱系不一致')
+        pair_texts = {}
         for suffix, kind, key, role, condition in (
                 ('original', 'SOURCE', 'sourceLines', 'VULNERABLE', False),
                 ('patch', 'PATCH', 'patchLines', 'DEFENSE', True)):
             doc_id = row['id'] + '-' + suffix
             text = _excerpt(root, artifacts[kind], spec.get(key), spec['function'])
+            pair_texts[suffix] = text
             documents.append({'id': doc_id, 'sample_id': row['id'], 'text': text})
             cases[doc_id] = {'caseId': doc_id, 'pairId': row['patchPairId'], 'role': role,
                              'mechanism': mechanism, 'riskKind': spec['riskKind'],
                              'conditions': [{'predicate': spec['predicate'], 'subject': spec['subject'],
                                              'resource': spec['resource'], 'expected': condition}],
                              'reviewed': True}
+        _check_pair_witness(spec, pair_texts['original'], pair_texts['patch'])
+    if vector_bundle is not None:
+        if (not isinstance(vector_bundle, dict) or vector_bundle.get('candidateOnly') is not True
+                or vector_bundle.get('lineageHash') != audit['ledgerHash']
+                or vector_bundle.get('textsHash') != fingerprint({item['id']: item['text'] for item in documents})
+                or vector_bundle.get('vectors') != vectors or vector_bundle.get('embedding') != embedding):
+            raise ValueError('候选向量与知识正文摘要或模型元数据不一致')
     sources = {item['id']: item for item in ledger['sources']}
     manifest = {'schema_version': '1', 'categories': sorted(MECHANISMS),
                 'samples': [{'id': row['id'], 'path': row['path'], 'source_hash': row['sourceHash'],
@@ -93,7 +117,7 @@ def stage_snapshot(ledger, root, pairs, vectors, embedding, snapshot_root):
                             for row in sorted(ledger['samples'], key=lambda item: item['id'])]}
     validate_documents(manifest, documents)
     identifier = build_snapshot(snapshot_root, manifest, documents, embedding,
-                                {'version': 'reviewed-function-pair-v1'}, vectors)
+                                {'version': 'reviewed-function-pair-v1:' + fingerprint(cases)}, vectors)
     catalog = {'snapshotId': identifier, 'cases': cases}
     catalog_path = Path(snapshot_root) / 'catalogs' / (identifier + '.json')
     catalog_path.parent.mkdir(parents=True, exist_ok=True)
@@ -108,13 +132,21 @@ def stage_snapshot(ledger, root, pairs, vectors, embedding, snapshot_root):
 
 def main():
     parser = argparse.ArgumentParser(description='从完整审核材料构建 D1 知识快照；不会自动激活')
-    for name in ('ledger', 'pairs', 'vectors', 'embedding', 'root', 'snapshot-root'):
+    for name in ('ledger', 'pairs', 'root', 'snapshot-root'):
         parser.add_argument('--' + name, required=True)
+    parser.add_argument('--vector-bundle')
+    parser.add_argument('--vectors')
+    parser.add_argument('--embedding')
     args = parser.parse_args()
     try:
+        bundle = decode(Path(args.vector_bundle).read_bytes()) if args.vector_bundle else None
+        if bundle is None and (not args.vectors or not args.embedding):
+            raise ValueError('必须提供完整候选向量包或向量与模型元数据')
+        vectors = bundle['vectors'] if bundle is not None else decode(Path(args.vectors).read_bytes())
+        embedding = bundle['embedding'] if bundle is not None else decode(Path(args.embedding).read_bytes())
         result = stage_snapshot(decode(Path(args.ledger).read_bytes()), Path(args.root),
-                                decode(Path(args.pairs).read_bytes()), decode(Path(args.vectors).read_bytes()),
-                                decode(Path(args.embedding).read_bytes()), Path(args.snapshot_root))
+                                decode(Path(args.pairs).read_bytes()), vectors,
+                                embedding, Path(args.snapshot_root), vector_bundle=bundle)
     except (ValueError, OSError, KeyError, TypeError) as error:
         parser.exit(2, '正式知识快照构建拒绝：' + str(error) + '\n')
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
