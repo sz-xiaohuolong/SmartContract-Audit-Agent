@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from d1_kb import stage_snapshot
-from d1_embed import candidate_vectors
+from d1_embed import candidate_vectors, load_encoder
 from snapshots import verify_snapshot
 
 
@@ -108,3 +108,9 @@ class D1KnowledgeTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '补丁'):
             candidate_vectors(self.ledger, self.root, self.pairs, lambda texts: [[1.0, 0.0]] * len(texts),
                               'fixed-revision', 2)
+
+    def test_model_download_failure_has_clear_message(self):
+        def unavailable(*args, **kwargs):
+            raise OSError('TLS 连接失败')
+        with self.assertRaisesRegex(ValueError, '固定模型权重无法读取'):
+            load_encoder(unavailable, self.root / 'model')

@@ -14,6 +14,15 @@ REVISION = '5c38ec7c405ec4b44b94cc5a9bb96e735b38267a'
 DIMENSION = 384
 
 
+def load_encoder(factory, cache):
+    try:
+        model = factory(MODEL, revision=REVISION, cache_folder=str(cache), trust_remote_code=False)
+    except Exception as error:
+        raise ValueError('固定模型权重无法读取，请检查网络或本机缓存') from error
+    return lambda texts: model.encode(texts, normalize_embeddings=True, convert_to_numpy=True,
+                                      show_progress_bar=False)
+
+
 def candidate_vectors(ledger, root, pairs, encode, revision, dimension):
     audit = audit_lineage(ledger, root)
     if not audit['ok']:
@@ -57,11 +66,7 @@ def main():
         ledger = decode(Path(args.ledger).read_bytes())
         pairs = decode(Path(args.pairs).read_bytes())
         from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer(MODEL, revision=REVISION, cache_folder=args.model_cache,
-                                    trust_remote_code=False)
-        def encode(texts):
-            return model.encode(texts, normalize_embeddings=True, convert_to_numpy=True,
-                                show_progress_bar=False)
+        encode = load_encoder(SentenceTransformer, args.model_cache)
         result = candidate_vectors(ledger, Path(args.root), pairs, encode, REVISION, DIMENSION)
         output = Path(args.output_dir)
         output.mkdir(parents=True, exist_ok=True)
