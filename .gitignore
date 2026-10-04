@@ -3,6 +3,8 @@ application-coding-plan.yml
 /config/providers.local.properties
 /.local/experiment-ui/
 /.local/first-batch/
+/.local/d1-kb-candidates/
+/.local/d1-kb-snapshots/
 /.local/mvp-milvus/
 /.local/mvp-kb/
 /.local/mvp-runs/

@@ -134,3 +134,11 @@ D1 裁决：**谨慎保留离线证伪方案，暂停效果结论**。下一步�
 本次显式试跑的四个新运行均只发一次请求、没有自动重试。`6043e1496bbc4341a82e429d478fa60d` 使用严格 Schema＋关闭思考，输出 103 token 但字段校验未通过；该次尚未启用原文诊断，具体字段无法追溯。`3d2ab656d0e54534bf966d6aa75273b0` 使用同配置，输出 26 token 且结构化解析完成，但结论为“未发现”，与早前同一源码的其他回答不一致，不能证明检测正确。低强度思考的 `ff03d009e2054fa588eb40d1d2d2b72b` 与 `d65ddce0c5e749be86bd1c49271fc980` 分别耗尽 2048、4096 输出 token，均没有生成任何最终回答；前者的本机 `raw-response.txt` 为 0 字节。增加总预算不能可靠解决该型号的思考耗尽问题，因此最终工程配置回到关闭显式思考和 2048 上限。最终修改后没有再发起付费请求，**不能把一次成功当作已测得低失败率**。
 
 最终离线验证：[Maven 日志](evidence/mvp-structured-maven.log)的 `mvn clean verify` 通过 Java 40 项，[Python 日志](evidence/mvp-structured-python.log)的离线测试 90 项通过。新增测试覆盖显式配置时发送的 JSON Schema/思考参数、普通 DeepSeek 请求不继承 MVP 开关、`finish_reason=LENGTH` 的未决映射、无效原文仅写本机诊断文件以及失败时不重试。工程页面保留原失败历史，新运行的输出截断会显示为明确原因；已保存的旧记录不会被改写。科研标签、D1 效果和检测准确率仍未验证。
+
+## 2026-10-04 D1 正式知识候选与构建门禁
+
+[D1 知识库准入记录](D1_KB_READINESS.md)固定 Atomic Loans 原始审计、真实修复 PR、修复前后源码与 MIT 许可证，替换不可读取修复源码的 AI Arena 正式知识位置；原工程 `mvp_` 集合和划分未改。正式候选 11，排除 3，参与隔离的八项为知识 2、开发 4、验证 2。[机器泄漏报告](evidence/d1-kb-leakage-report.json)显示 `ok=true`、跨划分错误 0、近克隆候选 0、`pendingSamples=8`。Atomic Loans 审计报告所列整文件 SHA-1 与 PR 修复前文件不同，已记录为独立复核点。
+
+新增 `d1_kb.py` 从经过 S3 完整审核的清单生成两种角色的知识片段、S1b 快照和 D1 catalog；不自动激活。离线测试先验证缺失实现失败，再验证待审标签、待审配对、补丁篡改、缺失配对、重复补丁和无效结构均拒绝；完整审核的夹具可生成两条内容寻址文档且没有 `active.json`。实际首批清单执行构建命令返回 `正式知识快照构建拒绝：谱系冲突或真实标签待审`，没有创建 `.local/d1-kb-snapshots/active.json` 或 `s1b_` Milvus 集合。所用空向量文件只为验证拒绝发生在向量处理前，**并非正式 embedding**。
+
+本轮重新执行 `mvn clean verify`：`BUILD SUCCESS`，Java 40 项测试，失败 0、错误 0；`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`：Python 95 项，全部通过。本轮没有调用付费 API、没有运行 D1 真实效果实验、没有打开锁定测试集。正式知识快照准入 0，错误／失败样本不映射为安全，未知分母 8。

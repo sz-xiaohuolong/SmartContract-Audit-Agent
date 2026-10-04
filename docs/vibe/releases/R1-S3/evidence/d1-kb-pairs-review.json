@@ -1,0 +1,52 @@
+[
+  {
+    "sampleId": "AC-ASE-040",
+    "function": "mintYieldFee",
+    "sourceLines": [
+      394,
+      402
+    ],
+    "patchLines": [
+      393,
+      401
+    ],
+    "mechanism": "ACCESS_CONTROL",
+    "riskKind": "WRITE",
+    "predicate": "CHECK_BEFORE",
+    "subject": "$actor",
+    "resource": "$authority",
+    "reviewed": false,
+    "reviewerType": null,
+    "reviewer": null,
+    "evidence": [
+      "AC-ASE-040-report",
+      "AC-ASE-040-patch"
+    ],
+    "reviewNote": "报告与真实修复源码已固定；原始报告指出接收方参数可被任意调用者指定，修复版改用预设接收方。条件适用性与修复充分性仍待独立复核。"
+  },
+  {
+    "sampleId": "RE-ATOMIC-001",
+    "function": "pull",
+    "sourceLines": [
+      298,
+      316
+    ],
+    "patchLines": [
+      298,
+      316
+    ],
+    "mechanism": "REENTRANCY",
+    "riskKind": "CALL",
+    "predicate": "STATE_WRITE_BEFORE",
+    "subject": "$actor",
+    "resource": "$resource",
+    "reviewed": false,
+    "reviewerType": null,
+    "reviewer": null,
+    "evidence": [
+      "RE-ATOMIC-001-report",
+      "RE-ATOMIC-001-patch"
+    ],
+    "reviewNote": "ConsenSys 报告 6.6 与 PR #23 指向同一状态更新顺序问题。审计范围文件 SHA-1 与 PR 修复前整文件不一致；关键函数差异已逐行定位，独立标签审核仍待完成。"
+  }
+]
