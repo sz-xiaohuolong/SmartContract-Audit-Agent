@@ -1,6 +1,14 @@
 # R1-S3 工程交付与研究门禁验证记录
 
 日期：2026-09-24。范围：来源准入、谱系隔离与 D1 离线证伪流水线，以及 D2 固定候选最小契约。开发在当前主目录完成；真实模型未调用。工程交付与研究效果分别验收，后者仍受 G1–G3 门禁约束。
+
+## 2026-10-04 首批原件增量复核
+
+对首批十项固定源码和既有划分重新执行离线谱系审计。新增固定 Basin、Gondi、Maia、AI Arena 四份原始 finding 正文，Basin 修复审查版与 Maia 维护者修复提交；PoolTogether 原有报告和补丁保持摘要不变。八项未剔除样本中，已登记原始报告 5，修复源码或修复版本 3，缺完整原件或独立标签的样本仍为 8。新登记材料均继承事件组，更新的[泄漏报告](evidence/first-batch-leakage-report.json)给出 `ok=true`、跨划分错误 0、近克隆候选 0、知识 2／开发 4／验证 2、`readyForFormalSnapshot=false`。原件 SHA-256、来源、逐项限制及重放命令见[原件复核](FIRST_BATCH_EVIDENCE_REVIEW.md)。
+
+正式准入未通过：AI Arena 的维护者修复仓库返回 404；SCRUBD 三项缺逐事件报告和修复；所有八项均缺独立的漏洞位置、类别和适用性标签。未把修复源码自动标成安全负例，也未打开锁定测试。现有 `mvp_` 集合保持 `ENGINEERING_MVP`；本轮未创建或激活正式 `s1b_` 集合，正式 `active.json` 不存在。下一步需补知识侧重入真实修复对与独立标签，再按 S1b 完整回读流程激活正式快照。
+
+本轮执行 `mvn clean verify`，Java 40 项全部通过、`BUILD SUCCESS`，见[Maven 日志](evidence/first-batch-20261004-maven.log)；执行 `PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`，Python 90 项全部通过，见[Python 日志](evidence/first-batch-20261004-python.log)。清单更新改变工程演示快照的谱系摘要，已重建当前 `mvp_ec838f133828429f8b9fc0f53a1b2948` 集合，完整回读后页面状态接口返回 `ready=true`、`researchEligible=false`、3 条文档；旧 `mvp_b51c012b788548a6bca40e3ca91d67ae` 集合保留。Milvus 集合列表仅含上述两个 `mvp_`，没有 `s1b_`。
 工程代码与证据已提交到远程 `origin/main`；同步不改变下文的研究门禁状态。2026-09-25 的第一批真实案例核验增量见文末；下面原有工程验证数据保留其当时口径。
 
 ## 按需求核验

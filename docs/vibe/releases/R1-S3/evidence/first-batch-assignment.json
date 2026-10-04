@@ -3,12 +3,12 @@
   "intake": "first-batch-intake.json",
   "assignments": [
     {"id": "AC-ASE-003", "split": "excluded", "reason": "原始 H-06 为错误修饰器导致功能失败，暂不作为未经授权调用样本"},
-    {"id": "AC-ASE-006", "split": "development", "reason": "访问控制检测目标"},
-    {"id": "AC-ASE-009", "split": "development", "reason": "访问控制检测目标"},
-    {"id": "AC-ASE-030", "split": "validation", "reason": "访问控制独立验证目标"},
+    {"id": "AC-ASE-006", "split": "development", "reason": "访问控制检测目标；原始 H-01 与修复审查版本已固定，独立标签仍待审", "reportEvidence": {"url": "https://github.com/code-423n4/2024-07-basin-findings/issues/52", "path": ".local/first-batch/reports/AC-ASE-006.md", "sha256": "c6d73aa41b56c6a5b3fc64227bbcedd44649b36d81b58d4f8fefa3ddd5a813fb"}, "patchEvidence": {"url": "https://github.com/code-423n4/2024-08-basin/blob/7e08ff591df0a2ade7d5618113dda2621cd899bc/src/WellUpgradeable.sol", "path": ".local/first-batch/patches/AC-ASE-006.sol", "sha256": "283bda224984decf8df58c8593353b05ef9c8bdc84707d511d468685afca2258"}},
+    {"id": "AC-ASE-009", "split": "development", "reason": "访问控制检测目标；原始 H-03 已固定，维护者补丁原件仍缺失", "reportEvidence": {"url": "https://github.com/code-423n4/2024-04-gondi-findings/issues/64", "path": ".local/first-batch/reports/AC-ASE-009.md", "sha256": "817c3186a4d556f082e4f465a9ac9cf1eddb170d7457531910b36034f970bcc6"}},
+    {"id": "AC-ASE-030", "split": "validation", "reason": "访问控制独立验证目标；原始 H-01 与修复提交已固定，独立标签仍待审", "reportEvidence": {"url": "https://github.com/code-423n4/2023-09-maia-findings/issues/885", "path": ".local/first-batch/reports/AC-ASE-030.md", "sha256": "aab646d2904c9967ba751af9d3187ae49c4381f65f6922b01ed0946970af5643"}, "patchEvidence": {"url": "https://github.com/Maia-DAO/2023-09-maia-remediations/commit/2209d6e96af986fa0960aacc356ba2be070fdc85", "path": ".local/first-batch/patches/AC-ASE-030.sol", "sha256": "b37ba587c5e19830f2071febad4c184b203cfc8ed3206e9c82c6f2ca3e3b1255"}},
     {"id": "AC-ASE-040", "split": "knowledge", "reason": "访问控制知识候选；已固定原始报告和修复源码，独立标签仍待审", "reportEvidence": {"url": "https://github.com/code-423n4/2023-07-pooltogether-findings/issues/396", "path": ".local/first-batch/reports/AC-ASE-040.md", "sha256": "c8765072eb107dc21408f9998406d83dbda470cccad3b076a1b4847a2d9cb48d"}, "patchEvidence": {"url": "https://github.com/GenerationSoftware/pt-v5-vault/commit/50bd158089d890eb759da67282bf5b5238a3a22a", "path": ".local/first-batch/patches/AC-ASE-040.sol", "sha256": "1ee2f664dda115d58367eee8e5da632d0a3584f6c99b7472f14667ec9c4c3a76"}},
     {"id": "RE-POP-048", "split": "excluded", "reason": "原始 H-01 为版税接收方抽干资金，关联 PR 12 是版税计算修复，不能作为重入补丁对"},
-    {"id": "RE-POP-077", "split": "knowledge", "reason": "重入知识候选；修复对尚不可取得"},
+    {"id": "RE-POP-077", "split": "knowledge", "reason": "重入知识候选；原始 H-08 已固定，修复仓库仍不可取得", "reportEvidence": {"url": "https://github.com/code-423n4/2024-02-ai-arena-findings/issues/37", "path": ".local/first-batch/reports/RE-POP-077.md", "sha256": "d42775cd10a858ed8e7b913d0b79985453aa6e2b070cbb88da22ea6b8af7cba6"}},
     {"id": "RE-SCRUBD-001", "split": "development", "reason": "重入检测目标；逐事件原始报告缺失"},
     {"id": "RE-SCRUBD-002", "split": "development", "reason": "重入检测目标；逐事件原始报告缺失"},
     {"id": "RE-SCRUBD-003", "split": "validation", "reason": "重入独立验证目标；逐事件原始报告缺失"}

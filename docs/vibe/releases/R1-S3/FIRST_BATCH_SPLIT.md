@@ -2,6 +2,8 @@
 
 更新：2026-09-26。用户确认首批范围用于非商业毕业设计实验。本文件给出**项目级预分配和已执行的源码隔离结果**；`knowledge` 表示知识候选，不等于已激活正式知识快照。真实防御补丁、逐事件报告与独立标签未齐备前，正式 Milvus 集合保持未激活。
 
+2026-10-04 复核增量：新增固定 Basin、Gondi、Maia、AI Arena 四份原始 finding，以及 Basin、Maia 两份修复版本；连同此前的 PoolTogether，目前八项中报告 5、修复源码或修复版本 3。更新后的[原件复核表](FIRST_BATCH_EVIDENCE_REVIEW.md)和[泄漏报告](evidence/first-batch-leakage-report.json)可复查；独立标签仍为 0，正式快照仍未激活。
+
 ## 数据集分别做什么
 
 数据集名称只表示发现案例的入口。实际划分按项目、漏洞事件、补丁对和近克隆组进行；同一项目的源码、报告、修复前后代码和知识文档必须留在同一侧。
@@ -25,7 +27,7 @@
 
 TraitForge [H-06 原始报告](https://code4rena.com/reports/2024-07-traitforge)描述错误修饰器导致铸造／锻造失败，暂不按未经授权访问案例使用。Caviar [H-01 原始报告](https://code4rena.com/reports/2023-04-caviar)是版税接收方抽干池子，关联的[维护者 PR 12](https://github.com/outdoteth/caviar-private-pools/pull/12)修正版税计算，不是可核实的重入补丁对。PoolTogether [H-04 报告](https://code4rena.com/reports/2023-07-pooltogether)与[PR 7](https://github.com/GenerationSoftware/pt-v5-vault/pull/7)在 `mintYieldFee` 处对应：修复移除任意接收方参数，改用预设接收方。本机已固定[原始 finding 396](https://github.com/code-423n4/2023-07-pooltogether-findings/issues/396)正文和[修复提交 50bd158](https://github.com/GenerationSoftware/pt-v5-vault/commit/50bd158089d890eb759da67282bf5b5238a3a22a)源码，两份原件摘要与知识候选事件组绑定；独立标签仍待审。AI Arena [H-08 报告](https://code4rena.com/reports/2024-02-ai-arena)明确写出 `claimRewards()` 的重入路径，但名单所指修复仓库仍无法取回。
 
-十份固定版本源码已重新下载到本机 `.local/first-batch/sources/`，逐项 SHA-256 与[原名单](evidence/first-batch-intake.json)一致。八个未剔除项目的[分组报告](evidence/first-batch-leakage-report.json)显示知识 2、开发 4、验证 2，当前项目/事件/字节/已发现近克隆跨划分冲突 0；两个剔除项与入选项也没有达到当前近克隆阈值。该检查不能证明不存在其他语义克隆，且补丁与报告原件尚未加入关联图。八项均保持待审；安全负例 0，锁定测试集 0，正式知识快照和 Milvus 激活数 0。
+十份固定版本源码已重新下载到本机 `.local/first-batch/sources/`，逐项 SHA-256 与[原名单](evidence/first-batch-intake.json)一致。八个未剔除项目的[分组报告](evidence/first-batch-leakage-report.json)显示知识 2、开发 4、验证 2，当前项目/事件/字节/已发现近克隆跨划分冲突 0；两个剔除项与入选项也没有达到当前近克隆阈值。该检查不能证明不存在其他语义克隆。已登记的报告与修复原件继承各自事件组并纳入关联图；尚未取得的原件不能由该检查证明隔离。八项均保持待审；安全负例 0，锁定测试集 0，正式知识快照和 Milvus 激活数 0。
 
 ## 重放与进入正式知识库的条件
 
