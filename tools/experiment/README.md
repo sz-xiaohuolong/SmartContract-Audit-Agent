@@ -84,7 +84,7 @@ python3 tools/experiment/s1b.py snapshot-activate --root /路径/kb --id 生成�
 
 Milvus 通过 `snapshots.MilvusIndex(client)` 注入同步 `MilvusClient`，再调用 `activate_snapshot(root, snapshot_id, index)`。适配器创建唯一 `s1b_...` 集合，分批插入、flush，并通过 Strong 一致性分页读回每个 ID、向量和文档；完整匹配才替换本地激活指针。应用使用 `active_snapshot(root, index)` 获取经过再次校验的集合名。它不修改旧集合或全局别名，不自动清除构建失败留下的孤立集合。旧 legacy RAG 的启动导入逻辑没有接入此入口。
 
-R1-S3 的 D1 正式知识候选使用 `d1_kb.py` 从完整审核的谱系清单、逐案审核的补丁对片段、同一固定模型的向量构建上述 S1b 快照和 D1 catalog。构建命令不自动激活；待审标签、未审配对、摘要不符、知识样本覆盖不全或跨划分泄漏都会拒绝。当前首批材料仍待审，具体原件、候选划分及阻塞见 [D1 知识库准入记录](../../docs/vibe/releases/R1-S3/D1_KB_READINESS.md)。现有 `mvp_` 工程演示集合不属于此入口。
+R1-S3 的 D1 正式知识候选使用 `d1_kb.py` 从完整审核的谱系清单、逐案审核的补丁对片段、同一固定模型的向量构建上述 S1b 快照和 D1 catalog。构建命令不自动激活；待审标签、未审配对、摘要不符、知识样本覆盖不全或跨划分泄漏都会拒绝。`d1_embed.py` 可先用本地固定模型为待审案例生成候选向量，输出明确标记 `candidateOnly=true`，不绕过正式准入；离线测试用注入的确定性编码器，不下载权重。当前首批材料仍待审，具体原件、候选划分及模型下载阻塞见 [D1 知识库准入记录](../../docs/vibe/releases/R1-S3/D1_KB_READINESS.md)。现有 `mvp_` 工程演示集合不属于此入口。
 
 默认 CLI 只激活本地快照。真实 Milvus 接入须在明确配置、凭证来自环境变量的调用方创建客户端；本轮不安装 SDK、不建立真实连接。适配接口依据 [PyMilvus 官方客户端文档](https://github.com/milvus-io/pymilvus/blob/master/_autodocs/api-reference/milvus-client.md) 实现，离线客户端夹具验证完整性与激活行为，真实 SDK/服务版本兼容性仍须部署时验证。
 

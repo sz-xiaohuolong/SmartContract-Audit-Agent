@@ -141,4 +141,4 @@ D1 裁决：**谨慎保留离线证伪方案，暂停效果结论**。下一步�
 
 新增 `d1_kb.py` 从经过 S3 完整审核的清单生成两种角色的知识片段、S1b 快照和 D1 catalog；不自动激活。离线测试先验证缺失实现失败，再验证待审标签、待审配对、补丁篡改、缺失配对、重复补丁和无效结构均拒绝；完整审核的夹具可生成两条内容寻址文档且没有 `active.json`。实际首批清单执行构建命令返回 `正式知识快照构建拒绝：谱系冲突或真实标签待审`，没有创建 `.local/d1-kb-snapshots/active.json` 或 `s1b_` Milvus 集合。所用空向量文件只为验证拒绝发生在向量处理前，**并非正式 embedding**。
 
-本轮重新执行 `mvn clean verify`：`BUILD SUCCESS`，Java 40 项测试，失败 0、错误 0；`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`：Python 96 项，全部通过。复查发现同一快照 ID 的 catalog 若被本地篡改会被静默覆盖，已增加拒绝覆盖的回归测试和修复。本轮没有调用付费 API、没有运行 D1 真实效果实验、没有打开锁定测试集。正式知识快照准入 0，错误／失败样本不映射为安全，未知分母 8。
+本轮重新执行 `mvn clean verify`：`BUILD SUCCESS`，Java 40 项测试，失败 0、错误 0；`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`：Python 98 项，全部通过。复查发现同一快照 ID 的 catalog 若被本地篡改会被静默覆盖，已增加拒绝覆盖的回归测试和修复。候选向量工具另以注入的确定性编码器验证两份片段输出和缺补丁拒绝；真实 BGE 模型依赖已安装并锁定，但权重下载在 `huggingface.co/.../modules.json` 的 HTTPS 请求遇到 `SSL: UNEXPECTED_EOF_WHILE_READING`，没有产生真实向量。本轮没有调用付费 API、没有运行 D1 真实效果实验、没有打开锁定测试集。正式知识快照准入 0，错误／失败样本不映射为安全，未知分母 8。

@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from d1_kb import stage_snapshot
+from d1_embed import candidate_vectors
 from snapshots import verify_snapshot
 
 
@@ -89,3 +90,21 @@ class D1KnowledgeTest(unittest.TestCase):
         Path(result['catalogPath']).write_text('{"tampered":true}')
         with self.assertRaisesRegex(ValueError, '元数据'):
             self.stage()
+
+    def test_pending_pair_can_prepare_real_model_vectors_without_formal_activation(self):
+        self.ledger['samples'][0]['labelStatus'] = 'PENDING'
+        self.pairs[0]['reviewed'] = False
+        calls = []
+        def encode(texts):
+            calls.extend(texts)
+            return [[float(i + 1), 1.0] for i, _ in enumerate(texts)]
+        output = candidate_vectors(self.ledger, self.root, self.pairs, encode, 'fixed-revision', 2)
+        self.assertEqual({'case-original', 'case-patch'}, set(output['vectors']))
+        self.assertEqual(2, len(calls))
+        self.assertFalse((self.root / 'snapshots' / 'active.json').exists())
+
+    def test_candidate_vectors_reject_missing_patch(self):
+        self.ledger['sources'][0]['patchStatus'] = 'PENDING'
+        with self.assertRaisesRegex(ValueError, '补丁'):
+            candidate_vectors(self.ledger, self.root, self.pairs, lambda texts: [[1.0, 0.0]] * len(texts),
+                              'fixed-revision', 2)

@@ -5,6 +5,8 @@ application-coding-plan.yml
 /.local/first-batch/
 /.local/d1-kb-candidates/
 /.local/d1-kb-snapshots/
+/.local/d1-embed-venv/
+/.local/d1-embedding-model/
 /.local/mvp-milvus/
 /.local/mvp-kb/
 /.local/mvp-runs/

@@ -17,7 +17,7 @@ Atomic Loans 的源码、补丁、报告和仓库 MIT 许可证均固定在 Git 
 
 新增 `tools/experiment/d1_kb.py` 复用 S3 谱系审计与 S1b 原子快照：仅当**所有参与样本**的来源、补丁、报告、独立标签均审核通过，且知识配对审查表精确覆盖知识样本时，生成每组漏洞／修复两个文档、S1b 全量清单和 D1 条件 catalog。文档继承同一 `sample_id`、项目组和补丁对 ID。向量必须逐文档提供，写入后通过原有快照校验；此命令只构建，不激活。激活仍需 Milvus 全量读回完全一致。
 
-当前不可运行正式构建的原因有两个：八项独立标签未完成，其中部分原始报告或补丁缺失；尚未冻结并生成**真实语义向量**。本机工程演示用的 128 维词法哈希向量不能转成正式向量。可选的本地模型为 [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5)，官方模型卡声明 MIT，2026-10-04 查询的模型提交为 `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`；这只是待验证的选型，尚未安装、跑向量或冻结 token 化／依赖版本。
+当前不可运行正式构建的原因有两个：八项独立标签未完成，其中部分原始报告或补丁缺失；尚未生成**真实语义向量**。本机工程演示用的 128 维词法哈希向量不能转成正式向量。本轮选用 [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5) 作为候选本地模型，官方模型卡声明 MIT，模型提交固定为 `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`；Python 3.12.13 环境的依赖版本见 [`d1-embedding-requirements.lock`](../../../../tools/experiment/d1-embedding-requirements.lock)。依赖已在 Git 忽略的本机环境安装，但从 Hugging Face 获取权重时 TLS 连接报错，**没有生成向量**。模型本身尚未通过本机编码与检索核验。
 
 ## 本机重放
 
@@ -34,11 +34,23 @@ PYTHONPATH=tools/experiment python3 tools/experiment/first_batch.py audit --inta
 
 `d1_kb.py` 的 `--ledger` 指向上述审计生成的清单；`--pairs` 指向审查完成后的配对表，`--vectors` 与 `--embedding` 必须来自同一固定真实模型，`--snapshot-root` 为专用本机目录。**当前命令会因待审标签拒绝构建；不得把 `reviewed` 改成 `true` 作为运行捷径。**
 
+候选向量可先用以下命令离线计算（首次获取模型权重需要网络）。它只写入 `.local/d1-kb-candidates/`，输出标记 `candidateOnly=true`，不会调用模型审计 API、建立快照或激活 Milvus。2026-10-04 本机权重下载尝试在 `huggingface.co` 的 `modules.json` 请求发生 `SSL: UNEXPECTED_EOF_WHILE_READING`，命令未完成；应在网络恢复后重试，并核对模型修订、文档摘要及 384 维输出。
+
+```bash
+uv venv .local/d1-embed-venv --python 3.12
+uv pip install --python .local/d1-embed-venv/bin/python -r tools/experiment/d1-embedding-requirements.lock
+PYTHONPATH=tools/experiment .local/d1-embed-venv/bin/python tools/experiment/d1_embed.py \
+  --ledger .local/d1-kb-candidates/ledger.json \
+  --pairs docs/vibe/releases/R1-S3/evidence/d1-kb-pairs-review.json \
+  --root . --output-dir .local/d1-kb-candidates
+```
+
 ```bash
 PYTHONPATH=tools/experiment python3 tools/experiment/d1_kb.py \
   --ledger .local/d1-kb-candidates/ledger.json \
   --pairs docs/vibe/releases/R1-S3/evidence/d1-kb-pairs-review.json \
-  --vectors /经核验的向量文件.json --embedding /固定模型元数据.json \
+  --vectors .local/d1-kb-candidates/vectors.json \
+  --embedding .local/d1-kb-candidates/embedding.json \
   --root . --snapshot-root .local/d1-kb-snapshots
 ```
 
