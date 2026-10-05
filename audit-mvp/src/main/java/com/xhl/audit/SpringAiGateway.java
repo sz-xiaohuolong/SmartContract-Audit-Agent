@@ -15,6 +15,12 @@ public final class SpringAiGateway implements ModelGateway {
     private final ProviderRegistry registry;
     public SpringAiGateway(ProviderRegistry registry) {this.registry = registry;}
     @Override public GatewayReply complete(String provider, String system, String user) {
+        return completeWithSchema(provider, system, user, false);
+    }
+    public GatewayReply completeHypotheses(String provider, String system, String user) {
+        return completeWithSchema(provider, system, user, true);
+    }
+    private GatewayReply completeWithSchema(String provider, String system, String user, boolean hypotheses) {
         var p = registry.resolve(provider);
         // 显式管理 SDK 客户端，使成功和异常路径都释放连接资源。
         var client = OpenAiSetup.setupSyncClient(p.baseUrl(), p.apiKey(), null, null, null, null,
@@ -30,7 +36,18 @@ public final class SpringAiGateway implements ModelGateway {
             if (!deepseekV4) throw new IllegalArgumentException("当前模型未启用严格结构化输出");
             options.responseFormat(OpenAiChatModel.ResponseFormat.builder()
                 .type(OpenAiChatModel.ResponseFormat.Type.JSON_SCHEMA)
-                .jsonSchema("""
+                .jsonSchema(hypotheses ? """
+                    {"type":"object","properties":{
+                    "schemaVersion":{"type":"string","enum":["2"]},
+                    "hypotheses":{"type":"array","maxItems":3,"items":{"type":"object","properties":{
+                    "vulnerabilityType":{"type":"string","enum":["REENTRANCY","ACCESS_CONTROL"]},
+                    "contract":{"type":"string"},"function":{"type":"string"},
+                    "riskLine":{"type":"integer"},"riskOperation":{"type":"string"},
+                    "reason":{"type":"string"},"evidenceIds":{"type":"array","items":{"type":"string"}}},
+                    "required":["vulnerabilityType","contract","function","riskLine","riskOperation","reason","evidenceIds"],
+                    "additionalProperties":false}}},
+                    "required":["schemaVersion","hypotheses"],"additionalProperties":false}
+                    """ : """
                     {"type":"object","properties":{
                     "hasVulnerability":{"type":"boolean"},
                     "vulnerabilityType":{"type":"string"},

@@ -1,4 +1,4 @@
-> 2026-09-19 实施更新：本文件后续内容保留原系统调查结论。当前 S0 通过独立 `audit-mvp` 模块实现，具体接口与边界以 [S0 SPEC](releases/R1-S0/SPEC.md)、[实施计划](releases/R1-S0/IMPLEMENTATION_PLAN.md)及 [README](../../README.md) 为准。原 `src/` 尚未迁移，本文件列出的旧代码缺陷不能视为全部已修复。
+> 2026-10-05 当前架构更新：以下仍为 2026-09-18 旧源码调查记录，不代表新模块现状。现行 R1-S4 由 Python 固定目标与谱系、正式 Milvus 快照只读检索、Java D1 与 Spring AI 结构化假设、受控工具 CLI、Python D2 初版及本机 HTTP 页面构成。实际边界、运行契约与限制以 [R1-S4 规格](releases/R1-S4/SPEC.md)、[设计](releases/R1-S4/PROPOSED_DESIGN.md)、[验证](releases/R1-S4/VERIFICATION.md)为准。
 
 # 当前源码架构与重构依据
 

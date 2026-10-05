@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>单样本审计工作台</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="agent-page">
+  <main class="agent-shell">
+    <header class="agent-header">
+      <p class="agent-eyebrow">R1 / S4 · 本机工程试跑</p>
+      <h1>单样本审计工作台</h1>
+      <p>从正式知识快照出发，查看 D1 检索、模型假设、工具证据与 D2 判断。当前运行不作为论文效果数据。</p>
+    </header>
+    <section class="agent-grid">
+      <div class="agent-card">
+        <span class="agent-step">01 / 目标</span>
+        <h2>选择开发样本</h2>
+        <label for="sample">已登记目标</label>
+        <select id="sample"></select>
+        <p id="scope" class="agent-muted"></p>
+        <div class="agent-actions"><button id="preview">预览正式检索</button></div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-step">02 / 快照</span>
+        <h2>正式知识库</h2>
+        <p id="snapshot">读取中…</p>
+        <p id="provider" class="agent-muted"></p>
+      </div>
+      <div class="agent-card agent-card-wide">
+        <span class="agent-step">03 / 检索证据</span>
+        <h2>D1 条件检索</h2>
+        <div id="retrieval" class="agent-output">选择目标并预览。</div>
+      </div>
+      <div class="agent-card agent-card-wide">
+        <span class="agent-step">04 / 执行</span>
+        <h2>运行一次审计</h2>
+        <p>离线演练不请求付费模型。真实运行仅在明确点击后发起最多 1 次请求，输出最多 2048 token，零自动重试。</p>
+        <div class="agent-actions"><button id="offline">运行离线演练</button><button id="real" class="agent-secondary">显式真实运行</button></div>
+        <p id="notice" class="agent-muted" role="status"></p>
+      </div>
+      <div class="agent-card agent-card-wide">
+        <span class="agent-step">05 / 结果</span>
+        <h2>本次结果</h2>
+        <div id="result" class="agent-output">尚无运行结果。</div>
+        <a id="report" hidden>下载逐样本 JSONL 报告</a>
+      </div>
+      <div class="agent-card agent-card-wide">
+        <span class="agent-step">06 / 历史</span>
+        <h2>已保存的运行</h2>
+        <div id="history" class="agent-output">读取中…</div>
+      </div>
+    </section>
+  </main>
+  <script src="/agent.js" defer></script>
+</body>
+</html>

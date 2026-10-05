@@ -165,3 +165,25 @@ java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --retrieval \
 S3 的完整契约、来源待审状态和可重放命令见 [R1-S3 验证](../../docs/vibe/releases/R1-S3/VERIFICATION.md)。`s3.py lineage` 只读取开发、知识与验证源码；本切片对任何包含锁定测试的清单直接拒绝，程序不打开其源码。`s3_pilot.py` 共用 S2 候选池运行四原策略、字段过滤和两项消融，要求完整提示 tokenizer 适配器与版本摘要；示例码点计数器只用于机制测试。失败和未知保持单独分母，未核验真实标签时不计算科研收益。
 
 本机 Milvus 与单次真实模型工程试跑采用独立的 `mvp_` 集合和 `/mvp.html` 页面，完整命令、费用边界及报告目录见 [工程 MVP 说明](../../docs/vibe/releases/R1-S3/MVP_MILVUS_RUN.md)。该入口只处理固定开发样本，不作为 S3 研究先导或 D1 效果评估。
+
+## R1-S4：正式知识快照的单样本审计工作台
+
+本机已登记的四个开发目标中，`AC-ASE-006` 与 `AC-ASE-009` 可作整份源码工程试跑；`RE-SCRUBD-001` 仅允许 `matchOrderWithReserve` 第 574–660 行函数级试跑，必须同时展示完整源码与片段摘要；`RE-SCRUBD-002` 因提示上限暂不可运行。全部目标均非论文测试结果，标签仍按原谱系审核状态处理。
+
+先执行 `mvn clean verify` 构建当前 Java JAR。页面使用本机固定 BGE 权重，需要项目已有的 `.local/d1-embed-venv`，从仓库根目录启动：
+
+```bash
+.local/d1-embed-venv/bin/python tools/experiment/local_ui.py --port 8769
+```
+
+浏览器打开 `http://127.0.0.1:8769/agent.html`。目标列表、状态、正式检索预览、历史与下载为只读操作。离线演练不调用付费模型，也不运行真实 Slither；它会检查本机正式 `s1b_` Milvus 快照、使用固定 BGE 生成 D1 候选、经过 Java D1，并以明确标记的空假设及跳过工具状态检验编排和报告。离线结果的“未发现已报告问题”不构成安全结论，D2 仍为 UNKNOWN。Milvus 需在 `127.0.0.1:29531` 可用，正式指针与四条向量须完整读回，不回退到旧 `mvp_` 集合。
+
+只有在页面点击“显式真实运行”才使用 `config/providers.local.properties` 中已核实的火山 Agent Plan 端点和模型；本轮固定每次点击最多 1 个模型请求、2048 输出 token、零重试。运行器在临时配置中启用严格 JSON Schema 并关闭显式思考，以避免推理预算占满回答；这改变模型工作方式，不能直接当作科研对照配置。完整消息只有 UTF-8 字节硬上限，尚无指定模型的精确 token 公平保证。Slither 路径填写在被 Git 忽略的 `config/tools.local.properties`，格式见 `config/tools.example.properties`；Mythril 可选，增加 `tools.mythril.executable` 即可。工具未安装、失败、空告警均不证明安全。
+
+每次运行写入 `.local/audit-runs/<运行编号>/plan.json`、`events.jsonl`、`sample.jsonl` 与 `result.json`。模型请求前先将启动事件 fsync；中断后已有记录只读回放，不自动重发。`replay(root, run_id)` 会核对计划摘要、逐样本结果和结束事件摘要。页面下载的 JSONL 与本机逐样本文件相同。若需要人工检查，可对照页面运行编号和该目录中的快照 ID、两个源码摘要、阶段状态、usage 与 UNKNOWN/失败分母。真实付费运行须由操作者自行点击；默认离线测试命令不发网络 API 请求。
+
+```bash
+PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v
+```
+
+该工作台只证明单样本工程链路可执行。D1 的真实效果仍需独立审核目标—案例适用性标签、锁定真实 tokenizer 和同池强基线后另行实验；D2 初版只有已有证据的六项义务检查，不是完整路径求解。

@@ -1,6 +1,8 @@
 # 当前工作进度
 
-更新：2026-10-04。
+2026-10-05：用户已批准 [R1-S4 规格](releases/R1-S4/SPEC.md)、[设计](releases/R1-S4/PROPOSED_DESIGN.md)及[函数级追加决定](releases/R1-S4/CHANGE_PROPOSAL.md)。现已实现固定开发目标谱系校验、正式 `s1b_` 快照只读 D1 检索、最多三条严格结构化模型假设、Slither 与可选 Mythril 工具 CLI、D2 六项义务初版、逐事件持久化和 `/agent.html` 审计页面。实测 `AC-ASE-006`、`RE-SCRUBD-001` 的离线演练均保存并可重放；后者仅为第 574–660 行函数级上下文。最终全量 Java 47 项与 Python 120 项离线测试通过。真实付费模型未在本轮调用；D1 科研效果和 D2 准确率仍未知。逐项证据及验收命令见 [S4 验证](releases/R1-S4/VERIFICATION.md)。
+
+更新：2026-10-05。
 
 2026-10-04 D1 首版正式知识库：核对 Atomic Loans 审计范围源码与上游提交完全一致，并发现 PoolTogether 的真实修复属于固定接收方，不能用现有 `CHECK_BEFORE` 条件冒充权限修饰器。首版知识改选 Maia 访问控制真实补丁对与 Atomic Loans 重入真实补丁对；PoolTogether 单独留在验证侧。按固定模型文件摘要离线生成四条 384 维真实语义向量，S1b 快照经完整性校验及 Milvus 全量读回后激活，集合为 `s1b_612ad26b068c4b64842463a633d6d1ba`。首版知识 2、验证 1、开发 0，跨划分冲突 0；其余五项候选仍待审。Maia 风险操作据实为 `CALL`，但现有轻量事实提取仍为 `PARTIAL/UNKNOWN`。四条自检索及本地／Milvus 排序一致仅证明链路可用，目标—案例独立适用性标签尚缺，**D1 科研效果仍未知**。数据划分、原件、模型、快照和重放见[首版正式知识库](releases/R1-S3/D1_KB_READINESS.md)，验证见[记录](releases/R1-S3/VERIFICATION.md)。
 

@@ -18,6 +18,10 @@ public final class AuditCli {
     public static int run(String[] args, Map<String, String> environment, PrintStream out, PrintStream err) {
         if (args.length > 0 && "--retrieval".equals(args[0]))
             return com.xhl.audit.retrieval.RetrievalCli.run(java.util.Arrays.copyOfRange(args, 1, args.length), out, err);
+        if (args.length > 0 && "--hypotheses".equals(args[0]))
+            return HypothesisCli.run(java.util.Arrays.copyOfRange(args, 1, args.length), environment, out, err);
+        if (args.length > 0 && "--tools".equals(args[0]))
+            return ToolCli.run(java.util.Arrays.copyOfRange(args, 1, args.length), out, err);
         if (args.length == 0 || (args.length == 1 && "--help".equals(args[0]))) {
             out.println("用法：java -jar audit-mvp.jar --source 合约.sol --config providers.properties [--provider ark] [--context 检索案例.txt]");
             out.println("仅显式执行时调用一次模型；退出码：0 完成，1 审计失败，2 输入或配置无效。");

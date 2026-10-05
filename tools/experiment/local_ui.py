@@ -15,6 +15,8 @@ from pathlib import Path
 
 from storage import atomic_json, durable_write, encode, sync_directory
 import mvp_runtime
+from urllib.parse import urlsplit, parse_qs
+from storage import decode
 
 
 DEMO = Path('docs/vibe/releases/R1-S3/evidence/demo')
@@ -92,12 +94,55 @@ def publish_report(store, record):
             shutil.rmtree(temporary)
 
 
-def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp_status=None):
+def _agent_dependencies(root):
+    from functools import lru_cache
+    from audit_run import RunDependencies, model_runner, tool_runner
+    from d1_embed import MODEL_MANIFEST, load_local_encoder
+    from formal_recall import java_retrieval
+    from milvus_rest import MilvusRestIndex
+    index = MilvusRestIndex('http://127.0.0.1:29531')
+    @lru_cache(maxsize=1)
+    def encoder():
+        from sentence_transformers import SentenceTransformer
+        return load_local_encoder(SentenceTransformer, root / '.local/d1-embedding-model',
+                                  decode(MODEL_MANIFEST.read_bytes()))
+    return RunDependencies(index, lambda texts: encoder()(texts),
+                           lambda source, request: java_retrieval(root, source, request),
+                           model_runner, tool_runner)
+
+
+def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp_status=None,
+                  agent_targets=None, agent_status=None, agent_preview=None, agent_runner=None, agent_store=None):
     root = Path(root).resolve()
     store = Path(store) if store is not None else root / '.local/experiment-ui'
     runner = runner or (lambda: run_demo(root))
     mvp_runner = mvp_runner or (lambda: mvp_runtime.run_once(root))
     mvp_status = mvp_status or (lambda: mvp_runtime.active(root)[0])
+    agent_store = Path(agent_store) if agent_store is not None else root / '.local/audit-runs'
+    if agent_targets is None or agent_status is None or agent_preview is None or agent_runner is None:
+        from audit_run import run_once
+        from formal_targets import list_targets, load_target
+        from formal_recall import preview as formal_preview
+        from snapshots import active_snapshot
+        dependencies = _agent_dependencies(root)
+        agent_targets = agent_targets or (lambda: list_targets(root))
+        def default_status():
+            pointer = active_snapshot(root / '.local/d1-kb-snapshots', dependencies.index)
+            values = {'ready': True, 'snapshotId': pointer['snapshot_id'],
+                      'collection': pointer['collection'], 'maxRequestsPerClick': 1,
+                      'maxOutputTokens': 2048, 'researchEligible': False}
+            try:
+                from mvp_runtime import _config_values
+                config = _config_values(root / 'config/providers.local.properties')
+                values.update({'realReady': True, 'endpoint': config['providers.ark.base-url'],
+                               'model': config['providers.ark.model']})
+            except (OSError, ValueError, KeyError):
+                values['realReady'] = False
+            return values
+        agent_status = agent_status or default_status
+        agent_preview = agent_preview or (lambda sample: formal_preview(root, load_target(root, sample),
+            dependencies.index, dependencies.encoder, dependencies.java_retriever))
+        agent_runner = agent_runner or (lambda sample, mode: run_once(root, sample, mode, dependencies))
     run_lock = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
@@ -125,7 +170,61 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             if not self._allowed_host():
                 self._send(403, {'error': '仅允许本机访问'})
                 return
-            if self.path == '/api/demo':
+            parsed = urlsplit(self.path)
+            if parsed.path == '/api/agent/status' and not parsed.query:
+                try: self._send(200, agent_status())
+                except (OSError, ValueError, RuntimeError, KeyError, ImportError):
+                    self._send(200, {'ready': False, 'researchEligible': False})
+            elif parsed.path == '/api/agent/targets' and not parsed.query:
+                try: self._send(200, {'targets': agent_targets()})
+                except (OSError, ValueError, RuntimeError, KeyError):
+                    self._send(503, {'error': '开发目标或谱系暂不可用'})
+            elif parsed.path == '/api/agent/preview':
+                query = parse_qs(parsed.query, strict_parsing=True)
+                if set(query) != {'sampleId'} or len(query['sampleId']) != 1:
+                    self._send(400, {'error': '样本参数无效'})
+                else:
+                    sample = query['sampleId'][0]
+                    try:
+                        if sample not in {row['sampleId'] for row in agent_targets() if row.get('runnable')}:
+                            raise ValueError('样本不可运行')
+                        self._send(200, agent_preview(sample))
+                    except (OSError, ValueError, RuntimeError, KeyError, ImportError):
+                        self._send(503, {'error': '正式检索预览不可用'})
+            elif parsed.path == '/api/agent/runs' and not parsed.query:
+                from audit_run import replay_at
+                rows = []
+                for path in agent_store.glob('*/result.json'):
+                    if RUN_ID.fullmatch(path.parent.name):
+                        try:
+                            row = replay_at(agent_store, path.parent.name)
+                            rows.append({'runId': row['runId'], 'sampleId': row['plan']['sampleId'],
+                                         'status': row['status'], 'mode': row['plan']['mode'],
+                                         'createdAt': row['plan']['createdAt']})
+                        except (OSError, ValueError, KeyError): pass
+                rows.sort(key=lambda row: row['createdAt'], reverse=True)
+                self._send(200, {'runs': rows[:20]})
+            elif parsed.path.startswith('/api/agent/runs/') and not parsed.query:
+                from audit_run import replay_at
+                suffix = parsed.path.removeprefix('/api/agent/runs/')
+                report = suffix.endswith('/report')
+                identifier = suffix.removesuffix('/report') if report else suffix
+                if not RUN_ID.fullmatch(identifier):
+                    self._not_found()
+                else:
+                    path = agent_store / identifier / ('sample.jsonl' if report else 'result.json')
+                    if not path.is_file(): self._not_found()
+                    else:
+                        try:
+                            row = replay_at(agent_store, identifier)
+                            if report: self._send(200, path.read_bytes(), 'application/x-ndjson; charset=utf-8', 'sample.jsonl')
+                            else: self._send(200, row)
+                        except (OSError, ValueError): self._send(500, {'error': '运行记录损坏'})
+            elif self.path == '/agent.html':
+                self._send(200, (FRONTEND / 'agent.html').read_bytes(), 'text/html; charset=utf-8')
+            elif self.path == '/agent.js':
+                self._send(200, (FRONTEND / 'agent.js').read_bytes(), 'text/javascript; charset=utf-8')
+            elif self.path == '/api/demo':
                 self._send(200, demo_record(root))
             elif self.path == '/api/mvp/status':
                 try:
@@ -202,8 +301,31 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             if origin and origin != f'http://127.0.0.1:{self.server.server_port}':
                 self._send(403, {'error': '请求来源不允许'})
                 return
-            if self.path not in ('/api/runs', '/api/mvp/run'):
+            if self.path not in ('/api/runs', '/api/mvp/run', '/api/agent/runs'):
                 self._not_found()
+                return
+            if self.path == '/api/agent/runs':
+                length = self.headers.get('Content-Length')
+                if self.headers.get('Content-Type') != 'application/json' or length is None or not length.isdecimal() or int(length) > 256:
+                    self._send(400, {'error': '运行请求无效'}); return
+                try:
+                    payload = decode(self.rfile.read(int(length)))
+                    if not isinstance(payload, dict) or set(payload) != {'sampleId', 'mode'} or payload['mode'] not in ('offline', 'real'):
+                        raise ValueError()
+                    if payload['sampleId'] not in {row['sampleId'] for row in agent_targets() if row.get('runnable')}:
+                        raise ValueError()
+                except (ValueError, KeyError, TypeError):
+                    self._send(400, {'error': '只能选择已登记可运行样本和明确模式'}); return
+                if not run_lock.acquire(blocking=False):
+                    self._send(409, {'error': '已有实验正在运行'}); return
+                try:
+                    result = agent_runner(payload['sampleId'], payload['mode'])
+                    if result.get('researchEligible') is not False or result.get('plan', {}).get('sampleId') != payload['sampleId']:
+                        raise ValueError()
+                    self._send(201, result)
+                except (OSError, ValueError, RuntimeError, KeyError, TypeError, subprocess.TimeoutExpired, ImportError):
+                    self._send(500, {'error': '审计运行失败，请检查本机正式快照、模型及工具配置。'})
+                finally: run_lock.release()
                 return
             if self.headers.get('Content-Type') != 'application/json' or self.headers.get('Content-Length') != '2' or self.rfile.read(2) != b'{}':
                 self._send(400, {'error': '只能运行固定样本，且请求内容必须是空对象'})

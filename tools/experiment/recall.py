@@ -12,9 +12,17 @@ def cosine(a, b):
 
 
 def recall_pool(root, snapshot_id, catalog, query_vector, query_text, limit, search=None, target_source_hash=None):
+    return _recall_candidates(root, snapshot_id, catalog, query_vector, query_text, limit, search,
+                              target_source_hash, allow_external=False)
+
+
+def _recall_candidates(root, snapshot_id, catalog, query_vector, query_text, limit, search,
+                       target_source_hash, allow_external):
     snapshot = verify_snapshot(root, snapshot_id)
     targets = [s for s in snapshot['manifest']['samples'] if s['source_hash'] == target_source_hash]
-    if not targets or any(s['split'] == 'knowledge' for s in targets):
+    if (not allow_external and not targets or any(s['split'] == 'knowledge' for s in targets)
+            or allow_external and (not isinstance(target_source_hash, str)
+                                   or not re.fullmatch(r'[0-9a-f]{64}', target_source_hash))):
         raise ValueError('目标源码必须来自快照全量审核清单的非知识划分')
     query = vector32(query_vector, snapshot['embedding']['dimension'])
     if type(limit) is not int or not 1 <= limit <= 1000 or not isinstance(query_text, str):
