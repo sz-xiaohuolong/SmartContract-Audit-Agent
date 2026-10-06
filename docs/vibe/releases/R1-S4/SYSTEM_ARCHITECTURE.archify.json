@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "智能合约审计系统 · 当前架构",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {"url": "https://github.com/sz-xiaohuolong/SmartContract-Audit-Agent.git", "revision": "444c131bc709129deff3ea965ac189e367da8bb0"},
+    "viewBox": [1320, 625]
+  },
+  "components": [
+    { "id": "workbench", "type": "frontend", "label": "审计工作台", "sublabel": "浏览器 · agent.html", "pos": [50, 210], "size": [170, 82], "sources": [{"path": "tools/experiment/local_ui/agent.html"}] },
+    { "id": "localApi", "type": "backend", "label": "本机实验接口", "sublabel": "127.0.0.1 · local_ui.py", "pos": [310, 210], "size": [170, 82], "sources": [{"path": "tools/experiment/local_ui.py"}] },
+    { "id": "lineageGate", "type": "security", "label": "样本与谱系门禁", "sublabel": "开发样本 · 摘要 · 隔离", "pos": [570, 210], "size": [170, 82], "sources": [{"path": "tools/experiment/formal_targets.py"}] },
+    { "id": "d1Retrieval", "type": "backend", "label": "D1 条件检索", "sublabel": "事实提取 · 配对选择", "pos": [830, 210], "size": [170, 82], "sources": [{"path": "tools/experiment/formal_recall.py"}] },
+    { "id": "hypothesis", "type": "backend", "label": "结构化漏洞假设", "sublabel": "最多 3 条 · 严格校验", "pos": [830, 445], "size": [170, 82], "sources": [{"path": "audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java"}] },
+    { "id": "toolEvidence", "type": "backend", "label": "工具证据", "sublabel": "Slither · 可选 Mythril", "pos": [570, 445], "size": [170, 82], "sources": [{"path": "audit-mvp/src/main/java/com/xhl/audit/ToolCli.java"}] },
+    { "id": "d2Check", "type": "backend", "label": "D2 初版核查", "sublabel": "六项义务 · 证据不足为未知", "pos": [310, 445], "size": [170, 82], "sources": [{"path": "tools/experiment/d2_verify.py"}] },
+    { "id": "runReport", "type": "database", "label": "运行与报告", "sublabel": "JSONL · 原子结果 · 回放", "pos": [50, 445], "size": [170, 82], "sources": [{"path": "tools/experiment/audit_run.py"}] },
+    { "id": "localBge", "type": "backend", "label": "固定 BGE 编码", "sublabel": "本地 384 维查询向量", "pos": [830, 55], "size": [170, 76], "sources": [{"path": "tools/experiment/d1_embed.py"}] },
+    { "id": "formalMilvus", "type": "database", "label": "正式 Milvus 快照", "sublabel": "s1b_ · 完整读回", "pos": [1100, 210], "size": [170, 82], "sources": [{"path": "tools/experiment/snapshots.py"}] },
+    { "id": "realModel", "type": "external", "label": "DeepSeek 模型 API", "sublabel": "仅显式真实运行", "pos": [1100, 445], "size": [170, 82], "sources": [{"path": "audit-mvp/src/main/java/com/xhl/audit/SpringAiGateway.java"}] }
+  ],
+  "connections": [
+    { "id": "uiApi", "from": "workbench", "to": "localApi", "label": "本机 HTTP", "variant": "emphasis" },
+    { "id": "apiGate", "from": "localApi", "to": "lineageGate" },
+    { "id": "gateD1", "from": "lineageGate", "to": "d1Retrieval" },
+    { "id": "d1Model", "from": "d1Retrieval", "to": "hypothesis", "label": "证据包", "variant": "emphasis", "labelDy": 24 },
+    { "id": "modelTools", "from": "hypothesis", "to": "toolEvidence", "label": "初步假设" },
+    { "id": "toolsD2", "from": "toolEvidence", "to": "d2Check", "label": "工具状态与告警" },
+    { "id": "d2Report", "from": "d2Check", "to": "runReport", "label": "判断与失败记录", "variant": "emphasis" },
+    { "id": "bgeD1", "from": "localBge", "to": "d1Retrieval", "label": "查询向量", "labelDy": 24 },
+    { "id": "milvusD1", "from": "formalMilvus", "to": "d1Retrieval", "label": "正式候选池" },
+    { "id": "apiModel", "from": "realModel", "to": "hypothesis", "label": "显式单次响应", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "已经打通", "items": ["本机页面 → 正式知识检索 → 假设与工具 → D2 → 可回放报告", "离线演练不请求付费模型；真实运行须在页面显式选择"] },
+    { "dot": "amber", "title": "研究边界", "items": ["D1 的真实效果尚未完成同池强基线对照", "D2 只是已有证据的初版核查；UNKNOWN 不等于安全"] }
+  ]
+}

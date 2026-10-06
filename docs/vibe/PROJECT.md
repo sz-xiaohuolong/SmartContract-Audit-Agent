@@ -10,7 +10,7 @@
 - S1a：只读清单、严格类型评估；S1b：审核划分、知识快照和实验恢复。见 [实施计划](releases/R1-S1/IMPLEMENTATION_PLAN.md)、[验证记录](releases/R1-S1/VERIFICATION.md)、[工具说明](../../tools/experiment/README.md)。
 - S2：D1 条件对比检索、轻量程序事实与四策略独立比较；工程测试、独立复审及本地 Milvus 冒烟已通过；真实效果实验尚未执行。见 [S2 验证](releases/R1-S2/VERIFICATION.md)。
 - S3：已完成[定向查新裁决](../../thesis/D1_D2第二轮查新与立题裁决_20260924.md)；工程部分已实现来源登记、谱系门禁和合成夹具离线先导。真实数据 G1 未通过，D1/D2 效果未验证。见 [S3 验证](releases/R1-S3/VERIFICATION.md)。D1 仅谨慎保留，D2 宽版本撤回创新主张。
-- S4：固定开发样本的正式知识快照、D1、结构化假设、本机工具、D2 初版、持久化报告和本机页面已接通；离线工程验收及剩余限制见 [S4 验证](releases/R1-S4/VERIFICATION.md)。工程演练不产生科研效果结论。
+- S4：固定开发样本的正式知识快照、D1、结构化假设、本机工具、D2 初版、持久化报告和本机页面已接通；可交互的[当前架构图](releases/R1-S4/SYSTEM_ARCHITECTURE.html)展示实际模块与研究边界，离线工程验收及剩余限制见 [S4 验证](releases/R1-S4/VERIFICATION.md)。工程演练不产生科研效果结论。
 - 使用者为论文作者与审核者；正式标签、数据比例及 D1/D2 方法创新结论仍需后续审核与研究证据。
 
 ## 事实源职责
