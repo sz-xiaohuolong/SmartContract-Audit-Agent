@@ -31,6 +31,19 @@ class HypothesisServiceTest {
         assertEquals("VULNERABILITY_REPORTED", reported.conclusion());
         assertEquals(1, reported.hypotheses().size());
         assertEquals(20, reported.outputTokens());
+        assertNull(reported.validationIssue());
+    }
+    @Test void invalidContractHasSpecificDiagnosticWithoutBecomingSafe() {
+        var body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"REENTRANCY",
+            "contract":"Unknown","function":"withdraw","riskLine":1,"riskOperation":"CALL",
+            "reason":"x","evidenceIds":[]}]}
+            """;
+        var result = service(body, 10, 20, "stop").analyze(request(), "fixture");
+        assertEquals("FAILED", result.status());
+        assertEquals("UNRESOLVED", result.conclusion());
+        assertEquals("CONTRACT_MISMATCH", result.validationIssue());
+        assertEquals(20, result.outputTokens());
     }
 
     @Test void badStructureLineAndEvidenceNeverBecomeSafe() {
@@ -73,5 +86,33 @@ class HypothesisServiceTest {
             "REENTRANCY", "withdraw", "", List.of());
         assertEquals("FAILED", service.analyze(badExcerpt, "fixture").status());
         assertEquals(0, calls.get());
+    }
+    @Test void promptSpecifiesExactObjectAndAbsoluteSourceLines() {
+        var captured = new java.util.ArrayList<String>();
+        var service = new HypothesisService((p, system, user) -> {
+            captured.add(system);
+            captured.add(user);
+            return new GatewayReply("{\"schemaVersion\":\"2\",\"hypotheses\":[]}", "fixture", "fixture", null, null, 1);
+        });
+        String source = "contract Vault {\nfunction withdraw() public {\nmsg.sender.call(\"\");\n}\n}";
+        var scoped = new HypothesisService.Request(source,
+            "function withdraw() public {\nmsg.sender.call(\"\");\n}", null,
+            "FUNCTION", 2, 4, "REENTRANCY", "withdraw", "", List.of());
+        assertEquals("COMPLETED", service.analyze(scoped, "fixture").status());
+        assertTrue(captured.get(0).contains("只输出一个 JSON 对象"));
+        assertTrue(captured.get(1).contains("3 | msg.sender.call"));
+        assertTrue(captured.get(1).contains("vulnerabilityType 必须等于上述机制"));
+    }
+    @Test void fullSourceContractHintUsesTargetFunctionOwner() {
+        var captured = new java.util.ArrayList<String>();
+        var service = new HypothesisService((p, system, user) -> {
+            captured.add(user);
+            return new GatewayReply("{\"schemaVersion\":\"2\",\"hypotheses\":[]}", "fixture", "fixture", null, null, 1);
+        });
+        String source = "contract Target {\nfunction f() public {}\n}\ncontract Other {}";
+        var full = new HypothesisService.Request(source, source, null, "FULL", 1, 4,
+            "ACCESS_CONTROL", "f", "", List.of());
+        assertEquals("COMPLETED", service.analyze(full, "fixture").status());
+        assertTrue(captured.get(0).contains("目标所属合约：Target"));
     }
 }

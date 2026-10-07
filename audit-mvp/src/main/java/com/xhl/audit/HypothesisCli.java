@@ -24,7 +24,7 @@ public final class HypothesisCli {
     }
     public static int run(String[] args, Map<String,String> env, PrintStream out, PrintStream err, ModelGateway injected) {
         try {
-            Map<String,String> options = options(args, Set.of("--source", "--request", "--config", "--provider"));
+            Map<String,String> options = options(args, Set.of("--source", "--request", "--config", "--provider", "--diagnostic-output"));
             if (!options.containsKey("--source") || !options.containsKey("--request")) throw new IllegalArgumentException();
             String source = read(options.get("--source"), 1_048_576);
             String requestText = read(options.get("--request"), 32_768);
@@ -62,6 +62,20 @@ public final class HypothesisCli {
                 providerName = provider.name();
                 SpringAiGateway real = new SpringAiGateway(registry);
                 gateway = real::completeHypotheses;
+            }
+            if (options.containsKey("--diagnostic-output")) {
+                Path diagnostic = Path.of(options.get("--diagnostic-output"));
+                ModelGateway original = gateway;
+                gateway = (name, system, user) -> {
+                    var reply = original.complete(name, system, user);
+                    // 仅写入调用者指定的新文件；诊断写入失败不改变模型结论。
+                    try {
+                        if (reply.content() != null && reply.content().length() <= 16_384)
+                            Files.writeString(diagnostic, reply.content(), StandardCharsets.UTF_8,
+                                java.nio.file.StandardOpenOption.CREATE_NEW, java.nio.file.StandardOpenOption.WRITE);
+                    } catch (java.io.IOException ignored) { }
+                    return reply;
+                };
             }
             var result = new HypothesisService(gateway).analyze(request, providerName);
             out.println(mapper.writeValueAsString(result));

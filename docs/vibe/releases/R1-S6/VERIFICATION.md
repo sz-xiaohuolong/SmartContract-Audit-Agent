@@ -1,5 +1,27 @@
 # R1-S6 批量对照与数据规模调研验证
 
+## 2026-10-07 真实运行授权后的补充验收
+
+用户明确授权真实模型批量试跑并取消预算前置限制。真实入口现可在页面预览计划后启动，固定每组合一次请求、零自动重试；已开始但未落盘的组合续跑时仍记为失败且未知，不自动重发。完整输入 token 与费用上界保留 `null`，UTF-8 字节上限不作为 token 公平依据。
+
+排查近期单次 `FAILED` 发现两个原因：已登记验证源码包含原项目导入路径且要求特定 Solidity 编译器版本，临时单文件 Slither 运行返回 `PROCESS_ERROR`；真实模型有时无视 API 的严格结构要求，返回 Markdown 顶层数组，或在函数级源码缺少合约声明时填入 `Unknown`。本次为模型提示加入精确对象字段、固定空数组格式、绝对行号和从完整源码读取的所属合约名；无效输出仍是失败与未决，新增具体校验原因及仅保存在 `.local/audit-runs/<运行编号>/raw-response.txt` 的原文诊断。对需要项目依赖的源码，Slither 明确记为 `SKIPPED`，没有将工具缺失、无告警或 D2 未知解释为安全，也没有伪造工具结果。
+
+真实单次复测 `RE-INFINITY-001`：运行 `f99d443b5ce543c085b323fb75bff881`，状态 `COMPLETED`、模型用量 1415/12 token、Slither `SKIPPED`、D2 `UNKNOWN`。真实 HTTP 批量编号 `454ae9bd0efc4cb8afe2a68c033b3725`，三验证目标 × 三策略共九次计划请求，完成 8、失败 1、未知 9；失败项为 `AC-ASE-040 × D1` 的 `MODEL_OUTPUT_INVALID`（356/292 token），并未重试或计作安全。补充改进后，`AC-ASE-040 × D1` 的单次运行 `68911004ad154215b3061bb358e2046e` 通过结构校验并产生一条初步假设，D2 仍为 `UNKNOWN`。这些结果仅证明真实调用和报告链路可运行，不能证明 D1 检测增益或审计结论正确。
+
+补充验收的离线回归：`mvn clean verify` 通过，Java 51 项；Python 137 项全部通过；`node --check tools/experiment/local_ui/agent.js` 通过。自动化测试均未调用真实 API 或 Milvus；上述真实调用属于单独的人工授权冒烟。
+
+重放命令：
+
+```bash
+PYTHONPATH=tools/experiment python3 -c 'from pathlib import Path; from batch_compare import replay_batch; print(replay_batch(Path(".local/audit-batches"), "454ae9bd0efc4cb8afe2a68c033b3725")["denominators"])'
+PYTHONPATH=tools/experiment python3 -c 'from pathlib import Path; from audit_run import replay; r=replay(Path.cwd(), "68911004ad154215b3061bb358e2046e"); print(r["status"], r["model"]["conclusion"], r["d2"]["verdict"])'
+mvn clean verify
+PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v
+node --check tools/experiment/local_ui/agent.js
+```
+
+以下原始 S6 验收段落记录变更前状态，保留供追溯；当前运行入口以本补充段落为准。
+
 日期：2026-10-07。所有新增自动化测试完全离线；本机 Milvus 与 HTTP 冒烟另列。**本轮没有调用真实付费 API，也没有产生 D1 效果提升结论。**
 
 ## Milvus 清理与当前知识

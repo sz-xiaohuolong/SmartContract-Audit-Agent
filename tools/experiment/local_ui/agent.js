@@ -56,7 +56,7 @@ function renderBatchChoices() {
 function invalidateBatchPlan() {
   batchPlan = null;
   byId('batch-start').disabled = true;
-  show('batch-plan-detail', '选择已改变，请重新查看运行上界。');
+  show('batch-plan-detail', '选择已改变，请重新查看运行计划。');
 }
 function batchChoice() {
   return {sampleIds: [...document.querySelectorAll('input[name="batch-sample"]:checked')].map(input => input.value),
@@ -70,8 +70,9 @@ async function previewBatchPlan() {
     batchPlan = plan;
     const bounds = plan.requestBounds;
     show('batch-plan-detail', `${bounds.samples} 个目标 × ${bounds.strategies} 种策略 × ${bounds.repeats} 次重复 × ${bounds.modelStages} 个模型阶段 × ${bounds.attemptsPerUnit} 次尝试\n正式快照：${plan.snapshotId}\n模型：${plan.provider ? plan.provider.endpoint + ' · ' + plan.provider.model : '固定离线空假设'}\n请求上界：${bounds.maxRequests}；输出 token 上界：${bounds.maxOutputTokens}；输入字节上界：${bounds.maxInputBytes}；完整输入 token 上界：${metric(bounds.maxInputTokens, '尚未锁定')}；费用上界：${metric(bounds.maxCost, '尚未锁定')}。\n每项结果写入本机报告，失败和未知单独统计。`);
-    byId('batch-start').disabled = plan.mode === 'real';
-    show('batch-notice', plan.mode === 'real' ? '真实批量仍被禁止：完整输入 token 与费用上界尚未锁定。' : '计划已固定，可以开始离线对照。');
+    byId('batch-start').disabled = false;
+    byId('batch-start').textContent = plan.mode === 'real' ? '开始真实批量对照' : '开始离线批量对照';
+    show('batch-notice', plan.mode === 'real' ? '计划已固定；点击启动后将逐项调用真实模型。' : '计划已固定，可以开始离线对照。');
   } catch (error) { show('batch-notice', error.message); }
 }
 function metric(value, unavailable = '待核验') { return value === null || value === undefined ? unavailable : String(value); }
@@ -140,9 +141,9 @@ async function loadBatchHistory() {
         catch (error) { show('batch-notice', error.message); }
       };
       region.append(button);
-      if (item.status === 'RUNNING' && item.mode === 'offline') {
+      if (item.status === 'RUNNING') {
         const resume = document.createElement('button'); resume.className = 'agent-history';
-        resume.textContent = `继续未完成的离线批量运行 ${item.batchId.slice(0, 8)}`;
+        resume.textContent = `继续未完成的${item.mode === 'real' ? '真实' : '离线'}批量运行 ${item.batchId.slice(0, 8)}`;
         resume.onclick = async () => {
           try {
             const report = await request('/api/agent/batches/' + item.batchId);

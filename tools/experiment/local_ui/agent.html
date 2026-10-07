@@ -17,14 +17,14 @@
       <div class="agent-card agent-card-wide">
         <span class="agent-step">01 / 批量对照</span>
         <h2>选择独立验证样本与检索策略</h2>
-        <p class="agent-muted">每种组合只运行一次。离线模式使用固定空假设，仅检查检索和报告链路；真实批量运行须先固定完整提示的 token 上界。</p>
+        <p class="agent-muted">每种组合只运行一次。离线模式使用固定空假设，仅检查检索和报告链路；真实模式会逐项调用已配置的模型，并保留失败与未知结果。</p>
         <div class="agent-batch-options"><fieldset><legend>验证目标</legend><div id="batch-targets"></div></fieldset>
           <fieldset><legend>检索策略</legend><label><input type="checkbox" name="batch-strategy" value="DENSE" checked> 向量召回</label>
           <label><input type="checkbox" name="batch-strategy" value="FIELD_FILTER" checked> 简单条件过滤</label>
           <label><input type="checkbox" name="batch-strategy" value="D1" checked> D1 对比检索</label></fieldset></div>
         <label for="batch-mode">运行模式</label>
-        <select id="batch-mode"><option value="offline">离线工程演练（零模型请求）</option><option value="real">真实模型预估（当前禁止启动）</option></select>
-        <div class="agent-actions"><button id="batch-plan">查看运行上界</button><button id="batch-start" disabled>开始离线批量对照</button></div>
+        <select id="batch-mode"><option value="offline">离线工程演练（零模型请求）</option><option value="real">真实模型批量运行</option></select>
+        <div class="agent-actions"><button id="batch-plan">查看运行计划</button><button id="batch-start" disabled>开始批量对照</button></div>
         <p id="batch-notice" class="agent-muted" role="status">等待选择。</p>
         <div id="batch-plan-detail" class="agent-output"></div>
       </div>

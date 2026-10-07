@@ -32,4 +32,30 @@ class HypothesisCliTest {
             }
         }
     }
+    @Test void diagnosticOutputKeepsInvalidResponseLocal() throws Exception {
+        var directory = Files.createTempDirectory("hypothesis-diagnostic-test-");
+        try {
+            var source = directory.resolve("Contract.sol");
+            Files.writeString(source, "contract C { function f() public {} }");
+            var request = directory.resolve("request.json");
+            Files.writeString(request, """
+                {"schemaVersion":"1","modelSource":"contract C { function f() public {} }",
+                "scope":"FULL","lineStart":1,"lineEnd":1,"mechanism":"ACCESS_CONTROL",
+                "function":"f","context":"","evidenceIds":[]}
+                """);
+            var diagnostic = directory.resolve("raw.txt");
+            var output = new ByteArrayOutputStream();
+            int status = HypothesisCli.run(new String[]{"--source", source.toString(), "--request", request.toString(),
+                "--provider", "fixture", "--diagnostic-output", diagnostic.toString()}, Map.of(),
+                new PrintStream(output), System.err,
+                (p, s, u) -> new GatewayReply("[]", "fixture", "fixture", 8, 4, 1));
+            assertEquals(1, status);
+            assertEquals("[]", Files.readString(diagnostic));
+            assertTrue(output.toString().contains("MODEL_OUTPUT_INVALID"));
+        } finally {
+            try (var files = Files.walk(directory)) {
+                for (var path : files.sorted(java.util.Comparator.reverseOrder()).toList()) Files.deleteIfExists(path);
+            }
+        }
+    }
 }

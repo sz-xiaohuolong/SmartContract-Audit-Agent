@@ -362,8 +362,6 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                         raise ValueError('续跑计划已变化或运行已结束')
                 except (OSError, ValueError, KeyError, TypeError):
                     self._send(400, {'error': '续跑计划无效或正式快照已变化'}); return
-                if plan['mode'] == 'real':
-                    self._send(422, {'error': '真实批量续跑仍需完整提示 token 上界'}); return
                 if not run_lock.acquire(blocking=False):
                     self._send(409, {'error': '已有实验正在运行'}); return
                 def resume_work():
@@ -395,8 +393,6 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                         raise ValueError('批量预览已失效，请重新查看计划')
                 except (ValueError, TypeError, KeyError, OSError, RuntimeError):
                     self._send(400, {'error': '批量选择或预览摘要无效'}); return
-                if plan['mode'] == 'real' and plan['requestBounds']['maxInputTokens'] is None:
-                    self._send(422, {'error': '尚无真实模型完整提示 token 上界，禁止批量付费运行'}); return
                 if not run_lock.acquire(blocking=False):
                     self._send(409, {'error': '已有实验正在运行'}); return
                 identifier = uuid.uuid4().hex

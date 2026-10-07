@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from audit_run import RunDependencies, run_once, replay, selected_ids, model_runner
+from audit_run import RunDependencies, run_once, replay, selected_ids, model_runner, tool_runner
 from storage import decode
 
 
@@ -16,6 +16,13 @@ class AuditRunTest(unittest.TestCase):
     def test_d1_selection_ids_follow_java_result_shape(self):
         self.assertEqual(['chunk-1'], selected_ids([{'candidate': {'chunkId': 'chunk-1'}, 'use': 'SUPPORT'}]))
         with self.assertRaises(ValueError): selected_ids([{'chunkId': 'wrong-level'}])
+
+    def test_imported_source_skips_unreproducible_single_file_slither(self):
+        target = {'fullSource': 'pragma solidity 0.8.17;\nimport "src/Well.sol";\ncontract C {}'}
+        result = tool_runner(Path('.'), target, 'real')
+        self.assertEqual('SKIPPED', result[0]['status'])
+        self.assertEqual([], result[0]['issues'])
+        self.assertIn('原项目', result[0]['reason'])
 
     def test_once_and_replay(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -62,6 +69,17 @@ class AuditRunTest(unittest.TestCase):
             self.assertEqual('FAILED', result['status'])
             self.assertEqual('UNRESOLVED', result['conclusion'])
             self.assertNotIn('secret', str(result))
+            diagnostic_deps = RunDependencies(None, None, None,
+                lambda *args: {'status': 'FAILED', 'errorCategory': 'MODEL_OUTPUT_INVALID',
+                               'validationIssue': 'CONTRACT_MISMATCH', 'inputTokens': 8,
+                               'outputTokens': 4, '_rawResponse': 'private diagnostic'},
+                lambda *args: [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': []}])
+            with patch('audit_run.load_target', return_value=target), patch('audit_run.preview', return_value=view):
+                diagnostic_result = run_once(Path(directory), 'fixture', 'offline', diagnostic_deps)
+            self.assertEqual('CONTRACT_MISMATCH', diagnostic_result['model']['validationIssue'])
+            self.assertNotIn('private diagnostic', str(diagnostic_result))
+            self.assertEqual('private diagnostic', (Path(directory) / '.local/audit-runs' /
+                diagnostic_result['runId'] / 'raw-response.txt').read_text())
 
     def test_source_change_before_model_rejects_without_request(self):
         with tempfile.TemporaryDirectory() as directory:

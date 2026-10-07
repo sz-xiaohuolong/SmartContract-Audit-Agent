@@ -69,16 +69,22 @@ class BatchUiTest(unittest.TestCase):
         self.assertEqual(200, self.request('GET', '/api/agent/batches')[0])
         self.assertEqual(200, self.request('GET', '/api/agent/batches/' + created['batchId'] + '/report')[0])
 
-    def test_paid_batch_is_blocked_without_token_upper(self):
+    def test_explicit_real_batch_runs_with_fixed_request_count(self):
         code, plan = self.request('POST', '/api/agent/batches/plan',
                                   {'sampleIds': ['A'], 'strategies': ['D1'], 'mode': 'real'})
         self.assertEqual(200, code)
         self.assertIsNone(plan['requestBounds']['maxInputTokens'])
-        code, _ = self.request('POST', '/api/agent/batches',
+        code, created = self.request('POST', '/api/agent/batches',
                                {'sampleIds': ['A'], 'strategies': ['D1'], 'mode': 'real',
                                 'planHash': plan['planHash']})
-        self.assertEqual(422, code)
-        self.assertEqual([], self.calls)
+        self.assertEqual(202, code)
+        for _ in range(100):
+            _, report = self.request('GET', '/api/agent/batches/' + created['batchId'])
+            if report['status'] == 'COMPLETED': break
+            time.sleep(.01)
+        self.assertEqual([('A', 'real', 'D1')], self.calls)
+        self.assertEqual(1, plan['requestBounds']['maxRequests'])
+        self.assertEqual(1, report['denominators']['unknown'])
 
     def test_offline_interrupted_batch_can_resume_without_repeating_started_item(self):
         choice = {'sampleIds': ['A'], 'strategies': ['DENSE', 'D1'], 'mode': 'offline'}

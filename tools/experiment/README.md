@@ -178,7 +178,7 @@ S3 的完整契约、来源待审状态和可重放命令见 [R1-S3 验证](../.
 
 浏览器打开 `http://127.0.0.1:8769/agent.html`。目标列表、状态、正式检索预览、历史与下载为只读操作。离线演练不调用付费模型，也不运行真实 Slither；它会检查本机正式 `s1b_` Milvus 快照、使用固定 BGE 生成 D1 候选、经过 Java D1，并以明确标记的空假设及跳过工具状态检验编排和报告。离线结果的“未发现已报告问题”不构成安全结论，D2 仍为 UNKNOWN。Milvus 需在 `127.0.0.1:29531` 可用，当前正式指针与六条向量须完整读回，不回退到旧 `mvp_` 集合。
 
-只有在页面点击“显式真实运行”才使用 `config/providers.local.properties` 中已核实的火山 Agent Plan 端点和模型；本轮固定每次点击最多 1 个模型请求、2048 输出 token、零重试。运行器在临时配置中启用严格 JSON Schema 并关闭显式思考，以避免推理预算占满回答；这改变模型工作方式，不能直接当作科研对照配置。完整消息只有 UTF-8 字节硬上限，尚无指定模型的精确 token 公平保证。Slither 路径填写在被 Git 忽略的 `config/tools.local.properties`，格式见 `config/tools.example.properties`；Mythril 可选，增加 `tools.mythril.executable` 即可。工具未安装、失败、空告警均不证明安全。
+只有在页面显式选择真实运行才使用 `config/providers.local.properties` 中已核实的火山 Agent Plan 端点和模型；单样本最多 1 次请求，批量每种目标与策略组合最多 1 次请求，2048 输出 token，零自动重试。运行器在临时配置中启用严格 JSON Schema 并关闭显式思考，提示同时写明精确 JSON 字段、已核实的所属合约和绝对行号；模型仍可能违约，失败保持未决，原始响应仅存于被 Git 忽略的本机诊断文件。这种模型配置不能直接当作科研对照配置。完整消息只有 UTF-8 字节硬上限，尚无指定模型的精确 token 公平保证。Slither 路径填写在被 Git 忽略的 `config/tools.local.properties`，格式见 `config/tools.example.properties`；Mythril 可选，增加 `tools.mythril.executable` 即可。对依赖原项目导入路径的验证源码，单文件 Slither 无法可靠编译，当前明确记为 `SKIPPED`，D2 保持 `UNKNOWN`；工具未安装、失败、空告警均不证明安全。
 
 每次运行写入 `.local/audit-runs/<运行编号>/plan.json`、`events.jsonl`、`sample.jsonl` 与 `result.json`。模型请求前先将启动事件 fsync；中断后已有记录只读回放，不自动重发。`replay(root, run_id)` 会核对计划摘要、逐样本结果和结束事件摘要。页面下载的 JSONL 与本机逐样本文件相同。若需要人工检查，可对照页面运行编号和该目录中的快照 ID、两个源码摘要、阶段状态、usage 与 UNKNOWN/失败分母。真实付费运行须由操作者自行点击；默认离线测试命令不发网络 API 请求。
 
@@ -190,6 +190,6 @@ PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tes
 
 ## R1-S6：独立验证样本批量对照
 
-同一 `/agent.html` 页面新增批量区域。勾选已登记的独立验证目标和 `DENSE`、`FIELD_FILTER`、`D1` 策略，先点击“查看运行上界”，再开始离线批量对照。每项结果同步写入 `.local/audit-batches/<批量编号>/samples.jsonl`，页面显示按策略的完成、失败、未知、入选证据、usage 和待核验指标；下载链接直接返回逐样本 JSONL。重新打开历史不会发起模型请求；异常中断的离线计划可在历史中续跑，已启动但没有结果的项记为未决，不自动重发。
+同一 `/agent.html` 页面新增批量区域。勾选已登记的独立验证目标和 `DENSE`、`FIELD_FILTER`、`D1` 策略，先点击“查看运行计划”，再开始批量对照。每项结果同步写入 `.local/audit-batches/<批量编号>/samples.jsonl`，页面显示按策略的完成、失败、未知、入选证据、usage 和待核验指标；下载链接直接返回逐样本 JSONL。重新打开历史不会发起模型请求；异常中断的计划可在历史中续跑，已启动但没有结果的项记为未决，不自动重发。
 
-“真实模型预估”可查看当前端点、模型、样本数 × 策略数 × 重复次数 × 模型阶段 × 尝试次数以及请求和输出 token 上界。由于完整输入 token 与费用上界尚未锁定，真实批量启动被服务端拒绝；输入 UTF-8 字节上限不是 token 公平。页面的检测召回、检索 Recall@K 和 nDCG 只有取得独立审核的目标—案例标签后才能计算，当前显示“待核验”。数据规模依据和后续实验方案见 [R1-S6 研究设计](../../docs/vibe/releases/R1-S6/RESEARCH_DESIGN.md)。
+“真实模型批量运行”可查看当前端点、模型、样本数 × 策略数 × 重复次数 × 模型阶段 × 尝试次数以及请求和输出 token 上界。用户已授权显式启动真实批量；完整输入 token 与费用上界仍为 `null`，输入 UTF-8 字节上限不是 token 公平。页面的检测召回、检索 Recall@K 和 nDCG 只有取得独立审核的目标—案例标签后才能计算，当前显示“待核验”。数据规模依据和后续实验方案见 [R1-S6 研究设计](../../docs/vibe/releases/R1-S6/RESEARCH_DESIGN.md)。

@@ -17,6 +17,11 @@ from storage import atomic_json, decode, durable_write, encode, fingerprint
 STORE = Path('.local/audit-runs')
 RUN_ID = re.compile(r'[0-9a-f]{32}')
 MAX_PROMPT_BYTES = 10_000
+HYPOTHESIS_SYSTEM = ('你是智能合约审计员。只输出一个 JSON 对象，不要 Markdown、代码围栏、解释文字或顶层数组。'
+                     '对象必须且只能有 schemaVersion 和 hypotheses 两个字段；schemaVersion 固定为字符串 2。'
+                     'hypotheses 最多 3 项，每项必须且只能有 vulnerabilityType、contract、function、riskLine、riskOperation、reason、evidenceIds。'
+                     'riskLine 是源码左侧标注的绝对整数行号，不是范围或字符串。证据不足时只返回 {"schemaVersion":"2","hypotheses":[]}。'
+                     '不得编造合约、函数、行号和证据 ID。')
 
 
 @dataclass(frozen=True)
@@ -38,7 +43,8 @@ def _event(path, kind, value=None):
 
 def _model_error(category):
     return {'schemaVersion': '2', 'status': 'FAILED', 'conclusion': 'UNRESOLVED',
-            'hypotheses': [], 'errorCategory': category, 'inputTokens': None, 'outputTokens': None}
+            'hypotheses': [], 'errorCategory': category, 'validationIssue': None,
+            'inputTokens': None, 'outputTokens': None}
 
 
 def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencies, strategy='D1') -> dict:
@@ -58,12 +64,33 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
     if view['sourceHash'] != target['fullSourceHash'] or view['modelSourceHash'] != target['modelSourceHash']:
         raise ValueError('检索结果与待审源码不一致')
     context = view['d1'].get('context', '')
-    message_bytes = len(('你是智能合约审计员。仅输出符合指定 JSON schema 的初步漏洞假设。证据不足时返回空数组；不得编造行号或证据 ID。最多 3 条。'
-                         '机制：' + target['mechanism'] + '\n函数：' + target['function']
-                         + '\n范围：' + target['scope'] + '，原始行号 '
-                         + str(target['lineStart']) + '-' + str(target['lineEnd'])
-                         + '\n可引用证据 ID：' + str(view['d1'].get('selected', []))
-                         + '\n检索上下文：' + context + '\n待审源码：\n' + target['modelSource']).encode('utf-8'))
+    first_line = target['lineStart'] if target['scope'] == 'FUNCTION' else 1
+    numbered = '\n'.join(f'{first_line + offset} | {line}'
+                         for offset, line in enumerate(target['modelSource'].split('\n')))
+    contract = None
+    source_lines = target['fullSource'].splitlines()
+    for offset, line in enumerate(source_lines, 1):
+        found = re.match(r'^\s*(?:abstract\s+)?(?:contract|library|interface)\s+([A-Za-z_$][A-Za-z0-9_$]*)\b', line)
+        if found:
+            contract = found.group(1)
+        if (target['scope'] == 'FUNCTION' and offset == target['lineStart']
+                or target['scope'] == 'FULL' and re.match(r'^\s*function\s+' + re.escape(target['function']) + r'\b', line)):
+            break
+    else:
+        contract = None
+    contract = contract or '请从完整源码中的真实声明判断'
+    ids = selected_ids(view['d1'].get('selected', []))
+    # 与 Java 的请求正文保持相同结构，完整消息字节数只用作本地硬上限。
+    user_message = ('机制：' + target['mechanism'] + '\n函数：' + target['function']
+                    + '\n范围：' + target['scope'] + '，原始行号 '
+                    + str(target['lineStart']) + '-' + str(target['lineEnd'])
+                    + '\n目标所属合约：' + contract
+                    + '\n可引用证据 ID：' + '[' + ', '.join(ids) + ']'
+                    + '\n检索上下文：' + context
+                    + '\n每条假设的 vulnerabilityType 必须等于上述机制，function 必须等于上述函数；'
+                    + '若给出目标所属合约，contract 必须等于该名称；evidenceIds 只能从可引用 ID 中选择，也可以为空数组。'
+                    + '\n待审源码（左侧为原始行号）：\n' + numbered)
+    message_bytes = len((HYPOTHESIS_SYSTEM + user_message).encode('utf-8'))
     if message_bytes > MAX_PROMPT_BYTES:
         raise ValueError('完整模型输入超过硬上限')
     # 再次读取目标，封闭预览与发起模型之间的源码变化窗口。
@@ -94,8 +121,14 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
         model = dependencies.model_runner(root, target, view, mode)
         if not isinstance(model, dict) or model.get('status') not in ('COMPLETED', 'FAILED'):
             raise ValueError('模型结果无效')
+        raw_response = model.pop('_rawResponse', None)
+        if model['status'] == 'FAILED' and isinstance(raw_response, str):
+            diagnostic = directory / 'raw-response.txt'
+            durable_write(diagnostic, raw_response.encode('utf-8'))
+            diagnostic.chmod(0o600)
         if model.get('status') == 'FAILED':
             model = {**_model_error(model.get('errorCategory', 'MODEL_OUTPUT_INVALID')),
+                     'validationIssue': model.get('validationIssue'),
                      'inputTokens': model.get('inputTokens'), 'outputTokens': model.get('outputTokens')}
         _event(events, 'MODEL_RESULT', {'status': model['status'], 'conclusion': model.get('conclusion')})
         tools = dependencies.tool_runner(root, target, mode)
@@ -181,11 +214,16 @@ def model_runner(root, target, view, mode):
             'providers.ark.thinking=disabled\n', encoding='utf-8')
         provider_config.chmod(0o600)
         command = ['java', '-jar', str(jar), '--hypotheses', '--source', str(temp / 'source.sol'),
-                   '--request', str(temp / 'request.json'), '--config', str(provider_config), '--provider', 'ark']
+                   '--request', str(temp / 'request.json'), '--config', str(provider_config), '--provider', 'ark',
+                   '--diagnostic-output', str(temp / 'raw-response.txt')]
         completed = subprocess.run(command, cwd=root, capture_output=True, timeout=210)
         if completed.returncode not in (0, 1) or len(completed.stdout) > 1_048_576:
             raise ValueError('模型运行未返回受控结果')
-        return decode(completed.stdout)
+        result = decode(completed.stdout)
+        diagnostic = temp / 'raw-response.txt'
+        if result.get('status') == 'FAILED' and diagnostic.is_file():
+            result['_rawResponse'] = diagnostic.read_text(encoding='utf-8')
+        return result
 
 
 def selected_ids(selected):
@@ -204,6 +242,9 @@ def tool_runner(root, target, mode):
     if mode == 'offline':
         return [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': [], 'durationMs': 0,
                  'version': None, 'reason': '固定离线演练不运行真实静态工具'}]
+    if re.search(r'^\s*import\b', target['fullSource'], re.MULTILINE):
+        return [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': [], 'durationMs': 0,
+                 'version': None, 'reason': '目标依赖原项目导入路径与固定编译器版本；单文件环境无法可靠编译，静态工具未运行'}]
     jar = root / 'audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar'
     config = root / 'config/tools.local.properties'
     if not config.is_file():
