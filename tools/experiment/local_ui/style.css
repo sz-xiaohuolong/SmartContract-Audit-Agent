@@ -24,4 +24,14 @@
 .agent-muted { color: #5d706b; }
 .agent-output { overflow-wrap: anywhere; white-space: pre-wrap; font: 13px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; }
 .agent-history { display: block; width: 100%; text-align: left; background: transparent; color: #164f47; margin: 7px 0; }
+.agent-batch-options { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.agent-batch-options fieldset { border: 1px solid #cbd5cc; padding: 16px; min-width: 0; }
+.agent-batch-options legend { padding: 0 8px; color: #164f47; font-weight: 700; }
+.agent-batch-options label { display: block; margin: 10px 0; line-height: 1.5; cursor: pointer; }
+.agent-batch-options input { accent-color: #135d53; }
+.agent-metrics { width: 100%; border-collapse: collapse; margin: 16px 0; font: 14px/1.5 system-ui, sans-serif; }
+.agent-metrics th, .agent-metrics td { padding: 10px 8px; border-bottom: 1px solid #d8dfd8; text-align: left; }
+.agent-metrics th { color: #164f47; background: #eaf2ed; }
+.agent-output pre { overflow-x: auto; white-space: pre-wrap; }
+@media (max-width: 720px) { .agent-batch-options { grid-template-columns: 1fr; } .agent-metrics { display: block; overflow-x: auto; } }
 @media (max-width: 720px) { .agent-grid { grid-template-columns: 1fr; } .agent-card-wide { grid-column: 1; } .agent-shell { padding: 28px 16px 70px; } }

@@ -3,19 +3,40 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>单样本审计工作台</title>
+  <title>合约审计对照工作台</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="agent-page">
   <main class="agent-shell">
     <header class="agent-header">
-      <p class="agent-eyebrow">R1 / S4 · 本机工程试跑</p>
-      <h1>单样本审计工作台</h1>
-      <p>从正式知识快照出发，对独立验证样本逐次比较向量召回、条件字段过滤与 D1，查看模型假设、工具证据和 D2 判断。当前运行不作为论文效果数据。</p>
+      <p class="agent-eyebrow">R1 / S6 · 独立验证目标</p>
+      <h1>合约审计对照工作台</h1>
+      <p>在同一正式知识快照下批量比较三种检索策略，逐样本保存审计记录；没有经过复核的真值时，页面不计算论文效果指标。</p>
     </header>
     <section class="agent-grid">
+      <div class="agent-card agent-card-wide">
+        <span class="agent-step">01 / 批量对照</span>
+        <h2>选择独立验证样本与检索策略</h2>
+        <p class="agent-muted">每种组合只运行一次。离线模式使用固定空假设，仅检查检索和报告链路；真实批量运行须先固定完整提示的 token 上界。</p>
+        <div class="agent-batch-options"><fieldset><legend>验证目标</legend><div id="batch-targets"></div></fieldset>
+          <fieldset><legend>检索策略</legend><label><input type="checkbox" name="batch-strategy" value="DENSE" checked> 向量召回</label>
+          <label><input type="checkbox" name="batch-strategy" value="FIELD_FILTER" checked> 简单条件过滤</label>
+          <label><input type="checkbox" name="batch-strategy" value="D1" checked> D1 对比检索</label></fieldset></div>
+        <label for="batch-mode">运行模式</label>
+        <select id="batch-mode"><option value="offline">离线工程演练（零模型请求）</option><option value="real">真实模型预估（当前禁止启动）</option></select>
+        <div class="agent-actions"><button id="batch-plan">查看运行上界</button><button id="batch-start" disabled>开始离线批量对照</button></div>
+        <p id="batch-notice" class="agent-muted" role="status">等待选择。</p>
+        <div id="batch-plan-detail" class="agent-output"></div>
+      </div>
+      <div class="agent-card agent-card-wide">
+        <span class="agent-step">02 / 指标与报告</span>
+        <h2>策略对比</h2>
+        <div id="batch-result" class="agent-output">尚无批量运行。</div>
+        <a id="batch-report" hidden>下载批量逐样本 JSONL</a>
+        <div id="batch-history" class="agent-output"></div>
+      </div>
       <div class="agent-card">
-        <span class="agent-step">01 / 目标</span>
+        <span class="agent-step">03 / 单样本目标</span>
         <h2>选择真实样本</h2>
         <label for="sample">已登记目标</label>
         <select id="sample"></select>
@@ -25,31 +46,31 @@
         <div class="agent-actions"><button id="preview">预览正式检索</button></div>
       </div>
       <div class="agent-card">
-        <span class="agent-step">02 / 快照</span>
+        <span class="agent-step">04 / 快照</span>
         <h2>正式知识库</h2>
         <p id="snapshot">读取中…</p>
         <p id="provider" class="agent-muted"></p>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">03 / 检索证据</span>
+        <span class="agent-step">05 / 检索证据</span>
         <h2>同池检索预览</h2>
         <div id="retrieval" class="agent-output">选择目标并预览。</div>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">04 / 执行</span>
+        <span class="agent-step">06 / 单次执行</span>
         <h2>运行一次审计</h2>
         <p>离线演练只检查检索、保存和回放，使用固定空假设，不代表检测结果。真实运行仅在明确点击后发起最多 1 次请求，输出最多 2048 token，零自动重试。当前上下文受 UTF-8 字节上限约束，尚未具备完整 token 公平与目标—案例人工标签，因此不能据此宣布 D1 提升。</p>
         <div class="agent-actions"><button id="offline">运行离线演练</button><button id="real" class="agent-secondary">显式真实运行</button></div>
         <p id="notice" class="agent-muted" role="status"></p>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">05 / 结果</span>
+        <span class="agent-step">07 / 单次结果</span>
         <h2>本次结果</h2>
         <div id="result" class="agent-output">尚无运行结果。</div>
         <a id="report" hidden>下载逐样本 JSONL 报告</a>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">06 / 历史</span>
+        <span class="agent-step">08 / 单次历史</span>
         <h2>已保存的运行</h2>
         <div id="history" class="agent-output">读取中…</div>
       </div>

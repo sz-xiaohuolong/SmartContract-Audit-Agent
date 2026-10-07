@@ -112,13 +112,15 @@ def _agent_dependencies(root):
 
 
 def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp_status=None,
-                  agent_targets=None, agent_status=None, agent_preview=None, agent_runner=None, agent_store=None):
+                  agent_targets=None, agent_status=None, agent_preview=None, agent_runner=None, agent_store=None,
+                  batch_store=None):
     root = Path(root).resolve()
     store = Path(store) if store is not None else root / '.local/experiment-ui'
     runner = runner or (lambda: run_demo(root))
     mvp_runner = mvp_runner or (lambda: mvp_runtime.run_once(root))
     mvp_status = mvp_status or (lambda: mvp_runtime.active(root)[0])
     agent_store = Path(agent_store) if agent_store is not None else root / '.local/audit-runs'
+    batch_store = Path(batch_store) if batch_store is not None else root / '.local/audit-batches'
     if agent_targets is None or agent_status is None or agent_preview is None or agent_runner is None:
         from audit_run import run_once
         from formal_targets import list_targets, load_target
@@ -171,7 +173,39 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 self._send(403, {'error': '仅允许本机访问'})
                 return
             parsed = urlsplit(self.path)
-            if parsed.path == '/api/agent/status' and not parsed.query:
+            if parsed.path == '/api/agent/batches' and not parsed.query:
+                from batch_compare import replay_batch
+                rows = []
+                for path in batch_store.glob('*/plan.json'):
+                    if RUN_ID.fullmatch(path.parent.name):
+                        try:
+                            report = replay_batch(batch_store, path.parent.name)
+                            rows.append({'batchId': path.parent.name, 'status': report['status'],
+                                         'planned': report['denominators']['planned'], 'mode': report['plan']['mode'],
+                                         'time': path.stat().st_mtime_ns})
+                        except (OSError, ValueError, KeyError):
+                            continue
+                rows.sort(key=lambda row: row['time'], reverse=True)
+                self._send(200, {'batches': rows[:20]})
+            elif parsed.path.startswith('/api/agent/batches/') and not parsed.query:
+                from batch_compare import replay_batch
+                suffix = parsed.path.removeprefix('/api/agent/batches/')
+                report_file = suffix.endswith('/report')
+                identifier = suffix.removesuffix('/report') if report_file else suffix
+                if not RUN_ID.fullmatch(identifier) or not (batch_store / identifier / 'plan.json').is_file():
+                    self._not_found()
+                else:
+                    try:
+                        result = replay_batch(batch_store, identifier)
+                        if report_file:
+                            path = batch_store / identifier / 'samples.jsonl'
+                            self._send(200, path.read_bytes() if path.is_file() else b'',
+                                       'application/x-ndjson; charset=utf-8', 'samples.jsonl')
+                        else:
+                            self._send(200, result)
+                    except (OSError, ValueError, KeyError):
+                        self._send(500, {'error': '批量运行记录损坏'})
+            elif parsed.path == '/api/agent/status' and not parsed.query:
                 try: self._send(200, agent_status())
                 except (OSError, ValueError, RuntimeError, KeyError, ImportError):
                     self._send(200, {'ready': False, 'researchEligible': False})
@@ -305,8 +339,84 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             if origin and origin != f'http://127.0.0.1:{self.server.server_port}':
                 self._send(403, {'error': '请求来源不允许'})
                 return
-            if self.path not in ('/api/runs', '/api/mvp/run', '/api/agent/runs'):
+            resume_match = re.fullmatch(r'/api/agent/batches/([0-9a-f]{32})/resume', self.path)
+            if self.path not in ('/api/runs', '/api/mvp/run', '/api/agent/runs',
+                                 '/api/agent/batches/plan', '/api/agent/batches') and not resume_match:
                 self._not_found()
+                return
+            if resume_match:
+                from batch_compare import make_plan, replay_batch, run_batch
+                length = self.headers.get('Content-Length')
+                if (self.headers.get('Content-Type') != 'application/json' or length is None
+                        or not length.isdecimal() or int(length) > 256):
+                    self._send(400, {'error': '续跑请求无效'}); return
+                identifier = resume_match.group(1)
+                try:
+                    payload = decode(self.rfile.read(int(length)))
+                    report = replay_batch(batch_store, identifier)
+                    plan = report['plan']
+                    current = make_plan(plan['sampleIds'], plan['strategies'], plan['mode'], agent_targets(), agent_status())
+                    if (not isinstance(payload, dict) or set(payload) != {'planHash'}
+                            or payload['planHash'] != plan['planHash'] or current != plan
+                            or report['status'] != 'RUNNING'):
+                        raise ValueError('续跑计划已变化或运行已结束')
+                except (OSError, ValueError, KeyError, TypeError):
+                    self._send(400, {'error': '续跑计划无效或正式快照已变化'}); return
+                if plan['mode'] == 'real':
+                    self._send(422, {'error': '真实批量续跑仍需完整提示 token 上界'}); return
+                if not run_lock.acquire(blocking=False):
+                    self._send(409, {'error': '已有实验正在运行'}); return
+                def resume_work():
+                    try:
+                        run_batch(batch_store, plan, agent_runner, identifier)
+                    except Exception:
+                        atomic_json(batch_store / identifier / 'error.json', {'error': '批量续跑失败'})
+                    finally:
+                        run_lock.release()
+                threading.Thread(target=resume_work, daemon=True).start()
+                self._send(202, {'batchId': identifier, 'planHash': plan['planHash']})
+                return
+            if self.path in ('/api/agent/batches/plan', '/api/agent/batches'):
+                from batch_compare import make_plan, prepare_batch, run_batch
+                length = self.headers.get('Content-Length')
+                if (self.headers.get('Content-Type') != 'application/json' or length is None
+                        or not length.isdecimal() or int(length) > 1024):
+                    self._send(400, {'error': '批量请求无效'}); return
+                try:
+                    payload = decode(self.rfile.read(int(length)))
+                    expected = {'sampleIds', 'strategies', 'mode'}
+                    if not isinstance(payload, dict) or set(payload) != (expected if self.path.endswith('/plan') else expected | {'planHash'}):
+                        raise ValueError('批量字段无效')
+                    plan = make_plan(payload['sampleIds'], payload['strategies'], payload['mode'],
+                                     agent_targets(), agent_status())
+                    if self.path.endswith('/plan'):
+                        self._send(200, plan); return
+                    if payload['planHash'] != plan['planHash']:
+                        raise ValueError('批量预览已失效，请重新查看计划')
+                except (ValueError, TypeError, KeyError, OSError, RuntimeError):
+                    self._send(400, {'error': '批量选择或预览摘要无效'}); return
+                if plan['mode'] == 'real' and plan['requestBounds']['maxInputTokens'] is None:
+                    self._send(422, {'error': '尚无真实模型完整提示 token 上界，禁止批量付费运行'}); return
+                if not run_lock.acquire(blocking=False):
+                    self._send(409, {'error': '已有实验正在运行'}); return
+                identifier = uuid.uuid4().hex
+                try:
+                    batch_store.mkdir(parents=True, exist_ok=True)
+                    prepare_batch(batch_store, plan, identifier)
+                except (OSError, ValueError):
+                    run_lock.release()
+                    self._send(500, {'error': '无法持久化批量运行计划'}); return
+                def execute():
+                    try:
+                        run_batch(batch_store, plan, agent_runner, identifier)
+                    except Exception:
+                        directory = batch_store / identifier
+                        directory.mkdir(parents=True, exist_ok=True)
+                        atomic_json(directory / 'error.json', {'error': '批量执行失败，请检查本机环境'})
+                    finally:
+                        run_lock.release()
+                threading.Thread(target=execute, daemon=True).start()
+                self._send(202, {'batchId': identifier, 'planHash': plan['planHash']})
                 return
             if self.path == '/api/agent/runs':
                 length = self.headers.get('Content-Length')

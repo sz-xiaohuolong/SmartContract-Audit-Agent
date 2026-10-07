@@ -176,7 +176,7 @@ S3 的完整契约、来源待审状态和可重放命令见 [R1-S3 验证](../.
 .local/d1-embed-venv/bin/python tools/experiment/local_ui.py --port 8769
 ```
 
-浏览器打开 `http://127.0.0.1:8769/agent.html`。目标列表、状态、正式检索预览、历史与下载为只读操作。离线演练不调用付费模型，也不运行真实 Slither；它会检查本机正式 `s1b_` Milvus 快照、使用固定 BGE 生成 D1 候选、经过 Java D1，并以明确标记的空假设及跳过工具状态检验编排和报告。离线结果的“未发现已报告问题”不构成安全结论，D2 仍为 UNKNOWN。Milvus 需在 `127.0.0.1:29531` 可用，正式指针与四条向量须完整读回，不回退到旧 `mvp_` 集合。
+浏览器打开 `http://127.0.0.1:8769/agent.html`。目标列表、状态、正式检索预览、历史与下载为只读操作。离线演练不调用付费模型，也不运行真实 Slither；它会检查本机正式 `s1b_` Milvus 快照、使用固定 BGE 生成 D1 候选、经过 Java D1，并以明确标记的空假设及跳过工具状态检验编排和报告。离线结果的“未发现已报告问题”不构成安全结论，D2 仍为 UNKNOWN。Milvus 需在 `127.0.0.1:29531` 可用，当前正式指针与六条向量须完整读回，不回退到旧 `mvp_` 集合。
 
 只有在页面点击“显式真实运行”才使用 `config/providers.local.properties` 中已核实的火山 Agent Plan 端点和模型；本轮固定每次点击最多 1 个模型请求、2048 输出 token、零重试。运行器在临时配置中启用严格 JSON Schema 并关闭显式思考，以避免推理预算占满回答；这改变模型工作方式，不能直接当作科研对照配置。完整消息只有 UTF-8 字节硬上限，尚无指定模型的精确 token 公平保证。Slither 路径填写在被 Git 忽略的 `config/tools.local.properties`，格式见 `config/tools.example.properties`；Mythril 可选，增加 `tools.mythril.executable` 即可。工具未安装、失败、空告警均不证明安全。
 
@@ -187,3 +187,9 @@ PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tes
 ```
 
 该工作台只证明单样本工程链路可执行。D1 的真实效果仍需独立审核目标—案例适用性标签、锁定真实 tokenizer 和同池强基线后另行实验；D2 初版只有已有证据的六项义务检查，不是完整路径求解。
+
+## R1-S6：独立验证样本批量对照
+
+同一 `/agent.html` 页面新增批量区域。勾选已登记的独立验证目标和 `DENSE`、`FIELD_FILTER`、`D1` 策略，先点击“查看运行上界”，再开始离线批量对照。每项结果同步写入 `.local/audit-batches/<批量编号>/samples.jsonl`，页面显示按策略的完成、失败、未知、入选证据、usage 和待核验指标；下载链接直接返回逐样本 JSONL。重新打开历史不会发起模型请求；异常中断的离线计划可在历史中续跑，已启动但没有结果的项记为未决，不自动重发。
+
+“真实模型预估”可查看当前端点、模型、样本数 × 策略数 × 重复次数 × 模型阶段 × 尝试次数以及请求和输出 token 上界。由于完整输入 token 与费用上界尚未锁定，真实批量启动被服务端拒绝；输入 UTF-8 字节上限不是 token 公平。页面的检测召回、检索 Recall@K 和 nDCG 只有取得独立审核的目标—案例标签后才能计算，当前显示“待核验”。数据规模依据和后续实验方案见 [R1-S6 研究设计](../../docs/vibe/releases/R1-S6/RESEARCH_DESIGN.md)。
