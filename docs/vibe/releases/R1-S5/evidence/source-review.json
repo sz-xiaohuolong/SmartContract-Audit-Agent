@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1",
+  "checkedAt": "2026-10-07",
+  "scope": "只对所列漏洞路径和固定版本负责；修复后整份合约不视为安全负例",
+  "reviews": [
+    {
+      "sampleId": "AC-RABBIT-001",
+      "finding": "Code4rena finding #608 为高危且项目方确认，问题是 onlyMinter 修饰器只比较地址而没有拒绝非 minter；受其保护的 mint 可被任意调用。",
+      "auditedRevision": "8c4c1f71221570b14a0479c216583342bd652d8d",
+      "patchParent": "93fd452ecf0bf0725d73d5ed0d7640e3ee6f4299",
+      "patchRevision": "8e1bc90f619dfafba1fbfbac39c9249b8885e64a",
+      "versionLink": "审计版 RabbitHoleReceipt.sol 与补丁父提交同文件 SHA-256 相同；修复将 onlyMinter 中的无效相等表达式改为 require。",
+      "sourceFileSpdx": "MIT",
+      "repositoryLicense": "GPL-3.0；仓库与文件声明不一致，使用时同时保留来源归属。",
+      "admission": "knowledge",
+      "limitation": "知识条件只覆盖 mint 权限路径，不推断其他函数安全。"
+    },
+    {
+      "sampleId": "RE-JPEGD-001",
+      "finding": "Code4rena finding #81 为高危且项目方确认，deposit 在转入代币前后读取余额和总供应量，可能受回调影响；维护者合并 PR #19。",
+      "auditedRevision": "e72861a9ccb707ced9015166fbded5c97c6991b6",
+      "patchParent": "641ecd6247636fb5d1402b115a074bf71ac8c0f4",
+      "patchRevision": "5eb2e19e71c949503664017183d65f19c72ed2f9",
+      "versionLink": "审计版与补丁父提交的整文件不同，但 deposit 函数正文逐行一致；修复把 safeTransferFrom 移到份额计算之后。",
+      "sourceFileSpdx": "GPL-3.0",
+      "repositoryLicense": "未核实独立仓库许可证；仅按源码文件 SPDX 保留归属。",
+      "admission": "validation",
+      "limitation": "函数级目标；当前轻量事实提取不能完整追踪 _mint 内部状态更新。"
+    },
+    {
+      "sampleId": "RE-INFINITY-001",
+      "finding": "Code4rena finding #184 为高危且项目方确认，matchOneToManyOrders 可在外部执行路径中遭遇重入；项目方评论指定修复提交。",
+      "auditedRevision": "bb8d35a07051204cb0d4b77fd30e60ec186c9e24",
+      "patchParent": "5a3f81b82a9bee2de7517b3a5f18953cb5ec3684",
+      "patchRevision": "b90e746fa7af13037e7300b58df46457a026c1ac",
+      "versionLink": "审计版与补丁父提交的相关函数签名均无 nonReentrant；修复在函数签名增加 nonReentrant。整文件并非字节相同。",
+      "sourceFileSpdx": "MIT",
+      "repositoryLicense": "未核实独立仓库许可证；仅按源码文件 SPDX 保留归属。",
+      "admission": "validation",
+      "limitation": "函数内委托其他内部路径，当前轻量事实提取不能把跨函数调用视为已证实的直接外部调用。"
+    }
+  ]
+}

@@ -3,11 +3,16 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from audit_run import RunDependencies, run_once, replay, selected_ids
+from audit_run import RunDependencies, run_once, replay, selected_ids, model_runner
 from storage import decode
 
 
 class AuditRunTest(unittest.TestCase):
+    def test_offline_fixture_does_not_claim_safe_result(self):
+        result = model_runner(Path('.'), {}, {}, 'offline')
+        self.assertEqual('UNRESOLVED', result['conclusion'])
+        self.assertIsNone(result['inputTokens'])
+
     def test_d1_selection_ids_follow_java_result_shape(self):
         self.assertEqual(['chunk-1'], selected_ids([{'candidate': {'chunkId': 'chunk-1'}, 'use': 'SUPPORT'}]))
         with self.assertRaises(ValueError): selected_ids([{'chunkId': 'wrong-level'}])

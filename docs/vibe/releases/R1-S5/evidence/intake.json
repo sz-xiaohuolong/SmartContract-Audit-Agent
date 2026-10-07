@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1",
+  "checkedAt": "2026-10-07",
+  "status": "新增真实案例候选；准入以前不得把来源索引当作标签",
+  "cases": [
+    {
+      "id": "AC-RABBIT-001",
+      "direction": "访问控制",
+      "projectId": "rabbithole-quest-2023",
+      "eventId": "rabbithole-H01-onlyMinter",
+      "function": "mint",
+      "sourceUrl": "https://github.com/rabbitholegg/quest-protocol/blob/8c4c1f71221570b14a0479c216583342bd652d8d/contracts/RabbitHoleReceipt.sol",
+      "sourceSha256": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+      "reportUrl": "https://github.com/code-423n4/2023-01-rabbithole-findings/issues/608",
+      "patchUrl": "https://github.com/rabbitholegg/quest-protocol/pull/86",
+      "sourceFileSpdx": "MIT"
+    },
+    {
+      "id": "RE-JPEGD-001",
+      "direction": "重入",
+      "projectId": "jpegd-core-2022",
+      "eventId": "jpegd-H-yVault-deposit",
+      "function": "deposit",
+      "sourceUrl": "https://github.com/code-423n4/2022-04-jpegd/blob/e72861a9ccb707ced9015166fbded5c97c6991b6/contracts/vaults/yVault/yVault.sol",
+      "sourceSha256": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+      "reportUrl": "https://github.com/code-423n4/2022-04-jpegd-findings/issues/81",
+      "patchUrl": "https://github.com/jpegd/core/pull/19",
+      "sourceFileSpdx": "GPL-3.0"
+    },
+    {
+      "id": "RE-INFINITY-001",
+      "direction": "重入",
+      "projectId": "infinity-exchange-2022",
+      "eventId": "infinity-matchOneToManyOrders",
+      "function": "matchOneToManyOrders",
+      "sourceUrl": "https://github.com/code-423n4/2022-06-infinity/blob/bb8d35a07051204cb0d4b77fd30e60ec186c9e24/contracts/core/InfinityExchange.sol",
+      "sourceSha256": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+      "reportUrl": "https://github.com/code-423n4/2022-06-infinity-findings/issues/184",
+      "patchUrl": "https://github.com/infinitydotxyz/exchange-contracts-v2/commit/b90e746fa7af13037e7300b58df46457a026c1ac",
+      "sourceFileSpdx": "MIT"
+    }
+  ]
+}

@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from d2_verify import evaluate
-from formal_recall import preview, java_retrieval
+from formal_recall import preview, java_retrieval, select_strategy
 from formal_targets import load_target
 from storage import atomic_json, decode, durable_write, encode, fingerprint
 
@@ -41,7 +41,7 @@ def _model_error(category):
             'hypotheses': [], 'errorCategory': category, 'inputTokens': None, 'outputTokens': None}
 
 
-def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencies) -> dict:
+def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencies, strategy='D1') -> dict:
     root = Path(root).resolve()
     if mode not in ('offline', 'real'):
         raise ValueError('运行模式无效')
@@ -53,7 +53,8 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
             raise ValueError('真实模型输出上限超过 2048')
         provider = {'endpoint': values['providers.ark.base-url'], 'model': values['providers.ark.model']}
     target = load_target(root, sample_id)
-    view = preview(root, target, dependencies.index, dependencies.encoder, dependencies.java_retriever)
+    view = select_strategy(preview(root, target, dependencies.index, dependencies.encoder,
+                                   dependencies.java_retriever), strategy)
     if view['sourceHash'] != target['fullSourceHash'] or view['modelSourceHash'] != target['modelSourceHash']:
         raise ValueError('检索结果与待审源码不一致')
     context = view['d1'].get('context', '')
@@ -76,6 +77,7 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
             'sourceHash': target['fullSourceHash'], 'modelSourceHash': target['modelSourceHash'],
             'assignmentHash': target['assignmentHash'], 'formalLedgerHash': target['formalLedgerHash'],
             'groupId': target['groupId'], 'snapshotId': view['snapshotId'], 'collection': view['collection'],
+            'strategy': strategy, 'poolHash': view['poolHash'],
             'maxRequests': 0 if mode == 'offline' else 1, 'maxOutputTokens': 2048,
             'maxInputBytes': MAX_PROMPT_BYTES, 'actualInputBytes': message_bytes, 'retries': 0,
             'provider': provider, 'researchEligible': False, 'createdAt': datetime.now(timezone.utc).isoformat()}
@@ -154,7 +156,7 @@ def replay_at(store: Path, run_id: str) -> dict:
 
 def model_runner(root, target, view, mode):
     if mode == 'offline':
-        return {'schemaVersion': '2', 'status': 'COMPLETED', 'conclusion': 'NO_CONFIRMED_FINDINGS',
+        return {'schemaVersion': '2', 'status': 'COMPLETED', 'conclusion': 'UNRESOLVED',
                 'hypotheses': [], 'errorCategory': None, 'inputTokens': None, 'outputTokens': None,
                 'fixture': True}
     from mvp_runtime import _config_values

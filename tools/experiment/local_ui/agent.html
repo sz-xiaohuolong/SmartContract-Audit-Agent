@@ -11,14 +11,16 @@
     <header class="agent-header">
       <p class="agent-eyebrow">R1 / S4 · 本机工程试跑</p>
       <h1>单样本审计工作台</h1>
-      <p>从正式知识快照出发，查看 D1 检索、模型假设、工具证据与 D2 判断。当前运行不作为论文效果数据。</p>
+      <p>从正式知识快照出发，对独立验证样本逐次比较向量召回、条件字段过滤与 D1，查看模型假设、工具证据和 D2 判断。当前运行不作为论文效果数据。</p>
     </header>
     <section class="agent-grid">
       <div class="agent-card">
         <span class="agent-step">01 / 目标</span>
-        <h2>选择开发样本</h2>
+        <h2>选择真实样本</h2>
         <label for="sample">已登记目标</label>
         <select id="sample"></select>
+        <label for="strategy">检索策略</label>
+        <select id="strategy"><option value="DENSE">向量召回</option><option value="FIELD_FILTER">简单条件过滤</option><option value="D1">D1 对比检索</option></select>
         <p id="scope" class="agent-muted"></p>
         <div class="agent-actions"><button id="preview">预览正式检索</button></div>
       </div>
@@ -30,13 +32,13 @@
       </div>
       <div class="agent-card agent-card-wide">
         <span class="agent-step">03 / 检索证据</span>
-        <h2>D1 条件检索</h2>
+        <h2>同池检索预览</h2>
         <div id="retrieval" class="agent-output">选择目标并预览。</div>
       </div>
       <div class="agent-card agent-card-wide">
         <span class="agent-step">04 / 执行</span>
         <h2>运行一次审计</h2>
-        <p>离线演练不请求付费模型。真实运行仅在明确点击后发起最多 1 次请求，输出最多 2048 token，零自动重试。</p>
+        <p>离线演练只检查检索、保存和回放，使用固定空假设，不代表检测结果。真实运行仅在明确点击后发起最多 1 次请求，输出最多 2048 token，零自动重试。当前上下文受 UTF-8 字节上限约束，尚未具备完整 token 公平与目标—案例人工标签，因此不能据此宣布 D1 提升。</p>
         <div class="agent-actions"><button id="offline">运行离线演练</button><button id="real" class="agent-secondary">显式真实运行</button></div>
         <p id="notice" class="agent-muted" role="status"></p>
       </div>

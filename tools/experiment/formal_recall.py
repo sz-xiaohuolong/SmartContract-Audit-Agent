@@ -14,6 +14,33 @@ from storage import decode, encode, fingerprint
 
 SNAPSHOT_ROOT = Path('.local/d1-kb-snapshots')
 CONTEXT_BYTES = 2048
+STRATEGIES = frozenset({'DENSE', 'FIELD_FILTER', 'D1'})
+
+
+def select_strategy(view, strategy):
+    """在已固定的同一候选池上选择上下文；字节限制不表示 token 公平。"""
+    if strategy not in STRATEGIES:
+        raise ValueError('检索策略未登记')
+    pool = view['pool']
+    pool_hash = fingerprint(pool)
+    if strategy == 'D1':
+        return dict(view, strategy='D1', poolHash=pool_hash)
+    evaluations = view['d1'].get('evaluations', {})
+    selected, parts, used = [], [], 0
+    for candidate in pool['candidates']:
+        if strategy == 'FIELD_FILTER' and evaluations.get(candidate['chunkId'], {}).get('applicability') not in ('SUPPORTED', 'CONTRADICTED'):
+            continue
+        snippet = f"[{candidate['caseId']}/{candidate['chunkId']}|{candidate['role']}]\n{candidate['text']}\n"
+        length = len(snippet.encode('utf-8'))
+        if used + length > CONTEXT_BYTES or len(selected) == 4:
+            continue
+        selected.append({'candidate': candidate, 'use': 'SUPPORT'})
+        parts.append(snippet)
+        used += length
+    choice = {'status': 'COMPLETED', 'strategy': strategy, 'selected': selected,
+              'context': ''.join(parts), 'gaps': [], 'evaluations': evaluations,
+              'poolHash': pool_hash, 'budgetKind': 'UTF8_BYTES'}
+    return dict(view, d1=choice, strategy=strategy, poolHash=pool_hash)
 
 
 def java_retrieval(root, source, request):
@@ -77,7 +104,8 @@ def preview(root, target, index, encoder, java_runner=None):
         d1 = {'status': 'NO_RISK_FACT', 'selected': [], 'context': '',
               'gaps': ['目标函数没有与正式知识案例风险类型一致的可绑定操作'], 'evaluations': {}}
     else:
-        resource = 'balances' if current['mechanism'] == 'REENTRANCY' else 'owner'
+        resource = risk['resource'] if risk['kind'] == 'WRITE' else (
+            'balances' if current['mechanism'] == 'REENTRANCY' else 'owner')
         request = {'target': {'mechanism': current['mechanism'], 'riskFactId': risk['id'],
                               'bindings': {'actor': 'msg.sender', 'resource': resource, 'authority': resource}},
                    'pool': recalled['pool'], 'budget': {'maxBytes': CONTEXT_BYTES, 'maxCases': 4}}

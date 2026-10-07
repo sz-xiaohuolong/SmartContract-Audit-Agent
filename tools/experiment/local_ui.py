@@ -142,7 +142,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
         agent_status = agent_status or default_status
         agent_preview = agent_preview or (lambda sample: formal_preview(root, load_target(root, sample),
             dependencies.index, dependencies.encoder, dependencies.java_retriever))
-        agent_runner = agent_runner or (lambda sample, mode: run_once(root, sample, mode, dependencies))
+        agent_runner = agent_runner or (lambda sample, mode, strategy='D1': run_once(root, sample, mode, dependencies, strategy))
     run_lock = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
@@ -181,14 +181,17 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                     self._send(503, {'error': '开发目标或谱系暂不可用'})
             elif parsed.path == '/api/agent/preview':
                 query = parse_qs(parsed.query, strict_parsing=True)
-                if set(query) != {'sampleId'} or len(query['sampleId']) != 1:
+                if (set(query) not in ({'sampleId'}, {'sampleId', 'strategy'}) or len(query['sampleId']) != 1
+                        or len(query.get('strategy', ['D1'])) != 1
+                        or query.get('strategy', ['D1'])[0] not in ('DENSE', 'FIELD_FILTER', 'D1')):
                     self._send(400, {'error': '样本参数无效'})
                 else:
                     sample = query['sampleId'][0]
                     try:
                         if sample not in {row['sampleId'] for row in agent_targets() if row.get('runnable')}:
                             raise ValueError('样本不可运行')
-                        self._send(200, agent_preview(sample))
+                        from formal_recall import select_strategy
+                        self._send(200, select_strategy(agent_preview(sample), query.get('strategy', ['D1'])[0]))
                     except (OSError, ValueError, RuntimeError, KeyError, ImportError):
                         self._send(503, {'error': '正式检索预览不可用'})
             elif parsed.path == '/api/agent/runs' and not parsed.query:
@@ -200,6 +203,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                             row = replay_at(agent_store, path.parent.name)
                             rows.append({'runId': row['runId'], 'sampleId': row['plan']['sampleId'],
                                          'status': row['status'], 'mode': row['plan']['mode'],
+                                         'strategy': row['plan'].get('strategy', 'D1'),
                                          'createdAt': row['plan']['createdAt']})
                         except (OSError, ValueError, KeyError): pass
                 rows.sort(key=lambda row: row['createdAt'], reverse=True)
@@ -310,7 +314,9 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                     self._send(400, {'error': '运行请求无效'}); return
                 try:
                     payload = decode(self.rfile.read(int(length)))
-                    if not isinstance(payload, dict) or set(payload) != {'sampleId', 'mode'} or payload['mode'] not in ('offline', 'real'):
+                    if (not isinstance(payload, dict) or set(payload) not in ({'sampleId', 'mode'}, {'sampleId', 'mode', 'strategy'})
+                            or payload['mode'] not in ('offline', 'real')
+                            or payload.get('strategy', 'D1') not in ('DENSE', 'FIELD_FILTER', 'D1')):
                         raise ValueError()
                     if payload['sampleId'] not in {row['sampleId'] for row in agent_targets() if row.get('runnable')}:
                         raise ValueError()
@@ -319,7 +325,8 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 if not run_lock.acquire(blocking=False):
                     self._send(409, {'error': '已有实验正在运行'}); return
                 try:
-                    result = agent_runner(payload['sampleId'], payload['mode'])
+                    result = (agent_runner(payload['sampleId'], payload['mode'], payload['strategy'])
+                              if 'strategy' in payload else agent_runner(payload['sampleId'], payload['mode']))
                     if result.get('researchEligible') is not False or result.get('plan', {}).get('sampleId') != payload['sampleId']:
                         raise ValueError()
                     self._send(201, result)

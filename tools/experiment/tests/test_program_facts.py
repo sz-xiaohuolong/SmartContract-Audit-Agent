@@ -18,6 +18,11 @@ class ProgramFactsTest(unittest.TestCase):
         self.assertEqual("balance", write["resource"])
         self.assertLess(call["order"], write["order"])
 
+    def test_token_transfer_is_visible_but_library_semantics_remain_partial(self):
+        result = self.facts('token.safeTransferFrom(msg.sender, address(this), 1); balance = 0;')
+        self.assertEqual('PARTIAL', result['status'])
+        self.assertEqual(['CALL', 'WRITE'], [fact['kind'] for fact in result['facts']])
+
     def test_modifiers_expand_in_execution_order_not_source_order(self):
         result = self.facts('balance = 1;', 'modifier guard() { require(msg.sender == owner); _; }')
         self.assertEqual(["CHECK", "WRITE"], [f["kind"] for f in result["facts"]])

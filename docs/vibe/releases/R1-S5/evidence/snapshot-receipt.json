@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1",
+  "builtAt": "2026-10-07",
+  "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+  "collection": "s1b_a6741615b74240909978e25ae2264476",
+  "previousSnapshotId": "9fc63d0e8828a8caa78145e133b8f954f9fedaf79469ea0927434d7dbef725c8",
+  "lineageHash": "581a083047ba2a8d8eefe8b34f2e32d219d170544941116d8ec0101b7e622df6",
+  "knowledgeSamples": ["AC-ASE-030", "AC-RABBIT-001", "RE-ATOMIC-001"],
+  "validationSamples": ["AC-ASE-040", "RE-INFINITY-001", "RE-JPEGD-001"],
+  "documentCount": 6,
+  "embedding": {
+    "model": "BAAI/bge-small-en-v1.5",
+    "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "dimension": 384
+  },
+  "milvusReadBack": "完整 6 条向量与正文和本地快照一致后激活",
+  "leakage": {
+    "errors": 0,
+    "nearCloneCandidates": 0,
+    "pendingSamples": 0
+  },
+  "realModelRequests": 0
+}

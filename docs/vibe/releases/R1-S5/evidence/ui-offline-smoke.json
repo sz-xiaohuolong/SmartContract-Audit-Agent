@@ -1,0 +1,129 @@
+{
+  "denominators": {
+    "failed": 0,
+    "planned": 9,
+    "unknown": 9
+  },
+  "mode": "offline",
+  "note": "九次均为固定空假设离线演练，不能表示漏洞检测效果。",
+  "researchEligible": false,
+  "runs": [
+    {
+      "conclusion": "UNRESOLVED",
+      "failed": 0,
+      "poolHash": "405e2e1a8a98914827bc36a52c122aaf8b33bf8f40a0109f986de62268e36770",
+      "report": ".local/audit-runs/f6c4a18bb3504f0c86b0bf1182c910e4/sample.jsonl",
+      "runId": "f6c4a18bb3504f0c86b0bf1182c910e4",
+      "sampleId": "AC-ASE-040",
+      "selected": 1,
+      "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+      "status": "COMPLETED",
+      "strategy": "DENSE",
+      "unknown": 1
+    },
+    {
+      "conclusion": "UNRESOLVED",
+      "failed": 0,
+      "poolHash": "405e2e1a8a98914827bc36a52c122aaf8b33bf8f40a0109f986de62268e36770",
+      "report": ".local/audit-runs/8cefbe1abe7b44728e0b97ea8dd8b6b4/sample.jsonl",
+      "runId": "8cefbe1abe7b44728e0b97ea8dd8b6b4",
+      "sampleId": "AC-ASE-040",
+      "selected": 2,
+      "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+      "status": "COMPLETED",
+      "strategy": "FIELD_FILTER",
+      "unknown": 1
+    },
+    {
+      "conclusion": "UNRESOLVED",
+      "failed": 0,
+      "poolHash": "405e2e1a8a98914827bc36a52c122aaf8b33bf8f40a0109f986de62268e36770",
+      "report": ".local/audit-runs/fb2aa2d8c52c4143b33863c3c60c8307/sample.jsonl",
+      "runId": "fb2aa2d8c52c4143b33863c3c60c8307",
+      "sampleId": "AC-ASE-040",
+      "selected": 0,
+      "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+      "status": "COMPLETED",
+      "strategy": "D1",
+      "unknown": 1
+    },
+    {
+      "conclusion": "UNRESOLVED",
+      "failed": 0,
+      "poolHash": "1b1507613afee68718d0cc543f9e1df6ff0ef7839eb58b5091424295ed2fe95c",
+      "report": ".local/audit-runs/1f3c368d7081449bbe032085d25c6221/sample.jsonl",
+      "runId": "1f3c368d7081449bbe032085d25c6221",
+      "sampleId": "RE-JPEGD-001",
+      "selected": 2,
+      "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+      "status": "COMPLETED",
+      "strategy": "DENSE",
+      "unknown": 1
+    },
+    {
+      "conclusion": "UNRESOLVED",
+      "failed": 0,
+      "poolHash": "1b1507613afee68718d0cc543f9e1df6ff0ef7839eb58b5091424295ed2fe95c",
+      "report": ".local/audit-runs/6d4825fa0c1b4cadae154036c475bc06/sample.jsonl",
+      "runId": "6d4825fa0c1b4cadae154036c475bc06",
+      "sampleId": "RE-JPEGD-001",
+      "selected": 1,
+      "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+      "status": "COMPLETED",
+      "strategy": "FIELD_FILTER",
+      "unknown": 1
+    },
+    {
+      "conclusion": "UNRESOLVED",
+      "failed": 0,
+      "poolHash": "1b1507613afee68718d0cc543f9e1df6ff0ef7839eb58b5091424295ed2fe95c",
+      "report": ".local/audit-runs/54e7e1f118404a268255c3ac1f33726f/sample.jsonl",
+      "runId": "54e7e1f118404a268255c3ac1f33726f",
+      "sampleId": "RE-JPEGD-001",
+      "selected": 0,
+      "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+      "status": "COMPLETED",
+      "strategy": "D1",
+      "unknown": 1
+    },
+    {
+      "conclusion": "UNRESOLVED",
+      "failed": 0,
+      "poolHash": "c484d35047dd5542f06ac83622cda9b6d3b0b2caf39774ed25237d63058cde85",
+      "report": ".local/audit-runs/6cd03f905811498aa0e1a1d1118533b5/sample.jsonl",
+      "runId": "6cd03f905811498aa0e1a1d1118533b5",
+      "sampleId": "RE-INFINITY-001",
+      "selected": 1,
+      "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+      "status": "COMPLETED",
+      "strategy": "DENSE",
+      "unknown": 1
+    },
+    {
+      "conclusion": "UNRESOLVED",
+      "failed": 0,
+      "poolHash": "c484d35047dd5542f06ac83622cda9b6d3b0b2caf39774ed25237d63058cde85",
+      "report": ".local/audit-runs/acc43bc1def44051832c8a29090ecab7/sample.jsonl",
+      "runId": "acc43bc1def44051832c8a29090ecab7",
+      "sampleId": "RE-INFINITY-001",
+      "selected": 0,
+      "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+      "status": "COMPLETED",
+      "strategy": "FIELD_FILTER",
+      "unknown": 1
+    },
+    {
+      "conclusion": "UNRESOLVED",
+      "failed": 0,
+      "poolHash": "c484d35047dd5542f06ac83622cda9b6d3b0b2caf39774ed25237d63058cde85",
+      "report": ".local/audit-runs/d9bca9f307764b049ef2a616ac1425a6/sample.jsonl",
+      "runId": "d9bca9f307764b049ef2a616ac1425a6",
+      "sampleId": "RE-INFINITY-001",
+      "selected": 0,
+      "snapshotId": "5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3",
+      "status": "COMPLETED",
+      "strategy": "D1",
+      "unknown": 1
+    }
+  ]
+}

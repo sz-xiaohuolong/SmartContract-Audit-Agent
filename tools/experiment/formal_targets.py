@@ -11,9 +11,12 @@ from storage import decode, fingerprint
 INTAKE = Path('docs/vibe/releases/R1-S3/evidence/first-batch-intake.json')
 ASSIGNMENT = Path('docs/vibe/releases/R1-S3/evidence/first-batch-assignment.json')
 FORMAL_LEDGER = Path('.local/d1-kb-v1/ledger.json')
+FORMAL_V2_LEDGER = Path('.local/r1-s5/formal-v2/ledger.json')
 SOURCE_DIR = '.local/first-batch/sources'
 DEVELOPMENT_IDS = frozenset({'AC-ASE-006', 'AC-ASE-009', 'RE-SCRUBD-001', 'RE-SCRUBD-002'})
-FUNCTION_SCOPE = {'RE-SCRUBD-001': 'matchOrderWithReserve'}
+FUNCTION_SCOPE = {'RE-SCRUBD-001': 'matchOrderWithReserve',
+                  'AC-ASE-040': 'mintYieldFee', 'RE-JPEGD-001': 'deposit',
+                  'RE-INFINITY-001': 'matchOneToManyOrders'}
 MAX_MODEL_SOURCE_BYTES = 6000
 
 
@@ -41,7 +44,8 @@ def _records(root):
     ledger, old_audit = prepare(intake, assignment, root, SOURCE_DIR)
     if not old_audit['ok']:
         raise ValueError('原开发清单存在谱系隔离错误')
-    formal = decode((root / FORMAL_LEDGER).read_bytes())
+    formal_path = FORMAL_V2_LEDGER if (root / FORMAL_V2_LEDGER).is_file() else FORMAL_LEDGER
+    formal = decode((root / formal_path).read_bytes())
     targets = [row for row in ledger['samples'] if row['split'] == 'development']
     if {row['id'] for row in targets} != DEVELOPMENT_IDS:
         raise ValueError('已登记开发目标与固定范围不一致')
@@ -58,9 +62,13 @@ def _records(root):
         raise ValueError('开发目标与正式知识库同组或存在跨划分隔离错误')
     cases = {row['id']: row for row in intake['cases']}
     result = []
-    for row in sorted(targets, key=lambda value: value['id']):
+    runnable_rows = targets + ([row for row in formal['samples'] if row['split'] == 'validation']
+                               if formal_path == FORMAL_V2_LEDGER else [])
+    for row in sorted(runnable_rows, key=lambda value: value['id']):
         source = (root / row['path']).read_bytes().decode('utf-8')
         name = FUNCTION_SCOPE.get(row['id'])
+        if row['split'] == 'validation' and not name:
+            raise ValueError('验证目标缺少固定函数范围')
         if name:
             start, end, model_source = _function_range(source, name)
             scope = 'FUNCTION'
@@ -68,9 +76,10 @@ def _records(root):
             start, end, model_source = 1, len(source.splitlines()), source
             scope = 'FULL'
         size = len(model_source.encode('utf-8'))
-        result.append({'sampleId': row['id'], 'split': 'development', 'scope': scope,
+        result.append({'sampleId': row['id'], 'split': row['split'], 'scope': scope,
                        'function': name or cases[row['id']]['function'],
-                       'mechanism': 'REENTRANCY' if cases[row['id']]['direction'] == '重入' else 'ACCESS_CONTROL',
+                       'mechanism': row['vulnerabilityType'] if row['split'] == 'validation' else
+                       ('REENTRANCY' if cases[row['id']]['direction'] == '重入' else 'ACCESS_CONTROL'),
                        'runnable': size <= MAX_MODEL_SOURCE_BYTES,
                        'reason': None if size <= MAX_MODEL_SOURCE_BYTES else '超过首版单次提示上限',
                        'lineStart': start, 'lineEnd': end,
@@ -90,9 +99,15 @@ def list_targets(root):
 
 
 def load_target(root, sample_id):
-    if sample_id not in DEVELOPMENT_IDS:
-        raise ValueError('目标未登记为工程开发样本')
-    row = next(item for item in _records(root) if item['sampleId'] == sample_id)
+    allowed = set(DEVELOPMENT_IDS)
+    if (Path(root) / FORMAL_V2_LEDGER).is_file():
+        formal = decode((Path(root) / FORMAL_V2_LEDGER).read_bytes())
+        allowed.update(row['id'] for row in formal['samples'] if row['split'] == 'validation')
+    if sample_id not in allowed:
+        raise ValueError('目标未登记为工程开发或验证样本')
+    row = next((item for item in _records(root) if item['sampleId'] == sample_id), None)
+    if row is None:
+        raise ValueError('目标未登记为工程开发或验证样本')
     if not row['runnable']:
         raise ValueError(row['reason'])
     return row

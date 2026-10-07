@@ -54,14 +54,16 @@ def admit_candidates(candidate, decisions, root):
         if len(artifacts) != len(row['artifacts']) or not {'SOURCE', 'REPORT', 'PATCH'} <= artifacts.keys():
             raise ValueError('准入原件缺失或重复')
         license_record = entry.get('licenseEvidence')
-        if (not isinstance(license_record, dict) or license_record.get('license') != 'MIT'
+        if (not isinstance(license_record, dict) or license_record.get('license') not in ('MIT', 'GPL-3.0')
                 or not isinstance(license_record.get('path'), str)
                 or not isinstance(license_record.get('sha256'), str)):
             raise ValueError('许可证原件未固定')
         raw_license = _verified_file(root, license_record)
-        if b'SPDX-License-Identifier: MIT' not in raw_license and b'MIT License' not in raw_license:
-            raise ValueError('许可证原件不支持 MIT 声明')
-        source.update(license='MIT', licenseStatus='VERIFIED')
+        license_name = license_record['license']
+        if ('SPDX-License-Identifier: ' + license_name).encode() not in raw_license and not (
+                license_name == 'MIT' and b'MIT License' in raw_license):
+            raise ValueError('许可证原件与声明不符')
+        source.update(license=license_name, licenseStatus='VERIFIED')
         row.update(split=entry['split'], labelStatus='REVIEWED',
                    vulnerabilityType=entry['vulnerabilityType'], vulnerabilityLine=entry['vulnerabilityLine'],
                    truthReviewerType='INDEPENDENT', truthReviewer=entry['reviewer'],
@@ -87,14 +89,44 @@ def admit_candidates(candidate, decisions, root):
                                  note='仅对外部原始审计证实的漏洞与真实修复对准入；目标—案例适用性仍须独立审核')
 
 
+def merge_admitted(base, base_pairs, extension, extension_pairs, root):
+    """合并两个独立准入批次，重新检查跨批次谱系与知识配对。"""
+    for ledger in (base, extension):
+        report = audit_lineage(ledger, root)
+        if not report['ok'] or report['pendingSamples']:
+            raise ValueError('待合并清单的谱系或标签未通过')
+    samples = base['samples'] + extension['samples']
+    sources = base['sources'] + extension['sources']
+    pairs = base_pairs + extension_pairs
+    if (len({row['id'] for row in samples}) != len(samples)
+            or len({row['id'] for row in sources}) != len(sources)
+            or len({row['sampleId'] for row in pairs}) != len(pairs)
+            or {row['sampleId'] for row in pairs} != {row['id'] for row in samples if row['split'] == 'knowledge'}):
+        raise ValueError('合并后样本、来源或知识配对重复或缺失')
+    merged = {'schemaVersion': '1', 'sources': sources, 'samples': samples,
+              'edges': base['edges'] + extension['edges']}
+    report = audit_lineage(merged, root)
+    if not report['ok'] or report['pendingSamples']:
+        raise ValueError('合并后谱系存在跨划分冲突或待审样本')
+    return merged, pairs, report
+
+
 def main():
     parser = argparse.ArgumentParser(description='从固定外部审计原件生成首版正式准入清单')
     for name in ('candidate-ledger', 'decisions', 'root', 'output-dir'):
         parser.add_argument('--' + name, required=True)
+    parser.add_argument('--base-ledger')
+    parser.add_argument('--base-pairs')
     args = parser.parse_args()
     try:
+        if bool(args.base_ledger) != bool(args.base_pairs):
+            raise ValueError('合并基线清单与补丁对必须同时提供')
         ledger, pairs, report = admit_candidates(decode(Path(args.candidate_ledger).read_bytes()),
                                                   decode(Path(args.decisions).read_bytes()), Path(args.root))
+        if args.base_ledger:
+            ledger, pairs, report = merge_admitted(
+                decode(Path(args.base_ledger).read_bytes()), decode(Path(args.base_pairs).read_bytes()),
+                ledger, pairs, Path(args.root))
         output = Path(args.output_dir)
         output.mkdir(parents=True, exist_ok=True)
         atomic_json(output / 'ledger.json', ledger)

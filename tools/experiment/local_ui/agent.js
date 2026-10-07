@@ -21,7 +21,7 @@ async function load() {
     for (const target of targets) {
       const option = document.createElement('option');
       option.value = target.sampleId;
-      option.textContent = target.sampleId + (target.runnable ? '' : ' · 暂不可运行');
+      option.textContent = target.sampleId + (target.split === 'validation' ? ' · 独立验证' : ' · 开发') + (target.runnable ? '' : ' · 暂不可运行');
       option.disabled = !target.runnable;
       selector.append(option);
     }
@@ -37,18 +37,19 @@ async function load() {
 }
 function showScope() {
   const target = targets.find(item => item.sampleId === byId('sample').value);
-  show('scope', target ? `${target.scope === 'FUNCTION' ? '函数级，非完整合约' : '整份源码'} · ${target.reason || '可运行'} · 原始行 ${target.lineStart || '?'}–${target.lineEnd || '?'}` : '无可运行目标');
+  show('scope', target ? `${target.split === 'validation' ? '独立验证' : '工程开发'} · ${target.scope === 'FUNCTION' ? '函数级，非完整合约' : '整份源码'} · ${target.reason || '可运行'} · 原始行 ${target.lineStart || '?'}–${target.lineEnd || '?'}` : '无可运行目标');
 }
 async function preview() {
   try {
-    const data = await request('/api/agent/preview?sampleId=' + encodeURIComponent(byId('sample').value));
+    const data = await request('/api/agent/preview?sampleId=' + encodeURIComponent(byId('sample').value) + '&strategy=' + encodeURIComponent(byId('strategy').value));
     show('retrieval', json({snapshotId: data.snapshotId, collection: data.collection,
-      candidatePool: data.pool, selected: data.d1.selected, status: data.d1.status,
+      strategy: data.strategy, poolHash: data.poolHash, candidatePool: data.pool, selected: data.d1.selected, status: data.d1.status,
       gaps: data.d1.gaps, evaluations: data.d1.evaluations}));
   } catch (error) { show('retrieval', error.message); }
 }
 function showResult(data) {
   show('result', json({sampleId: data.plan.sampleId, scope: data.plan.scope,
+    strategy: data.plan.strategy, poolHash: data.plan.poolHash,
     status: data.status, conclusion: data.conclusion, model: data.model,
     tools: data.tools, d2: data.d2, denominators: data.denominators,
     sourceHash: data.plan.sourceHash, snapshotId: data.plan.snapshotId}));
@@ -60,7 +61,7 @@ async function run(mode) {
   const target = targets.find(item => item.sampleId === byId('sample').value);
   if (!target || !target.runnable) return;
   if (mode === 'real') {
-    const choice = window.confirm(`确认运行 ${target.sampleId}（${target.scope === 'FUNCTION' ? '函数级' : '整份源码'}）？\n端点：${status.endpoint}\n模型：${status.model}\n最多 1 次请求，输出上限 2048 token，零重试。`);
+    const choice = window.confirm(`确认运行 ${target.sampleId}（${target.scope === 'FUNCTION' ? '函数级' : '整份源码'}）？\n策略：${byId('strategy').value}\n端点：${status.endpoint}\n模型：${status.model}\n最多 1 次请求，输出上限 2048 token，零重试。`);
     if (!choice) return;
   }
   byId('offline').disabled = true;
@@ -68,7 +69,7 @@ async function run(mode) {
   show('notice', mode === 'real' ? '真实模型运行中，请勿重复点击。' : '离线演练运行中。');
   try {
     const data = await request('/api/agent/runs', {method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({sampleId: target.sampleId, mode})});
+      body: JSON.stringify({sampleId: target.sampleId, mode, strategy: byId('strategy').value})});
     showResult(data);
     show('notice', `运行记录：.local/audit-runs/${data.runId}/`);
     await loadHistory();
@@ -84,7 +85,7 @@ async function loadHistory() {
     for (const item of data.runs) {
       const button = document.createElement('button');
       button.className = 'agent-history';
-      button.textContent = `${item.sampleId} · ${item.mode} · ${item.status} · ${item.createdAt}`;
+      button.textContent = `${item.sampleId} · ${item.strategy || 'D1'} · ${item.mode} · ${item.status} · ${item.createdAt}`;
       button.onclick = async () => {
         try { showResult(await request('/api/agent/runs/' + item.runId)); }
         catch (error) { show('notice', error.message); }

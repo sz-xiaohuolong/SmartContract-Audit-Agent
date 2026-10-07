@@ -21,8 +21,8 @@ class AgentUiTest(unittest.TestCase):
         report = {'runId': 'a'*32, 'status': 'COMPLETED', 'researchEligible': False,
                   'plan': plan, 'planHash': fingerprint(plan), 'model': {}, 'tools': [], 'd2': {},
                   'conclusion': 'UNRESOLVED'}
-        def run(sample, mode):
-            self.calls.append((sample, mode))
+        def run(sample, mode, strategy='D1'):
+            self.calls.append((sample, mode) if strategy == 'D1' else (sample, mode, strategy))
             directory = Path(self.temp.name) / ('a'*32)
             directory.mkdir()
             (directory / 'plan.json').write_text(json.dumps(plan))
@@ -34,7 +34,8 @@ class AgentUiTest(unittest.TestCase):
             return report
         self.server = create_server(ROOT, 0, agent_targets=lambda: [target],
             agent_status=lambda: {'ready': True, 'snapshotId': 's'},
-            agent_preview=lambda sample: {'sampleId': sample, 'd1': {'status': 'NO_RISK_FACT'}},
+            agent_preview=lambda sample: {'sampleId': sample, 'pool': {'candidates': []},
+                'd1': {'status': 'NO_RISK_FACT', 'selected': [], 'context': '', 'evaluations': {}}},
             agent_runner=run,
             agent_store=Path(self.temp.name))
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
@@ -69,6 +70,21 @@ class AgentUiTest(unittest.TestCase):
         self.assertEqual(200, self.request('GET', '/api/agent/runs/' + 'a'*32)[0])
         self.assertEqual(200, self.request('GET', '/api/agent/runs/' + 'a'*32 + '/report')[0])
         self.assertEqual([('AC-ASE-006', 'offline')], self.calls)
+
+    def test_strategy_whitelist_and_read_only_preview(self):
+        code, body = self.request('GET', '/api/agent/preview?sampleId=AC-ASE-006&strategy=DENSE')
+        self.assertEqual(200, code)
+        self.assertEqual('DENSE', json.loads(body)['strategy'])
+        self.assertEqual([], self.calls)
+        self.assertEqual(400, self.request('GET', '/api/agent/preview?sampleId=AC-ASE-006&strategy=UNKNOWN')[0])
+        headers = {'Content-Type': 'application/json'}
+        self.assertEqual(400, self.request('POST', '/api/agent/runs',
+            b'{"sampleId":"AC-ASE-006","mode":"offline","strategy":"UNKNOWN"}', headers)[0])
+        self.assertEqual([], self.calls)
+        status, _ = self.request('POST', '/api/agent/runs',
+            b'{"sampleId":"AC-ASE-006","mode":"offline","strategy":"FIELD_FILTER"}', headers)
+        self.assertEqual(201, status)
+        self.assertEqual([('AC-ASE-006', 'offline', 'FIELD_FILTER')], self.calls)
 
 
 if __name__ == '__main__': unittest.main()

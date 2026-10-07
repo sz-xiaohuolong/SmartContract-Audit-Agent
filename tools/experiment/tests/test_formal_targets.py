@@ -1,10 +1,12 @@
 """正式知识快照外的开发目标准入与函数范围离线测试。"""
 import hashlib
+import copy
 import tempfile
 import unittest
 from pathlib import Path
 
 from storage import atomic_json
+from storage import decode
 from formal_targets import list_targets, load_target
 
 
@@ -83,6 +85,32 @@ class FormalTargetsTest(unittest.TestCase):
             load_target(self.root, 'AC-ASE-006')
         with self.assertRaisesRegex(ValueError, '未登记'):
             load_target(self.root, 'NOT-LISTED')
+
+    def test_validation_function_is_registered_without_entering_knowledge(self):
+        source = 'contract Vault { function mintYieldFee() external { balance = 1; } uint balance; }'
+        path = self.root / '.local/first-batch/sources/AC-ASE-040.sol'
+        path.write_text(source)
+        digest = hashlib.sha256(source.encode()).hexdigest()
+        ledger = copy.deepcopy(decode((self.root / '.local/d1-kb-v1/ledger.json').read_bytes()))
+        ledger['sources'].append({'id': 'AC-ASE-040', 'url': 'https://example.test/validation',
+            'revision': 'b'*40, 'licenseStatus': 'VERIFIED', 'license': 'MIT',
+            'sourceStatus': 'VERIFIED', 'reportStatus': 'VERIFIED', 'patchStatus': 'VERIFIED'})
+        ledger['samples'].append({'id': 'AC-ASE-040', 'sourceId': 'AC-ASE-040',
+            'path': '.local/first-batch/sources/AC-ASE-040.sol', 'sourceHash': digest,
+            'split': 'validation', 'projectId': 'independent-vault', 'eventId': 'vault-fee',
+            'patchPairId': 'vault-fee', 'cloneGroups': [], 'originType': 'REAL_PATCH',
+            'labelStatus': 'REVIEWED', 'vulnerabilityType': 'ACCESS_CONTROL',
+            'artifacts': [{'id': 'vault-source', 'kind': 'SOURCE',
+                'path': '.local/first-batch/sources/AC-ASE-040.sol', 'sha256': digest,
+                'groupId': 'vault-fee'}]})
+        target = self.root / '.local/r1-s5/formal-v2/ledger.json'
+        target.parent.mkdir(parents=True)
+        atomic_json(target, ledger)
+        selected = load_target(self.root, 'AC-ASE-040')
+        self.assertEqual('validation', selected['split'])
+        self.assertEqual('FUNCTION', selected['scope'])
+        self.assertEqual('mintYieldFee', selected['function'])
+        self.assertFalse(selected['researchEligible'])
 
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ from test_isolation import manifest
 from snapshots import build_snapshot, activate_snapshot
 from storage import atomic_json, fingerprint
 from d1_embed import MODEL, REVISION, DIMENSION
-from formal_recall import preview
+from formal_recall import preview, select_strategy
 
 
 class FakeIndex:
@@ -116,6 +116,20 @@ class FormalRecallTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'D1'):
                 preview(self.root, self.target, self.index,
                         lambda texts: [[1.0] + [0.0] * (DIMENSION - 1)], stale_java)
+
+    def test_three_strategies_share_pool_and_unknown_is_not_applicable(self):
+        with patch('formal_recall.load_target', return_value=self.target):
+            view = preview(self.root, self.target, self.index,
+                           lambda texts: [[1.0] + [0.0] * (DIMENSION - 1)], self.java)
+        dense, filtered, d1 = (select_strategy(view, name) for name in ('DENSE', 'FIELD_FILTER', 'D1'))
+        self.assertEqual(len({row['poolHash'] for row in (dense, filtered, d1)}), 1)
+        self.assertEqual(len({row['snapshotId'] for row in (dense, filtered, d1)}), 1)
+        self.assertTrue(dense['d1']['selected'])
+        self.assertEqual([], filtered['d1']['selected'])
+        self.assertEqual([], d1['d1']['selected'])
+        self.assertFalse(dense['researchEligible'])
+        with self.assertRaisesRegex(ValueError, '策略'):
+            select_strategy(view, 'UNKNOWN')
 
 
 if __name__ == '__main__':

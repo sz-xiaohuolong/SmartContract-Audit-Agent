@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1",
+  "candidateLedgerHash": "96e18ee796fad2550085055e3fb2f86338a8e273cddefcca5d474fd5eb93924a",
+  "admissions": [
+    {
+      "sampleId": "AC-RABBIT-001",
+      "sourceHash": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+      "split": "knowledge",
+      "vulnerabilityType": "ACCESS_CONTROL",
+      "vulnerabilityLine": 59,
+      "reviewerType": "INDEPENDENT",
+      "reviewer": "Code4rena H-01 选入报告且项目方确认，finding #608；维护者合并 PR #86",
+      "reviewVersion": "757c8538ef918def151086b2df17e8c0284edbb5c647b81dc465774e6b8cf068",
+      "licenseEvidence": {
+        "path": ".local/r1-s5/sources/AC-RABBIT-001.sol",
+        "sha256": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+        "license": "MIT"
+      },
+      "pair": {
+        "sampleId": "AC-RABBIT-001",
+        "function": "mint",
+        "sourceLines": [58, 104],
+        "patchLines": [58, 104],
+        "mechanism": "ACCESS_CONTROL",
+        "riskKind": "WRITE",
+        "predicate": "CHECK_BEFORE",
+        "subject": "$actor",
+        "resource": "$authority",
+        "guardWitness": "require",
+        "reviewNote": "原版 onlyMinter 中的相等表达式没有 require，修复 PR 将其改为 require；mint 的映射写入位于同一受修饰函数中。仅代表此铸造权限路径。"
+      }
+    },
+    {
+      "sampleId": "RE-INFINITY-001",
+      "sourceHash": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+      "split": "validation",
+      "vulnerabilityType": "REENTRANCY",
+      "vulnerabilityLine": 178,
+      "reviewerType": "INDEPENDENT",
+      "reviewer": "Code4rena 3 高危且项目方确认，finding #184；项目方评论指定修复提交 b90e746f",
+      "reviewVersion": "9f75faa97b83492d5aa7283a53a18bec7271acec9de540d5d8c714b6531db3d0",
+      "licenseEvidence": {
+        "path": ".local/r1-s5/sources/RE-INFINITY-001.sol",
+        "sha256": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+        "license": "MIT"
+      }
+    },
+    {
+      "sampleId": "RE-JPEGD-001",
+      "sourceHash": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+      "split": "validation",
+      "vulnerabilityType": "REENTRANCY",
+      "vulnerabilityLine": 145,
+      "reviewerType": "INDEPENDENT",
+      "reviewer": "Code4rena 3 高危且项目方确认，finding #81；维护者合并 PR #19",
+      "reviewVersion": "8cc4adf8e04eb74afeddd9b8735b81ab37a36efa6e024317109040b0daafc905",
+      "licenseEvidence": {
+        "path": ".local/r1-s5/sources/RE-JPEGD-001.sol",
+        "sha256": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+        "license": "GPL-3.0"
+      }
+    }
+  ]
+}

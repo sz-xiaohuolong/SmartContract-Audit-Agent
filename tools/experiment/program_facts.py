@@ -82,20 +82,24 @@ def _body_facts(tokens, state_names):
                 recognized_writes.add(end)
                 if value in index_names: complete = False
                 finish = values.index(';', end) if ';' in values[end:] else len(values)
-                if any(v in ('call', 'send', 'transfer', 'delegatecall', 'staticcall') for v in values[end:finish]):
+                if any(v in ('call', 'send', 'transfer', 'transferFrom', 'safeTransfer', 'safeTransferFrom',
+                             'delegatecall', 'staticcall') for v in values[end:finish]):
                     complete = False
                 facts.append({'kind': 'WRITE', 'subject': 'msg.sender', 'resource': _text(tokens[i:end]),
                               'line': line, 'position': i})
-        if value in ('call', 'delegatecall', 'staticcall', 'send', 'transfer') and i > 0 and values[i - 1] == '.':
+        if value in ('call', 'delegatecall', 'staticcall', 'send', 'transfer', 'transferFrom',
+                     'safeTransfer', 'safeTransferFrom') and i > 0 and values[i - 1] == '.':
             start = i - 2
             while start > 0 and (IDENTIFIER.fullmatch(values[start - 1]) or values[start - 1] == '.'):
                 start -= 1
             subject = _text(tokens[start:i - 1])
             if not re.fullmatch(r'[\w$]+(?:\.[\w$]+)*', subject): complete = False
             facts.append({'kind': 'CALL', 'subject': subject, 'resource': '', 'line': line, 'position': i})
-            if value in ('delegatecall', 'staticcall'): complete = False
+            if value in ('delegatecall', 'staticcall', 'transferFrom', 'safeTransfer', 'safeTransferFrom'):
+                complete = False
         if IDENTIFIER.fullmatch(value) and i + 1 < len(tokens) and values[i + 1] == '(':
-            if value not in ('require', 'assert', 'call', 'send', 'transfer'):
+            if value not in ('require', 'assert', 'call', 'send', 'transfer', 'transferFrom',
+                             'safeTransfer', 'safeTransferFrom'):
                 complete = False
         if value in state_names and i > 0 and re.fullmatch(r'(?:u?int\d*|address|bool|string|bytes\d*)', values[i - 1]):
             complete = False

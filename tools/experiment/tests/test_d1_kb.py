@@ -1,6 +1,7 @@
 """正式 D1 知识快照准入与成对文档的离线测试。"""
 import hashlib
 import io
+import copy
 import tempfile
 import unittest
 from decimal import Decimal
@@ -216,3 +217,34 @@ class D1KnowledgeTest(unittest.TestCase):
         decision['admissions'][0]['reviewVersion'] = '0' * 64
         with self.assertRaisesRegex(ValueError, '外部审计'):
             admit_candidates(self.ledger, decision, self.root)
+
+    def test_admission_accepts_exact_gpl_source_declaration(self):
+        original = '// SPDX-License-Identifier: GPL-3.0\n' + self.original
+        (self.root / 'source.sol').write_text(original)
+        self.ledger['samples'][0].update(sourceHash=digest(original), labelStatus='PENDING', split='validation')
+        self.ledger['samples'][0]['artifacts'][0]['sha256'] = digest(original)
+        self.ledger['sources'][0]['licenseStatus'] = 'PENDING'
+        decision = {'schemaVersion': '1', 'candidateLedgerHash': fingerprint(self.ledger),
+                    'admissions': [{'sampleId': 'case', 'sourceHash': digest(original),
+                                    'split': 'validation', 'vulnerabilityType': 'REENTRANCY',
+                                    'vulnerabilityLine': 3, 'reviewerType': 'INDEPENDENT',
+                                    'reviewer': '外部原始审计', 'reviewVersion': digest((self.root / 'report.md').read_text()),
+                                    'licenseEvidence': {'path': 'source.sol', 'sha256': digest(original),
+                                                        'license': 'GPL-3.0'}}]}
+        admitted, pairs, report = admit_candidates(self.ledger, decision, self.root)
+        self.assertEqual('GPL-3.0', admitted['sources'][0]['license'])
+        self.assertEqual([], pairs)
+        self.assertEqual([], report['pendingSamples'])
+        decision['admissions'][0]['licenseEvidence']['license'] = 'MIT'
+        with self.assertRaisesRegex(ValueError, '许可证'):
+            admit_candidates(self.ledger, decision, self.root)
+
+    def test_merge_admitted_rejects_same_project_across_knowledge_and_validation(self):
+        from d1_admission import merge_admitted
+        extension = copy.deepcopy(self.ledger)
+        extension['sources'][0]['id'] = 'other-source'
+        extension['samples'][0].update(id='other', sourceId='other-source', split='validation')
+        extension['samples'][0]['artifacts'] = [dict(row, id='other-' + row['id'])
+                                               for row in extension['samples'][0]['artifacts']]
+        with self.assertRaisesRegex(ValueError, '谱系'):
+            merge_admitted(self.ledger, self.pairs, extension, [], self.root)

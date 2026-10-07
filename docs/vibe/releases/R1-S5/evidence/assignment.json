@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1",
+  "assignments": [
+    {
+      "id": "AC-RABBIT-001",
+      "split": "knowledge",
+      "reason": "独立项目的访问控制原始裁决与维护者已合并修复；只使用 RabbitHoleReceipt 的同一事件组",
+      "reportEvidence": {
+        "url": "https://github.com/code-423n4/2023-01-rabbithole-findings/issues/608",
+        "path": ".local/r1-s5/reports/AC-RABBIT-001.md",
+        "sha256": "757c8538ef918def151086b2df17e8c0284edbb5c647b81dc465774e6b8cf068"
+      },
+      "patchEvidence": {
+        "url": "https://github.com/rabbitholegg/quest-protocol/commit/8e1bc90f619dfafba1fbfbac39c9249b8885e64a",
+        "path": ".local/r1-s5/patches/AC-RABBIT-001.sol",
+        "sha256": "8075bdae170c3b63b5a156f19f2b63072b6d82e25c5d6f2a7078b583dac52fdd"
+      }
+    },
+    {
+      "id": "RE-JPEGD-001",
+      "split": "validation",
+      "reason": "独立重入验证项目；原始高危裁决及已合并修复对应 deposit，仍需目标—案例适用性审核",
+      "reportEvidence": {
+        "url": "https://github.com/code-423n4/2022-04-jpegd-findings/issues/81",
+        "path": ".local/r1-s5/reports/RE-JPEGD-001.md",
+        "sha256": "8cc4adf8e04eb74afeddd9b8735b81ab37a36efa6e024317109040b0daafc905"
+      },
+      "patchEvidence": {
+        "url": "https://github.com/jpegd/core/commit/5eb2e19e71c949503664017183d65f19c72ed2f9",
+        "path": ".local/r1-s5/patches/RE-JPEGD-001.sol",
+        "sha256": "2b305fbd3256de8f1d9523d813de544fa4d6cb7583fbeae8bf2150cb70d71791"
+      }
+    },
+    {
+      "id": "RE-INFINITY-001",
+      "split": "validation",
+      "reason": "独立重入验证项目；原始高危裁决、项目方确认及指定修复提交对应同一函数",
+      "reportEvidence": {
+        "url": "https://github.com/code-423n4/2022-06-infinity-findings/issues/184",
+        "path": ".local/r1-s5/reports/RE-INFINITY-001.md",
+        "sha256": "9f75faa97b83492d5aa7283a53a18bec7271acec9de540d5d8c714b6531db3d0"
+      },
+      "patchEvidence": {
+        "url": "https://github.com/infinitydotxyz/exchange-contracts-v2/commit/b90e746fa7af13037e7300b58df46457a026c1ac",
+        "path": ".local/r1-s5/patches/RE-INFINITY-001.sol",
+        "sha256": "5aba829fac8a1c0e11da5f8e9acd9ad082f0b1e8e895ea939e3fe67b7d4469a1"
+      }
+    }
+  ]
+}
