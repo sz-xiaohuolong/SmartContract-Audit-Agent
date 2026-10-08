@@ -112,6 +112,31 @@ class FormalTargetsTest(unittest.TestCase):
         self.assertEqual('mintYieldFee', selected['function'])
         self.assertFalse(selected['researchEligible'])
 
+    def test_new_validation_target_uses_reviewed_function_name(self):
+        source = 'contract MoreVault { function auditEntry() external { balance = 1; } uint balance; }'
+        path = self.root / '.local/first-batch/sources/AC-NEW-001.sol'
+        path.write_text(source)
+        digest = hashlib.sha256(source.encode()).hexdigest()
+        ledger = copy.deepcopy(decode((self.root / '.local/d1-kb-v1/ledger.json').read_bytes()))
+        ledger['sources'].append({'id': 'AC-NEW-001', 'url': 'https://example.test/new',
+            'revision': 'c'*40, 'licenseStatus': 'VERIFIED', 'license': 'MIT',
+            'sourceStatus': 'VERIFIED', 'reportStatus': 'VERIFIED', 'patchStatus': 'VERIFIED'})
+        ledger['samples'].append({'id': 'AC-NEW-001', 'sourceId': 'AC-NEW-001',
+            'path': '.local/first-batch/sources/AC-NEW-001.sol', 'sourceHash': digest,
+            'split': 'validation', 'projectId': 'more-vault', 'eventId': 'more-vault-event',
+            'patchPairId': 'more-vault-event', 'cloneGroups': [], 'originType': 'REAL_PATCH',
+            'labelStatus': 'REVIEWED', 'vulnerabilityType': 'ACCESS_CONTROL',
+            'evaluationFunction': 'auditEntry',
+            'artifacts': [{'id': 'new-source', 'kind': 'SOURCE',
+                'path': '.local/first-batch/sources/AC-NEW-001.sol', 'sha256': digest,
+                'groupId': 'more-vault-event'}]})
+        target = self.root / '.local/r1-s5/formal-v2/ledger.json'
+        target.parent.mkdir(parents=True)
+        atomic_json(target, ledger)
+        selected = load_target(self.root, 'AC-NEW-001')
+        self.assertEqual('auditEntry', selected['function'])
+        self.assertEqual('FUNCTION', selected['scope'])
+
 
 if __name__ == '__main__':
     unittest.main()

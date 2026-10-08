@@ -86,13 +86,13 @@ function renderBatchReport(report) {
   region.append(heading);
   const table = document.createElement('table'); table.className = 'agent-metrics';
   const head = document.createElement('tr');
-  for (const value of ['策略', '完成', '失败', '未知', '入选证据', '输入 token', '输出 token', '检测召回', '检索 Recall@K / nDCG']) {
+  for (const value of ['策略', '完成', '失败', '未知', '报告漏洞', '未决', '入选证据', '输入 token', '输出 token', '检测召回', '检索 Recall@K / nDCG']) {
     const cell = document.createElement('th'); cell.textContent = value; head.append(cell);
   }
   table.append(head);
   for (const [strategy, row] of Object.entries(report.metrics)) {
     const tr = document.createElement('tr');
-    for (const value of [strategy, row.completed, row.failed, row.unknown, row.selectedEvidence,
+    for (const value of [strategy, row.completed, row.failed, row.unknown, row.reported ?? 0, row.unresolved ?? 0, row.selectedEvidence,
       metric(row.inputTokens, '未返回'), metric(row.outputTokens, '未返回'), metric(row.detectionRecall),
       `${metric(row.retrievalRecallAtK)} / ${metric(row.ndcgAtK)}`]) {
       const cell = document.createElement('td'); cell.textContent = String(value); tr.append(cell);

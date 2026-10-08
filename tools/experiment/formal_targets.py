@@ -66,7 +66,9 @@ def _records(root):
                                if formal_path == FORMAL_V2_LEDGER else [])
     for row in sorted(runnable_rows, key=lambda value: value['id']):
         source = (root / row['path']).read_bytes().decode('utf-8')
-        name = FUNCTION_SCOPE.get(row['id'])
+        name = row.get('evaluationFunction') if row['split'] == 'validation' else FUNCTION_SCOPE.get(row['id'])
+        if row['split'] == 'validation' and name is None:
+            name = FUNCTION_SCOPE.get(row['id'])
         if row['split'] == 'validation' and not name:
             raise ValueError('验证目标缺少固定函数范围')
         if name:

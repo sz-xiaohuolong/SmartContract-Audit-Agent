@@ -1,10 +1,10 @@
 # VeriRAG 毕业论文工程：文档入口
 
-更新：2026-10-07。当前在主目录 `main` 开发，实际提交以 Git 历史为准。
+更新：2026-10-08。当前在主目录 `main` 开发，实际提交以 Git 历史为准。
 
 ## 当前定位
 
-- 当前 Release：`R1-S6` 批量对照与数据扩充设计；范围见[规格](releases/R1-S6/SPEC.md)和[实施步骤](releases/R1-S6/IMPLEMENTATION_PLAN.md)。D1 科研效果仍待证伪。
+- 当前 Release：`R1-S8` 批量准入与正式对照推进；本阶段[实施计划](releases/R1-S8/IMPLEMENTATION_PLAN.md)和[阶段验证](releases/R1-S8/VERIFICATION.md)记录已完成工程及剩余准入工作。D1 科研效果仍待证伪。
 - 当前执行状态、验证及下一任务以 [PROGRESS](PROGRESS.md) 为准。
 - S0：新 `audit-mvp` 模块，多供应商单次 CLI 和离线测试；[验证记录](releases/R1-S0/VERIFICATION.md)。
 - S1a：只读清单、严格类型评估；S1b：审核划分、知识快照和实验恢复。见 [实施计划](releases/R1-S1/IMPLEMENTATION_PLAN.md)、[验证记录](releases/R1-S1/VERIFICATION.md)、[工具说明](../../tools/experiment/README.md)。
@@ -13,6 +13,7 @@
 - S4：固定开发样本的正式知识快照、D1、结构化假设、本机工具、D2 初版、持久化报告和本机页面已接通；可交互的[当前架构图](releases/R1-S4/SYSTEM_ARCHITECTURE.html)展示实际模块与研究边界，离线工程验收及剩余限制见 [S4 验证](releases/R1-S4/VERIFICATION.md)。工程演练不产生科研效果结论。
 - S5：正式知识增至三个真实补丁对的六条片段，独立验证三组；三策略单样本页面可试跑，见 [S5 验证](releases/R1-S5/VERIFICATION.md)。
 - S6：批量对照页面、逐项 JSONL、续跑防重复和保守指标展示已实施；数据规模与后续实验方案见[研究设计](releases/R1-S6/RESEARCH_DESIGN.md)，工程证据见[验证](releases/R1-S6/VERIFICATION.md)。
+- S7：442 组待审语料生成 742 条向量并与正式知识隔离；S8 正逐项核验原件、扩展批量入口，尚未完成候选转正。见 [S8 阶段验证](releases/R1-S8/VERIFICATION.md)。
 - 使用者为论文作者与审核者；正式标签、数据比例及 D1/D2 方法创新结论仍需后续审核与研究证据。
 
 ## 事实源职责
@@ -20,9 +21,9 @@
 | 内容 | 文档 |
 |---|---|
 | 当前执行位置、恢复入口、已知限制 | [PROGRESS](PROGRESS.md) |
-| 当前工程范围 | [R1-S6 SPEC](releases/R1-S6/SPEC.md) |
+| 当前工程范围 | [R1-S8 实施计划](releases/R1-S8/IMPLEMENTATION_PLAN.md) |
 | 下一研发阶段与研究门禁 | [R1-S6 研究设计](releases/R1-S6/RESEARCH_DESIGN.md)、[实施计划](releases/R1-S6/IMPLEMENTATION_PLAN.md)；科研准入仍以 R1-S3 为准 |
-| 实施步骤和验收证据 | 当前 Release 的 IMPLEMENTATION_PLAN / VERIFICATION |
+| 实施步骤和验收证据 | [R1-S8 实施计划](releases/R1-S8/IMPLEMENTATION_PLAN.md)、[阶段验证](releases/R1-S8/VERIFICATION.md) |
 | 实际命令与数据契约 | [tools/experiment/README](../../tools/experiment/README.md) 和根 README |
 | 旧源码调查与重构动机 | [TECH_DESIGN](TECH_DESIGN.md)，历史观察以当前代码核验 |
 | 历史提案与研究路线 | [R0 审核记录](releases/R0-20260918/REVIEW.md)及同目录提案 |

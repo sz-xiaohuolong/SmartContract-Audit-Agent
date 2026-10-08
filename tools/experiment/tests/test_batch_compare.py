@@ -43,6 +43,23 @@ class BatchCompareTest(unittest.TestCase):
         self.assertIsNone(report['metrics']['D1']['inputTokens'])
         self.assertEqual(0, report['requestBounds']['maxRequests'])
         self.assertEqual('COMPLETED', report['status'])
+        self.assertEqual(0, report['metrics']['D1']['reported'])
+        self.assertEqual(2, report['metrics']['D1']['unresolved'])
+
+    def test_按策略显示模型报告数并保留失败未知(self):
+        plan = make_plan(['A', 'B'], ['DENSE', 'D1'], 'real', self.targets, self.state)
+        def runner(sample, mode, strategy):
+            row = self._result(sample, mode, strategy)
+            if sample == 'A' and strategy == 'DENSE':
+                return {**row, 'conclusion': 'VULNERABILITY_REPORTED'}
+            if sample == 'B' and strategy == 'D1':
+                return {**row, 'status': 'FAILED', 'conclusion': 'UNRESOLVED'}
+            return row
+        report = replay_batch(self.store, run_batch(self.store, plan, runner))
+        self.assertEqual(1, report['metrics']['DENSE']['reported'])
+        self.assertEqual(1, report['metrics']['D1']['failed'])
+        self.assertEqual(2, report['metrics']['D1']['unresolved'])
+        self.assertIsNone(report['metrics']['D1']['detectionRecall'])
 
     def test_started_real_item_is_not_recalled_after_interruption(self):
         plan = make_plan(['A'], ['DENSE', 'D1'], 'real', self.targets, self.state)
@@ -81,6 +98,18 @@ class BatchCompareTest(unittest.TestCase):
         self.assertEqual(4, plan['requestBounds']['maxRequests'])
         self.assertEqual(8192, plan['requestBounds']['maxOutputTokens'])
         self.assertEqual(40000, plan['requestBounds']['maxInputBytes'])
+
+    def test_允许完整登记的多个验证目标且仍拒绝开发目标(self):
+        extended = self.targets + [
+            {'sampleId': f'V{i:02d}', 'split': 'validation', 'runnable': True,
+             'fullSourceHash': f'{i:064x}'} for i in range(12)]
+        extended += [{'sampleId': 'DEV', 'split': 'development', 'runnable': True,
+                      'fullSourceHash': 'd' * 64}]
+        ids = [row['sampleId'] for row in extended if row['split'] == 'validation']
+        plan = make_plan(ids, ['D1'], 'offline', extended, self.state)
+        self.assertEqual(14, plan['requestBounds']['samples'])
+        with self.assertRaises(ValueError):
+            make_plan(ids + ['DEV'], ['D1'], 'offline', extended, self.state)
 
     def test_changed_target_source_is_rejected_as_failed_unknown(self):
         plan = make_plan(['A'], ['D1'], 'offline', self.targets, self.state)

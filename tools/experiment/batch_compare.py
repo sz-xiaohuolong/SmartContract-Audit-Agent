@@ -12,7 +12,7 @@ ID = re.compile(r'[0-9a-f]{32}')
 
 
 def make_plan(sample_ids, strategies, mode, targets, state):
-    if (not isinstance(sample_ids, list) or not sample_ids or len(sample_ids) > 3
+    if (not isinstance(sample_ids, list) or not sample_ids
             or len(set(sample_ids)) != len(sample_ids) or
             not isinstance(strategies, list) or not strategies or len(strategies) > 3
             or len(set(strategies)) != len(strategies) or not set(strategies) <= STRATEGIES
@@ -105,6 +105,9 @@ def _summarize(directory, plan):
         metrics[strategy] = {'planned': len(rows), 'completed': sum(row['status'] == 'COMPLETED' for row in finished),
                              'failed': sum(row['status'] != 'COMPLETED' for row in finished),
                              'unknown': sum(row['verdict'] == 'UNKNOWN' for row in finished),
+                             'reported': sum(row['status'] == 'COMPLETED' and row.get('conclusion') == 'VULNERABILITY_REPORTED'
+                                             for row in finished),
+                             'unresolved': sum(row.get('conclusion') == 'UNRESOLVED' for row in finished),
                              'selectedEvidence': sum(row.get('selectedEvidence', 0) for row in finished),
                              'detectionRecall': None, 'precision': None, 'f1': None,
                              'retrievalRecallAtK': None, 'ndcgAtK': None,
