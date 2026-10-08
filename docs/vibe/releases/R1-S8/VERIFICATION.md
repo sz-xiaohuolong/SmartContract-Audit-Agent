@@ -14,6 +14,10 @@ PYTHONPATH=tools/experiment python3 tools/experiment/candidate_admission_queue.p
 
 另抽查 [Proof-of-Patch 固定版本](https://github.com/ASSERT-KTH/Proof-of-Patch/tree/eca2a566326d7636665c45c670698e05ea12a3ac) 的 [AI Arena 077](https://github.com/ASSERT-KTH/Proof-of-Patch/tree/eca2a566326d7636665c45c670698e05ea12a3ac/findings/077)：本机原版 `MergingPool.sol` SHA-256 为 `b0c5b90a1f1ec659047238063433f52cc69fa95091df9af76d155f69a75ab5dd`，补丁版为 `3469e4a579bb2435b33a65bb592c34f4402d4720e05bb089944f11fc86faa7c8`。原始 `claimRewards` 未带重入锁，补丁增加 `ReentrancyGuard` 与 `nonReentrant`。这是真实修复线索，但当前 D1 成对知识契约仅支持重入的“状态写入移到外部调用之前”；该补丁采取重入锁，不能伪造成现有条件见证。本项保留待审，不作为新增正式知识。Proof-of-Patch 的 001、041、042、054、070、098 等条目虽然有访问控制或重入元数据提示，原始文字描述分别涉及上限、不正确索引、预言机更新、转账／无代码地址和暂停问题；不能凭类别字段转正。
 
+进一步核对 [Proof-of-Patch Cooler 049](https://github.com/ASSERT-KTH/Proof-of-Patch/tree/eca2a566326d7636665c45c670698e05ea12a3ac/patches/049)：其本地补丁确实给 `rollLoan` 增加调用者检查；[Sherlock 原始问题 #200](https://github.com/sherlock-audit/2023-08-cooler-judging/issues/200) 被标为重复报告，[主问题 #243](https://github.com/sherlock-audit/2023-08-cooler-judging/issues/243) 还描述贷款方抢跑更换条款的路径。而元数据指向的[维护者 PR #54](https://github.com/ohmzeus/Cooler/pull/54) 将 `rollLoan` 整体替换为另一套延长贷款流程，不能把数据集中的单行检查称为该 PR 的原样修复。因此它也只保留为待审修复线索。
+
+另下载 [CoinFabrik Solidity RnD](https://github.com/CoinFabrik/solidity-rnd/tree/efd709441987a28bd7220d79b2d872f8c7cfa8d9) 的固定修订，仅读取 15 份 `findings.json` 后统计为 171 条 finding、15 个项目组。其中大小写合并后的重入类别只有 4 条、分属 4 个项目；报告中有“最佳实践”而非已证实可利用事件。抽查 Venus `PegStability.sol` 的前后文件，补丁同时升级编译器并重写大段业务逻辑，无法直接把整份差异归因于单个重入 finding。该来源可继续逐项筛选，不能凭 171 条 finding 将向量库扩成正式配对知识。
+
 ## 批量入口与本机重放
 
 批量计划不再限制最多 3 个目标，但服务端只接受正式谱系清单中 `validation` 且 `runnable` 的样本；未知、开发或锁定目标仍拒绝。新验证目标可在已审谱系记录中指定 `evaluationFunction`，由源码解析确认函数唯一且满足提示大小限制。页面每策略增加“报告漏洞／未决”原始运行计数，失败、未知、缺失 usage 保持独立。它们不是准确率或 D1 改进指标。
