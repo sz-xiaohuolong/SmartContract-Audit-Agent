@@ -23,6 +23,11 @@ public final class ConditionBinder {
                 .anyMatch(v -> v.contract().equals(scope.contract()) && (resource.equals(v.name()) || resource.startsWith(v.name() + "[")));
             if (!scope.complete() || facts.status().equals("FAILED")) {
                 reason = "该作用域包含未支持语义，不能从缺失事实推断保护存在或不存在";
+            } else if (condition.predicate().equals("NON_REENTRANT") && subject != null && resource != null) {
+                boolean observed = scope.modifiers().contains("nonReentrant");
+                state = observed == condition.expected() ? "SUPPORTED" : "CONTRADICTED";
+                reason = observed ? "目标函数显式声明 nonReentrant 修饰器；不推断其运行时覆盖"
+                    : "目标函数未声明 nonReentrant；不推断其他重入保护不存在";
             } else if (subject != null && knownResource) {
                 String kind = condition.predicate().equals("CHECK_BEFORE") ? "CHECK" : "WRITE";
                 boolean invalidated = false, aliasUnknown = false;

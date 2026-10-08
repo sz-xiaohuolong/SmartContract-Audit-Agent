@@ -39,7 +39,9 @@ public final class D1Retriever implements RetrievalStrategy {
             cases.add(a.caseId()); cases.add(b.caseId()); texts.add(a.text()); texts.add(b.text());
         }
         var gaps = new ArrayList<String>();
-        if (selected.isEmpty()) gaps.add(pairs.isEmpty() ? "没有经审核且条件适用的完整对比配对" : "完整配对超过预算或重复内容限制");
+        if (selected.isEmpty()) gaps.add(pairs.isEmpty() ?
+            (pool.schemaVersion().equals("1") ? "没有经审核且条件适用的完整对比配对" : "没有条件适用的暂定对比配对")
+            : "完整配对超过预算或重复内容限制");
         for (var entry : bound.entrySet()) if (entry.getValue().applicability().equals("UNKNOWN")) gaps.add("条件未知：" + entry.getKey());
         return RetrievalSupport.bundle("D1", facts, target, pool, budget, selected, gaps);
     }

@@ -16,6 +16,13 @@
     </header>
     <section class="agent-grid">
       <div class="agent-card agent-card-wide">
+        <span class="agent-step">探索 / 742 条待审参考</span>
+        <h2>公开样本的三策略检索对照</h2>
+        <p class="agent-muted">对本机 SmartBugs 源码运行离线检索，使用独立的待审向量集合。这里仅比较检索链路，不调用付费模型，也不计算漏洞检测准确率；正式知识库与下方正式实验保持独立。</p>
+        <div class="agent-actions"><button id="exploratory-start">运行或续跑离线检索</button><button id="exploratory-refresh" class="agent-secondary">刷新结果</button></div>
+        <div id="exploratory-result" class="agent-output">读取探索性报告中…</div>
+      </div>
+      <div class="agent-card agent-card-wide">
         <span class="agent-step">01 / 批量对照</span>
         <h2>选择独立验证样本与检索策略</h2>
         <p class="agent-muted">每种组合只运行一次。离线模式使用固定空假设，仅检查检索和报告链路；真实模式会逐项调用已配置的模型，并保留失败与未知结果。</p>

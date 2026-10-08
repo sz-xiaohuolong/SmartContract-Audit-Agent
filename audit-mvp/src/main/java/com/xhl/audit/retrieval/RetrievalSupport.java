@@ -39,28 +39,37 @@ final class RetrievalSupport {
     }
     static void validateCandidate(Candidate candidate) {
         require(candidate != null && text(candidate.caseId()) && text(candidate.chunkId()) && text(candidate.pairId())
-            && Set.of("VULNERABLE", "DEFENSE").contains(candidate.role())
+            && Set.of("VULNERABLE", "DEFENSE", "REFERENCE").contains(candidate.role())
             && Set.of("REENTRANCY", "ACCESS_CONTROL").contains(candidate.mechanism())
             && (candidate.mechanism().equals("REENTRANCY") ? candidate.riskKind().equals("CALL")
                 : Set.of("WRITE", "CALL").contains(candidate.riskKind()))
-            && text(candidate.text()) && text(candidate.provenance()) && candidate.reviewed()
+            && text(candidate.text()) && text(candidate.provenance())
             && Double.isFinite(candidate.denseScore()) && Double.isFinite(candidate.lexicalScore())
-            && candidate.conditions() != null && !candidate.conditions().isEmpty());
+            && candidate.conditions() != null);
         var conditions = new HashSet<String>();
         for (Condition condition : candidate.conditions()) {
-            require(condition != null && Set.of("CHECK_BEFORE", "STATE_WRITE_BEFORE").contains(condition.predicate())
+            require(condition != null && Set.of("CHECK_BEFORE", "STATE_WRITE_BEFORE", "NON_REENTRANT").contains(condition.predicate())
                 && text(condition.subject()) && text(condition.resource()) && condition.expected() != null);
             require(conditions.add(condition.predicate() + ":" + condition.subject() + ":" + condition.resource()));
         }
     }
     static void validate(ProgramFacts facts, Target target, CandidatePool pool, Budget budget) {
         validateFacts(facts, target);
-        require(pool != null && "1".equals(pool.schemaVersion()) && hash(pool.snapshotId()) && facts.sourceHash().equals(pool.sourceHash()) && pool.candidates() != null && pool.candidates().size() <= 1000);
+        require(pool != null && Set.of("1", "exploratory-1").contains(pool.schemaVersion())
+            && hash(pool.snapshotId()) && facts.sourceHash().equals(pool.sourceHash())
+            && pool.candidates() != null && pool.candidates().size() <= 1000);
         require(budget != null && budget.maxBytes() > 0 && budget.maxBytes() <= 1_048_576 && budget.maxCases() > 0 && budget.maxCases() <= 1000);
         var ids = new HashSet<String>();
         var cases = new HashMap<String, Candidate>();
         for (Candidate candidate : pool.candidates()) {
             validateCandidate(candidate);
+            require(candidate.reviewed() == pool.schemaVersion().equals("1"));
+            if (pool.schemaVersion().equals("1"))
+                require(!candidate.role().equals("REFERENCE") && !candidate.conditions().isEmpty());
+            else
+                require(candidate.role().equals("REFERENCE") == candidate.conditions().isEmpty());
+            if (candidate.conditions().stream().anyMatch(c -> c.predicate().equals("NON_REENTRANT")))
+                require(pool.schemaVersion().equals("exploratory-1") && candidate.mechanism().equals("REENTRANCY"));
             require(ids.add(candidate.chunkId()));
             Candidate previous = cases.putIfAbsent(candidate.caseId(), candidate);
             if (previous != null) require(previous.pairId().equals(candidate.pairId()) && previous.role().equals(candidate.role())

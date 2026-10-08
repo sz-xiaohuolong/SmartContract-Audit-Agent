@@ -1,5 +1,28 @@
 # R1-S8 批量准入与正式对照阶段记录
 
+## 2026-10-08 探索性数百条知识检索补充
+
+按用户要求，已在**不激活正式快照**的前提下，对 `r1pending_3ba8dd13979d18e0087177521ce5583e` 中的 742 条待审向量完成 Milvus 全量读回，并将其作为探索性 D1 候选库。来源为 AutoMESC 300 组改动前后片段（600 条）和 FORGE-Curated 142 条审计参考。两者原始准入状态均仍为 `PENDING`。对 AutoMESC 仅用可复核的句法差异暂定出 12 组可对照条件（重入修饰器 6 组、调用者检查 6 组）；其余 288 组和 FORGE 条目不伪装成安全反例。
+
+从本机 SmartBugs Curated 文档提取访问控制 18、重入 31 个公开源码作为**探索目标**。按来源项目、源码字节和归一化 5-gram 的 Jaccard／片段包含度筛查；入选目标对待审库的最大相似度为 0.815789，低于预设 0.85 排除阈值。它们只有文档头给出的漏洞行标签，未取得独立盲审的目标—案例适用性标签；不能作为锁定测试或真实安全负例。SolidiFI 注入样本本轮没有混入这一组。
+
+三策略在每个目标上共用固定候选集合、查询向量和候选池；Milvus 返回分数与本地固定向量余弦逐条核对，召回暂定配对时补齐另一侧。每条候选统一截取前 700 字符作为检索展示片段，检索上下文统一限制为 2048 UTF-8 字节、最多 4 条案例；这**仍不是完整提示 token 公平**。逐样本写入 JSONL，重启会跳过已有完成、未知和失败项；失败不会映射为安全。`FIELD_FILTER` 不会把无条件、未定性的参考条目计作适用证据。
+
+本机批次 `ae7c3a073454646ea1a0701dfca5b097`：计划 49、完成检索 32、失败 0、事实无法唯一绑定而未知 17。已完成目标中，向量召回 32 个目标有入选片段，简单条件过滤 3 个，D1 仅 1 个目标得到暂定正反配对（访问控制）；D1 重入配对入选为 0。逐样本记录、目标来源/摘要/隔离字段和三策略入选 ID 位于 `.local/d1-exploratory-runs/ae7c3a073454646ea1a0701dfca5b097/` 的 `plan.json`、`results.jsonl`、`report.json`。检测召回率、精确率、D1 改进均为 `null`，因为本轮**没有运行大模型审计，也没有可靠的独立适用性真值**。这轮直接说明目前的 742 条虽达到数量级，但可绑定的对比知识过少，不能据此声称 D1 改善审计。
+
+重放命令（固定本机 BGE 权重与 Milvus；只读向量库、零付费模型请求）：
+
+```bash
+mvn clean verify
+PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v
+node --check tools/experiment/local_ui/agent.js
+HF_HUB_OFFLINE=1 PYTHONPATH=tools/experiment .local/d1-embed-venv/bin/python tools/experiment/exploratory_probe.py
+PYTHONPATH=tools/experiment python3 tools/experiment/local_ui.py --port 8771
+curl --noproxy '*' -fsS http://127.0.0.1:8771/api/agent/exploratory
+```
+
+验证结果：Maven 54 项、Python 155 项、JavaScript 语法检查通过；实际批次 49 项逐样本保存、失败 0；页面 API 已读回同一批次与 `null` 效果指标。页面地址为 `http://127.0.0.1:8771/agent.html`，顶部“公开样本的三策略检索对照”可查看记录或点击重跑。正式活动快照仍为 `5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3`，对应 3 组／6 条经审知识；探索结果不改变正式研究结论。
+
 更新：2026-10-08。本阶段**未完成批量转正或正式 D1 效果实验**。当前活动知识快照仍为 3 个已审事件、6 条向量，独立验证仍为 3 个事件。以下是已完成的工程准备和可复核阻塞。
 
 ## 候选逐项核对

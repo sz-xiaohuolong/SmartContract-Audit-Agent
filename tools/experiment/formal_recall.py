@@ -28,6 +28,8 @@ def select_strategy(view, strategy):
     evaluations = view['d1'].get('evaluations', {})
     selected, parts, used = [], [], 0
     for candidate in pool['candidates']:
+        if strategy == 'FIELD_FILTER' and (candidate['role'] == 'REFERENCE' or not candidate['conditions']):
+            continue
         if strategy == 'FIELD_FILTER' and evaluations.get(candidate['chunkId'], {}).get('applicability') not in ('SUPPORTED', 'CONTRADICTED'):
             continue
         snippet = f"[{candidate['caseId']}/{candidate['chunkId']}|{candidate['role']}]\n{candidate['text']}\n"

@@ -59,7 +59,9 @@ class AgentUiTest(unittest.TestCase):
             agent_preview=lambda sample: {'sampleId': sample, 'pool': {'candidates': []},
                 'd1': {'status': 'NO_RISK_FACT', 'selected': [], 'context': '', 'evaluations': {}}},
             agent_runner=run,
-            agent_store=Path(self.temp.name))
+            agent_store=Path(self.temp.name),
+            exploratory_store=Path(self.temp.name) / 'exploratory',
+            exploratory_runner=lambda: self.calls.append(('exploratory', 'offline')))
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
 
@@ -107,6 +109,21 @@ class AgentUiTest(unittest.TestCase):
             b'{"sampleId":"AC-ASE-006","mode":"offline","strategy":"FIELD_FILTER"}', headers)
         self.assertEqual(201, status)
         self.assertEqual([('AC-ASE-006', 'offline', 'FIELD_FILTER')], self.calls)
+
+    def test_探索入口只有点击才运行且不会接受请求正文(self):
+        status, body = self.request('GET', '/api/agent/exploratory')
+        self.assertEqual(200, status)
+        self.assertIsNone(json.loads(body)['report'])
+        self.assertEqual([], self.calls)
+        self.assertEqual(409, self.request('POST', '/api/agent/exploratory', b'{}')[0])
+        self.assertEqual(403, self.request('POST', '/api/agent/exploratory', None,
+                                         {'Origin': 'https://example.com'})[0])
+        self.assertEqual(202, self.request('POST', '/api/agent/exploratory')[0])
+        for _ in range(20):
+            if self.calls:
+                break
+            threading.Event().wait(.01)
+        self.assertEqual([('exploratory', 'offline')], self.calls)
 
 
 if __name__ == '__main__': unittest.main()

@@ -151,4 +151,40 @@ class RetrievalTest {
             List.of(new Condition("CHECK_BEFORE", "$actor", "$authority", true)), true, "fixture", 1, 1);
         assertEquals("SUPPORTED", new ConditionBinder().bind(facts(List.of(check, call), true), query, defense).applicability());
     }
+
+    @Test void exploratoryPoolAcceptsOnlyUnreviewedCandidatesAndFormalStillRejectsThem() {
+        var original = candidate("bad", "pair", "VULNERABLE", .9);
+        var provisional = new Candidate(original.caseId(), original.chunkId(), original.pairId(),
+            original.role(), original.mechanism(), original.riskKind(), original.text(),
+            original.conditions(), false, original.provenance(), original.denseScore(), original.lexicalScore());
+        var facts = facts(List.of(write), true);
+        assertThrows(IllegalArgumentException.class, () -> new DenseRetriever().retrieve(facts, target(),
+            pool(provisional), new Budget(1000, 2)));
+        var exploratory = new CandidatePool("exploratory-1", HASH, HASH, List.of(provisional));
+        assertEquals("DENSE", new DenseRetriever().retrieve(facts, target(), exploratory, new Budget(1000, 2)).strategy());
+        assertThrows(IllegalArgumentException.class, () -> new DenseRetriever().retrieve(facts, target(),
+            new CandidatePool("exploratory-1", HASH, HASH, List.of(original)), new Budget(1000, 2)));
+    }
+
+    @Test void reentrancyModifierBindingIsSyntacticAndIncompleteScopeIsUnknown() {
+        var call = new Fact("risk-call", scope.id(), "CALL", "msg.sender", "", 1, 4);
+        var query = new Target("REENTRANCY", "risk-call", Map.of("actor", "msg.sender", "resource", "balance"));
+        var provisional = new Candidate("patched", "patched-chunk", "pair", "DEFENSE", "REENTRANCY", "CALL", "修饰器对照",
+            List.of(new Condition("NON_REENTRANT", "$actor", "$resource", true)), false, "pending", .9, .1);
+        var withModifier = new ProgramFacts("1", HASH, "COMPLETE", List.of(),
+            List.of(new Scope(scope.id(), scope.contract(), scope.name(), List.of("nonReentrant"), true)), List.of(call), List.of());
+        assertEquals("SUPPORTED", new ConditionBinder().bind(withModifier, query, provisional).applicability());
+        assertEquals("CONTRADICTED", new ConditionBinder().bind(facts(List.of(call), true), query, provisional).applicability());
+        assertEquals("UNKNOWN", new ConditionBinder().bind(facts(List.of(call), false), query, provisional).applicability());
+    }
+
+    @Test void exploratoryReferenceCanBeRecalledButCannotFormD1Pair() {
+        var reference = new Candidate("report", "report-chunk", "unpaired", "REFERENCE", "ACCESS_CONTROL", "WRITE", "待审报告",
+            List.of(), false, "pending", .9, .1);
+        var exploratory = new CandidatePool("exploratory-1", HASH, HASH, List.of(reference));
+        assertEquals(1, new DenseRetriever().retrieve(facts(List.of(write), true), target(), exploratory, new Budget(1000, 2)).selected().size());
+        assertEquals(0, new D1Retriever().retrieve(facts(List.of(write), true), target(), exploratory, new Budget(1000, 2)).selected().size());
+        assertThrows(IllegalArgumentException.class, () -> new DenseRetriever().retrieve(facts(List.of(write), true), target(),
+            pool(reference), new Budget(1000, 2)));
+    }
 }

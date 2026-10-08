@@ -148,7 +148,7 @@ def pending_knowledge_status(root, index):
 
 def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp_status=None,
                   agent_targets=None, agent_status=None, agent_preview=None, agent_runner=None, agent_store=None,
-                  batch_store=None):
+                  batch_store=None, exploratory_store=None, exploratory_runner=None):
     root = Path(root).resolve()
     store = Path(store) if store is not None else root / '.local/experiment-ui'
     runner = runner or (lambda: run_demo(root))
@@ -156,6 +156,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
     mvp_status = mvp_status or (lambda: mvp_runtime.active(root)[0])
     agent_store = Path(agent_store) if agent_store is not None else root / '.local/audit-runs'
     batch_store = Path(batch_store) if batch_store is not None else root / '.local/audit-batches'
+    exploratory_store = Path(exploratory_store) if exploratory_store is not None else root / '.local/d1-exploratory-runs'
     if agent_targets is None or agent_status is None or agent_preview is None or agent_runner is None:
         from audit_run import run_once
         from formal_targets import list_targets, load_target
@@ -187,6 +188,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             dependencies.index, dependencies.encoder, dependencies.java_retriever))
         agent_runner = agent_runner or (lambda sample, mode, strategy='D1': run_once(root, sample, mode, dependencies, strategy))
     run_lock = threading.Lock()
+    exploratory_lock = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
         def _send(self, status, data, content_type='application/json; charset=utf-8', filename=None):
@@ -214,7 +216,20 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 self._send(403, {'error': '仅允许本机访问'})
                 return
             parsed = urlsplit(self.path)
-            if parsed.path == '/api/agent/batches' and not parsed.query:
+            if parsed.path == '/api/agent/exploratory' and not parsed.query:
+                from exploratory_probe import replay_probe
+                plans = sorted((path for path in exploratory_store.glob('*/plan.json')
+                                if RUN_ID.fullmatch(path.parent.name)),
+                               key=lambda path: path.stat().st_mtime, reverse=True)
+                if not plans:
+                    self._send(200, {'running': exploratory_lock.locked(), 'report': None})
+                else:
+                    try:
+                        report = replay_probe(exploratory_store, plans[0].parent.name)
+                        self._send(200, {'running': exploratory_lock.locked(), 'report': report})
+                    except (OSError, ValueError, KeyError, TypeError):
+                        self._send(500, {'error': '探索性逐样本报告损坏'})
+            elif parsed.path == '/api/agent/batches' and not parsed.query:
                 from batch_compare import replay_batch
                 rows = []
                 for path in batch_store.glob('*/plan.json'):
@@ -382,8 +397,33 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 return
             resume_match = re.fullmatch(r'/api/agent/batches/([0-9a-f]{32})/resume', self.path)
             if self.path not in ('/api/runs', '/api/mvp/run', '/api/agent/runs',
-                                 '/api/agent/batches/plan', '/api/agent/batches') and not resume_match:
+                                 '/api/agent/batches/plan', '/api/agent/batches',
+                                 '/api/agent/exploratory') and not resume_match:
                 self._not_found()
+                return
+            if self.path == '/api/agent/exploratory':
+                if self.headers.get('Content-Length', '0') != '0' or not exploratory_lock.acquire(blocking=False):
+                    self._send(409, {'error': '探索任务正在运行或请求含有多余正文'}); return
+                def explore_work():
+                    try:
+                        if exploratory_runner is not None:
+                            exploratory_runner()
+                        else:
+                            python = root / '.local/d1-embed-venv/bin/python'
+                            script = root / 'tools/experiment/exploratory_probe.py'
+                            environment = dict(os.environ, HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1',
+                                               PYTHONPATH=str(root / 'tools/experiment'))
+                            completed = subprocess.run([str(python), str(script)], cwd=root,
+                                env=environment, capture_output=True, timeout=300)
+                            if completed.returncode != 0:
+                                raise RuntimeError('探索性检索失败')
+                    except (OSError, subprocess.TimeoutExpired, RuntimeError):
+                        exploratory_store.mkdir(parents=True, exist_ok=True)
+                        atomic_json(exploratory_store / 'last-error.json', {'error': '探索性检索失败，请检查固定模型、Milvus 与报告目录'})
+                    finally:
+                        exploratory_lock.release()
+                threading.Thread(target=explore_work, daemon=True).start()
+                self._send(202, {'running': True, 'mode': 'EXPLORATORY_RETRIEVAL_ONLY', 'modelCalls': 0})
                 return
             if resume_match:
                 from batch_compare import make_plan, replay_batch, run_batch

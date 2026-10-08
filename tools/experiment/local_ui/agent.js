@@ -31,14 +31,43 @@ async function load() {
     showScope();
     show('snapshot', state.ready ? `${state.snapshotId}\n${state.collection || ''}` : '正式快照暂不可用');
     const pending = state.pendingKnowledge;
-    show('knowledge-status', state.ready ? `本次实验使用正式知识 ${state.formalVectors ?? '待核对'} 条向量。${pending ? `另有 ${pending.vectors} 条待审向量（AutoMESC ${pending.automescPairs} 组改动、FORGE ${pending.forgeVfp} 条审计资料），仅供在 Attu 查看，不进入 D1 实验。` : '待审语料未就绪或未入库。'}` : '正式知识快照暂不可用。');
+    show('knowledge-status', state.ready ? `下方正式实验使用经审知识 ${state.formalVectors ?? '待核对'} 条向量。${pending ? `上方探索性检索另用 ${pending.vectors} 条待审向量（AutoMESC ${pending.automescPairs} 组改动、FORGE ${pending.forgeVfp} 条审计资料），不会激活为正式知识。` : '待审语料未就绪或未入库。'}` : '正式知识快照暂不可用。');
     show('provider', state.realReady ? `真实运行：${state.endpoint} · ${state.model}` : '真实模型配置未就绪；仍可查看历史与目标。');
     byId('real').disabled = !state.ready || !state.realReady;
     byId('offline').disabled = !state.ready;
     renderBatchChoices();
     await loadBatchHistory();
     await loadHistory();
+    await loadExploratory();
   } catch (error) { show('notice', error.message); }
+}
+async function loadExploratory() {
+  try {
+    const state = await request('/api/agent/exploratory');
+    const region = byId('exploratory-result'); region.replaceChildren();
+    if (!state.report) { region.textContent = state.running ? '正在检索并逐样本保存。' : '尚无探索性运行。'; return; }
+    const report = state.report;
+    const rows = report.results.filter(item => item.status === 'COMPLETED');
+    const count = strategy => rows.filter(item => item.selected[strategy]?.length).length;
+    const summary = document.createElement('p');
+    summary.textContent = `${state.running ? '运行中 · ' : ''}计划 ${report.denominators.planned} 个源码，已完成 ${report.denominators.completed}，失败 ${report.denominators.failed}，未知 ${report.denominators.unknown}。有证据入选的目标：向量 ${count('DENSE')}、条件过滤 ${count('FIELD_FILTER')}、D1 ${count('D1')}。`;
+    region.append(summary);
+    const note = document.createElement('p'); note.className = 'agent-muted';
+    note.textContent = '入选数量只反映检索覆盖；待审补丁与仅来源头标签不能证明哪种策略更会发现真实漏洞。检测召回率与 D1 增益保持空值。';
+    region.append(note);
+    const details = document.createElement('details');
+    const title = document.createElement('summary'); title.textContent = `查看 ${report.results.length} 条逐样本检索记录`; details.append(title);
+    const body = document.createElement('pre'); body.textContent = json(report.results); details.append(body); region.append(details);
+    if (state.running) setTimeout(loadExploratory, 2000);
+  } catch (error) { show('exploratory-result', error.message); }
+}
+async function startExploratory() {
+  byId('exploratory-start').disabled = true;
+  try {
+    await request('/api/agent/exploratory', {method: 'POST'});
+    await loadExploratory();
+  } catch (error) { show('exploratory-result', error.message); }
+  finally { byId('exploratory-start').disabled = false; }
 }
 function renderBatchChoices() {
   const region = byId('batch-targets');
@@ -223,4 +252,6 @@ byId('batch-plan').onclick = previewBatchPlan;
 byId('batch-start').onclick = startBatch;
 byId('offline').onclick = () => run('offline');
 byId('real').onclick = () => run('real');
+byId('exploratory-start').onclick = startExploratory;
+byId('exploratory-refresh').onclick = loadExploratory;
 load();
