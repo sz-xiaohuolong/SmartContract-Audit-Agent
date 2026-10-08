@@ -31,8 +31,11 @@ def validate_manifest(manifest):
         paths.add(path)
         if not sha256_value(row.get("source_hash")) or row.get("exact_group") != row["source_hash"]:
             raise ValueError("源码摘要与字节组不一致")
-        if (row.get("review_status") != "REVIEWED" or not nonempty(row.get("origin"))
-                or not nonempty(row.get("project_group"))):
+        status = row.get("review_status")
+        if (status not in ("REVIEWED", "AUTO_LABELED") or not nonempty(row.get("origin"))
+                or not nonempty(row.get("project_group"))
+                or status == "AUTO_LABELED" and (row.get("evidence_tier") != "HEURISTIC"
+                    or not nonempty(row.get("label_rule")))):
             raise ValueError("来源与项目谱系必须经审核")
         clones = row.get("clone_groups")
         if not isinstance(clones, list) or any(not nonempty(c) for c in clones) or len(set(clones)) != len(clones):

@@ -21,13 +21,22 @@ public final class ConditionBinder {
             var evidence = new ArrayList<String>();
             boolean knownResource = resource != null && facts.stateVariables().stream()
                 .anyMatch(v -> v.contract().equals(scope.contract()) && (resource.equals(v.name()) || resource.startsWith(v.name() + "[")));
-            if (!scope.complete() || facts.status().equals("FAILED")) {
+            boolean modifierPredicate = Set.of("NON_REENTRANT", "ONLY_OWNER", "HAS_ROLE", "CUSTOM_LOCK").contains(condition.predicate());
+            boolean modifierObserved = scope.modifiers().stream().anyMatch(name -> switch (condition.predicate()) {
+                case "NON_REENTRANT" -> name.equalsIgnoreCase("nonReentrant");
+                case "ONLY_OWNER" -> name.equalsIgnoreCase("onlyOwner");
+                case "HAS_ROLE" -> name.equalsIgnoreCase("onlyRole") || name.equalsIgnoreCase("hasRole");
+                case "CUSTOM_LOCK" -> name.toLowerCase(java.util.Locale.ROOT).matches(".*(?:lock|reentr|mutex).*");
+                default -> false;
+            });
+            if (modifierPredicate && modifierObserved && subject != null && resource != null) {
+                state = condition.expected() ? "SUPPORTED" : "CONTRADICTED";
+                reason = "目标函数显式声明匹配的防护修饰器；不推断修饰器实现的运行时覆盖";
+            } else if (!scope.complete() || facts.status().equals("FAILED")) {
                 reason = "该作用域包含未支持语义，不能从缺失事实推断保护存在或不存在";
-            } else if (condition.predicate().equals("NON_REENTRANT") && subject != null && resource != null) {
-                boolean observed = scope.modifiers().contains("nonReentrant");
-                state = observed == condition.expected() ? "SUPPORTED" : "CONTRADICTED";
-                reason = observed ? "目标函数显式声明 nonReentrant 修饰器；不推断其运行时覆盖"
-                    : "目标函数未声明 nonReentrant；不推断其他重入保护不存在";
+            } else if (modifierPredicate && subject != null && resource != null) {
+                state = condition.expected() ? "CONTRADICTED" : "SUPPORTED";
+                reason = "目标函数未声明该名称的修饰器；不推断其他防护不存在";
             } else if (subject != null && knownResource) {
                 String kind = condition.predicate().equals("CHECK_BEFORE") ? "CHECK" : "WRITE";
                 boolean invalidated = false, aliasUnknown = false;

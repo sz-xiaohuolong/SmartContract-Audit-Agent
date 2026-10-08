@@ -148,7 +148,8 @@ def pending_knowledge_status(root, index):
 
 def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp_status=None,
                   agent_targets=None, agent_status=None, agent_preview=None, agent_runner=None, agent_store=None,
-                  batch_store=None, exploratory_store=None, exploratory_runner=None):
+                  batch_store=None, exploratory_store=None, exploratory_runner=None,
+                  auto_store=None, auto_targets=None, auto_runtime=None):
     root = Path(root).resolve()
     store = Path(store) if store is not None else root / '.local/experiment-ui'
     runner = runner or (lambda: run_demo(root))
@@ -157,6 +158,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
     agent_store = Path(agent_store) if agent_store is not None else root / '.local/audit-runs'
     batch_store = Path(batch_store) if batch_store is not None else root / '.local/audit-batches'
     exploratory_store = Path(exploratory_store) if exploratory_store is not None else root / '.local/d1-exploratory-runs'
+    auto_store = Path(auto_store) if auto_store is not None else root / '.local/auto-benchmark-runs'
     if agent_targets is None or agent_status is None or agent_preview is None or agent_runner is None:
         from audit_run import run_once
         from formal_targets import list_targets, load_target
@@ -170,7 +172,9 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             values = {'ready': True, 'snapshotId': pointer['snapshot_id'],
                       'collection': pointer['collection'], 'maxRequestsPerClick': 1,
                       'maxOutputTokens': 2048, 'researchEligible': False,
-                      'formalVectors': len(snapshot['rows'])}
+                      'formalVectors': len(snapshot['rows']),
+                      'knowledgeTier': ('AUTO_LABELED' if all(row['review_status'] == 'AUTO_LABELED'
+                          for row in snapshot['manifest']['samples']) else 'REVIEWED')}
             try:
                 values['pendingKnowledge'] = pending_knowledge_status(root, dependencies.index)
             except (OSError, ValueError, KeyError, TypeError):
@@ -187,6 +191,22 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
         agent_preview = agent_preview or (lambda sample: formal_preview(root, load_target(root, sample),
             dependencies.index, dependencies.encoder, dependencies.java_retriever))
         agent_runner = agent_runner or (lambda sample, mode, strategy='D1': run_once(root, sample, mode, dependencies, strategy))
+    if auto_targets is None:
+        from functools import lru_cache
+        from benchmark_targets import load_benchmark_targets
+        from exploratory_corpus import load_corpus
+        @lru_cache(maxsize=1)
+        def default_auto_targets():
+            corpus = load_corpus(root / '.local/dataset-candidates/r1-pending')
+            return load_benchmark_targets(root, list(corpus['rows'].values()))
+        auto_targets = default_auto_targets
+    if auto_runtime is None:
+        from benchmark_runtime import BenchmarkRuntime
+        def default_auto_runtime():
+            prepared = _agent_dependencies(root)
+            return BenchmarkRuntime(root, prepared.index, prepared.encoder,
+                                    prepared.model_runner, prepared.java_retriever)
+        auto_runtime = default_auto_runtime
     run_lock = threading.Lock()
     exploratory_lock = threading.Lock()
 
@@ -216,7 +236,51 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 self._send(403, {'error': '仅允许本机访问'})
                 return
             parsed = urlsplit(self.path)
-            if parsed.path == '/api/agent/exploratory' and not parsed.query:
+            if parsed.path == '/api/agent/auto-benchmark/targets' and not parsed.query:
+                try:
+                    rows = [{key: value for key, value in row.items()
+                             if key not in ('source', 'fullSource', 'modelSource')} for row in auto_targets()]
+                    self._send(200, {'targets': rows})
+                except (OSError, ValueError, KeyError, TypeError):
+                    self._send(503, {'error': '自动知识验证目标暂不可用'})
+            elif parsed.path == '/api/agent/auto-benchmark/runs' and not parsed.query:
+                from benchmark_batch import replay_batch as replay_auto
+                rows = []
+                for path in auto_store.glob('*/plan.json'):
+                    if RUN_ID.fullmatch(path.parent.name):
+                        try:
+                            report = replay_auto(auto_store, path.parent.name)
+                            rows.append({'batchId': path.parent.name, 'status': report['status'],
+                                         'planned': report['denominators']['planned'],
+                                         'mode': report['plan']['mode'], 'time': path.stat().st_mtime_ns})
+                        except (OSError, ValueError, KeyError, TypeError):
+                            continue
+                rows.sort(key=lambda row: row['time'], reverse=True)
+                self._send(200, {'batches': rows[:20]})
+            elif parsed.path.startswith('/api/agent/auto-benchmark/runs/') and not parsed.query:
+                from benchmark_batch import export_csv, replay_batch as replay_auto
+                suffix = parsed.path.removeprefix('/api/agent/auto-benchmark/runs/')
+                parts = suffix.split('/')
+                identifier = parts[0]
+                if (not RUN_ID.fullmatch(identifier) or len(parts) > 2
+                        or len(parts) == 2 and parts[1] not in ('samples.jsonl', 'samples.csv')
+                        or not (auto_store / identifier / 'plan.json').is_file()):
+                    self._not_found()
+                else:
+                    try:
+                        report = replay_auto(auto_store, identifier)
+                        if len(parts) == 1:
+                            error = auto_store / identifier / 'error.json'
+                            self._send(200, {**report, 'error': _json(error).get('error') if error.is_file() else None})
+                        elif parts[1] == 'samples.csv':
+                            self._send(200, export_csv(report).encode(), 'text/csv; charset=utf-8', 'samples.csv')
+                        else:
+                            path = auto_store / identifier / 'samples.jsonl'
+                            self._send(200, path.read_bytes() if path.is_file() else b'',
+                                       'application/x-ndjson; charset=utf-8', 'samples.jsonl')
+                    except (OSError, ValueError, KeyError, TypeError):
+                        self._send(500, {'error': '自动知识批量报告损坏'})
+            elif parsed.path == '/api/agent/exploratory' and not parsed.query:
                 from exploratory_probe import replay_probe
                 plans = sorted((path for path in exploratory_store.glob('*/plan.json')
                                 if RUN_ID.fullmatch(path.parent.name)),
@@ -396,10 +460,72 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 self._send(403, {'error': '请求来源不允许'})
                 return
             resume_match = re.fullmatch(r'/api/agent/batches/([0-9a-f]{32})/resume', self.path)
+            auto_resume_match = re.fullmatch(r'/api/agent/auto-benchmark/runs/([0-9a-f]{32})/resume', self.path)
             if self.path not in ('/api/runs', '/api/mvp/run', '/api/agent/runs',
                                  '/api/agent/batches/plan', '/api/agent/batches',
-                                 '/api/agent/exploratory') and not resume_match:
+                                 '/api/agent/exploratory', '/api/agent/auto-benchmark/plan',
+                                 '/api/agent/auto-benchmark/runs') and not resume_match and not auto_resume_match:
                 self._not_found()
+                return
+            if self.path in ('/api/agent/auto-benchmark/plan', '/api/agent/auto-benchmark/runs') or auto_resume_match:
+                from benchmark_batch import make_plan as make_auto_plan, prepare_batch as prepare_auto
+                from benchmark_batch import replay_batch as replay_auto, run_batch as run_auto
+                length = self.headers.get('Content-Length')
+                if (self.headers.get('Content-Type') != 'application/json' or length is None
+                        or not length.isdecimal() or int(length) > 65536):
+                    self._send(400, {'error': '自动知识批量请求无效'}); return
+                try:
+                    payload = decode(self.rfile.read(int(length)))
+                    if auto_resume_match:
+                        identifier = auto_resume_match.group(1)
+                        previous = replay_auto(auto_store, identifier)
+                        stored = previous['plan']
+                        if set(payload) != {'planHash'} or payload['planHash'] != stored['planHash'] or previous['status'] != 'RUNNING':
+                            raise ValueError('续跑摘要或状态无效')
+                        choice = {key: stored[key] for key in ('sampleIds', 'strategies', 'mode')}
+                    else:
+                        expected = {'sampleIds', 'strategies', 'mode'}
+                        if not isinstance(payload, dict) or set(payload) != (expected if self.path.endswith('/plan') else expected | {'planHash'}):
+                            raise ValueError('批量字段无效')
+                        choice = payload
+                    state = agent_status()
+                    if (not state.get('ready') or state.get('knowledgeTier') not in (None, 'AUTO_LABELED')
+                            or choice['mode'] == 'real' and not state.get('realReady')):
+                        raise ValueError('知识快照或真实模型不可用')
+                    provider = {'endpoint': state.get('endpoint'), 'model': state.get('model')} if choice['mode'] == 'real' else None
+                    plan = make_auto_plan(choice['sampleIds'], choice['strategies'], choice['mode'],
+                                          auto_targets(), state['snapshotId'], provider)
+                    if ((auto_resume_match and plan != stored)
+                            or (not self.path.endswith('/plan') and payload['planHash'] != plan['planHash'])):
+                        raise ValueError('自动知识批量计划已变化')
+                    if self.path.endswith('/plan'):
+                        self._send(200, plan); return
+                except (OSError, ValueError, KeyError, TypeError):
+                    self._send(400, {'error': '自动知识批量选择、快照或计划摘要无效'}); return
+                if not run_lock.acquire(blocking=False):
+                    self._send(409, {'error': '已有批量实验正在运行'}); return
+                identifier = auto_resume_match.group(1) if auto_resume_match else uuid.uuid4().hex
+                try:
+                    auto_store.mkdir(parents=True, exist_ok=True)
+                    if not auto_resume_match:
+                        prepare_auto(auto_store, plan, identifier)
+                except (OSError, ValueError):
+                    run_lock.release()
+                    self._send(500, {'error': '自动知识批量计划保存失败'}); return
+                def auto_work():
+                    try:
+                        runtime = auto_runtime()
+                        if runtime.pointer['snapshot_id'] != plan['snapshotId']:
+                            raise ValueError('自动知识快照已变化')
+                        indexed = {row['sampleId']: row for row in auto_targets()}
+                        run_auto(auto_store, plan, lambda sample, strategy, mode:
+                                 runtime.run(indexed[sample], strategy, mode), identifier)
+                    except Exception:
+                        atomic_json(auto_store / identifier / 'error.json', {'error': '批量执行失败，请检查本机模型、Milvus 或逐样本日志'})
+                    finally:
+                        run_lock.release()
+                threading.Thread(target=auto_work, daemon=True).start()
+                self._send(202, {'batchId': identifier, 'planHash': plan['planHash']})
                 return
             if self.path == '/api/agent/exploratory':
                 if self.headers.get('Content-Length', '0') != '0' or not exploratory_lock.acquire(blocking=False):

@@ -39,6 +39,29 @@ public final class D1Retriever implements RetrievalStrategy {
             cases.add(a.caseId()); cases.add(b.caseId()); texts.add(a.text()); texts.add(b.text());
         }
         var gaps = new ArrayList<String>();
+        if (selected.isEmpty() && pool.schemaVersion().equals("auto-1")) {
+            record SoftPair(Candidate before, Candidate after, double score) {}
+            var soft = new ArrayList<SoftPair>();
+            for (Candidate before : pool.candidates()) for (Candidate after : pool.candidates()) {
+                if (!before.role().equals("VULNERABLE") || !after.role().equals("DEFENSE")
+                    || !before.pairId().equals(after.pairId()) || !before.mechanism().equals(after.mechanism())
+                    || !before.mechanism().equals(target.mechanism())
+                    || before.chunkId().equals(after.chunkId()) || before.text().equals(after.text())) continue;
+                double low = Math.min(before.denseScore(), after.denseScore());
+                double difference = Math.abs(before.denseScore() - after.denseScore());
+                soft.add(new SoftPair(before, after, low + .25 * difference));
+            }
+            soft.sort(Comparator.comparingDouble(SoftPair::score).reversed()
+                .thenComparing(pair -> pair.before().chunkId()));
+            for (SoftPair pair : soft) {
+                var before = new Selection(pair.before(), "SOFT_SUPPORT", bound.get(pair.before().chunkId()));
+                var after = new Selection(pair.after(), "SOFT_CONTRAST", bound.get(pair.after().chunkId()));
+                if (budget.maxCases() < 2 || RetrievalSupport.bytes(before) + RetrievalSupport.bytes(after) > budget.maxBytes()) continue;
+                selected.add(before); selected.add(after);
+                gaps.add("自动标注软配对：仅表示改动前后与目标向量相关，未证明漏洞或补丁安全");
+                break;
+            }
+        }
         if (selected.isEmpty()) gaps.add(pairs.isEmpty() ?
             (pool.schemaVersion().equals("1") ? "没有经审核且条件适用的完整对比配对" : "没有条件适用的暂定对比配对")
             : "完整配对超过预算或重复内容限制");

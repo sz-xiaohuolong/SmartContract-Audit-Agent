@@ -28,10 +28,13 @@ def select_strategy(view, strategy):
     evaluations = view['d1'].get('evaluations', {})
     selected, parts, used = [], [], 0
     for candidate in pool['candidates']:
-        if strategy == 'FIELD_FILTER' and (candidate['role'] == 'REFERENCE' or not candidate['conditions']):
+        if strategy == 'FIELD_FILTER' and view.get('targetMechanism') is not None and candidate['mechanism'] != view['targetMechanism']:
             continue
-        if strategy == 'FIELD_FILTER' and evaluations.get(candidate['chunkId'], {}).get('applicability') not in ('SUPPORTED', 'CONTRADICTED'):
-            continue
+        if strategy == 'FIELD_FILTER' and pool.get('schemaVersion') != 'auto-1':
+            if candidate['role'] == 'REFERENCE' or not candidate['conditions']:
+                continue
+            if evaluations.get(candidate['chunkId'], {}).get('applicability') not in ('SUPPORTED', 'CONTRADICTED'):
+                continue
         snippet = f"[{candidate['caseId']}/{candidate['chunkId']}|{candidate['role']}]\n{candidate['text']}\n"
         length = len(snippet.encode('utf-8'))
         if used + length > CONTEXT_BYTES or len(selected) == 4:
@@ -64,8 +67,10 @@ def java_retrieval(root, source, request):
 
 
 def _risk_fact(facts, target, catalog):
-    risk_kinds = {row['riskKind'] for row in catalog['cases'].values()
-                  if row['mechanism'] == target['mechanism']}
+    risk_kinds = ({'CALL', 'WRITE'} if target['mechanism'] == 'ACCESS_CONTROL'
+                  and any(not row['reviewed'] for row in catalog['cases'].values()) else
+                  {row['riskKind'] for row in catalog['cases'].values()
+                   if row['mechanism'] == target['mechanism']})
     matches = [fact for fact in facts['facts'] if fact['kind'] in risk_kinds
                and target['function'] in fact['scope']
                and target['lineStart'] <= fact['line'] <= target['lineEnd']]
@@ -93,7 +98,7 @@ def preview(root, target, index, encoder, java_runner=None):
         raise ValueError('查询模型未返回唯一向量')
     vector = vector32([float(value) for value in encoded[0]], DIMENSION)
     recalled = _recall_candidates(store, pointer['snapshot_id'], catalog, vector,
-        current['modelSource'], len(snapshot['rows']),
+        current['modelSource'], min(80, len(snapshot['rows'])),
         lambda query, limit: index.search(pointer['collection'], query, limit),
         current['fullSourceHash'], allow_external=True)
     if active_snapshot(store, index) != pointer:

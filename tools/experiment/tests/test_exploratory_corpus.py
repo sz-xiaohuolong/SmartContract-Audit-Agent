@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from exploratory_corpus import load_corpus, verify_remote, candidate_metadata
+from exploratory_corpus import load_corpus, verify_remote, candidate_metadata, _pair_predicate
 from r1_candidate_corpus import documents
 from storage import atomic_json, encode, fingerprint
 
@@ -77,6 +77,19 @@ class ExploratoryCorpusTest(unittest.TestCase):
         atomic_json(self.root / 'receipt.json', receipt)
         with self.assertRaises(ValueError):
             load_corpus(self.root)
+
+    def test_识别访问修饰器角色检查和重入状态顺序(self):
+        base = {'before': 'function take() external { target.call(""); }',
+                'after': 'function take() external onlyOwner { target.call(""); }',
+                'categoryHint': 'ACCESS_CONTROL'}
+        self.assertEqual('ONLY_OWNER', _pair_predicate(base))
+        self.assertEqual('HAS_ROLE', _pair_predicate({**base,
+            'after': 'function take() external { require(hasRole(MINTER_ROLE, msg.sender)); target.call(""); }'}))
+        self.assertEqual('CUSTOM_LOCK', _pair_predicate({**base, 'categoryHint': 'REENTRANCY',
+            'after': 'function take() external lockedCall { target.call(""); }'}))
+        self.assertEqual('STATE_WRITE_BEFORE', _pair_predicate({**base, 'categoryHint': 'REENTRANCY',
+            'before': 'function take() external { target.call(""); balance = 0; }',
+            'after': 'function take() external { balance = 0; target.call(""); }'}))
 
 
 if __name__ == '__main__':

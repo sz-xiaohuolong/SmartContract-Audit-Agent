@@ -2,6 +2,8 @@ const byId = id => document.getElementById(id);
 let targets = [];
 let status = null;
 let batchPlan = null;
+let autoTargets = [];
+let autoPlanState = null;
 const show = (id, value) => { byId(id).textContent = value; };
 const json = value => JSON.stringify(value, null, 2);
 
@@ -31,15 +33,172 @@ async function load() {
     showScope();
     show('snapshot', state.ready ? `${state.snapshotId}\n${state.collection || ''}` : '正式快照暂不可用');
     const pending = state.pendingKnowledge;
-    show('knowledge-status', state.ready ? `下方正式实验使用经审知识 ${state.formalVectors ?? '待核对'} 条向量。${pending ? `上方探索性检索另用 ${pending.vectors} 条待审向量（AutoMESC ${pending.automescPairs} 组改动、FORGE ${pending.forgeVfp} 条审计资料），不会激活为正式知识。` : '待审语料未就绪或未入库。'}` : '正式知识快照暂不可用。');
+    show('knowledge-status', state.ready ? `活动知识快照：${state.formalVectors ?? '待核对'} 条向量，标签等级：${state.knowledgeTier === 'AUTO_LABELED' ? '自动标注（未逐案复核）' : '经审'}。${pending ? `探索集合另存 ${pending.vectors} 条候选（AutoMESC ${pending.automescPairs} 组、FORGE ${pending.forgeVfp} 条）；该集合不作为本页批量模型的活动知识。` : ''}` : '知识快照暂不可用。');
     show('provider', state.realReady ? `真实运行：${state.endpoint} · ${state.model}` : '真实模型配置未就绪；仍可查看历史与目标。');
     byId('real').disabled = !state.ready || !state.realReady;
     byId('offline').disabled = !state.ready;
     renderBatchChoices();
+    await loadAutoTargets();
+    await loadAutoHistory();
     await loadBatchHistory();
     await loadHistory();
     await loadExploratory();
   } catch (error) { show('notice', error.message); }
+}
+async function loadAutoTargets() {
+  try {
+    autoTargets = (await request('/api/agent/auto-benchmark/targets')).targets;
+    const region = byId('auto-targets'); region.replaceChildren();
+    for (const target of autoTargets) {
+      const label = document.createElement('label');
+      const input = document.createElement('input');
+      input.type = 'checkbox'; input.name = 'auto-sample'; input.value = target.sampleId;
+      input.checked = !!target.runnable; input.disabled = !target.runnable;
+      input.onchange = invalidateAutoPlan;
+      label.append(input, document.createTextNode(` ${target.sampleId} · ${target.groundTruth.hasVulnerability ? '数据集漏洞' : '安全对照'}${target.runnable ? '' : ' · 暂不可运行'}`));
+      region.append(label);
+    }
+    show('auto-target-summary', `选择验证目标（${autoTargets.filter(item => item.runnable).length} 个可运行）`);
+    show('auto-notice', '可选择目标与策略，查看计划后启动。');
+    document.querySelectorAll('input[name="auto-strategy"]').forEach(input => input.onchange = invalidateAutoPlan);
+    byId('auto-mode').onchange = invalidateAutoPlan;
+  } catch (error) { show('auto-notice', error.message); }
+}
+function invalidateAutoPlan() {
+  autoPlanState = null;
+  byId('auto-start').disabled = true;
+  show('auto-plan-detail', '选择已改变，请重新查看计划。');
+}
+function autoChoice() {
+  return {sampleIds: [...document.querySelectorAll('input[name="auto-sample"]:checked')].map(input => input.value),
+    strategies: [...document.querySelectorAll('input[name="auto-strategy"]:checked')].map(input => input.value),
+    mode: byId('auto-mode').value};
+}
+async function previewAutoPlan() {
+  invalidateAutoPlan();
+  try {
+    const plan = await request('/api/agent/auto-benchmark/plan', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(autoChoice())});
+    autoPlanState = plan;
+    show('auto-plan-detail', `目标 ${plan.sampleIds.length} × 策略 ${plan.strategies.length}；快照 ${plan.snapshotId}\n模式：${plan.mode === 'real' ? '真实模型' : '固定离线空假设'}；模型：${plan.provider?.model || '不调用'}；最多 ${plan.requestBounds.maxRequests} 次请求、${plan.requestBounds.maxOutputTokens} 输出 token。\n指标按数据集标签计算；失败和未知不算作安全预测。`);
+    byId('auto-start').disabled = false;
+    byId('auto-start').textContent = plan.mode === 'real' ? '开始真实批量审计' : '开始离线批量验收';
+    show('auto-notice', '计划已固定，点击启动后逐项保存。');
+  } catch (error) { show('auto-notice', error.message); }
+}
+function renderAutoReport(report) {
+  const region = byId('auto-result'); region.replaceChildren();
+  const summary = document.createElement('p');
+  summary.textContent = `${report.status === 'COMPLETED' ? '运行结束' : '运行中'} · 计划 ${report.denominators.planned} · 完成 ${report.denominators.completed} · 失败 ${report.denominators.failed} · 未知 ${report.denominators.unknown} · 待处理 ${report.denominators.pending}`;
+  region.append(summary);
+  const table = document.createElement('table'); table.className = 'agent-metrics';
+  const head = document.createElement('tr');
+  for (const title of ['策略', 'TP', 'FP', 'FN', 'TN', 'Precision', 'Recall', 'F1', '类别命中@K', '平均输入 token', '平均输出 token', '平均耗时 ms', '失败/未知']) {
+    const cell = document.createElement('th'); cell.textContent = title; head.append(cell);
+  }
+  table.append(head);
+  for (const [strategy, row] of Object.entries(report.metrics)) {
+    const tr = document.createElement('tr');
+    for (const value of [strategy, row.tp, row.fp, row.fn, row.tn, metric(row.precision), metric(row.recall), metric(row.f1),
+      metric(row.retrievalHitAtK), metric(row.avgInputTokens), metric(row.avgOutputTokens), metric(row.avgDurationMs), `${row.failed}/${row.unknown}`]) {
+      const cell = document.createElement('td'); cell.textContent = String(value); tr.append(cell);
+    }
+    table.append(tr);
+  }
+  region.append(table);
+  const pairedTitle = document.createElement('h3');
+  pairedTitle.textContent = `三策略共同有效目标对照（${report.pairedSamples?.length || 0} 个目标）`;
+  region.append(pairedTitle);
+  const paired = document.createElement('table'); paired.className = 'agent-metrics';
+  const pairedHead = document.createElement('tr');
+  for (const title of ['策略', '共同目标', 'TP', 'FP', 'FN', 'TN', 'Precision', 'Recall', 'F1']) {
+    const cell = document.createElement('th'); cell.textContent = title; pairedHead.append(cell);
+  }
+  paired.append(pairedHead);
+  for (const [strategy, row] of Object.entries(report.pairedMetrics || {})) {
+    const tr = document.createElement('tr');
+    for (const value of [strategy, row.samples, row.tp, row.fp, row.fn, row.tn,
+      metric(row.precision), metric(row.recall), metric(row.f1)]) {
+      const cell = document.createElement('td'); cell.textContent = String(value); tr.append(cell);
+    }
+    paired.append(tr);
+  }
+  region.append(paired);
+  const progressTitle = document.createElement('h3'); progressTitle.textContent = '逐项运行进度';
+  region.append(progressTitle);
+  const progressWrap = document.createElement('div'); progressWrap.className = 'agent-progress-scroll';
+  const progress = document.createElement('table'); progress.className = 'agent-metrics';
+  const progressHead = document.createElement('tr');
+  for (const title of ['目标', '策略', '数据集标签', '状态', '模型结论', '错误类别', '耗时 ms']) {
+    const cell = document.createElement('th'); cell.textContent = title; progressHead.append(cell);
+  }
+  progress.append(progressHead);
+  const resultIndex = new Map(report.samples.map(item => [`${item.sampleId}|${item.strategy}`, item]));
+  for (const sampleId of report.plan.sampleIds) for (const strategy of report.plan.strategies) {
+    const row = resultIndex.get(`${sampleId}|${strategy}`);
+    const tr = document.createElement('tr');
+    const label = report.plan.labels[sampleId].hasVulnerability ? '漏洞' : '安全对照';
+    for (const value of [sampleId, strategy, label, row?.status || '待处理', row?.prediction || '—',
+      row?.errorCategory || '—', metric(row?.durationMs, '—')]) {
+      const cell = document.createElement('td'); cell.textContent = String(value); tr.append(cell);
+    }
+    progress.append(tr);
+  }
+  progressWrap.append(progress); region.append(progressWrap);
+  const note = document.createElement('p'); note.className = 'agent-muted';
+  note.textContent = 'TP/FP/FN/TN 以数据集标签和结构化模型的“报告／未报告”为口径；未报告不等于证明安全。类别命中@K 仅按漏洞类型匹配，是检索代理指标；离线空假设及错误项保持未知。';
+  region.append(note);
+  if (report.poolConflicts.length) {
+    const conflict = document.createElement('p'); conflict.textContent = '候选池不一致：' + report.poolConflicts.join('、'); region.append(conflict);
+  }
+  if (report.error) { const error = document.createElement('p'); error.textContent = report.error; region.append(error); }
+  const details = document.createElement('details');
+  const title = document.createElement('summary'); title.textContent = `查看 ${report.samples.length} 条逐样本记录`; details.append(title);
+  const body = document.createElement('pre'); body.textContent = json(report.samples); details.append(body); region.append(details);
+  byId('auto-jsonl').href = '/api/agent/auto-benchmark/runs/' + report.batchId + '/samples.jsonl';
+  byId('auto-csv').href = '/api/agent/auto-benchmark/runs/' + report.batchId + '/samples.csv';
+  byId('auto-jsonl').hidden = report.samples.length === 0;
+  byId('auto-csv').hidden = report.samples.length === 0;
+}
+async function pollAuto(batchId) {
+  for (let attempt = 0; attempt < 1200; attempt++) {
+    const report = await request('/api/agent/auto-benchmark/runs/' + batchId);
+    renderAutoReport(report);
+    if (report.status === 'COMPLETED' || report.error) {
+      show('auto-notice', `报告目录：.local/auto-benchmark-runs/${batchId}/`);
+      await loadAutoHistory(); return;
+    }
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+  show('auto-notice', `页面等待结束，可从历史记录继续查看 ${batchId}。`);
+}
+async function startAuto() {
+  if (!autoPlanState) return;
+  byId('auto-start').disabled = true;
+  try {
+    const created = await request('/api/agent/auto-benchmark/runs', {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({...autoChoice(), planHash: autoPlanState.planHash})});
+    show('auto-notice', '批量运行中，逐项结果已开始写入。');
+    await pollAuto(created.batchId);
+  } catch (error) { show('auto-notice', error.message); }
+  finally { byId('auto-start').disabled = false; }
+}
+async function loadAutoHistory() {
+  try {
+    const {batches} = await request('/api/agent/auto-benchmark/runs');
+    const region = byId('auto-history'); region.replaceChildren();
+    if (!batches.length) { region.textContent = '暂无自动知识批量历史。'; return; }
+    for (const item of batches) {
+      const button = document.createElement('button'); button.className = 'agent-history';
+      button.textContent = `${item.batchId.slice(0, 8)} · ${item.planned} 项 · ${item.status} · ${item.mode}`;
+      button.onclick = async () => {
+        try { renderAutoReport(await request('/api/agent/auto-benchmark/runs/' + item.batchId)); }
+        catch (error) { show('auto-notice', error.message); }
+      };
+      region.append(button);
+    }
+  } catch (error) { show('auto-history', error.message); }
 }
 async function loadExploratory() {
   try {
@@ -252,6 +411,8 @@ byId('batch-plan').onclick = previewBatchPlan;
 byId('batch-start').onclick = startBatch;
 byId('offline').onclick = () => run('offline');
 byId('real').onclick = () => run('real');
+byId('auto-plan').onclick = previewAutoPlan;
+byId('auto-start').onclick = startAuto;
 byId('exploratory-start').onclick = startExploratory;
 byId('exploratory-refresh').onclick = loadExploratory;
 load();

@@ -55,13 +55,22 @@ class AgentUiTest(unittest.TestCase):
                 + json.dumps({'kind':'RUN_COMPLETE','value':{'resultHash':fingerprint(report)}})+'\n')
             return report
         self.server = create_server(ROOT, 0, agent_targets=lambda: [target],
-            agent_status=lambda: {'ready': True, 'snapshotId': 's'},
+            agent_status=lambda: {'ready': True, 'snapshotId': 'f' * 64},
             agent_preview=lambda sample: {'sampleId': sample, 'pool': {'candidates': []},
                 'd1': {'status': 'NO_RISK_FACT', 'selected': [], 'context': '', 'evaluations': {}}},
             agent_runner=run,
             agent_store=Path(self.temp.name),
             exploratory_store=Path(self.temp.name) / 'exploratory',
-            exploratory_runner=lambda: self.calls.append(('exploratory', 'offline')))
+            exploratory_runner=lambda: self.calls.append(('exploratory', 'offline')),
+            auto_store=Path(self.temp.name) / 'auto',
+            auto_targets=lambda: [{'sampleId': 'bench', 'sourceHash': 'b' * 64,
+                'runnable': True, 'groundTruth': {'hasVulnerability': True,
+                'vulnerabilityType': 'REENTRANCY', 'labelSource': 'fixture'}}],
+            auto_runtime=lambda: type('Runner', (), {'pointer': {'snapshot_id': 'f' * 64},
+                'run': lambda self, target, strategy, mode: {
+                'status': 'COMPLETED', 'prediction': 'UNKNOWN', 'categoryHit': True,
+                'selectedEvidence': 2, 'inputTokens': None, 'outputTokens': None,
+                'durationMs': 0, 'model': {}}})())
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
 
@@ -124,6 +133,27 @@ class AgentUiTest(unittest.TestCase):
                 break
             threading.Event().wait(.01)
         self.assertEqual([('exploratory', 'offline')], self.calls)
+
+    def test_自动知识批量页面可启动读取并下载两种报告(self):
+        status, body = self.request('GET', '/api/agent/auto-benchmark/targets')
+        self.assertEqual(200, status)
+        self.assertEqual('bench', json.loads(body)['targets'][0]['sampleId'])
+        payload = {'sampleIds': ['bench'], 'strategies': ['D1'], 'mode': 'offline'}
+        headers = {'Content-Type': 'application/json'}
+        status, body = self.request('POST', '/api/agent/auto-benchmark/plan', json.dumps(payload), headers)
+        self.assertEqual(200, status)
+        payload['planHash'] = json.loads(body)['planHash']
+        status, body = self.request('POST', '/api/agent/auto-benchmark/runs', json.dumps(payload), headers)
+        self.assertEqual(202, status)
+        batch_id = json.loads(body)['batchId']
+        for _ in range(50):
+            status, body = self.request('GET', '/api/agent/auto-benchmark/runs/' + batch_id)
+            if status == 200 and json.loads(body)['status'] == 'COMPLETED':
+                break
+            threading.Event().wait(.01)
+        self.assertEqual('COMPLETED', json.loads(body)['status'])
+        self.assertEqual(200, self.request('GET', '/api/agent/auto-benchmark/runs/' + batch_id + '/samples.jsonl')[0])
+        self.assertEqual(200, self.request('GET', '/api/agent/auto-benchmark/runs/' + batch_id + '/samples.csv')[0])
 
 
 if __name__ == '__main__': unittest.main()

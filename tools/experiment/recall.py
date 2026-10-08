@@ -30,8 +30,11 @@ def _recall_candidates(root, snapshot_id, catalog, query_vector, query_text, lim
     if (not isinstance(catalog, dict) or set(catalog) != {'snapshotId', 'cases'} or catalog['snapshotId'] != snapshot_id
             or not isinstance(catalog['cases'], dict) or set(catalog['cases']) != {d['id'] for d in snapshot['documents']}):
         raise ValueError('案例审核元数据必须精确覆盖当前快照')
+    auto = any(row['review_status'] == 'AUTO_LABELED' for row in snapshot['manifest']['samples'])
     for metadata in catalog['cases'].values():
-        if not isinstance(metadata, dict) or set(metadata) != {'caseId', 'pairId', 'role', 'mechanism', 'riskKind', 'conditions', 'reviewed'} or metadata['reviewed'] is not True:
+        if (not isinstance(metadata, dict) or set(metadata) !=
+                {'caseId', 'pairId', 'role', 'mechanism', 'riskKind', 'conditions', 'reviewed'}
+                or type(metadata['reviewed']) is not bool or metadata['reviewed'] is auto):
             raise ValueError('案例条件与配对尚未审核或字段无效')
     rows = {r['id']: r for r in snapshot['rows']}
     scores = {key: cosine(query, row['vector']) for key, row in rows.items()}
@@ -43,6 +46,18 @@ def _recall_candidates(root, snapshot_id, catalog, query_vector, query_text, lim
     seen, selected = set(), []
     origins = {s['id']: s for s in snapshot['manifest']['samples']}
     query_terms = set(re.findall(r'\w+', query_text.lower()))
+    def append_candidate(key, score):
+        document = rows[key]['document']
+        metadata = catalog['cases'][document['id']]
+        origin = origins[document['sample_id']]
+        excerpt = document['text'][:700] if auto else document['text']
+        words = set(re.findall(r'\w+', excerpt.lower()))
+        union = query_terms | words
+        lexical = len(query_terms & words) / len(union) if union else 0.0
+        selected.append(dict(metadata, chunkId=document['id'], text=excerpt,
+                             provenance=origin['origin'] + '@' + origin['source_hash'],
+                             denseScore=score, lexicalScore=lexical))
+
     for hit in hits:
         key = hit.get('id') if isinstance(hit, dict) else None
         score = hit.get('distance') if isinstance(hit, dict) else None
@@ -50,17 +65,19 @@ def _recall_candidates(root, snapshot_id, catalog, query_vector, query_text, lim
                 or not math.isclose(score, scores[key], abs_tol=1e-5)):
             raise ValueError('远端召回包含未知、重复或向量分数不符的条目')
         seen.add(key)
-        document = rows[key]['document']
-        metadata = catalog['cases'][document['id']]
-        origin = origins[document['sample_id']]
-        words = set(re.findall(r'\w+', document['text'].lower()))
-        union = query_terms | words
-        lexical = len(query_terms & words) / len(union) if union else 0.0
-        selected.append(dict(metadata, chunkId=document['id'], text=document['text'],
-                             provenance=origin['origin'] + '@' + origin['source_hash'],
-                             denseScore=scores[key], lexicalScore=lexical))
+        append_candidate(key, scores[key])
+    by_document = {row['document']['id']: key for key, row in rows.items()}
+    pair_members = {}
+    for document_id, metadata in catalog['cases'].items():
+        pair_members.setdefault(metadata['pairId'], []).append(document_id)
+    for candidate in tuple(selected):
+        for partner_id in pair_members[candidate['pairId']]:
+            key = by_document[partner_id]
+            if key not in seen and len(selected) < 1000:
+                seen.add(key)
+                append_candidate(key, scores[key])
     selected.sort(key=lambda c: (-c['denseScore'], c['caseId'], c['chunkId']))
-    return {'pool': {'schemaVersion': '1', 'snapshotId': snapshot_id, 'sourceHash': target_source_hash, 'candidates': selected},
+    return {'pool': {'schemaVersion': 'auto-1' if auto else '1', 'snapshotId': snapshot_id, 'sourceHash': target_source_hash, 'candidates': selected},
             'recall': {'version': 'cosine-jaccard-v1', 'queryHash': fingerprint({'vector': query, 'text': query_text}),
                        'catalogHash': fingerprint(catalog), 'embedding': snapshot['embedding'], 'limit': limit,
                        'backend': 'local' if search is None else 'milvus'}}

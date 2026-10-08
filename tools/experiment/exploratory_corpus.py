@@ -66,8 +66,27 @@ def _pair_predicate(pair):
             and re.search(r'\bfunction\s+\w+\s*\(', after)):
         return None
     if pair['categoryHint'] == 'REENTRANCY':
-        return 'NON_REENTRANT' if not re.search(r'\bnonReentrant\b', before) and re.search(r'\bnonReentrant\b', after) else None
+        if not re.search(r'\bnonReentrant\b', before) and re.search(r'\bnonReentrant\b', after):
+            return 'NON_REENTRANT'
+        custom = r'\b(?:locked\w*|\w*(?:Lock|Mutex))\b(?=\s*\{)'
+        if not re.search(custom, before) and re.search(custom, after):
+            return 'CUSTOM_LOCK'
+        call = r'\.(?:call|send|transfer)\s*(?:\{|\()'
+        assignment = r'\b([A-Za-z_$][\w$]*)\s*(?:\[[^\]]+\])?\s*(?:=(?!=)|\+=|-=|\+\+|--)'
+        before_call, after_call = re.search(call, before), re.search(call, after)
+        if before_call and after_call:
+            late = {match.group(1) for match in re.finditer(assignment, before)
+                    if match.start() > before_call.start()}
+            early = {match.group(1) for match in re.finditer(assignment, after)
+                     if match.start() < after_call.start()}
+            if late & early:
+                return 'STATE_WRITE_BEFORE'
+        return None
     if pair['categoryHint'] == 'ACCESS_CONTROL':
+        if not re.search(r'\bonlyOwner\b', before) and re.search(r'\bonlyOwner\b', after):
+            return 'ONLY_OWNER'
+        if not re.search(r'\b(?:hasRole|onlyRole)\b', before) and re.search(r'\b(?:hasRole|onlyRole)\b', after):
+            return 'HAS_ROLE'
         pattern = r'\b(?:require|if)\s*\(\s*msg\.sender\s*(?:==|!=)'
         return 'CHECK_BEFORE' if not re.search(pattern, before) and re.search(pattern, after) else None
     return None

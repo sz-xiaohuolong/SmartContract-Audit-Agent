@@ -48,14 +48,14 @@ final class RetrievalSupport {
             && candidate.conditions() != null);
         var conditions = new HashSet<String>();
         for (Condition condition : candidate.conditions()) {
-            require(condition != null && Set.of("CHECK_BEFORE", "STATE_WRITE_BEFORE", "NON_REENTRANT").contains(condition.predicate())
+            require(condition != null && Set.of("CHECK_BEFORE", "STATE_WRITE_BEFORE", "NON_REENTRANT", "ONLY_OWNER", "HAS_ROLE", "CUSTOM_LOCK").contains(condition.predicate())
                 && text(condition.subject()) && text(condition.resource()) && condition.expected() != null);
             require(conditions.add(condition.predicate() + ":" + condition.subject() + ":" + condition.resource()));
         }
     }
     static void validate(ProgramFacts facts, Target target, CandidatePool pool, Budget budget) {
         validateFacts(facts, target);
-        require(pool != null && Set.of("1", "exploratory-1").contains(pool.schemaVersion())
+        require(pool != null && Set.of("1", "exploratory-1", "auto-1").contains(pool.schemaVersion())
             && hash(pool.snapshotId()) && facts.sourceHash().equals(pool.sourceHash())
             && pool.candidates() != null && pool.candidates().size() <= 1000);
         require(budget != null && budget.maxBytes() > 0 && budget.maxBytes() <= 1_048_576 && budget.maxCases() > 0 && budget.maxCases() <= 1000);
@@ -66,10 +66,11 @@ final class RetrievalSupport {
             require(candidate.reviewed() == pool.schemaVersion().equals("1"));
             if (pool.schemaVersion().equals("1"))
                 require(!candidate.role().equals("REFERENCE") && !candidate.conditions().isEmpty());
-            else
+            else if (pool.schemaVersion().equals("exploratory-1"))
                 require(candidate.role().equals("REFERENCE") == candidate.conditions().isEmpty());
+            else require(!candidate.role().equals("REFERENCE"));
             if (candidate.conditions().stream().anyMatch(c -> c.predicate().equals("NON_REENTRANT")))
-                require(pool.schemaVersion().equals("exploratory-1") && candidate.mechanism().equals("REENTRANCY"));
+                require(!pool.schemaVersion().equals("1") && candidate.mechanism().equals("REENTRANCY"));
             require(ids.add(candidate.chunkId()));
             Candidate previous = cases.putIfAbsent(candidate.caseId(), candidate);
             if (previous != null) require(previous.pairId().equals(candidate.pairId()) && previous.role().equals(candidate.role())

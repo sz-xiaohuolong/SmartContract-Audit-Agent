@@ -33,5 +33,10 @@
 .agent-metrics th, .agent-metrics td { padding: 10px 8px; border-bottom: 1px solid #d8dfd8; text-align: left; }
 .agent-metrics th { color: #164f47; background: #eaf2ed; }
 .agent-output pre { overflow-x: auto; white-space: pre-wrap; }
+#auto-result { overflow-x: auto; }
+#auto-targets { max-height: 320px; overflow-y: auto; padding: 8px 16px; }
+.agent-progress-scroll { max-height: 420px; overflow: auto; border: 1px solid #d8dfd8; }
+.agent-progress-scroll .agent-metrics { margin: 0; }
+.agent-progress-scroll th { position: sticky; top: 0; }
 @media (max-width: 720px) { .agent-batch-options { grid-template-columns: 1fr; } .agent-metrics { display: block; overflow-x: auto; } }
 @media (max-width: 720px) { .agent-grid { grid-template-columns: 1fr; } .agent-card-wide { grid-column: 1; } .agent-shell { padding: 28px 16px 70px; } }

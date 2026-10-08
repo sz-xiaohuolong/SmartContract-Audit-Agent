@@ -9,16 +9,39 @@
 <body class="agent-page">
   <main class="agent-shell">
     <header class="agent-header">
-      <p class="agent-eyebrow">R1 / S6 · 独立验证目标</p>
+      <p class="agent-eyebrow">R1 / S8 · 自动知识批量审计</p>
       <h1>合约审计对照工作台</h1>
-      <p>在同一正式知识快照下批量比较三种检索策略，逐样本保存审计记录；没有经过复核的真值时，页面不计算论文效果指标。</p>
+      <p>在同一活动知识快照下批量比较三种检索策略，逐样本保存审计记录。自动标签和数据集标签的指标供工程探索，不能当作人工复核后的论文结论。</p>
       <p id="knowledge-status" class="agent-muted" role="status">正在核对正式知识与待审语料。</p>
     </header>
     <section class="agent-grid">
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">探索 / 742 条待审参考</span>
+        <span class="agent-step">自动知识 / 300 组改动对</span>
+        <h2>公开数据集批量审计</h2>
+        <p class="agent-muted">使用已激活的自动标注 S1b 快照，对 SmartBugs 漏洞源码与本机安全对照函数运行同池三策略。标签来自原数据集；软配对和类别命中只作探索，不代表人工核验的漏洞或修复真值。</p>
+        <details><summary id="auto-target-summary">选择验证目标</summary><div id="auto-targets" class="agent-batch-options"></div></details>
+        <fieldset><legend>检索策略</legend>
+          <label><input type="checkbox" name="auto-strategy" value="DENSE" checked> 向量召回</label>
+          <label><input type="checkbox" name="auto-strategy" value="FIELD_FILTER" checked> 简单条件过滤</label>
+          <label><input type="checkbox" name="auto-strategy" value="D1" checked> D1 对比检索</label>
+        </fieldset>
+        <label for="auto-mode">运行模式</label>
+        <select id="auto-mode"><option value="offline">离线链路验收（零模型请求）</option><option value="real">真实模型批量审计</option></select>
+        <div class="agent-actions"><button id="auto-plan">查看批量计划</button><button id="auto-start" disabled>开始批量审计</button></div>
+        <p id="auto-notice" class="agent-muted" role="status">正在读取数据集。</p>
+        <div id="auto-plan-detail" class="agent-output"></div>
+      </div>
+      <div class="agent-card agent-card-wide">
+        <span class="agent-step">自动知识 / 指标与逐项记录</span>
+        <h2>三策略评测报告</h2>
+        <div id="auto-result" class="agent-output">尚无批量运行。</div>
+        <div class="agent-actions"><a id="auto-jsonl" hidden>下载 JSONL</a><a id="auto-csv" hidden>下载 CSV</a></div>
+        <div id="auto-history" class="agent-output"></div>
+      </div>
+      <div class="agent-card agent-card-wide">
+        <span class="agent-step">历史探索 / 742 条候选参考</span>
         <h2>公开样本的三策略检索对照</h2>
-        <p class="agent-muted">对本机 SmartBugs 源码运行离线检索，使用独立的待审向量集合。这里仅比较检索链路，不调用付费模型，也不计算漏洞检测准确率；正式知识库与下方正式实验保持独立。</p>
+        <p class="agent-muted">历史检索入口使用独立的候选向量集合，仅比较检索链路，不调用付费模型；上方自动标注快照批量审计才计算本轮数据集标签指标。</p>
         <div class="agent-actions"><button id="exploratory-start">运行或续跑离线检索</button><button id="exploratory-refresh" class="agent-secondary">刷新结果</button></div>
         <div id="exploratory-result" class="agent-output">读取探索性报告中…</div>
       </div>

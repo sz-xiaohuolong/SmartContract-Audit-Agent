@@ -187,4 +187,26 @@ class RetrievalTest {
         assertThrows(IllegalArgumentException.class, () -> new DenseRetriever().retrieve(facts(List.of(write), true), target(),
             pool(reference), new Budget(1000, 2)));
     }
+
+    @Test void autoLabeledPoolUsesSoftPairWhenNoStrictConditionMatches() {
+        var original = new Candidate("before", "before", "patch-1", "VULNERABLE", "ACCESS_CONTROL", "WRITE", "改动前",
+            List.of(), false, "auto", .91, 0);
+        var patched = new Candidate("after", "after", "patch-1", "DEFENSE", "ACCESS_CONTROL", "WRITE", "改动后",
+            List.of(), false, "auto", .83, 0);
+        var auto = new CandidatePool("auto-1", HASH, HASH, List.of(original, patched));
+        var output = new D1Retriever().retrieve(facts(List.of(write), true), target(), auto, new Budget(1000, 2));
+        assertEquals(List.of("before", "after"), output.selected().stream().map(s -> s.candidate().chunkId()).toList());
+        assertTrue(output.gaps().stream().anyMatch(value -> value.contains("自动标注软配对")));
+        assertEquals("DENSE", new DenseRetriever().retrieve(facts(List.of(write), true), target(), auto,
+            new Budget(1000, 2)).strategy());
+    }
+
+    @Test void explicitOwnerModifierCanBindEvenWhenBodyIsPartial() {
+        var modifier = new Candidate("patched", "patched", "p", "DEFENSE", "ACCESS_CONTROL", "WRITE", "onlyOwner",
+            List.of(new Condition("ONLY_OWNER", "$actor", "$authority", true)), false, "auto", .9, 0);
+        var partial = new ProgramFacts("1", HASH, "PARTIAL", List.of(),
+            List.of(new Scope(scope.id(), "C", "f", List.of("onlyOwner"), false)), List.of(write), List.of());
+        assertEquals("SUPPORTED", new ConditionBinder().bind(partial, target(), modifier).applicability());
+        assertEquals("UNKNOWN", new ConditionBinder().bind(facts(List.of(write), false), target(), modifier).applicability());
+    }
 }
