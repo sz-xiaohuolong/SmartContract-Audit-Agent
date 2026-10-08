@@ -5,10 +5,32 @@ import threading
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from local_ui import create_server
+from local_ui import create_server, pending_knowledge_status
 from storage import fingerprint
 
 ROOT = Path(__file__).resolve().parents[3]
+
+
+class PendingKnowledgeStatusTest(unittest.TestCase):
+    def test_页面只展示已读回的待审数量(self):
+        class Index:
+            def request(self, endpoint, payload):
+                if endpoint == 'collections/has': return {'has': True}
+                if endpoint == 'entities/query':
+                    return [{'id': 'candidate-a'}] if payload['offset'] == 0 else []
+                raise AssertionError(endpoint)
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertIsNone(pending_knowledge_status(root, Index()))
+            file = root / '.local/dataset-candidates/r1-pending/receipt.json'
+            file.parent.mkdir(parents=True)
+            receipt = {'collection': 'r1pending_' + 'a' * 32, 'candidateOnly': True,
+                       'formalD1Enabled': False, 'vectorCount': 1, 'automescPairs': 1, 'forgeVfp': 0}
+            file.write_text(json.dumps(receipt))
+            self.assertEqual(1, pending_knowledge_status(root, Index())['vectors'])
+            receipt['vectorCount'] = 2
+            file.write_text(json.dumps(receipt))
+            with self.assertRaises(ValueError): pending_knowledge_status(root, Index())
 
 
 class AgentUiTest(unittest.TestCase):

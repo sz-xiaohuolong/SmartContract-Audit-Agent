@@ -23,6 +23,7 @@ DEMO = Path('docs/vibe/releases/R1-S3/evidence/demo')
 S2_DEMO = Path('docs/vibe/releases/R1-S2/evidence/demo')
 FRONTEND = Path(__file__).with_name('local_ui')
 RUN_ID = re.compile(r'[0-9a-f]{32}')
+PENDING_COLLECTION = re.compile(r'r1pending_[0-9a-f]{32}')
 
 
 def _json(path):
@@ -111,6 +112,40 @@ def _agent_dependencies(root):
                            model_runner, tool_runner)
 
 
+def pending_knowledge_status(root, index):
+    receipt_path = Path(root) / '.local/dataset-candidates/r1-pending/receipt.json'
+    if not receipt_path.is_file():
+        return None
+    receipt = decode(receipt_path.read_bytes())
+    collection = receipt.get('collection')
+    count = receipt.get('vectorCount')
+    if (receipt.get('candidateOnly') is not True or receipt.get('formalD1Enabled') is not False
+            or not isinstance(collection, str) or not PENDING_COLLECTION.fullmatch(collection)
+            or type(count) is not int or count <= 0):
+        raise ValueError('待审集合收据无效')
+    if not index.request('collections/has', {'collectionName': collection})['has']:
+        raise ValueError('待审集合不存在')
+    ids = set()
+    for offset in range(0, count, 256):
+        batch = index.request('entities/query', {'collectionName': collection, 'filter': '',
+            'outputFields': ['id'], 'limit': 256, 'offset': offset, 'consistencyLevel': 'Strong'})
+        if not isinstance(batch, list):
+            raise ValueError('待审集合读回无效')
+        for item in batch:
+            if not isinstance(item, dict) or not isinstance(item.get('id'), str) or item['id'] in ids:
+                raise ValueError('待审集合 ID 重复或无效')
+            ids.add(item['id'])
+    if len(ids) != count:
+        raise ValueError('待审集合数量与收据不符')
+    extra = index.request('entities/query', {'collectionName': collection, 'filter': '',
+        'outputFields': ['id'], 'limit': 1, 'offset': count, 'consistencyLevel': 'Strong'})
+    if extra:
+        raise ValueError('待审集合存在收据以外的向量')
+    return {'collection': collection, 'vectors': count,
+            'automescPairs': receipt['automescPairs'], 'forgeVfp': receipt['forgeVfp'],
+            'formalD1Enabled': False}
+
+
 def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp_status=None,
                   agent_targets=None, agent_status=None, agent_preview=None, agent_runner=None, agent_store=None,
                   batch_store=None):
@@ -125,14 +160,20 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
         from audit_run import run_once
         from formal_targets import list_targets, load_target
         from formal_recall import preview as formal_preview
-        from snapshots import active_snapshot
+        from snapshots import active_snapshot, verify_snapshot
         dependencies = _agent_dependencies(root)
         agent_targets = agent_targets or (lambda: list_targets(root))
         def default_status():
             pointer = active_snapshot(root / '.local/d1-kb-snapshots', dependencies.index)
+            snapshot = verify_snapshot(root / '.local/d1-kb-snapshots', pointer['snapshot_id'])
             values = {'ready': True, 'snapshotId': pointer['snapshot_id'],
                       'collection': pointer['collection'], 'maxRequestsPerClick': 1,
-                      'maxOutputTokens': 2048, 'researchEligible': False}
+                      'maxOutputTokens': 2048, 'researchEligible': False,
+                      'formalVectors': len(snapshot['rows'])}
+            try:
+                values['pendingKnowledge'] = pending_knowledge_status(root, dependencies.index)
+            except (OSError, ValueError, KeyError, TypeError):
+                values['pendingKnowledge'] = None
             try:
                 from mvp_runtime import _config_values
                 config = _config_values(root / 'config/providers.local.properties')

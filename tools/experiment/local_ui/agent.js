@@ -30,6 +30,8 @@ async function load() {
     selector.onchange = showScope;
     showScope();
     show('snapshot', state.ready ? `${state.snapshotId}\n${state.collection || ''}` : '正式快照暂不可用');
+    const pending = state.pendingKnowledge;
+    show('knowledge-status', state.ready ? `本次实验使用正式知识 ${state.formalVectors ?? '待核对'} 条向量。${pending ? `另有 ${pending.vectors} 条待审向量（AutoMESC ${pending.automescPairs} 组改动、FORGE ${pending.forgeVfp} 条审计资料），仅供在 Attu 查看，不进入 D1 实验。` : '待审语料未就绪或未入库。'}` : '正式知识快照暂不可用。');
     show('provider', state.realReady ? `真实运行：${state.endpoint} · ${state.model}` : '真实模型配置未就绪；仍可查看历史与目标。');
     byId('real').disabled = !state.ready || !state.realReady;
     byId('offline').disabled = !state.ready;
