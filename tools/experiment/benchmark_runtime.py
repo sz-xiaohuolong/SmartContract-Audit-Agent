@@ -1,9 +1,10 @@
 """自动标注 S1b 快照上的同池三策略与结构化模型审计适配。"""
 from pathlib import Path
 from time import monotonic
+import uuid
+from storage import durable_write
 
 from audit_run import model_runner as default_model_runner
-from d1_embed import DIMENSION
 from formal_recall import CONTEXT_BYTES, java_retrieval, select_strategy
 from program_facts import extract_facts
 from recall import _recall_candidates
@@ -58,15 +59,21 @@ def _risk_fact(facts, target):
 
 
 class BenchmarkRuntime:
-    def __init__(self, root, index, encoder, model_runner=default_model_runner, java_runner=None):
+    def __init__(self, root, index, encoder, model_runner=default_model_runner, java_runner=None,
+                 snapshot_root=None):
         self.root = Path(root).resolve()
         self.index = index
         self.encoder = encoder
         self.model_runner = model_runner
         self.java_runner = java_runner or (lambda source, request: java_retrieval(self.root, source, request))
-        self.store = self.root / '.local/d1-kb-snapshots'
+        self.store = Path(snapshot_root) if snapshot_root is not None else self.root / '.local/d1-kb-snapshots'
         self.pointer = active_snapshot(self.store, index)
         self.snapshot = verify_snapshot(self.store, self.pointer['snapshot_id'])
+        embedding = self.snapshot['embedding']
+        if embedding['model'].startswith('ollama/') and (
+                getattr(encoder, 'digest', None) != embedding['revision']
+                or embedding['dimension'] != 768):
+            raise ValueError('Nomic 查询模型与活动知识快照不一致')
         if not all(row['review_status'] == 'AUTO_LABELED' for row in self.snapshot['manifest']['samples']):
             raise ValueError('当前活动快照不是自动标注知识层')
         self.catalog = decode((self.store / 'catalogs' / (self.pointer['snapshot_id'] + '.json')).read_bytes())
@@ -78,10 +85,14 @@ class BenchmarkRuntime:
             return self.views[key]
         if decode((self.store / 'active.json').read_bytes()) != self.pointer:
             raise ValueError('批量过程中活动知识快照已改变')
-        vector = self.encoder([target['modelSource']])
-        if len(vector) != 1:
-            raise ValueError('查询向量数量无效')
-        query = vector32([float(value) for value in vector[0]], DIMENSION)
+        if hasattr(self.encoder, 'encode_query'):
+            encoded, query_receipt = self.encoder.encode_query(target['modelSource'])
+        else:
+            vectors = self.encoder([target['modelSource']])
+            if len(vectors) != 1:
+                raise ValueError('查询向量数量无效')
+            encoded, query_receipt = vectors[0], None
+        query = vector32([float(value) for value in encoded], self.snapshot['embedding']['dimension'])
         recalled = _recall_candidates(self.store, self.pointer['snapshot_id'], self.catalog,
             query, target['modelSource'], min(80, len(self.snapshot['rows'])),
             lambda value, limit: self.index.search(self.pointer['collection'], value, limit),
@@ -105,7 +116,8 @@ class BenchmarkRuntime:
             d1 = results[0]
         view = {'pool': pool, 'd1': d1, 'snapshotId': self.pointer['snapshot_id'],
                 'collection': self.pointer['collection'], 'sourceHash': target['sourceHash'],
-                'targetMechanism': target['mechanism'], 'facts': facts, 'researchEligible': False}
+                'targetMechanism': target['mechanism'], 'facts': facts, 'researchEligible': False,
+                'queryEmbeddingReceipt': query_receipt}
         self.views[key] = view
         return view
 
@@ -117,9 +129,18 @@ class BenchmarkRuntime:
         duration = round((monotonic() - started) * 1000)
         if not isinstance(model, dict) or model.get('status') not in ('COMPLETED', 'FAILED'):
             raise ValueError('结构化模型结果无效')
+        diagnostic_path = None
+        if (model.get('status') == 'FAILED' or model.get('validationIssue')) and isinstance(model.get('_rawResponse'), str):
+            diagnostic = self.root / '.local/auto-benchmark-diagnostics' / (uuid.uuid4().hex + '.txt')
+            diagnostic.parent.mkdir(parents=True, exist_ok=True)
+            durable_write(diagnostic, model['_rawResponse'].encode('utf-8'))
+            diagnostic.chmod(0o600)
+            diagnostic_path = str(diagnostic.relative_to(self.root))
         model = {key: value for key, value in model.items() if key != '_rawResponse'}
         return {'status': model['status'], 'prediction': interpret_model(model, mode),
                 'poolHash': fingerprint(view['pool']),
+                'queryEmbeddingReceipt': view.get('queryEmbeddingReceipt'),
+                'diagnosticPath': diagnostic_path, 'requestAttempts': model.get('requestAttempts'),
                 'selectedIds': [row['candidate']['chunkId'] for row in selected],
                 'selectedEvidence': len(selected),
                 'categoryHit': (any(row['candidate']['mechanism'] == target['mechanism'] for row in selected)

@@ -155,5 +155,14 @@ class AgentUiTest(unittest.TestCase):
         self.assertEqual(200, self.request('GET', '/api/agent/auto-benchmark/runs/' + batch_id + '/samples.jsonl')[0])
         self.assertEqual(200, self.request('GET', '/api/agent/auto-benchmark/runs/' + batch_id + '/samples.csv')[0])
 
+    def test_嵌入选型随计划固定且未知选型被拒绝(self):
+        payload = {'sampleIds': ['bench'], 'strategies': ['D1'], 'mode': 'offline', 'embeddingProfile': 'bge'}
+        headers = {'Content-Type': 'application/json'}
+        status, body = self.request('POST', '/api/agent/auto-benchmark/plan', json.dumps(payload), headers)
+        self.assertEqual(200, status)
+        self.assertEqual('bge', json.loads(body)['embeddingProfile'])
+        payload['embeddingProfile'] = 'unknown'
+        self.assertEqual(400, self.request('POST', '/api/agent/auto-benchmark/plan', json.dumps(payload), headers)[0])
+
 
 if __name__ == '__main__': unittest.main()

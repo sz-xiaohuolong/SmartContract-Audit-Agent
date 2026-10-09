@@ -62,6 +62,7 @@ async function loadAutoTargets() {
     show('auto-notice', '可选择目标与策略，查看计划后启动。');
     document.querySelectorAll('input[name="auto-strategy"]').forEach(input => input.onchange = invalidateAutoPlan);
     byId('auto-mode').onchange = invalidateAutoPlan;
+    byId('auto-embedding').onchange = invalidateAutoPlan;
   } catch (error) { show('auto-notice', error.message); }
 }
 function invalidateAutoPlan() {
@@ -72,7 +73,7 @@ function invalidateAutoPlan() {
 function autoChoice() {
   return {sampleIds: [...document.querySelectorAll('input[name="auto-sample"]:checked')].map(input => input.value),
     strategies: [...document.querySelectorAll('input[name="auto-strategy"]:checked')].map(input => input.value),
-    mode: byId('auto-mode').value};
+    mode: byId('auto-mode').value, embeddingProfile: byId('auto-embedding').value};
 }
 async function previewAutoPlan() {
   invalidateAutoPlan();
@@ -80,7 +81,7 @@ async function previewAutoPlan() {
     const plan = await request('/api/agent/auto-benchmark/plan', {method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(autoChoice())});
     autoPlanState = plan;
-    show('auto-plan-detail', `目标 ${plan.sampleIds.length} × 策略 ${plan.strategies.length}；快照 ${plan.snapshotId}\n模式：${plan.mode === 'real' ? '真实模型' : '固定离线空假设'}；模型：${plan.provider?.model || '不调用'}；最多 ${plan.requestBounds.maxRequests} 次请求、${plan.requestBounds.maxOutputTokens} 输出 token。\n指标按数据集标签计算；失败和未知不算作安全预测。`);
+    show('auto-plan-detail', `目标 ${plan.sampleIds.length} × 策略 ${plan.strategies.length}；嵌入 ${plan.embeddingProfile || 'bge'}；快照 ${plan.snapshotId}\n模式：${plan.mode === 'real' ? '真实模型' : '固定离线空假设'}；模型：${plan.provider?.model || '不调用'}；最多 ${plan.requestBounds.maxRequests} 次请求、${plan.requestBounds.maxOutputTokens} 输出 token。\n指标按数据集标签计算；失败和未知不算作安全预测。`);
     byId('auto-start').disabled = false;
     byId('auto-start').textContent = plan.mode === 'real' ? '开始真实批量审计' : '开始离线批量验收';
     show('auto-notice', '计划已固定，点击启动后逐项保存。');
@@ -91,6 +92,9 @@ function renderAutoReport(report) {
   const summary = document.createElement('p');
   summary.textContent = `${report.status === 'COMPLETED' ? '运行结束' : '运行中'} · 计划 ${report.denominators.planned} · 完成 ${report.denominators.completed} · 失败 ${report.denominators.failed} · 未知 ${report.denominators.unknown} · 待处理 ${report.denominators.pending}`;
   region.append(summary);
+  const origin = document.createElement('p');
+  origin.textContent = `嵌入：${report.plan.embeddingProfile || 'bge'}；快照：${report.plan.snapshotId}` + (report.plan.parseReplay ? `；原文重放自 ${report.plan.parseReplay.originalBatchId}，追加模型请求 0 次。` : '；原始运行记录。');
+  region.append(origin);
   const table = document.createElement('table'); table.className = 'agent-metrics';
   const head = document.createElement('tr');
   for (const title of ['策略', 'TP', 'FP', 'FN', 'TN', 'Precision', 'Recall', 'F1', '类别命中@K', '平均输入 token', '平均输出 token', '平均耗时 ms', '失败/未知']) {
@@ -191,7 +195,7 @@ async function loadAutoHistory() {
     if (!batches.length) { region.textContent = '暂无自动知识批量历史。'; return; }
     for (const item of batches) {
       const button = document.createElement('button'); button.className = 'agent-history';
-      button.textContent = `${item.batchId.slice(0, 8)} · ${item.planned} 项 · ${item.status} · ${item.mode}`;
+      button.textContent = `${item.batchId.slice(0, 8)} · ${item.planned} 项 · ${item.status} · ${item.mode} · ${item.embeddingProfile || 'bge'}${item.parseReplay ? ' · 原文重放' : ''}`;
       button.onclick = async () => {
         try { renderAutoReport(await request('/api/agent/auto-benchmark/runs/' + item.batchId)); }
         catch (error) { show('auto-notice', error.message); }

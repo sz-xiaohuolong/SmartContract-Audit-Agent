@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from benchmark_targets import load_benchmark_targets
+from benchmark_targets import load_benchmark_targets, _scopes
 
 
 class BenchmarkTargetsTest(unittest.TestCase):
@@ -25,6 +25,10 @@ class BenchmarkTargetsTest(unittest.TestCase):
             self.assertEqual('FUNCTION', next(row for row in targets if row['groundTruth']['hasVulnerability'] is False)['scope'])
             self.assertEqual([], [row for row in load_benchmark_targets(root, [{'text': vulnerable,
                 'project': 'https://example.test/vault'}]) if row['groundTruth']['hasVulnerability'] is True])
+
+    def test_旧版无名回退函数与现代构造函数名称规范化(self):
+        source = 'contract A { function() public {} constructor() {} fallback() external {} receive() external payable {} }'
+        self.assertEqual(['fallback', 'constructor', 'fallback', 'receive'], [row[0] for row in _scopes(source)])
 
 
 if __name__ == '__main__':

@@ -24,7 +24,7 @@ public final class HypothesisCli {
     }
     public static int run(String[] args, Map<String,String> env, PrintStream out, PrintStream err, ModelGateway injected) {
         try {
-            Map<String,String> options = options(args, Set.of("--source", "--request", "--config", "--provider", "--diagnostic-output"));
+            Map<String,String> options = options(args, Set.of("--source", "--request", "--config", "--provider", "--diagnostic-output", "--replay-response"));
             if (!options.containsKey("--source") || !options.containsKey("--request")) throw new IllegalArgumentException();
             String source = read(options.get("--source"), 1_048_576);
             String requestText = read(options.get("--request"), 32_768);
@@ -50,6 +50,13 @@ public final class HypothesisCli {
                 node.path("mechanism").asText(), node.path("function").asText(), node.path("context").asText(), ids);
             String providerName = options.get("--provider");
             ModelGateway gateway = injected;
+            if (options.containsKey("--replay-response")) {
+                if (gateway != null || options.containsKey("--config") || options.containsKey("--provider"))
+                    throw new IllegalArgumentException();
+                String content = read(options.get("--replay-response"), 131_072);
+                // 重放入口只校验本机原文，不能发起真实网络请求。
+                gateway = (name, system, user) -> new GatewayReply(content, "replay", "replay", null, null, 0, "stop", 0);
+            }
             if (gateway == null) {
                 if (!options.containsKey("--config")) throw new IllegalArgumentException();
                 Properties properties = new Properties();

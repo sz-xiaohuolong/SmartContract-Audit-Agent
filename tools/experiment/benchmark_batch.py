@@ -12,20 +12,22 @@ from storage import decode, durable_write, exclusive_lock, fingerprint
 STRATEGIES = frozenset({'DENSE', 'FIELD_FILTER', 'D1'})
 
 
-def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None):
+def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None, embedding_profile='bge'):
     indexed = {row['sampleId']: row for row in targets if row.get('runnable')}
     if (not sample_ids or len(set(sample_ids)) != len(sample_ids) or not set(sample_ids) <= set(indexed)
             or not strategies or len(set(strategies)) != len(strategies)
             or not set(strategies) <= STRATEGIES or mode not in ('offline', 'real')
-            or not isinstance(snapshot_id, str) or len(snapshot_id) != 64):
+            or not isinstance(snapshot_id, str) or len(snapshot_id) != 64
+            or embedding_profile not in ('bge', 'nomic')):
         raise ValueError('自动标注批量计划无效')
     labels = {key: indexed[key]['groundTruth'] for key in sample_ids}
     plan = {'schemaVersion': 'auto-benchmark-1', 'sampleIds': sample_ids,
             'sourceHashes': {key: indexed[key]['sourceHash'] for key in sample_ids},
             'labels': labels, 'strategies': strategies, 'mode': mode,
-            'snapshotId': snapshot_id, 'provider': provider if mode == 'real' else None,
-            'requestBounds': {'maxRequests': len(sample_ids) * len(strategies) if mode == 'real' else 0,
-                              'maxOutputTokens': len(sample_ids) * len(strategies) * 2048 if mode == 'real' else 0},
+            'snapshotId': snapshot_id, 'embeddingProfile': embedding_profile,
+            'provider': provider if mode == 'real' else None,
+            'requestBounds': {'maxRequests': 2 * len(sample_ids) * len(strategies) if mode == 'real' else 0,
+                              'maxOutputTokens': 2 * len(sample_ids) * len(strategies) * 2048 if mode == 'real' else 0},
             'researchEligible': False, 'metricTier': 'DATASET_LABEL_EXPLORATORY'}
     return {**plan, 'planHash': fingerprint(plan)}
 
@@ -147,6 +149,8 @@ def replay_batch(store, batch_id):
                              'avgInputTokens': _mean(rows, 'inputTokens'),
                              'avgOutputTokens': _mean(rows, 'outputTokens'),
                              'avgDurationMs': _mean(rows, 'durationMs'),
+                             'requestAttemptsObserved': sum(row.get('requestAttempts') or 0 for row in rows),
+                             'requestAttemptsMissing': sum(row.get('requestAttempts') is None for row in rows),
                              'usageObserved': sum(type(row.get('inputTokens')) is int and type(row.get('outputTokens')) is int for row in rows)}
     samples = [indexed[(sample, strategy)] for sample in plan['sampleIds']
                for strategy in plan['strategies'] if (sample, strategy) in indexed]
@@ -185,7 +189,8 @@ def export_csv(report):
     writer = csv.writer(output)
     writer.writerow(['sampleId', 'strategy', 'label', 'labelSource', 'status', 'prediction',
                      'categoryHit', 'selectedEvidence', 'selectedIds', 'poolHash', 'snapshotId',
-                     'inputTokens', 'outputTokens', 'durationMs', 'errorCategory', 'retrievalGaps', 'model'])
+                     'inputTokens', 'outputTokens', 'durationMs', 'errorCategory', 'retrievalGaps', 'model',
+                     'requestAttempts', 'diagnosticPath', 'queryEmbeddingReceipt', 'parseReplay'])
     labels = report['plan']['labels']
     for row in report['samples']:
         label = labels[row['sampleId']]
@@ -195,5 +200,7 @@ def export_csv(report):
                          row.get('poolHash'), row.get('snapshotId'), row.get('inputTokens'),
                          row.get('outputTokens'), row.get('durationMs'), row.get('errorCategory'),
                          json.dumps(row.get('retrievalGaps'), ensure_ascii=False),
-                         json.dumps(row.get('model'), ensure_ascii=False)])
+                         json.dumps(row.get('model'), ensure_ascii=False), row.get('requestAttempts'), row.get('diagnosticPath'),
+                         json.dumps(row.get('queryEmbeddingReceipt'), ensure_ascii=False),
+                         json.dumps(row.get('parseReplay'), ensure_ascii=False)])
     return output.getvalue()

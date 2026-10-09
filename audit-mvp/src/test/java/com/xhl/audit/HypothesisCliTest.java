@@ -57,5 +57,29 @@ class HypothesisCliTest {
                 for (var path : files.sorted(java.util.Comparator.reverseOrder()).toList()) Files.deleteIfExists(path);
             }
         }
+    }    @Test void localReplayNeverNeedsProviderAndReportsZeroRequests() throws Exception {
+        var directory = Files.createTempDirectory("hypothesis-replay-test-");
+        try {
+            var source = directory.resolve("Contract.sol");
+            Files.writeString(source, "contract C { function f() public {} }");
+            var request = directory.resolve("request.json");
+            Files.writeString(request, """
+                {"schemaVersion":"1","modelSource":"contract C { function f() public {} }",
+                "scope":"FULL","lineStart":1,"lineEnd":1,"mechanism":"ACCESS_CONTROL",
+                "function":"f","context":"","evidenceIds":[]}
+                """);
+            var raw = directory.resolve("raw.txt");
+            Files.writeString(raw, "```json\n{\"schemaVersion\":\"2\",\"hypotheses\":[]}\n```");
+            var output = new ByteArrayOutputStream();
+            int status = HypothesisCli.run(new String[]{"--source", source.toString(), "--request", request.toString(),
+                "--replay-response", raw.toString()}, Map.of(), new PrintStream(output), System.err);
+            assertEquals(0, status);
+            assertTrue(output.toString().contains("\"requestAttempts\":0"));
+        } finally {
+            try (var files = Files.walk(directory)) {
+                for (var path : files.sorted(java.util.Comparator.reverseOrder()).toList()) Files.deleteIfExists(path);
+            }
+        }
     }
+
 }

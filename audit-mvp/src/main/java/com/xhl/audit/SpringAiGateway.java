@@ -21,6 +21,41 @@ public final class SpringAiGateway implements ModelGateway {
         return completeWithSchema(provider, system, user, true);
     }
     private GatewayReply completeWithSchema(String provider, String system, String user, boolean hypotheses) {
+        long started = System.nanoTime();
+        for (int attempt = 0; ; attempt++) {
+            try {
+                GatewayReply reply = completeOnce(provider, system, user, hypotheses);
+                return new GatewayReply(reply.content(), reply.provider(), reply.model(), reply.inputTokens(),
+                    reply.outputTokens(), (System.nanoTime() - started) / 1_000_000, reply.finishReason(), attempt + 1);
+            } catch (RuntimeException error) {
+                if (attempt >= 1) throw new CallFailure(error, attempt + 1);
+                if (!transientFailure(error)) throw error;
+                // 仅允许一次退避重试；SDK 自带重试关闭，避免请求次数叠加。
+                try { Thread.sleep(1000L << attempt); }
+                catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("模型重试被中断", interrupted);
+                }
+            }
+        }
+    }
+    /** 重试耗尽时保留实际请求数与原始异常链，不输出凭证或供应商正文。 */
+    static final class CallFailure extends RuntimeException {
+        final int attempts;
+        CallFailure(RuntimeException cause, int attempts) {
+            super("模型调用重试耗尽", cause);
+            this.attempts = attempts;
+        }
+    }
+    private static boolean transientFailure(Throwable error) {
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof com.openai.errors.RateLimitException) return true;
+            if (cause instanceof java.net.SocketException || cause instanceof java.net.ConnectException
+                || cause instanceof java.io.EOFException) return true;
+        }
+        return false;
+    }
+    private GatewayReply completeOnce(String provider, String system, String user, boolean hypotheses) {
         var p = registry.resolve(provider);
         // 显式管理 SDK 客户端，使成功和异常路径都释放连接资源。
         var client = OpenAiSetup.setupSyncClient(p.baseUrl(), p.apiKey(), null, null, null, null,

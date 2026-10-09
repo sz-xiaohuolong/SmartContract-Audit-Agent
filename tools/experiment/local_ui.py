@@ -170,7 +170,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             pointer = active_snapshot(root / '.local/d1-kb-snapshots', dependencies.index)
             snapshot = verify_snapshot(root / '.local/d1-kb-snapshots', pointer['snapshot_id'])
             values = {'ready': True, 'snapshotId': pointer['snapshot_id'],
-                      'collection': pointer['collection'], 'maxRequestsPerClick': 1,
+                      'collection': pointer['collection'], 'maxRequestsPerClick': 2,
                       'maxOutputTokens': 2048, 'researchEligible': False,
                       'formalVectors': len(snapshot['rows']),
                       'knowledgeTier': ('AUTO_LABELED' if all(row['review_status'] == 'AUTO_LABELED'
@@ -202,7 +202,10 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
         auto_targets = default_auto_targets
     if auto_runtime is None:
         from benchmark_runtime import BenchmarkRuntime
-        def default_auto_runtime():
+        def default_auto_runtime(profile='bge'):
+            if profile == 'nomic':
+                from benchmark_cli import prepare_runtime
+                return prepare_runtime(root, embedding_profile=profile)[1]
             prepared = _agent_dependencies(root)
             return BenchmarkRuntime(root, prepared.index, prepared.encoder,
                                     prepared.model_runner, prepared.java_retriever)
@@ -252,7 +255,10 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                             report = replay_auto(auto_store, path.parent.name)
                             rows.append({'batchId': path.parent.name, 'status': report['status'],
                                          'planned': report['denominators']['planned'],
-                                         'mode': report['plan']['mode'], 'time': path.stat().st_mtime_ns})
+                                         'mode': report['plan']['mode'],
+                                         'embeddingProfile': report['plan'].get('embeddingProfile', 'bge'),
+                                         'parseReplay': bool(report['plan'].get('parseReplay')),
+                                         'time': path.stat().st_mtime_ns})
                         except (OSError, ValueError, KeyError, TypeError):
                             continue
                 rows.sort(key=lambda row: row['time'], reverse=True)
@@ -387,7 +393,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             elif self.path == '/api/mvp/status':
                 try:
                     self._send(200, {'ready': True, 'snapshot': mvp_status(),
-                                     'sampleId': 'AC-ASE-006', 'maxRequestsPerClick': 1,
+                                     'sampleId': 'AC-ASE-006', 'maxRequestsPerClick': 2,
                                      'maxOutputTokens': 2048, 'researchEligible': False})
                 except (OSError, ValueError, KeyError, RuntimeError):
                     self._send(200, {'ready': False, 'researchEligible': False})
@@ -483,18 +489,29 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                         if set(payload) != {'planHash'} or payload['planHash'] != stored['planHash'] or previous['status'] != 'RUNNING':
                             raise ValueError('续跑摘要或状态无效')
                         choice = {key: stored[key] for key in ('sampleIds', 'strategies', 'mode')}
+                        choice['embeddingProfile'] = stored.get('embeddingProfile', 'bge')
                     else:
                         expected = {'sampleIds', 'strategies', 'mode'}
-                        if not isinstance(payload, dict) or set(payload) != (expected if self.path.endswith('/plan') else expected | {'planHash'}):
+                        fields = expected if self.path.endswith('/plan') else expected | {'planHash'}
+                        if not isinstance(payload, dict) or set(payload) not in (fields, fields | {'embeddingProfile'}):
                             raise ValueError('批量字段无效')
                         choice = payload
-                    state = agent_status()
+                    profile = choice.get('embeddingProfile', 'bge')
+                    if profile not in ('bge', 'nomic'):
+                        raise ValueError('嵌入模型选型无效')
+                    state = dict(agent_status())
+                    if profile == 'nomic':
+                        from snapshots import active_snapshot
+                        from milvus_rest import MilvusRestIndex
+                        pointer = active_snapshot(root / '.local/d1-nomic-snapshots',
+                                                  MilvusRestIndex('http://127.0.0.1:29531'))
+                        state.update(snapshotId=pointer['snapshot_id'], ready=True, knowledgeTier='AUTO_LABELED')
                     if (not state.get('ready') or state.get('knowledgeTier') not in (None, 'AUTO_LABELED')
                             or choice['mode'] == 'real' and not state.get('realReady')):
                         raise ValueError('知识快照或真实模型不可用')
                     provider = {'endpoint': state.get('endpoint'), 'model': state.get('model')} if choice['mode'] == 'real' else None
                     plan = make_auto_plan(choice['sampleIds'], choice['strategies'], choice['mode'],
-                                          auto_targets(), state['snapshotId'], provider)
+                                          auto_targets(), state['snapshotId'], provider, profile)
                     if ((auto_resume_match and plan != stored)
                             or (not self.path.endswith('/plan') and payload['planHash'] != plan['planHash'])):
                         raise ValueError('自动知识批量计划已变化')
@@ -514,7 +531,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                     self._send(500, {'error': '自动知识批量计划保存失败'}); return
                 def auto_work():
                     try:
-                        runtime = auto_runtime()
+                        runtime = auto_runtime('nomic') if profile == 'nomic' else auto_runtime()
                         if runtime.pointer['snapshot_id'] != plan['snapshotId']:
                             raise ValueError('自动知识快照已变化')
                         indexed = {row['sampleId']: row for row in auto_targets()}
@@ -656,7 +673,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             try:
                 if self.path == '/api/mvp/run':
                     result = mvp_runner()
-                    if result.get('researchEligible') is not False or result.get('plan', {}).get('maxRequests') != 1:
+                    if result.get('researchEligible') is not False or result.get('plan', {}).get('maxRequests') not in (1, 2):
                         raise ValueError('工程试跑结果无效')
                     self._send(201, result)
                     return

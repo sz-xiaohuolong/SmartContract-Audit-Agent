@@ -18,9 +18,9 @@ def _scopes(source):
     values = [item[0] for item in tokens]
     rows = []
     for index, value in enumerate(values[:-1]):
-        if value != 'function':
+        if value not in ('function', 'constructor', 'fallback', 'receive'):
             continue
-        name = values[index + 1]
+        name = ('fallback' if values[index + 1] == '(' else values[index + 1]) if value == 'function' else value
         end = next((at for at in range(index + 2, len(values)) if values[at] in ('{', ';')), None)
         if end is not None and values[end] == '{':
             rows.append((name, tokens[index][2], tokens[pairs[end]][2]))

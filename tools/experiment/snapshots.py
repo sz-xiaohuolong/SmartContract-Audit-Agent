@@ -100,13 +100,15 @@ def _check_index(payload, rows):
     if actual != expected: raise ValueError("索引读回内容与快照不一致，禁止激活")
 
 
-def activate_snapshot(root, identifier, index=None):
+def activate_snapshot(root, identifier, index=None, collection_prefix="s1b_"):
     root = Path(root)
+    if collection_prefix not in ("s1b_", "s1b_nomic_"):
+        raise ValueError("知识集合前缀无效")
     with exclusive_lock(root / ".snapshot.lock"):
         payload = verify_snapshot(root, identifier)
         collection = None
         if index is not None:
-            collection = "s1b_" + uuid.uuid4().hex
+            collection = collection_prefix + uuid.uuid4().hex
             index.build(collection, payload)
             _check_index(payload, index.read(collection))
         pointer = {"snapshot_id": identifier, "backend": "milvus" if index is not None else "local",
@@ -133,7 +135,7 @@ class MilvusIndex:
     def __init__(self, client): self.client = client
 
     def build(self, collection, payload):
-        if not re.fullmatch(r"s1b_[0-9a-f]{32}", collection) or self.client.has_collection(collection_name=collection):
+        if not re.fullmatch(r"s1b_(?:nomic_)?[0-9a-f]{32}", collection) or self.client.has_collection(collection_name=collection):
             raise ValueError("只允许创建尚不存在的 S1b 集合")
         self.client.create_collection(collection_name=collection, dimension=payload["embedding"]["dimension"],
                                       primary_field_name="id", id_type="string", max_length=64,
@@ -146,7 +148,7 @@ class MilvusIndex:
         self.client.flush(collection_name=collection, timeout=60)
 
     def read(self, collection):
-        if not isinstance(collection, str) or not re.fullmatch(r"s1b_[0-9a-f]{32}", collection):
+        if not isinstance(collection, str) or not re.fullmatch(r"s1b_(?:nomic_)?[0-9a-f]{32}", collection):
             raise ValueError("索引集合名无效")
         iterator = self.client.query_iterator(collection_name=collection, batch_size=256,
                                              output_fields=["id", "vector", "payload"],

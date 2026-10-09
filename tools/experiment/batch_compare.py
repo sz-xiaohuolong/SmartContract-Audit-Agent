@@ -25,10 +25,10 @@ def make_plan(sample_ids, strategies, mode, targets, state):
         raise ValueError('真实模型未配置')
     count = len(sample_ids) * len(strategies)
     bounds = {'samples': len(sample_ids), 'strategies': len(strategies), 'repeats': 1,
-              'modelStages': 1, 'attemptsPerUnit': 1,
-              'maxRequests': count if mode == 'real' else 0,
-              'maxOutputTokens': count * 2048 if mode == 'real' else 0,
-              'maxInputBytes': count * 10000 if mode == 'real' else 0,
+              'modelStages': 1, 'attemptsPerUnit': 2 if mode == 'real' else 0,
+              'maxRequests': 2 * count if mode == 'real' else 0,
+              'maxOutputTokens': 2 * count * 2048 if mode == 'real' else 0,
+              'maxInputBytes': 2 * count * 10000 if mode == 'real' else 0,
               'maxInputTokens': None if mode == 'real' else 0,
               'maxCost': None if mode == 'real' else 0}
     target_index = {row['sampleId']: row for row in targets if row.get('sampleId') in sample_ids}

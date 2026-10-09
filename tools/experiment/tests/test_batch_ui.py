@@ -83,7 +83,7 @@ class BatchUiTest(unittest.TestCase):
             if report['status'] == 'COMPLETED': break
             time.sleep(.01)
         self.assertEqual([('A', 'real', 'D1')], self.calls)
-        self.assertEqual(1, plan['requestBounds']['maxRequests'])
+        self.assertEqual(2, plan['requestBounds']['maxRequests'])
         self.assertEqual(1, report['denominators']['unknown'])
 
     def test_offline_interrupted_batch_can_resume_without_repeating_started_item(self):

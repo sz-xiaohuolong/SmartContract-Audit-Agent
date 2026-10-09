@@ -105,6 +105,65 @@ class GatewayTest {
             assertNull(other.inputTokens(), "缺失 usage 不应被记成零");
         } finally { server.stop(0); }
     }
+    @Test void retriesRateLimitOnceAndDoesNotRetryPermanentFailures() throws Exception {
+        var calls = new AtomicInteger();
+        var permanent = new java.util.concurrent.atomic.AtomicBoolean();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/chat/completions", exchange -> {
+            int count = calls.incrementAndGet();
+            exchange.getRequestBody().readAllBytes();
+            int status = permanent.get() ? 401 : count <= 1 ? 429 : 200;
+            byte[] body = (status == 200 ?
+                "{\"id\":\"test\",\"object\":\"chat.completion\",\"created\":1,\"model\":\"m\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}"
+                : "{\"error\":{\"message\":\"本地测试错误\",\"type\":\"fixture\"}}")
+                .getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(status, body.length);
+            exchange.getResponseBody().write(body); exchange.close();
+        });
+        server.start();
+        try {
+            var props = new Properties();
+            props.setProperty("providers.ark.base-url", "http://127.0.0.1:" + server.getAddress().getPort());
+            props.setProperty("providers.ark.model", "m");
+            props.setProperty("providers.ark.api-key", "fixture");
+            var gateway = new SpringAiGateway(new ProviderRegistry(props, Map.of()));
+            assertEquals("ok", gateway.complete("ark", "系统", "测试").content());
+            assertEquals(2, calls.get());
+            permanent.set(true); calls.set(0);
+            assertThrows(RuntimeException.class, () -> gateway.complete("ark", "系统", "测试"));
+            assertEquals(1, calls.get());
+            permanent.set(false); calls.set(-1);
+            assertThrows(RuntimeException.class, () -> gateway.complete("ark", "系统", "测试"));
+            assertEquals(1, calls.get(), "连续两次 429 后必须结束，不能无限重试");
+        } finally { server.stop(0); }
+    }
+
+    @Test void retriesInterruptedConnectionOnce() throws Exception {
+        var calls = new AtomicInteger();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/chat/completions", exchange -> {
+            exchange.getRequestBody().readAllBytes();
+            if (calls.incrementAndGet() == 1) { exchange.close(); return; }
+            byte[] body = """
+                {"id":"test","object":"chat.completion","created":1,"model":"m","choices":[{"index":0,"message":{"role":"assistant","content":"ok"},"finish_reason":"stop"}]}
+                """.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body); exchange.close();
+        });
+        server.start();
+        try {
+            var props = new Properties();
+            props.setProperty("providers.ark.base-url", "http://127.0.0.1:" + server.getAddress().getPort());
+            props.setProperty("providers.ark.model", "m");
+            props.setProperty("providers.ark.api-key", "fixture");
+            assertEquals("ok", new SpringAiGateway(new ProviderRegistry(props, Map.of()))
+                .complete("ark", "系统", "测试").content());
+            assertEquals(2, calls.get());
+        } finally { server.stop(0); }
+    }
+
     @Test void rejectsMissingKeyAndRemotePlainHttpWithoutLeakingConfiguration() {
         var p = new Properties();p.setProperty("default-provider", "ark");
         p.setProperty("providers.ark.base-url", "https://example.com/api/plan/v3");

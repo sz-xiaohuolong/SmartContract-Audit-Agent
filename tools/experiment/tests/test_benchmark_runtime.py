@@ -1,7 +1,9 @@
 """真实批量审计的报告级预测与无风险事实软对比。"""
 import unittest
 
-from benchmark_runtime import interpret_model, soft_without_risk
+from benchmark_runtime import BenchmarkRuntime, interpret_model, soft_without_risk
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from formal_recall import select_strategy
 
 
@@ -33,6 +35,20 @@ class BenchmarkRuntimeTest(unittest.TestCase):
                 'd1': {'evaluations': {}}, 'targetMechanism': 'REENTRANCY'}
         selected = select_strategy(view, 'FIELD_FILTER')['d1']['selected']
         self.assertEqual(['a'], [row['candidate']['chunkId'] for row in selected])
+
+    def test_失败正文原样落盘且结果保留请求次数(self):
+        with TemporaryDirectory() as directory:
+            runtime = BenchmarkRuntime.__new__(BenchmarkRuntime)
+            runtime.root = Path(directory)
+            runtime.preview = lambda target: {'pool': {'candidates': []}, 'd1': {'selected': []}}
+            raw = '```json\n{"bad":true}\n```'
+            runtime.model_runner = lambda *args: {'status': 'FAILED', 'conclusion': 'UNRESOLVED',
+                'errorCategory': 'MODEL_OUTPUT_INVALID', 'requestAttempts': 2, '_rawResponse': raw}
+            result = runtime.run({'groundTruth': {'hasVulnerability': True}}, 'D1', 'real')
+            self.assertEqual('UNKNOWN', result['prediction'])
+            self.assertEqual(2, result['requestAttempts'])
+            self.assertEqual(raw, (runtime.root / result['diagnosticPath']).read_text())
+            self.assertNotIn('_rawResponse', result['model'])
 
 
 if __name__ == '__main__':

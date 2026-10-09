@@ -105,8 +105,8 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
             'assignmentHash': target['assignmentHash'], 'formalLedgerHash': target['formalLedgerHash'],
             'groupId': target['groupId'], 'snapshotId': view['snapshotId'], 'collection': view['collection'],
             'strategy': strategy, 'poolHash': view['poolHash'],
-            'maxRequests': 0 if mode == 'offline' else 1, 'maxOutputTokens': 2048,
-            'maxInputBytes': MAX_PROMPT_BYTES, 'actualInputBytes': message_bytes, 'retries': 0,
+            'maxRequests': 0 if mode == 'offline' else 2, 'maxOutputTokens': 2048,
+            'maxInputBytes': MAX_PROMPT_BYTES, 'actualInputBytes': message_bytes, 'retries': 1 if mode == 'real' else 0,
             'provider': provider, 'researchEligible': False, 'createdAt': datetime.now(timezone.utc).isoformat()}
     atomic_json(directory / 'plan.json', plan)
     events = directory / 'events.jsonl'
@@ -221,7 +221,7 @@ def model_runner(root, target, view, mode):
             raise ValueError('模型运行未返回受控结果')
         result = decode(completed.stdout)
         diagnostic = temp / 'raw-response.txt'
-        if result.get('status') == 'FAILED' and diagnostic.is_file():
+        if (result.get('status') == 'FAILED' or result.get('validationIssue')) and diagnostic.is_file():
             result['_rawResponse'] = diagnostic.read_text(encoding='utf-8')
         return result
 

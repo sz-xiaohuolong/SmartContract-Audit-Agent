@@ -173,10 +173,10 @@ def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=
             'sampleId': target['id'], 'sourceHash': target['sourceSha256'],
             'snapshotId': pointer['snapshotId'], 'collection': pointer['collection'],
             'selected': selected, 'provider': 'ark', 'model': values['providers.ark.model'],
-            'baseUrl': values['providers.ark.base-url'], 'maxRequests': 1,
+            'baseUrl': values['providers.ark.base-url'], 'maxRequests': 2,
             'maxInputBytes': 10000, 'actualUserMessageBytes': prompt_bytes,
             'maxOutputTokens': 2048, 'responseFormat': 'json_schema_strict',
-            'thinking': 'disabled', 'retries': 0}
+            'thinking': 'disabled', 'retries': 1}
     atomic_json(directory / 'plan.json', plan)
     atomic_json(directory / 'started.json', {'planHash': fingerprint(plan), 'status': 'STARTED'})
     result = None

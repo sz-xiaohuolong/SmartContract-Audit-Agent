@@ -25,6 +25,8 @@
           <label><input type="checkbox" name="auto-strategy" value="FIELD_FILTER" checked> 简单条件过滤</label>
           <label><input type="checkbox" name="auto-strategy" value="D1" checked> D1 对比检索</label>
         </fieldset>
+        <label for="auto-embedding">知识向量模型</label>
+        <select id="auto-embedding"><option value="bge">BGE-small · 384 维 · 512 token</option><option value="nomic">Nomic · 768 维 · 本机有效 2048 token</option></select>
         <label for="auto-mode">运行模式</label>
         <select id="auto-mode"><option value="offline">离线链路验收（零模型请求）</option><option value="real">真实模型批量审计</option></select>
         <div class="agent-actions"><button id="auto-plan">查看批量计划</button><button id="auto-start" disabled>开始批量审计</button></div>
@@ -90,7 +92,7 @@
       <div class="agent-card agent-card-wide">
         <span class="agent-step">06 / 单次执行</span>
         <h2>运行一次审计</h2>
-        <p>离线演练只检查检索、保存和回放，使用固定空假设，不代表检测结果。真实运行仅在明确点击后发起最多 1 次请求，输出最多 2048 token，零自动重试。当前上下文受 UTF-8 字节上限约束，尚未具备完整 token 公平与目标—案例人工标签，因此不能据此宣布 D1 提升。</p>
+        <p>离线演练只检查检索、保存和回放，使用固定空假设，不代表检测结果。真实运行仅在明确点击后发起正常 1 次请求，限流或连接中断时最多重试 1 次，每次输出最多 2048 token。当前上下文受 UTF-8 字节上限约束，尚未具备完整 token 公平与目标—案例人工标签，因此不能据此宣布 D1 提升。</p>
         <div class="agent-actions"><button id="offline">运行离线演练</button><button id="real" class="agent-secondary">显式真实运行</button></div>
         <p id="notice" class="agent-muted" role="status"></p>
       </div>

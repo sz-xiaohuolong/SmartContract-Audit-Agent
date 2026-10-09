@@ -9,7 +9,7 @@ from snapshots import activate_snapshot, build_snapshot, verify_snapshot
 from storage import atomic_json, decode, fingerprint
 
 
-def stage_auto_snapshot(corpus, snapshot_root):
+def stage_auto_snapshot(corpus, snapshot_root, vectors_override=None, embedding_override=None):
     pairs = corpus['pairs']
     if not pairs or len(corpus['rows']) < 2 * len(pairs):
         raise ValueError('自动知识的前后片段不完整')
@@ -43,9 +43,9 @@ def stage_auto_snapshot(corpus, snapshot_root):
             if cases[key]['role'] == 'REFERENCE':
                 cases[key]['role'] = 'VULNERABLE' if row['side'] == 'before' else 'DEFENSE'
                 cases[key]['pairId'] = identifier
-            vectors[key] = corpus['vectors'][key]
+            vectors[key] = (vectors_override if vectors_override is not None else corpus['vectors'])[key]
     manifest = {'schema_version': '1', 'categories': ['ACCESS_CONTROL', 'REENTRANCY'], 'samples': samples}
-    embedding = corpus['receipt']['embedding']
+    embedding = embedding_override if embedding_override is not None else corpus['receipt']['embedding']
     snapshot_root = Path(snapshot_root)
     identifier = build_snapshot(snapshot_root, manifest, documents, embedding,
         {'version': 'automesc-auto-v1:' + fingerprint({'corpus': corpus['receipt']['identity'], 'cases': cases})}, vectors)

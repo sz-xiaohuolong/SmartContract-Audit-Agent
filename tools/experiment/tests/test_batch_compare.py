@@ -76,7 +76,7 @@ class BatchCompareTest(unittest.TestCase):
         self.assertEqual(['DENSE', 'D1'], calls)
         self.assertEqual(2, report['denominators']['unknown'])
         self.assertEqual(1, report['denominators']['failed'])
-        self.assertEqual(2, report['requestBounds']['maxRequests'])
+        self.assertEqual(4, report['requestBounds']['maxRequests'])
 
     def _result(self, sample, mode, strategy):
         return {'runId': 'b' * 32, 'status': 'COMPLETED', 'researchEligible': False,
@@ -95,9 +95,9 @@ class BatchCompareTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             make_plan(['A'], ['D1'], 'real', self.targets, {**self.state, 'realReady': False})
         plan = make_plan(['A', 'B'], ['DENSE', 'D1'], 'real', self.targets, self.state)
-        self.assertEqual(4, plan['requestBounds']['maxRequests'])
-        self.assertEqual(8192, plan['requestBounds']['maxOutputTokens'])
-        self.assertEqual(40000, plan['requestBounds']['maxInputBytes'])
+        self.assertEqual(8, plan['requestBounds']['maxRequests'])
+        self.assertEqual(16384, plan['requestBounds']['maxOutputTokens'])
+        self.assertEqual(80000, plan['requestBounds']['maxInputBytes'])
 
     def test_允许完整登记的多个验证目标且仍拒绝开发目标(self):
         extended = self.targets + [

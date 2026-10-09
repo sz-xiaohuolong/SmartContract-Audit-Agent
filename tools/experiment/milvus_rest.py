@@ -30,7 +30,7 @@ class MilvusRestIndex:
 
     @staticmethod
     def collection(name):
-        if not isinstance(name, str) or not re.fullmatch(r's1b_[0-9a-f]{32}', name):
+        if not isinstance(name, str) or not re.fullmatch(r's1b_(?:nomic_)?[0-9a-f]{32}', name):
             raise ValueError('只允许操作独立快照集合')
         return name
 

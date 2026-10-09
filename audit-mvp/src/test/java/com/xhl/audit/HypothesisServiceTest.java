@@ -50,7 +50,6 @@ class HypothesisServiceTest {
         var valid = "{\"schemaVersion\":\"2\",\"hypotheses\":[{\"vulnerabilityType\":\"REENTRANCY\",\"contract\":\"Vault\",\"function\":\"withdraw\",\"riskLine\":1,\"riskOperation\":\"CALL\",\"reason\":\"x\",\"evidenceIds\":[\"evidence-1\"]}]}";
         for (String body : List.of("", "{}", valid.replace("\"riskLine\":1", "\"riskLine\":2"),
                                    valid.replace("evidence-1", "unknown"),
-                                   valid.replace("\"reason\":\"x\"", "\"reason\":\"x\",\"extra\":1"),
                                    valid.replace("\"reason\":\"x\"", "\"reason\":\"x\",\"reason\":\"y\""),
                                    valid + "{}",
                                    valid.replace("REENTRANCY", "ACCESS_CONTROL"))) {
@@ -59,6 +58,122 @@ class HypothesisServiceTest {
             assertEquals("UNRESOLVED", result.conclusion());
             assertEquals("MODEL_OUTPUT_INVALID", result.errorCategory());
         }
+    }
+
+    @Test void normalizesPresentationWithoutChangingEvidenceOrScope() {
+        var body = """
+            下面是审计结论：
+            ```json
+            {"schemaVersion":"2","title":"审计结果","hypotheses":[{
+            "vulnerabilityType":"REENTRANCY","contract":" vault ","function":"Withdraw()",
+            "riskLine":"1","riskOperation":"CALL","reason":"状态更新滞后",
+            "evidenceIds":null,"severity":"high"}]}
+            ```
+            以上仅为初步假设。
+            """;
+        var result = service(body, 10, 20, "stop").analyze(request(), "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertEquals("Vault", result.hypotheses().getFirst().contract());
+        assertEquals("withdraw", result.hypotheses().getFirst().function());
+        assertEquals(List.of(), result.hypotheses().getFirst().evidenceIds());
+    }
+
+    @Test void constructorAliasesResolveToDeclaredTarget() {
+        String source = "contract Vault { constructor() { owner = msg.sender; } }";
+        var req = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+            "ACCESS_CONTROL", "constructor", "", List.of());
+        var body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"ACCESS_CONTROL",
+            "contract":"vault","function":"Vault()","riskLine":"1",
+            "riskOperation":"WRITE","reason":"构造函数假设","evidenceIds":[]}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(req, "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertEquals("constructor", result.hypotheses().getFirst().function());
+    }
+
+    @Test void normalizationStillRejectsWrongLineMissingFieldsAndUnknownFunction() {
+        var body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"REENTRANCY",
+            "contract":"Vault","function":"withdraw()","riskLine":"1",
+            "riskOperation":"CALL","reason":"x","evidenceIds":null}]}
+            """;
+        for (String invalid : List.of(body.replace("\"1\"", "\"2147483648\""),
+                body.replace("withdraw()", "constructor()"),
+                body.replace("\"reason\":\"x\",", ""))) {
+            assertEquals("UNRESOLVED", service(invalid, null, null, "stop").analyze(request(), "fixture").conclusion());
+        }
+    }
+
+    @Test void fullContractAllowsDeclaredFunctionsAndUnnamedFallbackButExcerptDoesNot() {
+        String source = """
+            contract Vault {
+                function withdraw() public { msg.sender.call(""); }
+                function() public { msg.sender.call(""); }
+            }
+            """;
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"REENTRANCY",
+            "contract":"Vault","function":"withdraw()","riskLine":2,"riskOperation":"CALL",
+            "reason":"调用风险","evidenceIds":[]},{"vulnerabilityType":"REENTRANCY",
+            "contract":"Vault","function":"","riskLine":3,"riskOperation":"CALL",
+            "reason":"回退调用风险","evidenceIds":[]}]}
+            """;
+        var full = new HypothesisService.Request(source, source, null, "FULL", 1, 4,
+            "REENTRANCY", "fallback", "", List.of());
+        var result = service(body, null, null, "stop").analyze(full, "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertEquals("fallback", result.hypotheses().get(1).function());
+        var excerpt = new HypothesisService.Request(source, source.split("\n")[2], null, "FUNCTION", 3, 3,
+            "REENTRANCY", "fallback", "", List.of());
+        var clipped = service(body, null, null, "stop").analyze(excerpt, "fixture");
+        assertEquals(1, clipped.hypotheses().size());
+        assertEquals("fallback", clipped.hypotheses().getFirst().function());
+        assertEquals("RISK_LINE_INVALID", clipped.rejectedHypotheses().getFirst().issue());
+        var wrongLine = service(body.replace("\"riskLine\":2", "\"riskLine\":3"),
+            null, null, "stop").analyze(full, "fixture");
+        assertEquals(1, wrongLine.hypotheses().size());
+        assertEquals("FUNCTION_MISMATCH", wrongLine.rejectedHypotheses().getFirst().issue());
+    }
+
+    @Test void similarContractNameDoesNotTurnOrdinaryFunctionIntoConstructor() {
+        String source = "contract Missing { function missing() public { owner = msg.sender; } }";
+        var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+            "ACCESS_CONTROL", "missing", "", List.of());
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"ACCESS_CONTROL",
+            "contract":"Missing","function":"missing","riskLine":1,"riskOperation":"WRITE",
+            "reason":"函数并非真正的构造函数","evidenceIds":[]}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(request, "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertEquals("missing", result.hypotheses().getFirst().function());
+    }
+
+    @Test void omittedEvidenceListMeansNoCitationRatherThanFabricatedCitation() {
+        var body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"REENTRANCY",
+            "contract":"Vault","function":"withdraw","riskLine":1,"riskOperation":"CALL","reason":"调用风险"}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(request(), "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertEquals(List.of(), result.hypotheses().getFirst().evidenceIds());
+    }
+
+    @Test void validFindingSurvivesRejectedExtraHypothesisButAllRejectedRemainsUnknown() {
+        String valid = """
+            {"vulnerabilityType":"REENTRANCY","contract":"Vault","function":"withdraw",
+            "riskLine":1,"riskOperation":"CALL","reason":"状态更新滞后","evidenceIds":[]}
+            """;
+        String invalid = valid.replace("withdraw", "fallback");
+        String body = "{\"schemaVersion\":\"2\",\"hypotheses\":[" + valid + "," + invalid + "]}";
+        var result = service(body, 10, 20, "stop").analyze(request(), "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertEquals("VULNERABILITY_REPORTED", result.conclusion());
+        assertEquals(1, result.hypotheses().size());
+        assertEquals("PARTIAL_HYPOTHESES_REJECTED", result.validationIssue());
+        body = "{\"schemaVersion\":\"2\",\"hypotheses\":[" + invalid + "]}";
+        assertEquals("UNRESOLVED", service(body, 10, 20, "stop").analyze(request(), "fixture").conclusion());
     }
 
     @Test void truncationAndCallErrorPreserveUnknown() {
