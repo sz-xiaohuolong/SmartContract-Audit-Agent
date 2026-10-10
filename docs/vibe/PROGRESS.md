@@ -20,6 +20,10 @@
 
 本轮初始提交为 `00fecf5`。基线证据 `.evidence/R2-20261010/baseline.json`，无关改动恢复材料 `.local/r2/preexisting.patch`。环境与输入任务文件所有权独立，公共编排串行整合；小版本验证后依 AGENTS 提交同步。尚未完成的真实路径、先导、页面与毕设交付不得以S10局部结果替代。
 
+## Apple 工作台界面局部交付
+
+`agent.html` 已重构为 macOS 浅色三栏工作台，使用原生 HTML/CSS/JavaScript，无编译链。支持预置与粘贴输入、D1 漏洞／修复配对、工具诊断、六项保护义务、只读历史、源码定位及 JSON／打印 PDF；批量入口保留。模拟读取已登记合成夹具，新增模型请求 0。验收与启动方式见 [界面局部验收](releases/R2-20261010/VERIFICATION.md#apple-工作台界面局部验收)，原始证据 `.evidence/R2-20261010/apple-workspace/`。此交付不代表 S11 路径证明、整个 S12 或研究效果完成。
+
 ## 最近基线与实验
 
 R1 已验工程提交 `4dfc7e1`，历史证据见[R1 验证](releases/R1/VERIFICATION.md)。最近[真实 API 报告](releases/R1/experiments/2026-10-10_API_BATCH_REPORT.md)为 53 目标 × 三策略、159 次模型有效请求；Slither 147 项进程错误，D2 全部 UNKNOWN，研究效果 UNVERIFIED。编译环境、输入隔离和相关路径由 R2 接续。

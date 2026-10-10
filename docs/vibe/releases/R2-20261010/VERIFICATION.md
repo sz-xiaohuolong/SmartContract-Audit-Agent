@@ -42,6 +42,24 @@
 `PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py --original-run .local/auto-benchmark-runs/546fe566368e4b0ea7b6aeb58b235939 --output-run .evidence/R2-20261010/S10-acceptance/新的派生目录`。
 必须使用新输出目录，并备齐原批次、固定编译器及本机工具配置。重放只评价保存候选核验，不代表清理输入后的模型发现实验；研究效果仍 UNVERIFIED。
 
+## Apple 工作台界面局部验收
+
+本次只完成用户指定的四个工作台实现文件及其接口回归；S11 事实提供器、派生报告接入和研究效果仍按原矩阵追踪。原始证据 `.evidence/R2-20261010/apple-workspace/` 默认 Git 忽略。
+
+| 检查 | 观察结果与证据 |
+|---|---|
+| 视觉与依赖 | 用户给定的 Apple 令牌、系统字体、浅色三栏布局、响应式与打印样式；运行不需要 Node/npm 构建 |
+| 完整 JSON | 新增 `/api/agent/workspace`、`/target`、`/simulation`、`/runs` 及单记录接口；预览补齐源码、六义务、阶段与统计，保留旧调用方兼容 |
+| 语义边界 | 工具失败保持未决；usage 与费用缺失为 null；模拟明确为合成夹具且 D2 未执行；历史按保存的策略与运行模式展示 |
+| Python | 当前共享工作区 352 项通过；本次新增接口回归 5 项；`python-final.log`。首轮其他任务模块未生成的错误保留在 `python.log` |
+| Maven / CLI | `maven.log`：88 项通过；`cli.log`：帮助命令退出 0 |
+| 实际 Chromium | 本机注入运行夹具：预览、显式离线运行、六义务、原始行号定位、策略变更使计划失效、历史回放不重发、源码字符串注入仅为文本；`browser-check.js` 与日志 |
+| 下载 | `export.json` 包含完整证据且 token 为 null；`report.pdf` 由浏览器打印样式生成 |
+| 响应式 | 1440px、834px、390px 截图；修复移动分段控件隐藏输入定位后，三个宽度均无页面水平溢出；`responsive-check.log` |
+| 模型请求 | 新增真实模型请求 0；模拟不调用模型、工具或外部检索服务；真实运行仍需固定计划与明确选择 |
+
+启动：`PYTHONPATH=tools/experiment python3 tools/experiment/local_ui.py --port 8765`，打开 `http://127.0.0.1:8765/agent.html`。点击「运行模拟」即可在没有知识服务时体验布局；真实审计使用现有已配置模型，必须先预览并勾选明确选择。PDF 按钮打开浏览器打印，可选择保存为 PDF。
+
 ## 完成审计规则
 
 逐项检查当前源码、适用自动测试、真实程序及浏览器证据；没有支持某项的证据时保持未验证。指标由保存结果重算。UNKNOWN、故障与标签缺失单列分母。没有独立审核或新模型实验时，不把工程完成改写为方法已验证。

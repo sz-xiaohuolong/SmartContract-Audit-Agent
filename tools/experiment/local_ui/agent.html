@@ -3,21 +3,115 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>合约审计对照工作台</title>
+  <meta name="color-scheme" content="light">
+  <title>VeriRAG · 智能合约审计工作台</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/agent.js" defer></script>
 </head>
 <body class="agent-page">
-  <main class="agent-shell">
-    <header class="agent-header">
-      <p class="agent-eyebrow">R1 / S8 · 自动知识批量审计</p>
-      <h1>合约审计对照工作台</h1>
-      <p><a href="/workbench.html">进入单合约深度审计：粘贴源码、查看 D1 配对与 D2 保护义务</a></p>
-      <p>在同一活动知识快照下批量比较三种检索策略，逐样本保存审计记录。自动标签和数据集标签的指标供工程探索，不能当作人工复核后的论文结论。</p>
-      <p id="knowledge-status" class="agent-muted" role="status">正在核对正式知识与待审语料。</p>
+  <a class="ws-skip" href="#workspace-panel">跳到审计工作区</a>
+  <svg class="ws-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="ws-code-icon" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-14-2 18"/></symbol>
+    <symbol id="ws-stack-icon" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5m-18 5 9 5 9-5"/></symbol>
+    <symbol id="ws-shield-icon" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="ws-history-icon" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2 7M3 4v7h7m2-5v6l4 2"/></symbol>
+    <symbol id="ws-play-icon" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></symbol>
+    <symbol id="ws-export-icon" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M5 15v5h14v-5"/></symbol>
+  </defs></svg>
+  <div class="agent-shell">
+    <header class="ws-toolbar">
+      <div class="ws-brand"><svg viewBox="0 0 32 34" aria-hidden="true"><path d="m5 7 10 20"/><path d="m26 7-9 18"/></svg><h1>VeriRAG</h1></div>
+      <button id="ws-refresh" class="ws-service ws-badge" type="button" title="刷新本机服务状态"><span class="ws-dot"></span><span id="ws-service-text">正在连接</span></button>
+      <div class="ws-toolbar-controls">
+        <fieldset class="ws-strategy"><legend class="ws-sr-only">检索策略</legend>
+          <label><input type="radio" name="ws-strategy" value="D1" checked><span>D1 对比检索</span></label>
+          <label><input type="radio" name="ws-strategy" value="DENSE"><span>向量召回</span></label>
+          <label><input type="radio" name="ws-strategy" value="FIELD_FILTER"><span>条件过滤</span></label>
+        </fieldset>
+        <label class="ws-model-label" for="ws-embedding">向量模型</label>
+        <select id="ws-embedding" class="ws-model"><option value="nomic">Nomic · 768 维</option><option value="bge">BGE · 384 维</option></select>
+        <button id="ws-simulate" class="ws-button ws-secondary" type="button"><svg class="ws-icon" aria-hidden="true"><use href="#ws-play-icon"/></svg>运行模拟</button>
+        <button id="ws-run" class="ws-button ws-primary" type="button" disabled>开始审计</button>
+      </div>
     </header>
+    <div class="ws-navigation">
+      <nav class="ws-tabs" role="tablist" aria-label="工作台视图">
+        <button id="workspace-tab" role="tab" aria-selected="true" aria-controls="workspace-panel" type="button"><svg class="ws-icon" aria-hidden="true"><use href="#ws-code-icon"/></svg>审计工作区</button>
+        <button id="batch-tab" role="tab" aria-selected="false" aria-controls="batch-panel" tabindex="-1" type="button"><svg class="ws-icon" aria-hidden="true"><use href="#ws-stack-icon"/></svg>批量对照</button>
+        <button id="history-tab" role="tab" aria-selected="false" aria-controls="history-panel" tabindex="-1" type="button"><svg class="ws-icon" aria-hidden="true"><use href="#ws-history-icon"/></svg>运行历史</button>
+      </nav>
+      <span id="ws-context" class="ws-caption">本机工作台 · 默认零模型请求</span>
+    </div>
+    <main>
+      <section id="workspace-panel" class="ws-workspace" role="tabpanel" aria-labelledby="workspace-tab" tabindex="0">
+        <section class="ws-card ws-editor" aria-labelledby="ws-editor-title">
+          <div class="ws-card-head"><h2 id="ws-editor-title"><svg class="ws-icon" aria-hidden="true"><use href="#ws-code-icon"/></svg>源码编辑器</h2><span id="ws-file" class="ws-file">Solidity</span></div>
+          <div class="ws-input-controls">
+            <label class="ws-sr-only" for="ws-input-mode">输入方式</label>
+            <select id="ws-input-mode"><option value="preset">预置样本</option><option value="source">粘贴源码</option></select>
+            <label class="ws-sr-only" for="ws-sample">已登记合约</label>
+            <select id="ws-sample"><option value="">正在读取样本…</option></select>
+            <span id="ws-byte-count" class="ws-caption" hidden>0 / 131072 字节</span>
+          </div>
+          <div id="ws-source-view" class="ws-source-view" tabindex="0" aria-label="合约源码，保留原始行号"><div class="ws-empty"><svg class="ws-empty-icon" aria-hidden="true"><use href="#ws-code-icon"/></svg><strong>从一份合约开始</strong><p>选择预置样本，或粘贴 Solidity 源码。<br>也可以运行模拟，查看完整的证据布局。</p></div></div>
+          <label class="ws-sr-only" for="ws-source-input">完整 Solidity 源码</label>
+          <textarea id="ws-source-input" class="ws-source-input" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="pragma solidity ^0.8.0;&#10;&#10;contract Vault {&#10;    // 在此粘贴完整 Solidity 源码&#10;}" hidden></textarea>
+          <div class="ws-source-foot"><label class="ws-sr-only" for="ws-source-kind">源码视图</label><select id="ws-source-kind" hidden><option value="full">完整源码</option><option value="model">模型片段</option></select><button id="ws-edit-source" class="ws-line-link" type="button" hidden>编辑源码</button><span>程序事实</span><div id="ws-facts" class="ws-fact-chips"><span class="ws-chip">等待预览</span></div></div>
+          <details id="ws-settings" class="ws-settings"><summary>审计范围与运行设置 <span id="ws-scope-label">访问控制 / 重入</span></summary>
+            <div class="ws-settings-grid">
+              <label for="ws-mechanism">审计方向<select id="ws-mechanism"><option value="REENTRANCY">重入</option><option value="ACCESS_CONTROL">访问控制</option></select></label>
+              <label for="ws-function">目标函数（粘贴时可选）<input id="ws-function" placeholder="例如 Vault.withdraw" autocomplete="off"></label>
+              <label for="ws-risk-line">原始风险行（可选）<input id="ws-risk-line" type="number" min="1" step="1" placeholder="自动识别"></label>
+              <label for="ws-mode">运行模式<select id="ws-mode"><option value="offline">离线演练 · 零模型请求</option><option value="real">真实审计 · 已配置模型</option></select></label>
+            </div>
+            <div id="ws-consent-region" class="ws-consent" hidden><p id="ws-limits">每次最多 2 次请求，输出上限 2048 token。</p><label><input id="ws-consent" type="checkbox">我选择使用已配置模型审计当前输入</label></div>
+          </details>
+          <div class="ws-editor-actions"><button id="ws-preview" class="ws-button ws-secondary" type="button" disabled>预览计划与证据</button><span id="ws-scope" class="ws-caption">保留原始行号与输入范围</span></div>
+        </section>
+        <div class="ws-evidence-column">
+          <section class="ws-card ws-d1" aria-labelledby="ws-d1-title">
+            <div class="ws-card-head"><h2 id="ws-d1-title">D1 对比证据</h2><span id="ws-match" class="ws-badge ws-blue">等待检索</span></div>
+            <div class="ws-evidence-bar"><span>漏洞与修复配对</span><label class="ws-sr-only" for="ws-pair">选择证据配对</label><select id="ws-pair" hidden></select></div>
+            <div class="ws-comparison">
+              <div class="ws-case ws-vulnerable"><div class="ws-case-head"><span>历史漏洞</span><span id="ws-vuln-state" class="ws-caption">未绑定</span></div><pre id="ws-vulnerable-code">预览后展示入选的漏洞案例。</pre></div>
+              <svg class="ws-icon ws-compare-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4m8-8 4 4-4 4"/></svg>
+              <div class="ws-case ws-defense"><div class="ws-case-head"><span>安全修复</span><span id="ws-defense-state" class="ws-caption">未绑定</span></div><pre id="ws-defense-code">预览后展示同组修复证据。</pre></div>
+            </div>
+            <p id="ws-pair-note" class="ws-caption">配对、条件绑定与证据缺口以检索结果为准。</p>
+            <details class="ws-detail"><summary>全部候选与条件绑定</summary><div id="ws-candidates" class="ws-detail-content">尚无检索证据。</div></details>
+          </section>
+          <section class="ws-card ws-tools" aria-labelledby="ws-tools-title">
+            <div class="ws-card-head"><h2 id="ws-tools-title">静态分析引擎</h2><span id="ws-tool-status" class="ws-badge">尚未运行</span></div>
+            <div id="ws-tool-list" class="ws-tool-list"><p class="ws-muted">审计后展示工具状态、诊断与定位。</p></div>
+            <p class="ws-caption">工具运行成功或无告警，均不代表合约安全。</p>
+          </section>
+          <section class="ws-card ws-d2" aria-labelledby="ws-d2-title">
+            <div class="ws-card-head"><h2 id="ws-d2-title">D2 保护义务矩阵</h2><span class="ws-caption">6 项核验</span></div>
+            <label class="ws-sr-only" for="ws-assessment">选择待核验假设</label><select id="ws-assessment" hidden></select>
+            <div id="ws-obligations" class="ws-obligations"></div>
+            <p id="ws-path" class="ws-caption">路径尚未核验，缺少证据的义务保持未知。</p>
+          </section>
+        </div>
+        <aside class="ws-result-column" aria-label="审计裁决与统计">
+          <section class="ws-card ws-verdict-card" aria-labelledby="ws-verdict-title">
+            <div id="ws-verdict-banner" class="ws-verdict-banner"><h2 id="ws-verdict-title">最终裁决</h2><strong id="ws-verdict">等待审计</strong><p id="ws-verdict-note">让每一个结论都有证据。</p><div class="ws-risk-meter" aria-hidden="true"><i></i><i></i><i></i></div></div>
+            <div class="ws-verdict-body"><div class="ws-card-head"><h3>漏洞假设</h3><span id="ws-hypothesis-status" class="ws-caption">未生成</span></div><div id="ws-hypothesis"></div>
+              <details class="ws-detail"><summary>计划与完整证据</summary><pre id="ws-raw">尚无审计记录。</pre></details>
+            </div>
+          </section>
+          <section class="ws-card ws-telemetry" aria-labelledby="ws-telemetry-title">
+            <div class="ws-card-head"><h2 id="ws-telemetry-title">运行统计</h2><span id="ws-run-kind" class="ws-caption">未运行</span></div>
+            <div class="ws-stat-grid"><div><span>Token</span><strong id="ws-tokens">—</strong></div><div><span>总耗时</span><strong id="ws-latency">—</strong></div><div><span>费用</span><strong id="ws-cost">—</strong></div></div>
+            <p id="ws-usage-note" class="ws-caption">用量未返回时保留未知。</p>
+            <details id="ws-stage-details" class="ws-stage-details"><summary>查看六阶段进度</summary><ol id="ws-stages" class="ws-stages" aria-label="审计阶段"></ol></details>
+            <div class="ws-export-actions"><button id="ws-export" class="ws-button ws-secondary" type="button" disabled><svg class="ws-icon" aria-hidden="true"><use href="#ws-export-icon"/></svg>导出 JSON</button><button id="ws-print" class="ws-button ws-secondary" type="button" disabled>PDF</button></div>
+          </section>
+        </aside>
+      </section>
+      <section id="batch-panel" role="tabpanel" aria-labelledby="batch-tab" tabindex="0" hidden>
+        <header class="agent-header"><h2>批量审计与检索对照</h2><p class="agent-muted">使用同一知识快照比较三种检索策略。自动标签指标用于工程探索，不能代替人工复核后的研究结论。</p><p id="knowledge-status" role="status">打开此视图后读取知识状态。</p></header>
     <section class="agent-grid">
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">自动知识 / 300 组改动对</span>
         <h2>公开数据集批量审计</h2>
         <p class="agent-muted">使用已激活的自动标注 S1b 快照，对 SmartBugs 漏洞源码与本机安全对照函数运行同池三策略。标签来自原数据集；软配对和类别命中只作探索，不代表人工核验的漏洞或修复真值。</p>
         <details><summary id="auto-target-summary">选择验证目标</summary><div id="auto-targets" class="agent-batch-options"></div></details>
@@ -35,21 +129,18 @@
         <div id="auto-plan-detail" class="agent-output"></div>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">自动知识 / 指标与逐项记录</span>
         <h2>三策略评测报告</h2>
         <div id="auto-result" class="agent-output">尚无批量运行。</div>
         <div class="agent-actions"><a id="auto-jsonl" hidden>下载 JSONL</a><a id="auto-csv" hidden>下载 CSV</a></div>
         <div id="auto-history" class="agent-output"></div>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">历史探索 / 742 条候选参考</span>
         <h2>公开样本的三策略检索对照</h2>
         <p class="agent-muted">历史检索入口使用独立的候选向量集合，仅比较检索链路，不调用付费模型；上方自动标注快照批量审计才计算本轮数据集标签指标。</p>
         <div class="agent-actions"><button id="exploratory-start">运行或续跑离线检索</button><button id="exploratory-refresh" class="agent-secondary">刷新结果</button></div>
         <div id="exploratory-result" class="agent-output">读取探索性报告中…</div>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">01 / 批量对照</span>
         <h2>选择独立验证样本与检索策略</h2>
         <p class="agent-muted">每种组合只运行一次。离线模式使用固定空假设，仅检查检索和报告链路；真实模式会逐项调用已配置的模型，并保留失败与未知结果。</p>
         <div class="agent-batch-options"><fieldset><legend>验证目标</legend><div id="batch-targets"></div></fieldset>
@@ -63,14 +154,12 @@
         <div id="batch-plan-detail" class="agent-output"></div>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">02 / 指标与报告</span>
         <h2>策略对比</h2>
         <div id="batch-result" class="agent-output">尚无批量运行。</div>
         <a id="batch-report" hidden>下载批量逐样本 JSONL</a>
         <div id="batch-history" class="agent-output"></div>
       </div>
       <div class="agent-card">
-        <span class="agent-step">03 / 单样本目标</span>
         <h2>选择真实样本</h2>
         <label for="sample">已登记目标</label>
         <select id="sample"></select>
@@ -80,36 +169,40 @@
         <div class="agent-actions"><button id="preview">预览正式检索</button></div>
       </div>
       <div class="agent-card">
-        <span class="agent-step">04 / 快照</span>
         <h2>正式知识库</h2>
         <p id="snapshot">读取中…</p>
         <p id="provider" class="agent-muted"></p>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">05 / 检索证据</span>
         <h2>同池检索预览</h2>
         <div id="retrieval" class="agent-output">选择目标并预览。</div>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">06 / 单次执行</span>
         <h2>运行一次审计</h2>
         <p>离线演练只检查检索、保存和回放，使用固定空假设，不代表检测结果。真实运行仅在明确点击后发起正常 1 次请求，限流或连接中断时最多重试 1 次，每次输出最多 2048 token。当前上下文受 UTF-8 字节上限约束，尚未具备完整 token 公平与目标—案例人工标签，因此不能据此宣布 D1 提升。</p>
         <div class="agent-actions"><button id="offline">运行离线演练</button><button id="real" class="agent-secondary">显式真实运行</button></div>
         <p id="notice" class="agent-muted" role="status"></p>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">07 / 单次结果</span>
         <h2>本次结果</h2>
         <div id="result" class="agent-output">尚无运行结果。</div>
         <a id="report" hidden>下载逐样本 JSONL 报告</a>
       </div>
       <div class="agent-card agent-card-wide">
-        <span class="agent-step">08 / 单次历史</span>
         <h2>已保存的运行</h2>
         <div id="history" class="agent-output">读取中…</div>
       </div>
     </section>
-  </main>
-  <script src="/agent.js" defer></script>
+      </section>
+      <section id="history-panel" class="ws-history-panel" role="tabpanel" aria-labelledby="history-tab" tabindex="0" hidden>
+        <div class="ws-history-heading"><div><h2>运行历史</h2><p class="ws-muted">回放已保存的证据与报告，零新增模型请求。</p></div><button id="ws-history-refresh" class="ws-button ws-secondary" type="button">刷新历史</button></div>
+        <div id="ws-history-list" class="ws-history-list">打开此视图后读取运行记录。</div>
+        <a class="ws-history-link" href="/workbench.html#history-section">查看原单合约工作台与历史报告</a>
+      </section>
+    </main>
+    <div id="ws-notice" class="ws-notice" role="status" aria-live="polite"><span class="ws-dot"></span><span id="ws-message">选择源码并预览计划，或运行零请求模拟。</span></div>
+    <footer class="ws-footer"><span><svg class="ws-icon" aria-hidden="true"><use href="#ws-shield-icon"/></svg>证据驱动的智能合约审计</span><span>未知保持未知 · 假设被反驳不表示全合约安全</span></footer>
+  </div>
+  <noscript><p>请启用 JavaScript 以读取审计证据与运行记录。</p></noscript>
 </body>
 </html>

@@ -48,6 +48,57 @@ def demo_context(root):
             'notice': '合成机制样例仅用于检查实验流程，不能作为论文效果证据。'}
 
 
+def workspace_document(record):
+    """补齐展示字段，保留证据原文、所有假设与缺失用量的 null。"""
+    from d2_verify import OBLIGATIONS
+    target = record.get('target') or {}
+    model = {key: value for key, value in (record.get('model') or {}).items() if key != '_rawResponse'}
+    d2 = {**(record.get('d2') or {})}
+    assessments = []
+    for assessment in d2.get('assessments') or [{}]:
+        supplied = {item['name']: item for item in assessment.get('obligations', [])}
+        obligations = [{**{'name': name, 'status': 'UNKNOWN', 'references': [],
+                           'reason': '尚无与当前源码绑定的充分证据'}, **supplied.get(name, {})}
+                       for name in OBLIGATIONS]
+        assessments.append({**assessment, 'obligations': obligations})
+    d2.update(verdict=d2.get('verdict', 'UNKNOWN'), assessments=assessments)
+    input_tokens, output_tokens = model.get('inputTokens'), model.get('outputTokens')
+    total = (input_tokens + output_tokens
+             if type(input_tokens) is int and type(output_tokens) is int else None)
+    durations = [row.get('durationMs') for row in record.get('stages', [])]
+    duration = sum(durations) if durations and all(type(item) in (int, float) for item in durations) else None
+    return {**record, 'schemaVersion': '2', 'conclusion': record.get('conclusion', 'UNRESOLVED'),
+            'target': target, 'model': model, 'tools': record.get('tools') or [], 'd2': d2,
+            'retrieval': record.get('retrieval') or {}, 'stages': record.get('stages') or [],
+            'source': {'full': target.get('fullSource', target.get('source', '')),
+                       'model': target.get('modelSource', ''),
+                       'lineStart': target.get('fullSourceLineStart', 1),
+                       'modelLineStart': target.get('lineStart', 1)},
+            'telemetry': {'inputTokens': input_tokens, 'outputTokens': output_tokens,
+                          'totalTokens': total, 'durationMs': duration, 'cost': model.get('cost')},
+            'researchEligible': record.get('researchEligible', False)}
+
+
+def workspace_simulation(root, strategy='D1'):
+    """只读已入库的合成证据；不执行工具、检索服务或模型请求。"""
+    request = _json(root / S2_DEMO / 'request.json')
+    comparison = _json(root / S2_DEMO / 'comparison.json')
+    selected = next(row for row in comparison['results'] if row['strategy'] == strategy)
+    source = (root / S2_DEMO / 'target.sol').read_text(encoding='utf-8')
+    return workspace_document({
+        'kind': 'SYNTHETIC_DEMO', 'status': 'COMPLETED', 'modelCalls': 0,
+        'notice': '合成机制模拟 · 零模型请求；展示已保存的检索证据，D2 未执行，不能据此判断合约安全。',
+        'target': {'sampleId': 'synthetic-target', 'fullSource': source, 'modelSource': source,
+                   'lineStart': 1, 'lineEnd': 1, 'scope': 'FULL_SOURCE',
+                   'contract': 'Target', 'function': 'update', 'riskLine': 1, 'mechanism': 'ACCESS_CONTROL'},
+        'plan': {'strategy': strategy, 'mode': 'offline', 'snapshotId': selected['snapshotId'],
+                 'poolHash': selected['poolHash'], 'sourceHash': selected['sourceHash'], 'maxRequests': 0},
+        'retrieval': {'d1': selected, 'pool': request['pool'], 'facts': comparison['facts']},
+        'model': {'status': 'SKIPPED', 'hypotheses': [], 'inputTokens': None, 'outputTokens': None},
+        'tools': [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': [], 'durationMs': None}],
+        'conclusion': 'UNRESOLVED', 'researchEligible': False})
+
+
 def run_demo(root):
     with tempfile.TemporaryDirectory(prefix='s3-ui-') as directory:
         output = Path(directory) / 'result.json'
@@ -248,7 +299,62 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 self._send(403, {'error': '仅允许本机访问'})
                 return
             parsed = urlsplit(self.path)
-            if parsed.path in ('/workbench.html', '/workbench.js', '/workbench.css') and not parsed.query:
+            if parsed.path.startswith('/api/agent/workspace'):
+                try:
+                    query = parse_qs(parsed.query, strict_parsing=True)
+                    if parsed.path == '/api/agent/workspace':
+                        if set(query) - {'embeddingProfile'} or len(query.get('embeddingProfile', ['nomic'])) != 1:
+                            raise ValueError('嵌入模型参数无效')
+                        profile = query.get('embeddingProfile', ['nomic'])[0]
+                        if profile not in ('nomic', 'bge'):
+                            raise ValueError('嵌入模型未登记')
+                        state = workbench.status(profile)
+                        try:
+                            rows, target_error = workbench.targets(), None
+                        except (OSError, ValueError, KeyError, RuntimeError, ImportError):
+                            rows, target_error = [], '预置来源暂不可用，可粘贴源码或运行模拟'
+                        self._send(200, {'status': state, 'targets': rows, 'targetError': target_error})
+                    elif parsed.path == '/api/agent/workspace/simulation':
+                        if set(query) - {'strategy'} or len(query.get('strategy', ['D1'])) != 1:
+                            raise ValueError('策略参数无效')
+                        strategy = query.get('strategy', ['D1'])[0]
+                        if strategy not in ('D1', 'DENSE', 'FIELD_FILTER'):
+                            raise ValueError('策略未登记')
+                        self._send(200, workspace_simulation(root, strategy))
+                    elif parsed.path == '/api/agent/workspace/target':
+                        if set(query) != {'sampleId'} or len(query['sampleId']) != 1:
+                            raise ValueError('目标参数无效')
+                        from audit_target import normalize_target
+                        matches = [row for row in workbench.target_loader() if row['sampleId'] == query['sampleId'][0]]
+                        if len(matches) != 1:
+                            raise ValueError('目标未登记')
+                        target = normalize_target(matches[0])
+                        target = {key: value for key, value in target.items()
+                                  if key not in ('groundTruth', 'vulnerableLines', 'originalSource')}
+                        self._send(200, workspace_document({'target': target}))
+                    elif parsed.path == '/api/agent/workspace/runs' and not query:
+                        rows = []
+                        for item in workbench.history():
+                            try:
+                                record = workbench.read(item['runId'])
+                                plan = record.get('plan', {})
+                                rows.append({**item, 'mode': plan.get('mode'), 'strategy': plan.get('strategy'),
+                                             'embeddingProfile': plan.get('embeddingProfile'),
+                                             'conclusion': record.get('conclusion', 'UNRESOLVED')})
+                            except (OSError, ValueError, KeyError):
+                                continue
+                        self._send(200, {'runs': rows})
+                    else:
+                        match = re.fullmatch(r'/api/agent/workspace/runs/([0-9a-f]{32})', parsed.path)
+                        if not match or query:
+                            self._not_found()
+                        else:
+                            self._send(200, workspace_document(workbench.read(match.group(1))))
+                except FileNotFoundError:
+                    self._not_found()
+                except (OSError, ValueError, KeyError, TypeError, RuntimeError, ImportError):
+                    self._send(400, {'error': '工作台参数或证据无效，请刷新状态并检查本机配置'})
+            elif parsed.path in ('/workbench.html', '/workbench.js', '/workbench.css') and not parsed.query:
                 content_type = {'html': 'text/html', 'js': 'text/javascript', 'css': 'text/css'}[parsed.path.rsplit('.', 1)[-1]]
                 self._send(200, (FRONTEND / parsed.path[1:]).read_bytes(), content_type + '; charset=utf-8')
             elif parsed.path.startswith('/api/workbench/'):
@@ -423,6 +529,8 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 self._send(200, (FRONTEND / 'agent.html').read_bytes(), 'text/html; charset=utf-8')
             elif self.path == '/agent.js':
                 self._send(200, (FRONTEND / 'agent.js').read_bytes(), 'text/javascript; charset=utf-8')
+            elif self.path == '/favicon.ico':
+                self._send(204, b'', 'image/x-icon')
             elif self.path == '/api/demo':
                 self._send(200, demo_record(root))
             elif self.path == '/api/mvp/status':
@@ -515,7 +623,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                     if not preview_slots.acquire(blocking=False):
                         self._send(429, {'error': '预览正在处理，请稍后再试'}); return
                     try:
-                        self._send(200, workbench.preview(payload))
+                        self._send(200, workspace_document(workbench.preview(payload)))
                     except (OSError, ValueError, KeyError, TypeError, RuntimeError, ImportError):
                         self._send(400, {'error': '预览失败：请检查源码、函数、风险行和本机知识快照'})
                     finally:
