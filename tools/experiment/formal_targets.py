@@ -8,8 +8,8 @@ from s3 import audit_lineage
 from storage import decode, fingerprint
 
 
-INTAKE = Path('docs/vibe/releases/R1/evidence/S3/first-batch-intake.json')
-ASSIGNMENT = Path('docs/vibe/releases/R1/evidence/S3/first-batch-assignment.json')
+INTAKE = Path('data/audit/r1/first-batch/first-batch-intake.json')
+ASSIGNMENT = Path('data/audit/r1/first-batch/first-batch-assignment.json')
 FORMAL_LEDGER = Path('.local/d1-kb-v1/ledger.json')
 FORMAL_V2_LEDGER = Path('.local/r1-s5/formal-v2/ledger.json')
 SOURCE_DIR = '.local/first-batch/sources'

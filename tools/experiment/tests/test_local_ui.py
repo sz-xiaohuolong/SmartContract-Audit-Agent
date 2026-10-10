@@ -11,7 +11,7 @@ from local_ui import create_server
 
 
 ROOT = Path(__file__).resolve().parents[3]
-DEMO = json.loads((ROOT / 'docs/vibe/releases/R1/evidence/S3/demo/pilot.json').read_text(encoding='utf-8'))
+DEMO = json.loads((ROOT / 'tools/experiment/fixtures/research-pilot/pilot.json').read_text(encoding='utf-8'))
 
 
 class LocalUiTest(unittest.TestCase):

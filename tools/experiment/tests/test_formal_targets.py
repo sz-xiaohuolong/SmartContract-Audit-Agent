@@ -15,7 +15,7 @@ class FormalTargetsTest(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
-        (self.root / 'docs/vibe/releases/R1/evidence/S3').mkdir(parents=True)
+        (self.root / 'data/audit/r1/first-batch').mkdir(parents=True)
         (self.root / '.local/first-batch/sources').mkdir(parents=True)
         (self.root / '.local/d1-kb-v1').mkdir(parents=True)
         self.sources = {
@@ -35,8 +35,8 @@ class FormalTargetsTest(unittest.TestCase):
                                'sourceUrl': 'https://github.com/example/repo/blob/' + 'a' * 40 + '/' + identifier + '.sol',
                                'sourceSha256': hashlib.sha256(raw).hexdigest()})
             self.assignments.append({'id': identifier, 'split': 'development', 'reason': '工程测试'})
-        self.intake_path = self.root / 'docs/vibe/releases/R1/evidence/S3/first-batch-intake.json'
-        self.assignment_path = self.root / 'docs/vibe/releases/R1/evidence/S3/first-batch-assignment.json'
+        self.intake_path = self.root / 'data/audit/r1/first-batch/first-batch-intake.json'
+        self.assignment_path = self.root / 'data/audit/r1/first-batch/first-batch-assignment.json'
         atomic_json(self.intake_path, {'schemaVersion': '1', 'cases': self.cases})
         atomic_json(self.assignment_path, {'schemaVersion': '1', 'assignments': self.assignments})
         knowledge_path = self.root / '.local/first-batch/sources/KNOWLEDGE.sol'

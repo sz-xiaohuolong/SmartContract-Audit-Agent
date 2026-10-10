@@ -1,8 +1,8 @@
 # 数据与实验工具（S1a / S1b）
 
-R1-S8 的 742 条待审向量可用 `candidate_admission_queue.py` 生成逐项证据缺口清单。它只写审核队列，不建立或激活正式知识快照；本机命令与准入状态见 [R1-S8 阶段验证](../../docs/vibe/releases/R1/VERIFICATION.md#s8-verification)。
+R1-S8 的 742 条待审向量可用 `candidate_admission_queue.py` 生成逐项证据缺口清单。它只写审核队列，不建立或激活正式知识快照；本机命令与准入状态见 [R1-S8 阶段验证](../../docs/vibe/releases/R1/VERIFICATION.md#r1-model-comparison)。
 
-本地可视化验收：先运行 `mvn clean verify` 生成 Java 检索 JAR，再运行 `python3 tools/experiment/local_ui.py --port 8765`，打开 `http://127.0.0.1:8765/`。前后端由同一服务提供，仅运行固定合成样例，不读取模型密钥。界面、历史结果与研究限制见 [本地页面说明](../../docs/vibe/releases/R1/operations/S3_LOCAL_UI.md)。
+本地可视化验收：先运行 `mvn clean verify` 生成 Java 检索 JAR，再运行 `python3 tools/experiment/local_ui.py --port 8765`，打开 `http://127.0.0.1:8765/`。前后端由同一服务提供，仅运行固定合成样例，不读取模型密钥。界面、历史结果与研究限制见 [本地页面说明](../../docs/vibe/releases/R1/attachments/LOCAL_UI.md)。
 
 离线清单、评估、快照和重放使用 Python 3 标准库，无额外依赖。只有 S1b 的 run/resume 命令会显式调用所选模型；单写者锁和进程组控制面向本项目的 macOS/Linux 环境。
 
@@ -86,7 +86,7 @@ python3 tools/experiment/s1b.py snapshot-activate --root /路径/kb --id 生成�
 
 Milvus 通过 `snapshots.MilvusIndex(client)` 注入同步 `MilvusClient`，再调用 `activate_snapshot(root, snapshot_id, index)`。适配器创建唯一 `s1b_...` 集合，分批插入、flush，并通过 Strong 一致性分页读回每个 ID、向量和文档；完整匹配才替换本地激活指针。应用使用 `active_snapshot(root, index)` 获取经过再次校验的集合名。它不修改旧集合或全局别名，不自动清除构建失败留下的孤立集合。旧 legacy RAG 的启动导入逻辑没有接入此入口。
 
-R1-S3 的 D1 正式知识候选使用 `d1_kb.py` 从完整审核的谱系清单、逐案审核的补丁对片段、同一固定模型的向量构建上述 S1b 快照和 D1 catalog。构建命令不自动激活；待审标签、未审配对、摘要不符、知识样本覆盖不全或跨划分泄漏都会拒绝。`d1_embed.py` 可先用本地固定模型为待审案例生成候选向量，输出明确标记 `candidateOnly=true`，不绕过正式准入；离线测试用注入的确定性编码器，不下载权重。当前首批材料仍待审，具体原件、候选划分及模型下载阻塞见 [D1 知识库准入记录](../../docs/vibe/releases/R1/research/S3_D1_KB_READINESS.md)。现有 `mvp_` 工程演示集合不属于此入口。
+R1-S3 的 D1 正式知识候选使用 `d1_kb.py` 从完整审核的谱系清单、逐案审核的补丁对片段、同一固定模型的向量构建上述 S1b 快照和 D1 catalog。构建命令不自动激活；待审标签、未审配对、摘要不符、知识样本覆盖不全或跨划分泄漏都会拒绝。`d1_embed.py` 可先用本地固定模型为待审案例生成候选向量，输出明确标记 `candidateOnly=true`，不绕过正式准入；离线测试用注入的确定性编码器，不下载权重。当前首批材料仍待审，具体原件、候选划分及模型下载阻塞见 [D1 知识库准入记录](../../docs/vibe/releases/R1/attachments/D1_KB_READINESS.md)。现有 `mvp_` 工程演示集合不属于此入口。
 
 默认 CLI 只激活本地快照。真实 Milvus 接入须在明确配置、凭证来自环境变量的调用方创建客户端；本轮不安装 SDK、不建立真实连接。适配接口依据 [PyMilvus 官方客户端文档](https://github.com/milvus-io/pymilvus/blob/master/_autodocs/api-reference/milvus-client.md) 实现，离线客户端夹具验证完整性与激活行为，真实 SDK/服务版本兼容性仍须部署时验证。
 
@@ -137,7 +137,7 @@ python3 tools/experiment/program_facts.py --source /路径/target.sol > /路径/
 java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --retrieval --help
 ```
 
-S1b 的知识块可加一份审核 catalog。其格式为 `{"snapshotId":"快照摘要","cases":{"知识块ID":{...}}}`；每个块的元数据必须包含 `caseId/pairId/role/mechanism/riskKind/conditions/reviewed`，不包含目标真值。`role` 为 VULNERABLE 或 DEFENSE，机制为 REENTRANCY 或 ACCESS_CONTROL；初始条件为 CHECK_BEFORE 或 STATE_WRITE_BEFORE，角色变量用 `$actor/$resource/$authority`。具体可运行示例见 [S2 合成夹具](../../docs/vibe/releases/R1/evidence/S2/demo/catalog.json)。
+S1b 的知识块可加一份审核 catalog。其格式为 `{"snapshotId":"快照摘要","cases":{"知识块ID":{...}}}`；每个块的元数据必须包含 `caseId/pairId/role/mechanism/riskKind/conditions/reviewed`，不包含目标真值。`role` 为 VULNERABLE 或 DEFENSE，机制为 REENTRANCY 或 ACCESS_CONTROL；初始条件为 CHECK_BEFORE 或 STATE_WRITE_BEFORE，角色变量用 `$actor/$resource/$authority`。具体可运行示例见 [S2 合成夹具](fixtures/retrieval/catalog.json)。
 
 查询 JSON 包含已准备的 `vector`、查询文本 `text` 和目标源码 `sourceHash`，不得偷偷调用 embedding。目标源码必须属于快照全量审核清单的非 knowledge 划分。
 
@@ -149,24 +149,24 @@ python3 tools/experiment/recall.py \
 
 输出含 `pool` 与召回元信息，后者记录向量/文本查询摘要、catalog 摘要、embedding 型号和算法版本。默认本地计算 cosine；加 `--milvus-url http://127.0.0.1:29530` 时要求该根目录已有经完整读回验证的 Milvus active 指针，再对搜索返回的 ID 和分数做本地核对。所有对照消费同一个导出的 pool，不能为 D1 额外免费补候选。
 
-Java 请求包括 `target`（机制、风险事实 ID、角色绑定）、`pool`、`budget`。风险事实 ID 从事实提供器输出选择，角色由调用方明确指定；完整样例为 [request.json](../../docs/vibe/releases/R1/evidence/S2/demo/request.json)。独立对照入口：
+Java 请求包括 `target`（机制、风险事实 ID、角色绑定）、`pool`、`budget`。风险事实 ID 从事实提供器输出选择，角色由调用方明确指定；完整样例为 [request.json](fixtures/retrieval/request.json)。独立对照入口：
 
 ```bash
 java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --retrieval \
-  --source docs/vibe/releases/R1/evidence/S2/demo/target.sol \
-  --request docs/vibe/releases/R1/evidence/S2/demo/request.json \
+  --source tools/experiment/fixtures/retrieval/target.sol \
+  --request tools/experiment/fixtures/retrieval/request.json \
   --worker tools/experiment/program_facts.py --strategy compare
 ```
 
 可选策略：`dense/hybrid/contrastive/d1/compare`。`compare` 固定输出四种策略、相同池摘要及预算、选中上下文和全部候选的条件解释；不读取配置密钥、不调用模型、与 D2 无耦合。预算单位为实际上下文 UTF-8 字节，包含标识与正文；额外诊断解释不属于允许下游免费拼入的上下文。
 
-示例是人工构造的机制夹具，包含有意接近的条件变体，仅供测试，不可作为跨项目实验、正式测试划分或论文性能数据。工程语义及已知覆盖边界见 [S2 设计](../../docs/vibe/releases/R1/PROPOSED_DESIGN.md#s2-design)。
+示例是人工构造的机制夹具，包含有意接近的条件变体，仅供测试，不可作为跨项目实验、正式测试划分或论文性能数据。工程语义及已知覆盖边界见 [S2 设计](../../docs/vibe/releases/R1/PROPOSED_DESIGN.md#r1-design)。
 
 ## S3：来源隔离与离线证伪先导
 
-S3 的完整契约、来源待审状态和可重放命令见 [R1-S3 验证](../../docs/vibe/releases/R1/VERIFICATION.md#s3-verification)。`s3.py lineage` 只读取开发、知识与验证源码；本切片对任何包含锁定测试的清单直接拒绝，程序不打开其源码。`s3_pilot.py` 共用 S2 候选池运行四原策略、字段过滤和两项消融，要求完整提示 tokenizer 适配器与版本摘要；示例码点计数器只用于机制测试。失败和未知保持单独分母，未核验真实标签时不计算科研收益。
+S3 的完整契约、来源待审状态和可重放命令见 [R1-S3 验证](../../docs/vibe/releases/R1/VERIFICATION.md#r1-data-evidence)。`s3.py lineage` 只读取开发、知识与验证源码；本切片对任何包含锁定测试的清单直接拒绝，程序不打开其源码。`s3_pilot.py` 共用 S2 候选池运行四原策略、字段过滤和两项消融，要求完整提示 tokenizer 适配器与版本摘要；示例码点计数器只用于机制测试。失败和未知保持单独分母，未核验真实标签时不计算科研收益。
 
-本机 Milvus 与单次真实模型工程试跑采用独立的 `mvp_` 集合和 `/mvp.html` 页面，完整命令、费用边界及报告目录见 [工程 MVP 说明](../../docs/vibe/releases/R1/operations/S3_MVP_MILVUS_RUN.md)。该入口只处理固定开发样本，不作为 S3 研究先导或 D1 效果评估。
+本机 Milvus 与单次真实模型工程试跑采用独立的 `mvp_` 集合和 `/mvp.html` 页面，完整命令、费用边界及报告目录见 [工程 MVP 说明](../../docs/vibe/releases/R1/attachments/MVP_MILVUS_RUN.md)。该入口只处理固定开发样本，不作为 S3 研究先导或 D1 效果评估。
 
 ## R1-S4：正式知识快照的单样本审计工作台
 
@@ -213,4 +213,4 @@ mvn clean verify
 
 同一 `/agent.html` 页面新增批量区域。勾选已登记的独立验证目标和 `DENSE`、`FIELD_FILTER`、`D1` 策略，先点击“查看运行计划”，再开始批量对照。每项结果同步写入 `.local/audit-batches/<批量编号>/samples.jsonl`，页面显示按策略的完成、失败、未知、入选证据、usage 和待核验指标；下载链接直接返回逐样本 JSONL。重新打开历史不会发起模型请求；异常中断的计划可在历史中续跑，已启动但没有结果的项记为未决，不自动重发。
 
-“真实模型批量运行”可查看当前端点、模型、样本数 × 策略数 × 重复次数 × 模型阶段 × 尝试次数以及请求和输出 token 上界。用户已授权显式启动真实批量；完整输入 token 与费用上界仍为 `null`，输入 UTF-8 字节上限不是 token 公平。页面的检测召回、检索 Recall@K 和 nDCG 只有取得独立审核的目标—案例标签后才能计算，当前显示“待核验”。数据规模依据和后续实验方案见 [R1-S6 研究设计](../../docs/vibe/releases/R1/research/S6_RESEARCH_DESIGN.md)。
+“真实模型批量运行”可查看当前端点、模型、样本数 × 策略数 × 重复次数 × 模型阶段 × 尝试次数以及请求和输出 token 上界。用户已授权显式启动真实批量；完整输入 token 与费用上界仍为 `null`，输入 UTF-8 字节上限不是 token 公平。页面的检测召回、检索 Recall@K 和 nDCG 只有取得独立审核的目标—案例标签后才能计算，当前显示“待核验”。数据规模依据和后续实验方案见 [R1-S6 研究设计](../../docs/vibe/releases/R1/attachments/RESEARCH_DESIGN.md)。

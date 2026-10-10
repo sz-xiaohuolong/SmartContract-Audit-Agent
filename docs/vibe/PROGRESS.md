@@ -2,121 +2,30 @@
 
 | 当前事项 | 状态与入口 |
 | --- | --- |
-| 2026-10-10 R1 文档归档 | 原 S0–S9 已归档至[R1](releases/R1/README.md)，旧切片目录已移除；程序与测试引用同步 |
-| 当前缺口 | 整体 Release 边界与完整有效需求未统一；最近实验未观察到 D1 改进，D2 全部 UNKNOWN，研究效果保持 UNVERIFIED |
-| 下一步 | 当前后续任务按[项目地图](PROJECT.md)恢复；实验后续仍需编译环境与事实覆盖 |
+| 当前工作 | R2-20261010 长目标已由用户冻结；[统一规格](releases/R2-20261010/SPEC.md)、[统一计划](releases/R2-20261010/IMPLEMENTATION_PLAN.md)、[验收矩阵](releases/R2-20261010/VERIFICATION.md)已建立 |
+| 当前缺口 | S10 编译环境与评测输入隔离构建中，真实来源盘点并行；研究效果 UNVERIFIED，新增模型请求预算 0 |
+| 下一步 | 整合固定编译/诊断和清理输入，执行历史53目标工具核验及172候选的派生重放，再补真实D2路径 |
 
 ## 当前恢复位置
 
 | 字段 | 核验事实 |
 |---|---|
-| 当前任务 | R1 目录归档与引用迁移已完成；保留历史批准、验收与无关修改 |
-| 本次检查 | 156 份原文件归档定位完整；101 份证据／源码字节一致；文档链接、锚点及受影响离线测试通过 |
-| 当前整体 Release / Workflow State | 未建立统一边界和完整基线；不从历史 Slice 路径推定整体状态 |
+| 当前任务 | S10 工具环境与评测输入隔离；真实来源只读盘点；主代理负责串行编排、派生重放和验收 |
+| 本次检查 | 用户长目标已读取，初始提交/既有改动摘要与本机恢复patch已保存；本轮测试尚未完成 |
+| 当前整体 Release / Workflow State | R2-20261010 / BUILDING / ACTIVE；本轮需求 FROZEN，验证 UNVERIFIED，正式部署未授权 |
 | 最近工程工作包 | S9 单合约深度审计与 D2 闭环，存量标识 `R1-S9`；原局部批准及验收依据继续沿用 |
-| 最近已验工程提交 | `4dfc7e1`；既有验收见 [S9 验证](releases/R1/VERIFICATION.md#s9-verification)，本次未重跑应用测试 |
-| 最近实验报告提交 | `9beb7b8`；159 次真实请求的结果与限制见[报告](experiments/2026-10-10_API_BATCH_REPORT.md) |
+| 最近已验工程提交 | `4dfc7e1`；既有验收见 [S9 验证](releases/R1/VERIFICATION.md#r1-core-evidence)，本次未重跑应用测试 |
+| 最近实验报告提交 | `9beb7b8`；159 次真实请求的结果与限制见[报告](releases/R1/experiments/2026-10-10_API_BATCH_REPORT.md) |
 | 执行目录与分支 | 当前主目录，分支 `main`；无关未提交修改保留 |
 
-## R1 归档记录
+本轮初始提交为 `00fecf5`。基线证据 `.evidence/R2-20261010/baseline.json`，无关改动恢复材料 `.local/r2/preexisting.patch`。环境与输入任务文件所有权独立，公共编排串行整合；小版本验证后依 AGENTS 提交同步。尚未完成的真实路径、先导、页面与毕设交付不得以S10局部结果替代。
 
-2026-10-10：已将原 S0–S9 的文档与资产归档到 [R1 目录](releases/R1/README.md)，规格、计划、验证、设计和评审按职责合并，旧十个切片目录已移除。原路径、摘要与来源提交见[迁移清单](releases/R1/ARCHIVE_MANIFEST.json)。程序与测试改读 `releases/R1/evidence/S2`、`S3`；本机 `.local/r1-s5/formal-v2/ledger.json` 和既有运行结果保持原位置。已有局部批准及历史验收状态保留。
+## 最近基线与实验
 
+R1 已验工程提交 `4dfc7e1`，历史证据见[R1 验证](releases/R1/VERIFICATION.md)。最近[真实 API 报告](releases/R1/experiments/2026-10-10_API_BATCH_REPORT.md)为 53 目标 × 三策略、159 次模型有效请求；Slither 147 项进程错误，D2 全部 UNKNOWN，研究效果 UNVERIFIED。编译环境、输入隔离和相关路径由 R2 接续。
 
-## 最近实验与工程记录
+## 本次文档整理
 
-以下记录按各自时间和范围阅读；其中局部工程状态不是整个项目或研究方法的验证状态。
+根目录只维护 PROJECT、PROGRESS、TECH_DESIGN；R1、R2 各自维护版本正文，Slice 进入计划表。旧日志和正文快照归入 `.evidence/`，运行登记与源码放 `data/audit/r1/`，合成夹具放 `tools/experiment/fixtures/`。本次本地引用、章节锚点、证据身份与相关离线回归检查通过；业务功能与研究状态保持原记录。
 
-2026-10-10 真实 API 实验：53 目标 × 三策略，159 次请求全部模型有效且无重试。未观察到 D1 改进；Slither 147 项进程错误，D2 全部 UNKNOWN；研究效果 UNVERIFIED。后续补齐工具编译环境与事实覆盖，再对保存假设做零新增模型请求的注明来源重放。[中文报告](experiments/2026-10-10_API_BATCH_REPORT.md)与[本机页面](http://127.0.0.1:8771/agent.html)。
-
-本批编号 `546fe566368e4b0ea7b6aeb58b235939`。JSONL／CSV、来源与快照绑定、共同候选池、凭证检查和 Chromium 报告入口核对通过；小型证据位于 `.evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/`，完整原始数据位于本机 `.local/auto-benchmark-runs/546fe566368e4b0ea7b6aeb58b235939/`。本轮未改源码、切换编译器、重建知识或重跑历史批次。以下工程与历史记录保留其原有时间口径。
-
-2026-10-10：完成 [R1-S9 单合约深度审计与 D2 闭环](releases/R1/SPEC.md#s9-spec)的工程验收。需求 FROZEN，Workflow State 为 READY_TO_SHIP，Verification 为 VERIFIED，正式部署/发布授权 NOT_REQUESTED；开发基点为 `0b40b4b`，完成提交以 Git 历史为准。固定 Nomic 默认检索、预置/粘贴输入、六阶段、源码高亮、D1 对照、D2 六项三态、报告回放及批量裁决已接通。独立评审发现的名称/目标绑定、权限覆盖与消费入口、拒绝假设聚合、配置快照与解析、点击劫持问题已修复并复核。最终 Java 75、Python 245 项通过且无跳过；Chromium 两次完整零付费演练、390px 无溢出、文本注入无图片、控制台零错误，历史仅 GET；本机三策略完成 3、失败 0、未知 3。同源 Java 模型/Slither 夹具验证非空假设与六项引用。详细矩阵见[验收](releases/R1/VERIFICATION.md#s9-verification)，源码与范围见[评审](releases/R1/REVIEW.md#s9-review)。本轮未调用外部付费模型、重建知识或重写历史；原有无关未提交修改保留。D1 改进和 D2 准确率仍待研究证据，下一步可人工核对实际审计路径与样本标签。
-
-2026-10-09：完成 [Nomic 对照与结构化输出修复](releases/R1/VERIFICATION.md#s8-nomic-verification)。复用 300 组／600 文本，以固定本机 Ollama 模型摘要生成独立 768 维快照并经 Milvus 全量读回激活，BGE 384 维快照与历史结果保留。实测 Nomic 有效窗口为 2048，不能标作 8192 实验；BGE 250 条超过 512 token，Nomic 17 条截取。完成 53 × 3 = 159 次真实模型尝试，原始 5 项解析失败经最终解析器零新增请求离线重放后全部恢复，另拒绝 1 条无目标源码声明的附加假设；原始失败／诊断与派生报告分别保存。修复围栏、附加字段、行号、名称及完整合约函数范围，限流／连接中断仅退避一次且记录请求次数。页面支持 BGE／Nomic 选择和原文重放标识。最终 Nomic DENSE／FIELD_FILTER／D1 F1 为 0.9897／0.9897／0.9574，六路共同有效 44 目标中 D1 仍低于 DENSE，**无 D1 相对强基线改善证据，科研主张继续收窄**；旧 BGE 与新 Nomic 解析／提示版本差异不能归因于嵌入窗口。Java 66 项、Python 175 项及脚本检查通过；数据、运行编号、可重放命令、Token 与失败分母见验收记录。
-
-2026-10-08：完成 [R1-S8 自动标注知识与批量审计](releases/R1/VERIFICATION.md#s8-auto-experiment-verification)。已把固定 AutoMESC 300 组改动前后片段作为**自动标注、未逐案核验**的知识层构建并激活为 600 向量 S1b 快照，Milvus 全量读回后才切换指针；明确保护差异 49 组，另 251 组只供标记为软配对的探索。D1 增加条件模式和软对比重排，页面可对 49 个 SmartBugs 漏洞目标与 4 个安全函数运行三策略、逐项保存并下载 JSONL/CSV。完整离线 159 项完成 159、失败 0、UNKNOWN 159，类别代理命中向量 43/49、简单字段过滤与 D1 均 49/49。真实模型完整批次 159 项中有效 147、失败/UNKNOWN 12；三策略共同有效的 43 个目标上，D1 与向量召回 F1 同为 0.937，字段过滤为 0.911，**尚无 D1 相对向量召回的净改进证据**。Maven 56 项、Python 166 项及 JavaScript 检查通过；详情见上述验收记录。
-
-2026-10-08：完成 [R1-S8 探索性 742 条知识检索](releases/R1/VERIFICATION.md#s8-verification)。AutoMESC 600 条改动片段与 FORGE 142 条审计参考已在独立待审 Milvus 集合全量读回；只有 12 组具备可暂定的句法对比条件，其余不标作安全负例。抽取并隔离 SmartBugs 49 个公开目标，实际三策略同池离线运行：32 个完成检索、17 个事实无法唯一绑定而保持未知、失败 0；向量／简单条件过滤／D1 分别对 32／3／1 个目标选出片段。页面可查看与重跑逐样本记录；正式 3 组／6 向量知识快照未变。此轮零付费模型请求，未算检测准确率，**D1 审计改进仍无证据**。Maven 54 项、Python 155 项及 JavaScript 检查通过。
-
-2026-10-08：推进 [R1-S8 批量准入与正式对照](releases/R1/VERIFICATION.md#s8-verification)。为 442 组／742 条待审向量生成逐项证据缺口清单，自动准入 0 组；抽查 Proof-of-Patch AI Arena 真实重入锁修复，现有 D1 状态更新条件不能表示，暂不转正。补查 Cooler 的原始争议报告与维护者 PR，发现数据集单行补丁并非所引 PR 原样修复；CoinFabrik 的 171 条 finding 仅来自 15 个项目组，其中重入 4 条，不能充当数百个独立配对案例。批量入口已去掉三个目标的硬编码上限，仍只允许谱系隔离的已审验证目标；页面新增按策略的报告漏洞与未决计数。本机三目标 × 三策略离线重放完成 9、失败 0、未知 9，D1 入选 0；正式快照仍为三组／六向量，科研指标保持空值。Maven 51 项、Python 146 项、JavaScript 语法检查通过。扩展正式知识与独立验证、人工目标—案例标签及完整 token 公平仍未完成，**不能开始数百级正式 D1 效果实验**。
-
-2026-10-08：完成 [R1-S7 公开语料待审入库](releases/R1/VERIFICATION.md#s7-verification)。固定 AutoMESC 与 FORGE-Curated 版本，下载原始表和审计源码到本机被忽略目录；筛出 300 个项目的 AutoMESC 改动前后候选和 142 个 FORGE 审计源码条目，用固定本地 BGE 生成 742 条向量，并在独立 `r1pending_` Milvus 集合逐条读回。全部标为待审，正式 `s1b_` 指针仍为三组补丁对／六条向量；页面直接显示二者区别，且仅使用正式知识。与现有两个测试来源的精确字节碰撞为 0，FORGE 完整源码近克隆阈值筛查命中 0；AutoMESC 局部 diff 的近克隆和标签仍待核对。页面九项离线对照完成 9、失败 0、未知 9，D1 入选证据 0；Maven 51 项、Python 141 项离线测试通过。此步骤解决本地候选数量和可视化查看，**尚不能据此开展数百级正式 D1 效果实验**。
-
-2026-10-07：按用户新增授权开放真实模型批量入口并排查单次 `FAILED`。真实 Slither 在缺少原项目依赖／指定编译器的单文件环境无法编译，现明确标记 `SKIPPED`，D2 保持 `UNKNOWN`；模型有时不遵守严格 JSON 格式或填入 `Unknown` 合约名，已加入精确字段提示、绝对行号和源码合约提示，保留失败原文的本机诊断与具体校验原因。真实九项批量冒烟完成 8、失败 1、未知 9；随后单次复测 `AC-ASE-040 × D1` 返回一条初步假设并完成结构校验，但不是已证实漏洞或 D1 增益。详情见 [S6 补充验收](releases/R1/VERIFICATION.md#s6-verification)。完整输入 token 与费用仍显示空值，不作为启动拦截，也不充作等预算科研证据。
-
-2026-10-07：完成 [R1-S6 批量对照工程](releases/R1/VERIFICATION.md#s6-verification)。清理三个无活动指针的旧 Milvus 集合，当前仅保留正式知识 `s1b_a6741615b74240909978e25ae2264476` 与活动工程 MVP `mvp_ec838f133828429f8b9fc0f53a1b2948`；正式知识仍为三组真实补丁对、六条向量。`/agent.html` 已支持三验证目标与三策略离线批量运行、逐样本 JSONL、断点保护、候选池一致性及指标表；最新九项离线冒烟完成 9、失败 0、未知 9、D1 入选证据 0。真实批量入口在输入 token 与费用上界未锁定前禁止启动；本轮零付费调用。文献规模与[研究设计](releases/R1/research/S6_RESEARCH_DESIGN.md)表明当前数据和事实覆盖不足以验证 D1 提升，检索及检测效果指标继续保持空值。Java 47 项、Python 136 项离线测试通过。后续优先补充可适用的真实知识—验证事件、独立盲审标签和完整提示 token 公平，再开展付费对照。
-
-2026-10-07：按用户要求完成 [R1-S5 真实数据与页面试跑](releases/R1/VERIFICATION.md#s5-verification)的工程部分。核实并固定 RabbitHole 访问控制知识案例、JPEG’d 与 Infinity 重入独立验证案例，合并原有 Maia、Atomic Loans 和 PoolTogether，正式清单为知识 3 组、验证 3 组；跨划分错误、近克隆候选及待审准入项均为 0。固定 BGE 模型离线生成 6 条知识向量，新快照 `5381e15f60729bf4e475572f0717e911d316e4754a17f9d0cf74cf341a3d76c3` 经 Milvus 全量读回后激活。独立验证目标已进入本机 `/agent.html`，可逐次选择向量、字段过滤或 D1；九次纯离线试跑均保存并重放，失败 0、未知 9、真实 API 调用 0。Java 47 项、Python 127 项离线测试通过。当前重入知识仅一组，D1 对这三个验证目标均未选出完整适用配对；真实 tokenizer、公平完整提示预算及目标—案例人工标签仍缺，**不能报告 D1 改进**，下一步补充合格案例与独立标签后再作真实对照。
-
-2026-10-05：用户已批准 [R1-S4 规格](releases/R1/SPEC.md#s4-spec)、[设计](releases/R1/PROPOSED_DESIGN.md#s4-proposed-design)及[函数级追加决定](releases/R1/decisions/S4_CHANGE_PROPOSAL.md)。现已实现固定开发目标谱系校验、正式 `s1b_` 快照只读 D1 检索、最多三条严格结构化模型假设、Slither 与可选 Mythril 工具 CLI、D2 六项义务初版、逐事件持久化和 `/agent.html` 审计页面。实测 `AC-ASE-006`、`RE-SCRUBD-001` 的离线演练均保存并可重放；后者仅为第 574–660 行函数级上下文。最终全量 Java 47 项与 Python 120 项离线测试通过。真实付费模型未在本轮调用；D1 科研效果和 D2 准确率仍未知。逐项证据及验收命令见 [S4 验证](releases/R1/VERIFICATION.md#s4-verification)。
-
-更新：2026-10-05。
-
-2026-10-04 D1 首版正式知识库：核对 Atomic Loans 审计范围源码与上游提交完全一致，并发现 PoolTogether 的真实修复属于固定接收方，不能用现有 `CHECK_BEFORE` 条件冒充权限修饰器。首版知识改选 Maia 访问控制真实补丁对与 Atomic Loans 重入真实补丁对；PoolTogether 单独留在验证侧。按固定模型文件摘要离线生成四条 384 维真实语义向量，S1b 快照经完整性校验及 Milvus 全量读回后激活，集合为 `s1b_612ad26b068c4b64842463a633d6d1ba`。首版知识 2、验证 1、开发 0，跨划分冲突 0；其余五项候选仍待审。Maia 风险操作据实为 `CALL`，但现有轻量事实提取仍为 `PARTIAL/UNKNOWN`。四条自检索及本地／Milvus 排序一致仅证明链路可用，目标—案例独立适用性标签尚缺，**D1 科研效果仍未知**。数据划分、原件、模型、快照和重放见[首版正式知识库](releases/R1/research/S3_D1_KB_READINESS.md)，验证见[记录](releases/R1/VERIFICATION.md#s3-verification)。
-
-以下同日早先记录保留当时的状态与证据；首版正式知识库的当前状态以上文为准。
-
-2026-10-04 D1 知识库候选推进：经用户确认，以具备[独立审计报告及维护者真实修复 PR](releases/R1/research/S3_D1_KB_READINESS.md)的 Atomic Loans 替换 AI Arena 的**正式重入知识位置**，原工程演示划分不改。正式候选 11 项中排除 3 项，活动样本知识 2、开发 4、验证 2；固定 Atomic 源码、报告、补丁和许可原件，谱系冲突及近克隆候选均为 0。新增 D1 正式快照准入器，可把经审补丁对生成漏洞／防御成对文档、S1b 快照与 D1 catalog，且不自动激活。当前八项仍有待审标签和缺失原件，真实语义向量也未生成；正式 `s1b_` Milvus 快照**尚未创建或激活**，D1 科研效果仍未知。完整阻塞与重放命令见[准入记录](releases/R1/research/S3_D1_KB_READINESS.md)。
-
-候选向量工具已支持固定 BGE 模型修订和离线确定性测试，本机 Python 3.12.13 依赖版本已锁定。实际模型权重下载在 Hugging Face TLS 握手时失败，因此尚无真实向量；不会以工程哈希向量替代。该阻塞和重试命令已写入准入记录。
-
-2026-10-04 首批数据再核验：维持知识 2、开发 4、验证 2 的项目级划分；新增固定四份 Code4rena 原始 finding 和 Basin／Maia 两份修复版本，合计八项中原始报告 5、修复源码或修复版本 3。报告、补丁与源码继承同一事件组，更新后的谱系检查跨划分错误 0，但 `pendingSamples=8`。知识侧 AI Arena 修复源码仍不可回读，所有样本缺独立逐事件标签，因此**正式知识快照没有创建或激活**。清单变化后已重建当前 `mvp_` 三条演示数据并恢复页面就绪，旧工程集合保留；两者均只供联调。最新 Java 40 项、Python 90 项离线验证通过。逐项证据与重放命令见[原件复核](releases/R1/REVIEW.md#s3-first-batch-evidence-review)。
-
-2026-10-04 针对真实试跑反复出现的 `MODEL_OUTPUT_INVALID`，已核查供应商输出：开启思考时，2048 与 4096 token 两次均完全耗尽且最终回答为空，严格 JSON Schema 不能阻止思考阶段先占满额度。工程 MVP 现由临时配置**显式启用严格 JSON Schema＋关闭显式思考**，普通审计请求不继承这两个开关；无效正文保留本机诊断、输出截断单独标识，失败仍为未决且不自动重试。该模式曾完成一次 26 输出 token 的结构化返回，也曾有一次 103 token 的无效返回；样本数不足以估计真实失败率，且关闭思考可能影响漏洞判断，D1 科研模型配置仍须另行冻结。最新 Java 40 项、Python 90 项离线测试通过，详见 [验证记录](releases/R1/VERIFICATION.md#s3-verification)。
-
-2026-09-26 新增[本机 Milvus＋真实模型工程试跑](releases/R1/operations/S3_MVP_MILVUS_RUN.md)：隔离的工程集合收录两组固定知识候选的 3 个片段，完整读回才激活；固定开发目标经 Milvus 检索后调用一次火山 Agent Plan `deepseek-v4-flash`，结果写入 `.local/mvp-runs/`，在本机 [页面](http://127.0.0.1:8767/mvp.html)回看。最后一次完成记录为 `9dc58487b1ad458386d72ccc516b7f78`，输入 1945、输出 1770 token；两次失败记录仍为未决，没有自动重试。Java 构建及 Python 89 项离线测试通过，[验证详情](releases/R1/VERIFICATION.md#s3-verification)已记录。这个集合及词法哈希向量仅供工程联调，正式科研知识快照仍未激活；同一目标的两次成功解释不一致，D1 效果和检测准确率仍未验证。
-
-2026-09-26 首批真实案例已完成[项目级预分配与固定源码隔离](releases/R1/research/S3_FIRST_BATCH_SPLIT.md)：十份源码摘要全部吻合；原始报告复核排除两项类别误配，余下知识候选 2、开发检测 4、验证 2。八项源码的项目、事件、字节与当前近克隆门禁无跨划分冲突；PoolTogether 的 finding 与修复源码已固定并绑定同一事件组。八项仍缺足够的独立标签／修复对证据，正式知识快照与 Milvus **未激活**，真实 D1 效果没有计算。用户要求非商业毕设实验，后续把许可作为来源记录处理，优先排除标签和修复误配。
-
-2026-09-26 用户确认首批十项候选审核通过；[核验记录](releases/R1/research/S3_FIRST_BATCH_AUDIT.md)与名单已记录该意见。原始许可、逐事件报告／补丁及独立标签依据仍有缺口，科研准入保持 0，不能由审核意见自动改写。工程上已扩展[本地实验台](releases/R1/operations/S3_LOCAL_UI.md)：一次离线运行会生成逐样本 JSONL 和汇总报告，并通过页面链接下载；正式数据与付费模型仍不开放。[验收记录](releases/R1/VERIFICATION.md#s3-verification)显示 `mvn clean verify` 的 36 项测试与 Python 离线 80 项测试全部通过，浏览器已核对本机报告入口。
-
-2026-09-25 用户已批准[第一批真实案例来源选择提案](releases/R1/research/S3_DATASET_SELECTION_PROPOSAL.md)的访问控制／重入范围、ASE 2025 与 SCRUBD V6.0 事件索引、Proof-of-Patch 修复线索，并限定先导为 10～15 个高质量样本；字节码案例和 ACFix 模型修复暂缓。[首次核验记录](releases/R1/research/S3_FIRST_BATCH_AUDIT.md)固定十项待审候选、源码摘要与阻塞项，排除发现的标签映射疑点。合格准入仍为 0，尚未分组划分、激活正式知识快照或运行付费实验，G1 仍未通过。
-
-**研究方向更新：**2026-09-24 二轮定向查新后，D1 仅保留可证伪的受约束命题；D2 宽版本创新主张撤回。见[第二轮裁决](../../thesis/D1_D2第二轮查新与立题裁决_20260924.md)。
-
-以下为当时的 S3 状态记录；当前恢复位置及最新实验与工程证据见本文开头。
-
-- 当前 Release：`R1-S3` 首个工程切片；[SPEC](releases/R1/SPEC.md#s3-spec) 的本轮工程范围 FROZEN。S2 工程历史状态仍为 READY_TO_SHIP，不能当成 D1 科研效果。
-- Workflow State：`VERIFYING`（S3 整体，工程部分可重放）；Operational Status：`ACTIVE`。Maven 36 项与 Python 85 项离线测试通过，旧模块离线编译成功；真实数据 G1 **未通过**，D1/D2 研究效果 `UNVERIFIED`。用户已授权完成的小版本同步远程，但不改变研究验证状态。
-- 当前目录：`/Users/daiyifei/Documents/code/SmartContract-agent`，分支 `main`。S0–S3 工程基线与离线证据以 Git 历史为准；保留研究原件。本次工程 MVP 已显式调用真实模型并逐次记录用量，未开展付费批量研究实验。
-- [S3 来源登记](releases/R1/data/SOURCE_REGISTRY.json)：SCRUBD、Proof-of-Patch 与 ACFix 未核实仓库许可；SmartBugs Curated/ASE AC 仓库分别声明 Apache-2.0/MIT，但逐事件报告、源码、补丁和标签尚未完成核对。真实安全负例数为 0。
-- [S3 验证](releases/R1/VERIFICATION.md#s3-verification)：项目/事件/补丁/精确重复/近克隆和衍生材料跨划分门禁；锁定集直接拒绝、未打开。标签含 UNKNOWN 分母；同池四策略、字段过滤与两消融在合成夹具跑通；完整提示预算用合成计数器验证机制，真实模型 tokenizer/chat 模板仍未锁定。
-- 推送前复审修正来源准入空材料、反证基线遗漏、超时失败分母和 D2 未知真值计数；合成夹具里 D1 与字段过滤 Recall@2 同为 1。旧源码硬编码凭证已改为环境读取，但历史中旧值仍需供应商侧轮换。
-- 本地凭证配置：`audit-mvp` 可从 `config/providers.local.properties` 读取 API Key，空值时回退到原有环境变量；该本地文件被 Git 忽略，示例文件不含密钥。文件读取和输出脱敏经本地 HTTP 夹具验证；本次另按用户要求完成固定样本真实 API 工程试跑，不构成 D1/D2 效果证据。
-- 本地可视化验收台：`/` 页面继续展示固定合成目标、七策略离线对照及 `.local/experiment-ui/` 报告，详见 [离线页面记录](releases/R1/operations/S3_LOCAL_UI.md)。独立的 `/mvp.html` 页面仅在明确点击时调用已配置的真实模型，展示本机 Milvus 快照和 `.local/mvp-runs/` 结果，详见 [工程试跑说明](releases/R1/operations/S3_MVP_MILVUS_RUN.md)。两个页面都只监听 `127.0.0.1`，均不开放锁定集。
-
-### S0–S1 当时可用能力
-
-S0 新 audit-mvp 模块：Boot 4.1.1 / Spring AI 2.0.1，多供应商与火山 Agent Plan 示例，单次审计 CLI，严格结果/错误区分，usage 和源码摘要，受控进程与工具解析。旧 src 通过 legacy/pom.xml 保留。见 [S0 验证](releases/R1/VERIFICATION.md#s0-verification)。
-
-S1a：只读清单、字节重复组、多标签类型评估、失败/缺失分母与固定类别宏平均。实际清单 400 源码、7 组完全重复（14 文件），标签和分组划分仍待审核。
-
-S1b：
-
-1. 全量审核清单校验字节、项目和克隆组跨划分泄漏；知识文档必须继承 knowledge 样本。
-2. 内容寻址知识快照、向量完整性验证、临时目录原子发布和 active 指针切换；Milvus 新集合经完整分页读回才能激活，旧集合不修改。
-3. 批处理逐样本 JSONL 持久化、单写者锁、源码/配置/产物/知识快照绑定、自动恢复与只读重放。完成/失败项默认跳过，不确定调用不自动重复计费；仅显式 retry-id 重试。
-4. S0 原始结果精确类型映射、usage 保留与失败统计；提供命令行闭环及本地子进程夹具。
-
-使用入口：[工具文档](../../tools/experiment/README.md)。工程事实入口 PROJECT 已从旧 R0 提案状态更新，历史 R0 文档保留。
-
-### S2 当时实现
-
-- Python 轻量事实提供器提取状态变量、主体、修饰器和调用/写入顺序；受限语义、别名、旁路及无法确认的保护返回 UNKNOWN。
-- Java `RetrievalStrategy` 提供 Dense、Hybrid、普通正反例和 D1 独立接口；目标角色、作用域、资源和顺序绑定可追溯。
-- D1 选择经审核且条件有差异的漏洞/防御配对，过滤不适用支持、记录缺口、去掉重复块与无新增条件的配对。全部候选评估和上下文硬预算写入证据包。
-- 已验证快照支持本地余弦与 Milvus 召回；导出候选池绑定目标源码摘要，目标真值不进入 Java 检索接口。
-- 新 `--retrieval --strategy compare` CLI 在相同池和预算下导出四策略对照，不调用模型或 D2。
-
-### S3 当时验收与下一步
-
-- 最新 S3 全量验证命令、失败回归、逐样本合成结果和逐需求状态见 [VERIFICATION](releases/R1/VERIFICATION.md#s3-verification)。真实开发样本 0；D1 保留离线证伪方案，暂停效果结论；D2 仅保留固定候选与 guard 基线契约。
-- G1 后续需逐项核对仓库许可、原始漏洞报告、精确源码提交、真实补丁与项目/克隆关联，并由独立审核员标目标—案例适用性。没有经审真实负例不计算真实性误报率。
-- G2 前须锁定指定模型的真实 tokenizer、chat 消息序列化模板和完整提示预算，比较 D1 与最强非 D1 基线的项目级结果。若字段过滤即可解释收益，收窄 D1；若资料不可得，暂停相关主张。锁定测试在方法冻结前不可打开。
-
-## 历史本地迁回记录
-
-2026-09-20 按用户要求将 S0/S1a 源码、配置和文档迁回主目录，逐文件字节校验通过，保留原 `.gitignore` 修改与原始数据。历史验证日志中的隔离工作树路径仅为当时位置。迁回后 Maven 19 项、Python 7 项及 diff 检查通过；本轮最新证据以上方 S1b 日志为准。
-
-2026-09-24 按用户要求清理本机冗余目录：删除旧隔离工作树及同提交旧分支、可重建构建产物和依赖环境、未被当前流程引用的 SolidiFI 上游工具结果；保留历史源码、原始数据、论文证据和已有未提交改动。清理后 Maven 35 项与 Python 66 项离线测试通过。今后只在主目录开发，每个小版本完成并验证后同步远程；当前 S3 整体仍在验证中，不能将同步视为研究效果成立。
+历史每日记录见[原 PROGRESS 快照](../../.evidence/R1/document-archive/PROGRESS.md)；目录与事实源只在[唯一地图](PROJECT.md)导航。

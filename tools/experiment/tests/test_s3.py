@@ -188,7 +188,7 @@ class S3Test(unittest.TestCase):
 
     def test_candidate_text_cannot_hide_target_or_locked_content(self):
         from storage import decode
-        base=Path('docs/vibe/releases/R1/evidence/S3/demo')
+        base=Path('tools/experiment/fixtures/research-pilot')
         ledger=decode((base/'ledger.json').read_bytes())
         plan=decode((base/'plan.json').read_bytes())
         labels=decode((base/'judgments.json').read_bytes())
@@ -215,7 +215,7 @@ class S3Test(unittest.TestCase):
 
     def test_s2_timeout_is_recorded_as_failed_sample(self):
         from storage import decode
-        base = Path('docs/vibe/releases/R1/evidence/S3/demo')
+        base = Path('tools/experiment/fixtures/research-pilot')
         ledger = decode((base/'ledger.json').read_bytes())
         plan = decode((base/'plan.json').read_bytes())
         labels = decode((base/'judgments.json').read_bytes())

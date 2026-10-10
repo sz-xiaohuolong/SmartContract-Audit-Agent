@@ -1,0 +1,1058 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "123a1e44ebe1968a8b6e545f23bad8257800ba9a",
+  "说明": "按用户指定的项目文档与Release目录结构整理；原日志、源码、登记和历史快照保持字节，运行夹具只调整路径。未提交正文改动保留在工作区。",
+  "moves": [
+    {
+      "originalPath": "docs/vibe/SPEC.md",
+      "currentPath": "docs/vibe/releases/R2-20261010/SPEC.md",
+      "originalSha256": "e4f050478976d620abe99ff07836d910b8ac0ad6aa67da3ee0be5c88b45cc47e",
+      "currentSha256": "b3be449894cfe6c46f158e9cd344f72bb087c4f1f3e3d57a9fbbc24ba9026d7c",
+      "sourceTracked": false
+    },
+    {
+      "originalPath": "docs/vibe/IMPLEMENTATION_PLAN.md",
+      "currentPath": "docs/vibe/releases/R2-20261010/IMPLEMENTATION_PLAN.md",
+      "originalSha256": "aed5271b5ae72976d5aa2949bf1169fdb3dcb65e32b75a238999213557fbb1d3",
+      "currentSha256": "f167da7bb82f2bbfdf4f56ca151cde627ebfafd131f6b5ea4ff3823a74e5bcd4",
+      "sourceTracked": false
+    },
+    {
+      "originalPath": "docs/vibe/VERIFICATION.md",
+      "currentPath": "docs/vibe/releases/R2-20261010/VERIFICATION.md",
+      "originalSha256": "8682964837256632e4c3ef56787f15887b4510efa063dae33207d700913c967c",
+      "currentSha256": "8682964837256632e4c3ef56787f15887b4510efa063dae33207d700913c967c",
+      "sourceTracked": false
+    },
+    {
+      "originalPath": "docs/vibe/REAL_CASE_PILOT.md",
+      "currentPath": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "originalSha256": "a248bab84438dc68e4cc98ddfb5581f61e97238841c79015cb79ee8fc69566c0",
+      "currentSha256": "e0a3b81d1afedc55c8e2b236698b88459400238f5123b28e12864763d23d5f25",
+      "sourceTracked": false
+    },
+    {
+      "originalPath": "docs/vibe/THESIS_ARCHITECTURE.md",
+      "currentPath": "docs/vibe/releases/R1/attachments/THESIS_ARCHITECTURE.md",
+      "originalSha256": "ed6d3b623c759e050dd5c0cd400ce463b25f968af95a1bec9d2f28554b3d6ca7",
+      "currentSha256": "08c7273dcc94fcef3fe438b9e1cab5b7df9a2c6cb311dc45fce51280527780a2",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/assets/thesis-architecture-20261004.png",
+      "currentPath": "docs/vibe/releases/R1/attachments/assets/thesis-architecture-20261004.png",
+      "originalSha256": "bb2a430902feeaa38160f49b6735bbedf6e2660efe470720e066f599afc5898d",
+      "currentSha256": "bb2a430902feeaa38160f49b6735bbedf6e2660efe470720e066f599afc5898d",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/experiments/2026-10-10_API_BATCH_REPORT.md",
+      "currentPath": "docs/vibe/releases/R1/experiments/2026-10-10_API_BATCH_REPORT.md",
+      "originalSha256": "fe0d256ace0b9633b7321f640d596b082de941604ad33c8106f5b9c7872b6e77",
+      "currentSha256": "fe0d256ace0b9633b7321f640d596b082de941604ad33c8106f5b9c7872b6e77",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S0/maven-clean-verify.log",
+      "currentPath": ".evidence/R1/S0/maven-clean-verify.log",
+      "originalSha256": "38930127ffa23b047a693f21e3ad153ea765f8585c25af12599bbeb3e802e57e",
+      "currentSha256": "38930127ffa23b047a693f21e3ad153ea765f8585c25af12599bbeb3e802e57e",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S0/test-summary.json",
+      "currentPath": ".evidence/R1/S0/test-summary.json",
+      "originalSha256": "30e43d892e7728e6d9df192bc9c2057acca8e79eb4159b4a5c4921ea22199b42",
+      "currentSha256": "30e43d892e7728e6d9df192bc9c2057acca8e79eb4159b4a5c4921ea22199b42",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S1/legacy-inventory.json",
+      "currentPath": ".evidence/R1/S1/legacy-inventory.json",
+      "originalSha256": "a617ee19cf544d3f90208104647e8f39df901c74a3cb1ff8638f1a9e8b31bb6a",
+      "currentSha256": "a617ee19cf544d3f90208104647e8f39df901c74a3cb1ff8638f1a9e8b31bb6a",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S1/local-maven-clean-verify.log",
+      "currentPath": ".evidence/R1/S1/local-maven-clean-verify.log",
+      "originalSha256": "b9e05d899433b207814f9e0f572f7d09581f86801a2b85c6034ff957c6767bf9",
+      "currentSha256": "b9e05d899433b207814f9e0f572f7d09581f86801a2b85c6034ff957c6767bf9",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S1/s1b-artifact-hashes.json",
+      "currentPath": ".evidence/R1/S1/s1b-artifact-hashes.json",
+      "originalSha256": "32e14c443845a4b6b6b968ab1654ff05d80f81b6165b468cadc38667a7b97726",
+      "currentSha256": "32e14c443845a4b6b6b968ab1654ff05d80f81b6165b468cadc38667a7b97726",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S1/s1b-cli-help.log",
+      "currentPath": ".evidence/R1/S1/s1b-cli-help.log",
+      "originalSha256": "9d50f77449037223237fe4112df423b047ea9a943ab12ebebdd903fa171b8eac",
+      "currentSha256": "9d50f77449037223237fe4112df423b047ea9a943ab12ebebdd903fa171b8eac",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S1/s1b-java-help.log",
+      "currentPath": ".evidence/R1/S1/s1b-java-help.log",
+      "originalSha256": "094d657ae27a05509f3d1418124f1a2f7a80255e1aa74029563ef165f85eff74",
+      "currentSha256": "094d657ae27a05509f3d1418124f1a2f7a80255e1aa74029563ef165f85eff74",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S1/s1b-maven-clean-verify.log",
+      "currentPath": ".evidence/R1/S1/s1b-maven-clean-verify.log",
+      "originalSha256": "ed34d2a90d1783952295128c0bbf37a96ef1b145562f49f9a45ac4ee24f98ae6",
+      "currentSha256": "ed34d2a90d1783952295128c0bbf37a96ef1b145562f49f9a45ac4ee24f98ae6",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S1/s1b-unittest.log",
+      "currentPath": ".evidence/R1/S1/s1b-unittest.log",
+      "originalSha256": "abdd110b03d01450eda9c1d8232feb7b1a09b06799b5791d1a3baf4da5c130cd",
+      "currentSha256": "abdd110b03d01450eda9c1d8232feb7b1a09b06799b5791d1a3baf4da5c130cd",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S1/s1b-workspace-check.json",
+      "currentPath": ".evidence/R1/S1/s1b-workspace-check.json",
+      "originalSha256": "f52ea638a6af5a818a30d0cf891cf7b083cb2999f4ec1839fe223962720b596c",
+      "currentSha256": "f52ea638a6af5a818a30d0cf891cf7b083cb2999f4ec1839fe223962720b596c",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S1/unittest.log",
+      "currentPath": ".evidence/R1/S1/unittest.log",
+      "originalSha256": "8e57d355114cbcd2bf1ab3da49c69a6afaceb776d4c6522e193097d8ccca4eb4",
+      "currentSha256": "8e57d355114cbcd2bf1ab3da49c69a6afaceb776d4c6522e193097d8ccca4eb4",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/alias-binding-red.log",
+      "currentPath": ".evidence/R1/S2/alias-binding-red.log",
+      "originalSha256": "104e070d05bbcce53395e2a49af00ff64c6d8a349fa3ed60b056ccc8b643be35",
+      "currentSha256": "104e070d05bbcce53395e2a49af00ff64c6d8a349fa3ed60b056ccc8b643be35",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/alias-regression-red.log",
+      "currentPath": ".evidence/R1/S2/alias-regression-red.log",
+      "originalSha256": "bcde9258750293b6f2f5c871b9af439003878c91fbf8aebb77a8d090bb9ef7f0",
+      "currentSha256": "bcde9258750293b6f2f5c871b9af439003878c91fbf8aebb77a8d090bb9ef7f0",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/artifact-check.json",
+      "currentPath": ".evidence/R1/S2/artifact-check.json",
+      "originalSha256": "236ffae8a0321cc06f998992263b81ec457c1c69129e79ded496790c9a3f0828",
+      "currentSha256": "236ffae8a0321cc06f998992263b81ec457c1c69129e79ded496790c9a3f0828",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/authority-alias-green.log",
+      "currentPath": ".evidence/R1/S2/authority-alias-green.log",
+      "originalSha256": "17a6e9849f6ee1e759e21bd0e3bd645702cb8da99be463b2e9587adf2dc87bc8",
+      "currentSha256": "17a6e9849f6ee1e759e21bd0e3bd645702cb8da99be463b2e9587adf2dc87bc8",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/authority-alias-red.log",
+      "currentPath": ".evidence/R1/S2/authority-alias-red.log",
+      "originalSha256": "56bcaf768aba750e9cd3d765c4b02341922257a7588669abe25892a2023df431",
+      "currentSha256": "56bcaf768aba750e9cd3d765c4b02341922257a7588669abe25892a2023df431",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/binding-regression-red.log",
+      "currentPath": ".evidence/R1/S2/binding-regression-red.log",
+      "originalSha256": "e85627b4404e017f9c4f5ea7ce3d7291b28663f0358b300b487fe62750bd3751",
+      "currentSha256": "e85627b4404e017f9c4f5ea7ce3d7291b28663f0358b300b487fe62750bd3751",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/comparison-summary.json",
+      "currentPath": ".evidence/R1/S2/comparison-summary.json",
+      "originalSha256": "5f8bfa084895d130e2843cabf783deb57c83101cef084b35ade9c582ef7aa0f8",
+      "currentSha256": "5f8bfa084895d130e2843cabf783deb57c83101cef084b35ade9c582ef7aa0f8",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/control-flow-green.log",
+      "currentPath": ".evidence/R1/S2/control-flow-green.log",
+      "originalSha256": "7b4c25f539c63b68ef36eba5f60f86a0495718396ba9e36a1651537a5cf649ea",
+      "currentSha256": "7b4c25f539c63b68ef36eba5f60f86a0495718396ba9e36a1651537a5cf649ea",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/control-flow-red.log",
+      "currentPath": ".evidence/R1/S2/control-flow-red.log",
+      "originalSha256": "3b2b80b8c0791d13f8a673465701d9a893dfba9942a1be8a2df606da0a1697fe",
+      "currentSha256": "3b2b80b8c0791d13f8a673465701d9a893dfba9942a1be8a2df606da0a1697fe",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/bundle.json",
+      "currentPath": "tools/experiment/fixtures/retrieval/bundle.json",
+      "originalSha256": "d9a937955f2b1fb138b71d4f4abc820d666c0dcda681d24b21f42fd2658cfcd8",
+      "currentSha256": "d9a937955f2b1fb138b71d4f4abc820d666c0dcda681d24b21f42fd2658cfcd8",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/catalog.json",
+      "currentPath": "tools/experiment/fixtures/retrieval/catalog.json",
+      "originalSha256": "3b4b0be839144b03f49fbb209aa3e958e7477d75c0898953cc81091e955e59ca",
+      "currentSha256": "3b4b0be839144b03f49fbb209aa3e958e7477d75c0898953cc81091e955e59ca",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/comparison.json",
+      "currentPath": "tools/experiment/fixtures/retrieval/comparison.json",
+      "originalSha256": "39ede08a0ab38bde9521f07cf44a9d0afd29ecf0d9c91227d5d1a656502377c0",
+      "currentSha256": "39ede08a0ab38bde9521f07cf44a9d0afd29ecf0d9c91227d5d1a656502377c0",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/defense.sol",
+      "currentPath": "tools/experiment/fixtures/retrieval/defense.sol",
+      "originalSha256": "499a57ff0b497743a277e938eeae5d28606e1cb2edca200363619905583eedce",
+      "currentSha256": "499a57ff0b497743a277e938eeae5d28606e1cb2edca200363619905583eedce",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/kb/.snapshot.lock",
+      "currentPath": "tools/experiment/fixtures/retrieval/kb/.snapshot.lock",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "currentSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/kb/active.json",
+      "currentPath": "tools/experiment/fixtures/retrieval/kb/active.json",
+      "originalSha256": "551745e17aa88c8d27b8efd703ab84efbed62f7f446ea6db7f36cd764e4946f7",
+      "currentSha256": "551745e17aa88c8d27b8efd703ab84efbed62f7f446ea6db7f36cd764e4946f7",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/kb/ad1fe2d80cc04dff16b6f3173b4fcb4ac173df47730509b600acf719be4fef7a/snapshot.json",
+      "currentPath": "tools/experiment/fixtures/retrieval/kb/ad1fe2d80cc04dff16b6f3173b4fcb4ac173df47730509b600acf719be4fef7a/snapshot.json",
+      "originalSha256": "d20966322273402bf047db613270065e8443a3008981537add4fd833a5cc0db8",
+      "currentSha256": "d20966322273402bf047db613270065e8443a3008981537add4fd833a5cc0db8",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/local-pool.json",
+      "currentPath": "tools/experiment/fixtures/retrieval/local-pool.json",
+      "originalSha256": "9b7e1f63cdcb5ff1f20cb8b022839f1dd06f6625da5797cbd8a4d68ac0936dfb",
+      "currentSha256": "9b7e1f63cdcb5ff1f20cb8b022839f1dd06f6625da5797cbd8a4d68ac0936dfb",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/milvus-pool.json",
+      "currentPath": "tools/experiment/fixtures/retrieval/milvus-pool.json",
+      "originalSha256": "c7dd9d48776271f8deeced6a9d648c168b7f0d9e0c57c31588431f4b84cf6f93",
+      "currentSha256": "c7dd9d48776271f8deeced6a9d648c168b7f0d9e0c57c31588431f4b84cf6f93",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/query.json",
+      "currentPath": "tools/experiment/fixtures/retrieval/query.json",
+      "originalSha256": "59944db8750b380f4c60c36bc7f98bfbb7b7c8ccf6009053fcf3966617676f27",
+      "currentSha256": "59944db8750b380f4c60c36bc7f98bfbb7b7c8ccf6009053fcf3966617676f27",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/request.json",
+      "currentPath": "tools/experiment/fixtures/retrieval/request.json",
+      "originalSha256": "6dd93610a05718ed4d5c2c17715608fbb35eeadd126957834fff3d4ce1750319",
+      "currentSha256": "6dd93610a05718ed4d5c2c17715608fbb35eeadd126957834fff3d4ce1750319",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/target.sol",
+      "currentPath": "tools/experiment/fixtures/retrieval/target.sol",
+      "originalSha256": "3247fdd1cd8b2ce82a12199c79c64e7112b0bbe20a4eba7856659925252afaac",
+      "currentSha256": "3247fdd1cd8b2ce82a12199c79c64e7112b0bbe20a4eba7856659925252afaac",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/demo/vulnerable.sol",
+      "currentPath": "tools/experiment/fixtures/retrieval/vulnerable.sol",
+      "originalSha256": "b9b6b9817ad5071683cbd387535b85be434874dce3763fba6d56f8b2a288682f",
+      "currentSha256": "b9b6b9817ad5071683cbd387535b85be434874dce3763fba6d56f8b2a288682f",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/explanation-red.log",
+      "currentPath": ".evidence/R1/S2/explanation-red.log",
+      "originalSha256": "3b4d5e5937e42da5d7e716e22d632e06a54c9eebf8da571adc4a40e8912a1703",
+      "currentSha256": "3b4d5e5937e42da5d7e716e22d632e06a54c9eebf8da571adc4a40e8912a1703",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/index-mutation-green.log",
+      "currentPath": ".evidence/R1/S2/index-mutation-green.log",
+      "originalSha256": "fa21ed313d052cd916aa8efed5f4f90bfca2f0f2cea8d6e5c95b563be8947b03",
+      "currentSha256": "fa21ed313d052cd916aa8efed5f4f90bfca2f0f2cea8d6e5c95b563be8947b03",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/index-mutation-red.log",
+      "currentPath": ".evidence/R1/S2/index-mutation-red.log",
+      "originalSha256": "2cc66f5cfdc7f9dee49db2cd9220494a5b6b388e11ea405c6ca877c9b09258cb",
+      "currentSha256": "2cc66f5cfdc7f9dee49db2cd9220494a5b6b388e11ea405c6ca877c9b09258cb",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/maven-clean-verify.log",
+      "currentPath": ".evidence/R1/S2/maven-clean-verify.log",
+      "originalSha256": "9d8964db549bc30bbe8f97f37aef05aaddd80c466d199634b93dffd489a6d17e",
+      "currentSha256": "9d8964db549bc30bbe8f97f37aef05aaddd80c466d199634b93dffd489a6d17e",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/milvus-container-state-before-stop.json",
+      "currentPath": ".evidence/R1/S2/milvus-container-state-before-stop.json",
+      "originalSha256": "142f6fcbe182621df4144bbdedb0d4b70b85ad5d52ded9dc1d49148698fabe01",
+      "currentSha256": "142f6fcbe182621df4144bbdedb0d4b70b85ad5d52ded9dc1d49148698fabe01",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/milvus-initial-start.log",
+      "currentPath": ".evidence/R1/S2/milvus-initial-start.log",
+      "originalSha256": "82293937d86a954170de1b6d3f6bbd43fbb4699b9a5d68df96d10994f80de54c",
+      "currentSha256": "82293937d86a954170de1b6d3f6bbd43fbb4699b9a5d68df96d10994f80de54c",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/milvus-smoke.json",
+      "currentPath": ".evidence/R1/S2/milvus-smoke.json",
+      "originalSha256": "9f6aef709e4b438b52e3fb1574534ce7a9a15e15f25281784295f333d34ce8da",
+      "currentSha256": "9f6aef709e4b438b52e3fb1574534ce7a9a15e15f25281784295f333d34ce8da",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/missing-field-test.log",
+      "currentPath": ".evidence/R1/S2/missing-field-test.log",
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "currentSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/python-unittest.log",
+      "currentPath": ".evidence/R1/S2/python-unittest.log",
+      "originalSha256": "2575fc53bc5cd9b39a9e118e558ac067ef214137337d274afb3b45bea8229918",
+      "currentSha256": "2575fc53bc5cd9b39a9e118e558ac067ef214137337d274afb3b45bea8229918",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/retrieval-help.log",
+      "currentPath": ".evidence/R1/S2/retrieval-help.log",
+      "originalSha256": "20da163b5abe2c2c32ce626b2bc2855083854c11b06308f1c70d11b4f09b5a5e",
+      "currentSha256": "20da163b5abe2c2c32ce626b2bc2855083854c11b06308f1c70d11b4f09b5a5e",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/reverse-alias-green.log",
+      "currentPath": ".evidence/R1/S2/reverse-alias-green.log",
+      "originalSha256": "2ca0d48fc5a2c149aaa13918cce31eff27db60d413c07ec2f50d0eb51905a6d4",
+      "currentSha256": "2ca0d48fc5a2c149aaa13918cce31eff27db60d413c07ec2f50d0eb51905a6d4",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/reverse-alias-red.log",
+      "currentPath": ".evidence/R1/S2/reverse-alias-red.log",
+      "originalSha256": "b5bc808234da77fa8eaf92bad4d48f7f107936e5ee1b421c7bb8a3b1a30f8988",
+      "currentSha256": "b5bc808234da77fa8eaf92bad4d48f7f107936e5ee1b421c7bb8a3b1a30f8988",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/t2-red.log",
+      "currentPath": ".evidence/R1/S2/t2-red.log",
+      "originalSha256": "eefaa3166a98423cc0047566968b10b516941f16c7bbf527132e30a4a9a953a0",
+      "currentSha256": "eefaa3166a98423cc0047566968b10b516941f16c7bbf527132e30a4a9a953a0",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S2/t3-red.log",
+      "currentPath": ".evidence/R1/S2/t3-red.log",
+      "originalSha256": "48f1fccb417808edf0e374ee6f532d4c6a890c6c1188558736131fa0d965b22f",
+      "currentSha256": "48f1fccb417808edf0e374ee6f532d4c6a890c6c1188558736131fa0d965b22f",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/artifact-check.json",
+      "currentPath": ".evidence/R1/S3/artifact-check.json",
+      "originalSha256": "9cb43c6e913bac372e5b76f41ef06a9f2c3019393b6581ee735928723c9b8002",
+      "currentSha256": "9cb43c6e913bac372e5b76f41ef06a9f2c3019393b6581ee735928723c9b8002",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-assignment.json",
+      "currentPath": "data/audit/r1/first-batch/d1-kb-assignment.json",
+      "originalSha256": "60f8baa9e616e07439b3e2ebcf792493c0e3683775e41c10b448db3f7c3f0f13",
+      "currentSha256": "60f8baa9e616e07439b3e2ebcf792493c0e3683775e41c10b448db3f7c3f0f13",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-intake.json",
+      "currentPath": "data/audit/r1/first-batch/d1-kb-intake.json",
+      "originalSha256": "a1c70289c3e00c77603b577d72310c1bc92d80502afca0f2575667fa5b43fe1b",
+      "currentSha256": "a1c70289c3e00c77603b577d72310c1bc92d80502afca0f2575667fa5b43fe1b",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-leakage-report.json",
+      "currentPath": ".evidence/R1/S3/d1-kb-leakage-report.json",
+      "originalSha256": "6de32147d1aa02e80de8d8055c0e7be8a29add997026cb87072e51eb53e07023",
+      "currentSha256": "6de32147d1aa02e80de8d8055c0e7be8a29add997026cb87072e51eb53e07023",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-pairs-review.json",
+      "currentPath": "data/audit/r1/first-batch/d1-kb-pairs-review.json",
+      "originalSha256": "c2e13733a7c42bcb1eaf693a6f9607ba1a2d11cadecd1d5a5264c5cb59953b87",
+      "currentSha256": "c2e13733a7c42bcb1eaf693a6f9607ba1a2d11cadecd1d5a5264c5cb59953b87",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-v1-atomic-version-chain.json",
+      "currentPath": "data/audit/r1/first-batch/d1-kb-v1-atomic-version-chain.json",
+      "originalSha256": "109ab6243269de42a32b231d01bed5ff2d4fba214a10416cbfb7b9f812e11bb3",
+      "currentSha256": "109ab6243269de42a32b231d01bed5ff2d4fba214a10416cbfb7b9f812e11bb3",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-v1-decisions.json",
+      "currentPath": "data/audit/r1/first-batch/d1-kb-v1-decisions.json",
+      "originalSha256": "7b4b32dd18041dc2d34f738157b3b56a0b030f8a1b108339983f9889b3a38a90",
+      "currentSha256": "7b4b32dd18041dc2d34f738157b3b56a0b030f8a1b108339983f9889b3a38a90",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-v1-leakage-report.json",
+      "currentPath": ".evidence/R1/S3/d1-kb-v1-leakage-report.json",
+      "originalSha256": "760d539644c9631cfdddfff28666a6fdb6ab2fc36837e92b38e2e42575ea094a",
+      "currentSha256": "760d539644c9631cfdddfff28666a6fdb6ab2fc36837e92b38e2e42575ea094a",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-v1-ledger.json",
+      "currentPath": "data/audit/r1/first-batch/d1-kb-v1-ledger.json",
+      "originalSha256": "6752c0a3eaedf52e8e8660b91e2fff081ca38dbba977a3975b88e6cc6c065187",
+      "currentSha256": "6752c0a3eaedf52e8e8660b91e2fff081ca38dbba977a3975b88e6cc6c065187",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-v1-maven.log",
+      "currentPath": ".evidence/R1/S3/d1-kb-v1-maven.log",
+      "originalSha256": "c26a3a72315d73de1c1625f75e410a90b623f725ef8ab132d4a3f48a6575439f",
+      "currentSha256": "c26a3a72315d73de1c1625f75e410a90b623f725ef8ab132d4a3f48a6575439f",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-v1-pairs.json",
+      "currentPath": "data/audit/r1/first-batch/d1-kb-v1-pairs.json",
+      "originalSha256": "06766e2db68aa1b2adfac518b8c1b74ce48044a0d1ce55292ce207010a06e3e2",
+      "currentSha256": "06766e2db68aa1b2adfac518b8c1b74ce48044a0d1ce55292ce207010a06e3e2",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-v1-python.log",
+      "currentPath": ".evidence/R1/S3/d1-kb-v1-python.log",
+      "originalSha256": "31080174d321ff11d1bcde9292595b26f2e68a00fdcddff304847195a70a8984",
+      "currentSha256": "31080174d321ff11d1bcde9292595b26f2e68a00fdcddff304847195a70a8984",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/d1-kb-v1-snapshot-receipt.json",
+      "currentPath": ".evidence/R1/S3/d1-kb-v1-snapshot-receipt.json",
+      "originalSha256": "b8e579694de43edc3d2cf3a0c93da79d29b295ee68fa6f83f460d3abc73b8762",
+      "currentSha256": "b8e579694de43edc3d2cf3a0c93da79d29b295ee68fa6f83f460d3abc73b8762",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/demo/codepoint_tokenizer.py",
+      "currentPath": "tools/experiment/fixtures/research-pilot/codepoint_tokenizer.py",
+      "originalSha256": "7da5e7eaac57d1f52c2d166936a1a721092b09d8f3b23b727417e0686f0afc6d",
+      "currentSha256": "7da5e7eaac57d1f52c2d166936a1a721092b09d8f3b23b727417e0686f0afc6d",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/demo/d2-baselines.json",
+      "currentPath": "tools/experiment/fixtures/research-pilot/d2-baselines.json",
+      "originalSha256": "ba2fac92d5483053aff1321249c3f270aacc5896f67f0dd0bd643e9fe15122e4",
+      "currentSha256": "ba2fac92d5483053aff1321249c3f270aacc5896f67f0dd0bd643e9fe15122e4",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/demo/d2-challenges.json",
+      "currentPath": "tools/experiment/fixtures/research-pilot/d2-challenges.json",
+      "originalSha256": "1c04b18962d85ce812e8aaf43afbf56f3b32c617ac1577366d3a085a5eccc52b",
+      "currentSha256": "1c04b18962d85ce812e8aaf43afbf56f3b32c617ac1577366d3a085a5eccc52b",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/demo/d2-summary.json",
+      "currentPath": "tools/experiment/fixtures/research-pilot/d2-summary.json",
+      "originalSha256": "a7509d2cdc2ed6add71a40a7bc865cda4f7c6d2a1c6258d1222f74e08660b978",
+      "currentSha256": "a7509d2cdc2ed6add71a40a7bc865cda4f7c6d2a1c6258d1222f74e08660b978",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/demo/judgments.json",
+      "currentPath": "tools/experiment/fixtures/research-pilot/judgments.json",
+      "originalSha256": "7abeda17b0a4938dfad9902be2334460cb037465656a521b2e35fb93cfd5e8ba",
+      "currentSha256": "7abeda17b0a4938dfad9902be2334460cb037465656a521b2e35fb93cfd5e8ba",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/demo/leakage-report.json",
+      "currentPath": "tools/experiment/fixtures/research-pilot/leakage-report.json",
+      "originalSha256": "dc55c678146cf72423f875514cf8b7bf83e11723677ae0618b87d606f991e4f5",
+      "currentSha256": "dc55c678146cf72423f875514cf8b7bf83e11723677ae0618b87d606f991e4f5",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/demo/ledger.json",
+      "currentPath": "tools/experiment/fixtures/research-pilot/ledger.json",
+      "originalSha256": "4dac4cb8590498c5ea91cd65313096105b814dc11f03763a33aeced42a912b11",
+      "currentSha256": "11d2713b99da6492ad5c8192bacc0fa3c29b25e9c57efd7d456f840f45bd2452",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/demo/pilot.json",
+      "currentPath": "tools/experiment/fixtures/research-pilot/pilot.json",
+      "originalSha256": "5a39c963bd37d1ac45172f90dd8315f23f3242232d933ae1ab0c05f19ba0cdef",
+      "currentSha256": "5a39c963bd37d1ac45172f90dd8315f23f3242232d933ae1ab0c05f19ba0cdef",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/demo/plan.json",
+      "currentPath": "tools/experiment/fixtures/research-pilot/plan.json",
+      "originalSha256": "82d2d3c84fe14c3d44e515bde369d231cb17447ec9b4e2c5d3f57d579a820587",
+      "currentSha256": "a91d5588b3698846966aefa99174219ff614352510aa8a56926fe283dcc782d4",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/empty-ledger-green.log",
+      "currentPath": ".evidence/R1/S3/empty-ledger-green.log",
+      "originalSha256": "a61964b1b82b6c04d716fe0098fd1794e0fd27db4062d39c97d12dc4fcc07a12",
+      "currentSha256": "a61964b1b82b6c04d716fe0098fd1794e0fd27db4062d39c97d12dc4fcc07a12",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/empty-ledger-red.log",
+      "currentPath": ".evidence/R1/S3/empty-ledger-red.log",
+      "originalSha256": "6360ec5d40410e62c72c94eafc8b6d8ac45aeab4b38bce636871124cca7b168b",
+      "currentSha256": "6360ec5d40410e62c72c94eafc8b6d8ac45aeab4b38bce636871124cca7b168b",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/first-batch-20261004-maven.log",
+      "currentPath": ".evidence/R1/S3/first-batch-20261004-maven.log",
+      "originalSha256": "aa2127f8860e8eb48e6accea51cac9d65b5d3d8e65e1f0a7a42f3f3fcdb59780",
+      "currentSha256": "aa2127f8860e8eb48e6accea51cac9d65b5d3d8e65e1f0a7a42f3f3fcdb59780",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/first-batch-20261004-python.log",
+      "currentPath": ".evidence/R1/S3/first-batch-20261004-python.log",
+      "originalSha256": "8cfa8a80d50e2a561b2cc2915c448101bbf5954be37de75cac7d553b34b2ddd7",
+      "currentSha256": "8cfa8a80d50e2a561b2cc2915c448101bbf5954be37de75cac7d553b34b2ddd7",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/first-batch-assignment.json",
+      "currentPath": "data/audit/r1/first-batch/first-batch-assignment.json",
+      "originalSha256": "d16efca291ce081ff69e18806a4c1c8902855db1afa8ce1865748d1a0cf816de",
+      "currentSha256": "d16efca291ce081ff69e18806a4c1c8902855db1afa8ce1865748d1a0cf816de",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/first-batch-intake.json",
+      "currentPath": "data/audit/r1/first-batch/first-batch-intake.json",
+      "originalSha256": "dad134c39bb34409ac1455ef6e57d331174148ab525dbfff10be0d705a873728",
+      "currentSha256": "dad134c39bb34409ac1455ef6e57d331174148ab525dbfff10be0d705a873728",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/first-batch-leakage-report.json",
+      "currentPath": ".evidence/R1/S3/first-batch-leakage-report.json",
+      "originalSha256": "87ef3078449c4fdcd1b3e1c8585fe0fb31b2eda9839ea2b330e3c11f9955d6fa",
+      "currentSha256": "87ef3078449c4fdcd1b3e1c8585fe0fb31b2eda9839ea2b330e3c11f9955d6fa",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/first-batch-source-check.json",
+      "currentPath": ".evidence/R1/S3/first-batch-source-check.json",
+      "originalSha256": "616e9acf439ea801579b91314daaf5196469a3aeb954fc2748321f02dfdf0384",
+      "currentSha256": "616e9acf439ea801579b91314daaf5196469a3aeb954fc2748321f02dfdf0384",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/maven-clean-verify.log",
+      "currentPath": ".evidence/R1/S3/maven-clean-verify.log",
+      "originalSha256": "bfff28e4c2d4515926388746ed05b99d86f9023180c58404d300176b1ce06666",
+      "currentSha256": "bfff28e4c2d4515926388746ed05b99d86f9023180c58404d300176b1ce06666",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/mvp-maven-clean-verify.log",
+      "currentPath": ".evidence/R1/S3/mvp-maven-clean-verify.log",
+      "originalSha256": "f12d870fa00a8801bfd34aca208071e70e48dfd5fa09cd22e52857878f95a12b",
+      "currentSha256": "f12d870fa00a8801bfd34aca208071e70e48dfd5fa09cd22e52857878f95a12b",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/mvp-python-unittest.log",
+      "currentPath": ".evidence/R1/S3/mvp-python-unittest.log",
+      "originalSha256": "55812c1014242c54df00c2627916229773c37322a52b16edc0ff1c42eeaecf95",
+      "currentSha256": "55812c1014242c54df00c2627916229773c37322a52b16edc0ff1c42eeaecf95",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/mvp-structured-maven.log",
+      "currentPath": ".evidence/R1/S3/mvp-structured-maven.log",
+      "originalSha256": "1d473f1dda014ce276840a0a65d65810ea1b3e8381cadb0644da1d3e38875cb1",
+      "currentSha256": "1d473f1dda014ce276840a0a65d65810ea1b3e8381cadb0644da1d3e38875cb1",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/mvp-structured-python.log",
+      "currentPath": ".evidence/R1/S3/mvp-structured-python.log",
+      "originalSha256": "2b8dfaff6cb09b60283b7246569b2b4757fa30dd2fa497d42fae82f009608807",
+      "currentSha256": "2b8dfaff6cb09b60283b7246569b2b4757fa30dd2fa497d42fae82f009608807",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/python-unittest.log",
+      "currentPath": ".evidence/R1/S3/python-unittest.log",
+      "originalSha256": "0190677af246e65104e8aba6fe398912ed1b9ff35a62e8c165c310bce54da576",
+      "currentSha256": "0190677af246e65104e8aba6fe398912ed1b9ff35a62e8c165c310bce54da576",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S3/review-red.log",
+      "currentPath": ".evidence/R1/S3/review-red.log",
+      "originalSha256": "861d5a0d2ed15498f27e8a79d3a95f5bbb0cc8c0c0605db07cf85dbe9dd2688b",
+      "currentSha256": "861d5a0d2ed15498f27e8a79d3a95f5bbb0cc8c0c0605db07cf85dbe9dd2688b",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/assignment.json",
+      "currentPath": "data/audit/r1/formal-expansion/assignment.json",
+      "originalSha256": "4e0b209ffde0d185bf03aff94c7c8f5594a3ebf0c0b7e6513b05b21dd3cb34e0",
+      "currentSha256": "4e0b209ffde0d185bf03aff94c7c8f5594a3ebf0c0b7e6513b05b21dd3cb34e0",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/decisions.json",
+      "currentPath": "data/audit/r1/formal-expansion/decisions.json",
+      "originalSha256": "b54cc124a742c0e63deff48b807a8c377f9a92c4fa58cfba8d511042d962e042",
+      "currentSha256": "b54cc124a742c0e63deff48b807a8c377f9a92c4fa58cfba8d511042d962e042",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/formal-v2-leakage-report.json",
+      "currentPath": ".evidence/R1/S5/formal-v2-leakage-report.json",
+      "originalSha256": "ffc5cb762cd7954108f500bc4dc9cf9cef1f4b99618ab3bee1191dcf98deead7",
+      "currentSha256": "ffc5cb762cd7954108f500bc4dc9cf9cef1f4b99618ab3bee1191dcf98deead7",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/formal-v2-ledger.json",
+      "currentPath": "data/audit/r1/formal-expansion/formal-v2-ledger.json",
+      "originalSha256": "1f064e7675f0d5146a49785dcf1e693678ac20ad84c9bb3c9b5f7ed623acad81",
+      "currentSha256": "1f064e7675f0d5146a49785dcf1e693678ac20ad84c9bb3c9b5f7ed623acad81",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/formal-v2-pairs.json",
+      "currentPath": "data/audit/r1/formal-expansion/formal-v2-pairs.json",
+      "originalSha256": "e27ec521e8539ed2b0da39cfeac5624ccc2032a9a97c9add0a302f87e201cf50",
+      "currentSha256": "e27ec521e8539ed2b0da39cfeac5624ccc2032a9a97c9add0a302f87e201cf50",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/intake.json",
+      "currentPath": "data/audit/r1/formal-expansion/intake.json",
+      "originalSha256": "63083f8f0b4a745167b3f38ba559821469d69a0dcda961ce03a9e12159418c4c",
+      "currentSha256": "63083f8f0b4a745167b3f38ba559821469d69a0dcda961ce03a9e12159418c4c",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/.gitattributes",
+      "currentPath": "data/audit/r1/formal-expansion/originals/.gitattributes",
+      "originalSha256": "ced65dfa913174ecbefc32d071f8b3ab56ecd5b6e1f44cad0800a33ae4373df5",
+      "currentSha256": "ced65dfa913174ecbefc32d071f8b3ab56ecd5b6e1f44cad0800a33ae4373df5",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/patches/AC-RABBIT-001.sol",
+      "currentPath": "data/audit/r1/formal-expansion/originals/patches/AC-RABBIT-001.sol",
+      "originalSha256": "8075bdae170c3b63b5a156f19f2b63072b6d82e25c5d6f2a7078b583dac52fdd",
+      "currentSha256": "8075bdae170c3b63b5a156f19f2b63072b6d82e25c5d6f2a7078b583dac52fdd",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/patches/RE-INFINITY-001.sol",
+      "currentPath": "data/audit/r1/formal-expansion/originals/patches/RE-INFINITY-001.sol",
+      "originalSha256": "5aba829fac8a1c0e11da5f8e9acd9ad082f0b1e8e895ea939e3fe67b7d4469a1",
+      "currentSha256": "5aba829fac8a1c0e11da5f8e9acd9ad082f0b1e8e895ea939e3fe67b7d4469a1",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/patches/RE-JPEGD-001.sol",
+      "currentPath": "data/audit/r1/formal-expansion/originals/patches/RE-JPEGD-001.sol",
+      "originalSha256": "2b305fbd3256de8f1d9523d813de544fa4d6cb7583fbeae8bf2150cb70d71791",
+      "currentSha256": "2b305fbd3256de8f1d9523d813de544fa4d6cb7583fbeae8bf2150cb70d71791",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/reports/AC-RABBIT-001.md",
+      "currentPath": "data/audit/r1/formal-expansion/originals/reports/AC-RABBIT-001.md",
+      "originalSha256": "757c8538ef918def151086b2df17e8c0284edbb5c647b81dc465774e6b8cf068",
+      "currentSha256": "757c8538ef918def151086b2df17e8c0284edbb5c647b81dc465774e6b8cf068",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/reports/RE-INFINITY-001.md",
+      "currentPath": "data/audit/r1/formal-expansion/originals/reports/RE-INFINITY-001.md",
+      "originalSha256": "9f75faa97b83492d5aa7283a53a18bec7271acec9de540d5d8c714b6531db3d0",
+      "currentSha256": "9f75faa97b83492d5aa7283a53a18bec7271acec9de540d5d8c714b6531db3d0",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/reports/RE-JPEGD-001.md",
+      "currentPath": "data/audit/r1/formal-expansion/originals/reports/RE-JPEGD-001.md",
+      "originalSha256": "8cc4adf8e04eb74afeddd9b8735b81ab37a36efa6e024317109040b0daafc905",
+      "currentSha256": "8cc4adf8e04eb74afeddd9b8735b81ab37a36efa6e024317109040b0daafc905",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/sources/AC-RABBIT-001.sol",
+      "currentPath": "data/audit/r1/formal-expansion/originals/sources/AC-RABBIT-001.sol",
+      "originalSha256": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+      "currentSha256": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/sources/RE-INFINITY-001.sol",
+      "currentPath": "data/audit/r1/formal-expansion/originals/sources/RE-INFINITY-001.sol",
+      "originalSha256": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+      "currentSha256": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/originals/sources/RE-JPEGD-001.sol",
+      "currentPath": "data/audit/r1/formal-expansion/originals/sources/RE-JPEGD-001.sol",
+      "originalSha256": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+      "currentSha256": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/snapshot-receipt.json",
+      "currentPath": ".evidence/R1/S5/snapshot-receipt.json",
+      "originalSha256": "3d96347745f94f2d8e1b217313a53958c4b3d65c6ed3f17a9c00cd71a5613ecc",
+      "currentSha256": "3d96347745f94f2d8e1b217313a53958c4b3d65c6ed3f17a9c00cd71a5613ecc",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/source-review.json",
+      "currentPath": ".evidence/R1/S5/source-review.json",
+      "originalSha256": "65d648ff126f6d138234619e94b5fa0aa3e5d706bc9ee6792400b779b04c43f5",
+      "currentSha256": "65d648ff126f6d138234619e94b5fa0aa3e5d706bc9ee6792400b779b04c43f5",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/evidence/S5/ui-offline-smoke.json",
+      "currentPath": ".evidence/R1/S5/ui-offline-smoke.json",
+      "originalSha256": "5c0d2d2fedf1dfc6b905c29104df408fdd88fd403da12c0cdf9d7610d8b10fc3",
+      "currentSha256": "5c0d2d2fedf1dfc6b905c29104df408fdd88fd403da12c0cdf9d7610d8b10fc3",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/data/SOURCE_REGISTRY.json",
+      "currentPath": "data/audit/r1/source-registry.json",
+      "originalSha256": "065fc8981b6bdf9ac427293253c81a3f6f2c148216d4dd3ce2b724b43fdd475d",
+      "currentSha256": "065fc8981b6bdf9ac427293253c81a3f6f2c148216d4dd3ce2b724b43fdd475d",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/ARCHIVE_MANIFEST.json",
+      "currentPath": ".evidence/R1/document-archive/initial-manifest.json",
+      "originalSha256": "65fe748a5b6cc7456fe38435e8a8194f85529b2c51791fd44825e6d5b986eac8",
+      "currentSha256": "65fe748a5b6cc7456fe38435e8a8194f85529b2c51791fd44825e6d5b986eac8",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/README.md",
+      "currentPath": ".evidence/R1/document-archive/README.md",
+      "originalSha256": "3fe221f7e02d92ed6069cd9dc79d6197887d21c737727cdaf31900a16e18cb9c",
+      "currentSha256": "3fe221f7e02d92ed6069cd9dc79d6197887d21c737727cdaf31900a16e18cb9c",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/decisions/S4_CHANGE_PROPOSAL.md",
+      "currentPath": "docs/vibe/decisions/DEC-001_SINGLE_AUDIT_SCOPE.md",
+      "originalSha256": "ab965fb9b2992620dddbf5ae582f46e0864bf632aa290b733c26e5aa7557df99",
+      "currentSha256": "ab965fb9b2992620dddbf5ae582f46e0864bf632aa290b733c26e5aa7557df99",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/investigations/S9_CONFIG_DEBUG.md",
+      "currentPath": "docs/vibe/bugs/BUG-001_CONFIGURATION_SNAPSHOT.md",
+      "originalSha256": "cc24f18abb4855b28288a4b1c8516ca3c823e7da203d9398adcf5fb15fb1c7d0",
+      "currentSha256": "cc24f18abb4855b28288a4b1c8516ca3c823e7da203d9398adcf5fb15fb1c7d0",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/research/S3_FIRST_BATCH_SPLIT.md",
+      "currentPath": "docs/vibe/releases/R1/attachments/FIRST_BATCH_SPLIT.md",
+      "originalSha256": "253f044980d44cc1ec99eb0a94b5bd42b46f65ba6e0fb550e2fc60253d0e1391",
+      "currentSha256": "e49c46b45451323c29983a3e2e713afe7d23a4607411e499927a066062dfe430",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/research/S6_RESEARCH_DESIGN.md",
+      "currentPath": "docs/vibe/releases/R1/attachments/RESEARCH_DESIGN.md",
+      "originalSha256": "2c2eab9c9234b189e129ad0902b79e275504c57fee5a1848829a89158ee270f6",
+      "currentSha256": "2c2eab9c9234b189e129ad0902b79e275504c57fee5a1848829a89158ee270f6",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/research/S3_D1_KB_READINESS.md",
+      "currentPath": "docs/vibe/releases/R1/attachments/D1_KB_READINESS.md",
+      "originalSha256": "fd5c42ce61ec50f19ef13bd6710e19726a02bbc68d7fa58fbfec1bf804aa48bf",
+      "currentSha256": "56c622d8efcadfc30e98999ded33bf3c56f901ab9da092a56580dd355ec10c3c",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/research/S3_FIRST_BATCH_AUDIT.md",
+      "currentPath": "docs/vibe/releases/R1/attachments/FIRST_BATCH_AUDIT.md",
+      "originalSha256": "4be049ec7e25d44f7dfd66531020fba3716b9c8e9c18840321dadd329651f690",
+      "currentSha256": "d4732d4c57ead133377a3c9ec873819880da03ce2c25ac406d92cabfb86e848d",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/research/S3_DATASET_SELECTION_PROPOSAL.md",
+      "currentPath": "docs/vibe/releases/R1/attachments/DATASET_SELECTION_PROPOSAL.md",
+      "originalSha256": "5cf8ddf53a6e5d3d5adfcf2302ef19c1a271180884e0f58759bbbebd947da4ed",
+      "currentSha256": "f393653bf5261417708831caeedd7ddf6fe2f177bacb58a26129bb1f7989743a",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/operations/S3_LOCAL_UI.md",
+      "currentPath": "docs/vibe/releases/R1/attachments/LOCAL_UI.md",
+      "originalSha256": "f8a4aa02f3643d7e8c46c14be0881787ebcbd27691db5fe6d48fa243ba7dc73d",
+      "currentSha256": "f8a4aa02f3643d7e8c46c14be0881787ebcbd27691db5fe6d48fa243ba7dc73d",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/operations/S3_MVP_MILVUS_RUN.md",
+      "currentPath": "docs/vibe/releases/R1/attachments/MVP_MILVUS_RUN.md",
+      "originalSha256": "662a86287a3fa9cf07e91aa886d19a3ce625752ab70cbf7a93287c2ce2e310c7",
+      "currentSha256": "662a86287a3fa9cf07e91aa886d19a3ce625752ab70cbf7a93287c2ce2e310c7",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/assets/SYSTEM_ARCHITECTURE.archify.json",
+      "currentPath": "docs/vibe/releases/R1/attachments/assets/SYSTEM_ARCHITECTURE.archify.json",
+      "originalSha256": "270aa45d6076f3a644d0cbba55ab2e30ace5cee2fe36baf80f20f1095f94e293",
+      "currentSha256": "270aa45d6076f3a644d0cbba55ab2e30ace5cee2fe36baf80f20f1095f94e293",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/assets/SYSTEM_ARCHITECTURE.html",
+      "currentPath": "docs/vibe/releases/R1/attachments/assets/SYSTEM_ARCHITECTURE.html",
+      "originalSha256": "f92412509ce824861cdbf9a510676d1b0b01e795345e07ab98ac1522a5168c5d",
+      "currentSha256": "f92412509ce824861cdbf9a510676d1b0b01e795345e07ab98ac1522a5168c5d",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/history/S0_LEDGER.md",
+      "currentPath": ".evidence/R1/document-archive/S0_LEDGER.md",
+      "originalSha256": "7775317df8ade04a0ca3ad2123171eb462d5372bd31cab2e3a6e09928902c325",
+      "currentSha256": "7775317df8ade04a0ca3ad2123171eb462d5372bd31cab2e3a6e09928902c325",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R1/history/S3_NEXT_THREAD_PROMPT.md",
+      "currentPath": ".evidence/R1/document-archive/S3_NEXT_THREAD_PROMPT.md",
+      "originalSha256": "84ea1bb7c87f4f43f1b87f797ff928d3528a41d00dcb0551fa2cc3066256f3d7",
+      "currentSha256": "84ea1bb7c87f4f43f1b87f797ff928d3528a41d00dcb0551fa2cc3066256f3d7",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R0-20260918/review-evidence/source-manifest.json",
+      "currentPath": ".evidence/R0-20260918/review/source-manifest.json",
+      "originalSha256": "df217737c4ee19d5ebfd2baec2908b21247b38ab3d158144784308b1189b175b",
+      "currentSha256": "df217737c4ee19d5ebfd2baec2908b21247b38ab3d158144784308b1189b175b",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R0-20260918/review-evidence/data-inventory.json",
+      "currentPath": ".evidence/R0-20260918/review/data-inventory.json",
+      "originalSha256": "1f5e5b0afe1f19134f733e5bf0889b3b2754d7cf1b55b2dea5013890eac570c2",
+      "currentSha256": "1f5e5b0afe1f19134f733e5bf0889b3b2754d7cf1b55b2dea5013890eac570c2",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R0-20260918/review-evidence/offline-test-compile.log",
+      "currentPath": ".evidence/R0-20260918/review/offline-test-compile.log",
+      "originalSha256": "c06b680f37b575a70c5405d7959810202c3977204de51bc5962c123fc53b71f6",
+      "currentSha256": "c06b680f37b575a70c5405d7959810202c3977204de51bc5962c123fc53b71f6",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R0-20260918/review-evidence/document-check.json",
+      "currentPath": ".evidence/R0-20260918/review/document-check.json",
+      "originalSha256": "7e991c0700a48114197d01de06d130c4e7408f105871ae35de77690f23cad238",
+      "currentSha256": "7e991c0700a48114197d01de06d130c4e7408f105871ae35de77690f23cad238",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": "docs/vibe/releases/R0-20260918/review-evidence/environment.txt",
+      "currentPath": ".evidence/R0-20260918/review/environment.txt",
+      "originalSha256": "fb5f37a433beeb5d44bdb5273b335a592d3d7e55de75af3128278bda027a69da",
+      "currentSha256": "fb5f37a433beeb5d44bdb5273b335a592d3d7e55de75af3128278bda027a69da",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/pasted-mobile.png",
+      "currentPath": ".evidence/R1/S9/pasted-mobile.png",
+      "originalSha256": "0541c37a5492184ed5a721895aab282c1c689b63d9ec81e04981c58ebb485e61",
+      "currentSha256": "0541c37a5492184ed5a721895aab282c1c689b63d9ec81e04981c58ebb485e61",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/maven.log",
+      "currentPath": ".evidence/R1/S9/maven.log",
+      "originalSha256": "ead4e4e239dae0793370c42cf9f652a69272de2c328eaac4ba1fb9c54174d73e",
+      "currentSha256": "ead4e4e239dae0793370c42cf9f652a69272de2c328eaac4ba1fb9c54174d73e",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/preset-desktop.png",
+      "currentPath": ".evidence/R1/S9/preset-desktop.png",
+      "originalSha256": "cdd28d6c036f412eb15bafc8abd6871323d25379853263a2891cf5ce4b959347",
+      "currentSha256": "cdd28d6c036f412eb15bafc8abd6871323d25379853263a2891cf5ce4b959347",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/history-network.log",
+      "currentPath": ".evidence/R1/S9/history-network.log",
+      "originalSha256": "222609f79906097c2aac864e1f4e3930119250422e43e6cff8aeb966b0ccdf0e",
+      "currentSha256": "222609f79906097c2aac864e1f4e3930119250422e43e6cff8aeb966b0ccdf0e",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/cli-help.log",
+      "currentPath": ".evidence/R1/S9/cli-help.log",
+      "originalSha256": "17f7f03349afe75a76d9aa6107e82616c8e7dccd85c6dbde9605c70e8c3a2551",
+      "currentSha256": "17f7f03349afe75a76d9aa6107e82616c8e7dccd85c6dbde9605c70e8c3a2551",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/batch-smoke.json",
+      "currentPath": ".evidence/R1/S9/batch-smoke.json",
+      "originalSha256": "5f6dd4ab55c735ec328a70a8436bcf606fcf0aa88720a611db0b5d79bdc678f1",
+      "currentSha256": "5f6dd4ab55c735ec328a70a8436bcf606fcf0aa88720a611db0b5d79bdc678f1",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/preset-report.jsonl",
+      "currentPath": ".evidence/R1/S9/preset-report.jsonl",
+      "originalSha256": "5d4c2400e1d6c6876153337cd6b9090c8317f78802b0451a83f43cb0ffc83d76",
+      "currentSha256": "5d4c2400e1d6c6876153337cd6b9090c8317f78802b0451a83f43cb0ffc83d76",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/browser-network.log",
+      "currentPath": ".evidence/R1/S9/browser-network.log",
+      "originalSha256": "7d5673f440c046007d7dcf2cb747fa5a1ce8a814479855811587108f15ec318b",
+      "currentSha256": "7d5673f440c046007d7dcf2cb747fa5a1ce8a814479855811587108f15ec318b",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/pasted-desktop.png",
+      "currentPath": ".evidence/R1/S9/pasted-desktop.png",
+      "originalSha256": "089c963a6ed6c5ff7c305448fc751563e8a21b77d5df5593ca56b10e81e8d8b4",
+      "currentSha256": "089c963a6ed6c5ff7c305448fc751563e8a21b77d5df5593ca56b10e81e8d8b4",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/browser-console.log",
+      "currentPath": ".evidence/R1/S9/browser-console.log",
+      "originalSha256": "da6fa4eb52a4085cf713ccc195cbaac703b0b3627cad6783b247fef8f02941c7",
+      "currentSha256": "da6fa4eb52a4085cf713ccc195cbaac703b0b3627cad6783b247fef8f02941c7",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/browser-summary.json",
+      "currentPath": ".evidence/R1/S9/browser-summary.json",
+      "originalSha256": "51375069d8b7f4c94a46bef5ae5049bb71fb97a2f6ba75f43683d78163ba0c2c",
+      "currentSha256": "51375069d8b7f4c94a46bef5ae5049bb71fb97a2f6ba75f43683d78163ba0c2c",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/R1-S9/python.log",
+      "currentPath": ".evidence/R1/S9/python.log",
+      "originalSha256": "8eb8f471256dc7fec786ff02664820ab03bfd569b10e22cf9b07833ab1a9e8d8",
+      "currentSha256": "8eb8f471256dc7fec786ff02664820ab03bfd569b10e22cf9b07833ab1a9e8d8",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/plan.json",
+      "currentPath": ".evidence/R1/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/plan.json",
+      "originalSha256": "fea864ffb5906b25098f5eb2b3015f5f4ed6109c2b0bdb7c677ba76988855aca",
+      "currentSha256": "fea864ffb5906b25098f5eb2b3015f5f4ed6109c2b0bdb7c677ba76988855aca",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/report-generation.json",
+      "currentPath": ".evidence/R1/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/report-generation.json",
+      "originalSha256": "9d1a667604e360de30fabf40b4e20dfe581d276f38072e2a0bad5c45c3bb5c50",
+      "currentSha256": "9d1a667604e360de30fabf40b4e20dfe581d276f38072e2a0bad5c45c3bb5c50",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/browser-report.json",
+      "currentPath": ".evidence/R1/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/browser-report.json",
+      "originalSha256": "b4113185f36bd5a21e8ab746aa821dc81861204b873cf0e2404f1e49040309b8",
+      "currentSha256": "b4113185f36bd5a21e8ab746aa821dc81861204b873cf0e2404f1e49040309b8",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/execution-manifest.json",
+      "currentPath": ".evidence/R1/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/execution-manifest.json",
+      "originalSha256": "2665565f86995553c60a49ae721326da2be461c9823c4690106d4b2f62e6d533",
+      "currentSha256": "2665565f86995553c60a49ae721326da2be461c9823c4690106d4b2f62e6d533",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/verification.json",
+      "currentPath": ".evidence/R1/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/verification.json",
+      "originalSha256": "f95a956fa6e256e557adc8cbc4d5e9a6deae85cdd0a07a4b452385fe8115f236",
+      "currentSha256": "f95a956fa6e256e557adc8cbc4d5e9a6deae85cdd0a07a4b452385fe8115f236",
+      "sourceTracked": true
+    },
+    {
+      "originalPath": ".evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/browser-report.png",
+      "currentPath": ".evidence/R1/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/browser-report.png",
+      "originalSha256": "9c3a31c4bfaceb13238a7e17c4e47f02ea44d290b89aa1007d75f0d047e4a18b",
+      "currentSha256": "9c3a31c4bfaceb13238a7e17c4e47f02ea44d290b89aa1007d75f0d047e4a18b",
+      "sourceTracked": true
+    }
+  ],
+  "documentSnapshots": [
+    ".evidence/R1/document-archive/SPEC.md",
+    ".evidence/R1/document-archive/IMPLEMENTATION_PLAN.md",
+    ".evidence/R1/document-archive/VERIFICATION.md",
+    ".evidence/R1/document-archive/PROPOSED_DESIGN.md",
+    ".evidence/R1/document-archive/REVIEW.md",
+    ".evidence/R1/document-archive/PROGRESS.md"
+  ]
+}

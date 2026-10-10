@@ -10,31 +10,31 @@
 | 知识：重入 | `RE-ATOMIC-001`，Atomic Loans 审计第 6.6 节 | [ConsenSys Diligence 原报告](https://github.com/ConsenSysDiligence/atomic-loans-audit-report-2019-07#66-reentrancy-attack-on-loanspull-can-lead-to-draining-funds) | [已合并 PR #23](https://github.com/AtomicLoans/atomicloans-eth-contracts/pull/23)将 `bools[loan].off = true` 移到外部转账之前 | 报告审计范围 `Loans.sol` 的 SHA-1 `72400480e986cbf206ef249bd14aca6c28833df3`，与上游提交 `3632e622e0b3fedf468866db0b878b7b74dd757e` 的文件**完全一致**；从该提交到 PR 基线 `697f12d3eb0772a059a165ec50f02c265bd3dd43`，`pull` 中只增加 ERC20 返回值检查，风险顺序未变；PR 头提交 `17adcc19c977c77273f07be3bd73123bf46e18a0` 修正顺序。 |
 | 验证候选：访问控制 | `AC-ASE-040`，PoolTogether H-04 | [Code4rena finding #396](https://github.com/code-423n4/2023-07-pooltogether-findings/issues/396)，包含项目方确认 | [维护者 PR #7](https://github.com/GenerationSoftware/pt-v5-vault/pull/7)将任意指定接收方改为固定 `_yieldFeeRecipient` | 它的防护机理是**固定接收方**，不是加入调用权限修饰器。现有 D1 `CHECK_BEFORE` 字段不能诚实描述其防御侧，因此不作该条件的知识对；仅保留为隔离的目标候选。 |
 
-[准入裁决](../evidence/S3/d1-kb-v1-decisions.json)固定源码摘要、漏洞位置、原始报告正文摘要、MIT 许可证原件和修复配对行号；Atomic 的[审计版—修复版版本链](../evidence/S3/d1-kb-v1-atomic-version-chain.json)单独保留；[准入清单](../evidence/S3/d1-kb-v1-ledger.json)与[知识配对](../evidence/S3/d1-kb-v1-pairs.json)由脚本生成。`INDEPENDENT` 在本版指**相对于本项目的外部原始审计裁决**，不是声称外部审计方重新审核了本项目的 D1 字段或目标—案例相关性。对 PoolTogether 与 Maia，源码文件声明 MIT；Atomic Loans 使用固定提交的仓库 MIT 许可证。报告正文保留来源引用，不把修复片段当作“整份合约安全”负例。
+[准入裁决](../../../../../data/audit/r1/first-batch/d1-kb-v1-decisions.json)固定源码摘要、漏洞位置、原始报告正文摘要、MIT 许可证原件和修复配对行号；Atomic 的[审计版—修复版版本链](../../../../../data/audit/r1/first-batch/d1-kb-v1-atomic-version-chain.json)单独保留；[准入清单](../../../../../data/audit/r1/first-batch/d1-kb-v1-ledger.json)与[知识配对](../../../../../data/audit/r1/first-batch/d1-kb-v1-pairs.json)由脚本生成。`INDEPENDENT` 在本版指**相对于本项目的外部原始审计裁决**，不是声称外部审计方重新审核了本项目的 D1 字段或目标—案例相关性。对 PoolTogether 与 Maia，源码文件声明 MIT；Atomic Loans 使用固定提交的仓库 MIT 许可证。报告正文保留来源引用，不把修复片段当作“整份合约安全”负例。
 
-原始 11 项候选排除 3 项；余下 8 项中仅上述 3 项满足首版原件与标签准入。Basin、Gondi 和 3 个 SCRUBD 案例继续待审，**没有为凑数量制造标签**。首版 [泄漏报告](../evidence/S3/d1-kb-v1-leakage-report.json)为知识 2、验证 1、开发 0、锁定测试 0，跨划分冲突 0、已发现近克隆候选 0、首版待审 0。`pendingSamples=0` 仅针对这 3 个准入项；其余 5 项的待审状态见原[候选泄漏报告](../evidence/S3/d1-kb-leakage-report.json)。近克隆扫描不能证明不存在未发现的语义克隆。
+原始 11 项候选排除 3 项；余下 8 项中仅上述 3 项满足首版原件与标签准入。Basin、Gondi 和 3 个 SCRUBD 案例继续待审，**没有为凑数量制造标签**。首版 [泄漏报告](../../../../../.evidence/R1/S3/d1-kb-v1-leakage-report.json)为知识 2、验证 1、开发 0、锁定测试 0，跨划分冲突 0、已发现近克隆候选 0、首版待审 0。`pendingSamples=0` 仅针对这 3 个准入项；其余 5 项的待审状态见原[候选泄漏报告](../../../../../.evidence/R1/S3/d1-kb-leakage-report.json)。近克隆扫描不能证明不存在未发现的语义克隆。
 
 ## 向量、Milvus 与当前结果
 
 使用 [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5) 的固定提交 `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`，384 维，本地离线编码。文件从 [BAAI ModelScope 镜像](https://modelscope.cn/models/BAAI/bge-small-en-v1.5)获取，十个文件逐一按[模型摘要清单](../../../../../tools/experiment/d1-embedding-model.json)校验；权重 `model.safetensors` 的 SHA-256 为 `3c9f31665447c8911517620762200d2245a2518d6e7208acc78cd9db317e21ad`。依赖版本见 [`d1-embedding-requirements.lock`](../../../../../tools/experiment/d1-embedding-requirements.lock)。不使用此前工程演示库的词法哈希向量，也没有调用付费模型 API。
 
-[快照收据](../evidence/S3/d1-kb-v1-snapshot-receipt.json)记录快照 `9fc63d0e8828a8caa78145e133b8f954f9fedaf79469ea0927434d7dbef725c8`，本机 Milvus 集合 `s1b_612ad26b068c4b64842463a633d6d1ba`，四条文档。S1b 原子激活先构建新集合、强一致性读回每个 ID／正文／向量，再更新 `.local/d1-kb-snapshots/active.json`。四条向量的自检索均命中自身；对 PoolTogether 验证目标的本地和 Milvus 召回排序完全一致。这只是**技术链路冒烟检查**，排序不代表适用性或漏洞检测准确率。Attu 在本机 `http://127.0.0.1:3000`，可查看该集合；原 `mvp_` 工程演示集合没有被覆盖。
+[快照收据](../../../../../.evidence/R1/S3/d1-kb-v1-snapshot-receipt.json)记录快照 `9fc63d0e8828a8caa78145e133b8f954f9fedaf79469ea0927434d7dbef725c8`，本机 Milvus 集合 `s1b_612ad26b068c4b64842463a633d6d1ba`，四条文档。S1b 原子激活先构建新集合、强一致性读回每个 ID／正文／向量，再更新 `.local/d1-kb-snapshots/active.json`。四条向量的自检索均命中自身；对 PoolTogether 验证目标的本地和 Milvus 召回排序完全一致。这只是**技术链路冒烟检查**，排序不代表适用性或漏洞检测准确率。Attu 在本机 `http://127.0.0.1:3000`，可查看该集合；原 `mvp_` 工程演示集合没有被覆盖。
 
 D1 检索契约已允许访问控制风险操作为对外调用，Maia 案例的元数据据实标为 `CALL`。但现有轻量事实提取器对 Maia 的继承、分支和修饰器返回 `PARTIAL`，其 `payableCall` 条件绑定仍应为 `UNKNOWN`；**不能因为补丁中出现修饰器字样，就报告自动事实证明或 D1 适用性成功**。早期试建的 `s1b_2f8522116d6b43e693092c303947be6a` 集合未被修改，但已退出激活指针；在 Attu 中以本节收据所列集合为准。
 
 ## 重放
 
-从项目根目录执行。首批固定源码、报告、补丁的获取与摘要见[原件复核](../REVIEW.md#s3-first-batch-evidence-review)；缺少这些原件时，应先按该文档下载并验证。所有生成文件写入 Git 忽略的 `.local/`。首版决策与候选清单摘要绑定；若重取源码后摘要不一致，准入会拒绝。
+从项目根目录执行。首批固定源码、报告、补丁的获取与摘要见[原件复核](../REVIEW.md#r1-review)；缺少这些原件时，应先按该文档下载并验证。所有生成文件写入 Git 忽略的 `.local/`。首版决策与候选清单摘要绑定；若重取源码后摘要不一致，准入会拒绝。
 
 ```bash
 PYTHONPATH=tools/experiment python3 tools/experiment/first_batch.py audit \
-  --intake docs/vibe/releases/R1/evidence/S3/d1-kb-intake.json \
-  --assignment docs/vibe/releases/R1/evidence/S3/d1-kb-assignment.json \
+  --intake data/audit/r1/first-batch/d1-kb-intake.json \
+  --assignment data/audit/r1/first-batch/d1-kb-assignment.json \
   --root . --output-dir .local/d1-kb-candidates
 
 PYTHONPATH=tools/experiment python3 tools/experiment/d1_admission.py \
   --candidate-ledger .local/d1-kb-candidates/ledger.json \
-  --decisions docs/vibe/releases/R1/evidence/S3/d1-kb-v1-decisions.json \
+  --decisions data/audit/r1/first-batch/d1-kb-v1-decisions.json \
   --root . --output-dir .local/d1-kb-v1
 
 uv venv .local/d1-embed-venv --python 3.12
@@ -54,7 +54,7 @@ PYTHONPATH=tools/experiment python3 tools/experiment/s1b.py snapshot-verify \
   --id 9fc63d0e8828a8caa78145e133b8f954f9fedaf79469ea0927434d7dbef725c8
 ```
 
-在**新环境首次**构建并激活本机 Milvus 集合时，调用 `snapshots.activate_snapshot(root, id, MilvusRestIndex('http://127.0.0.1:29531'))`；已有集合用 `active_snapshot(root, index)` 只读校验，避免重复建立新集合。`recall.py` 通过 `--milvus-url http://127.0.0.1:29531` 从已激活集合生成同一候选池；目标向量必须由上述同一模型编码。完整命令、输出摘要和测试见 [验证记录](../VERIFICATION.md#s3-verification)。
+在**新环境首次**构建并激活本机 Milvus 集合时，调用 `snapshots.activate_snapshot(root, id, MilvusRestIndex('http://127.0.0.1:29531'))`；已有集合用 `active_snapshot(root, index)` 只读校验，避免重复建立新集合。`recall.py` 通过 `--milvus-url http://127.0.0.1:29531` 从已激活集合生成同一候选池；目标向量必须由上述同一模型编码。完整命令、输出摘要和测试见 [验证记录](../VERIFICATION.md#r1-data-evidence)。
 
 Atomic 版本链可在独立上游克隆中核对：`git show 3632e622e0b3fedf468866db0b878b7b74dd757e:contracts/Loans.sol | shasum -a 1` 应返回报告所列 SHA-1；`git diff 3632e622e0b3fedf468866db0b878b7b74dd757e 697f12d3eb0772a059a165ec50f02c265bd3dd43 -- contracts/Loans.sol` 可核对 PR 前风险顺序未变。
 

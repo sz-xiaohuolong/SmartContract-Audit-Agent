@@ -12,14 +12,14 @@
 
 | 检查 | 结果 | 证据与范围 |
 |---|---|---|
-| Git 当前分支与基点 | main / 66161d5b74a6df980425f37c913e63591d246d2a | [源码清单](review-evidence/source-manifest.json)；不代表此提交运行稳定 |
+| Git 当前分支与基点 | main / 66161d5b74a6df980425f37c913e63591d246d2a | [源码清单](../../../../.evidence/R0-20260918/review/source-manifest.json)；不代表此提交运行稳定 |
 | 核心源码与调用入口审查 | 完成静态调查 | [TECH_DESIGN](../../TECH_DESIGN.md) 22 项记录；非主线演示类未逐项安全审计 |
-| 数据数量与字节重复检查 | 400 文件、393 唯一字节哈希、7 重复组 | [数据清单](review-evidence/data-inventory.json) |
+| 数据数量与字节重复检查 | 400 文件、393 唯一字节哈希、7 重复组 | [数据清单](../../../../.evidence/R0-20260918/review/data-inventory.json) |
 | KB/测试完全匹配检查 | 143 KB 代码块提取；首尾空白标准化后相同项为 0 | 只限精确匹配；近似克隆和项目污染仍未验证 |
-| Java/Maven 环境检查 | java 命令为 21.0.8；Maven 实际 JDK 为 23.0.2 | [环境记录](review-evidence/environment.txt)；编译目标仍为 21 |
-| `mvn -o -DskipTests test-compile` | exit 0，BUILD SUCCESS；本地 protobuf POM 警告 | [原始日志](review-evidence/offline-test-compile.log)；主类为增量 up-to-date，测试类编译 8 个；未运行测试 |
-| 源码与 pom 是否被改动 | 按 SHA-256 对照初始 manifest | [文档检查](review-evidence/document-check.json)；数据另以只读检查为限 |
-| 文档路径、需求与 AC 唯一性、需求在阶段建议中的覆盖 | 自动检查和主 Agent 自审 | [文档检查](review-evidence/document-check.json)；不能替代用户决定或独立科研审查 |
+| Java/Maven 环境检查 | java 命令为 21.0.8；Maven 实际 JDK 为 23.0.2 | [环境记录](../../../../.evidence/R0-20260918/review/environment.txt)；编译目标仍为 21 |
+| `mvn -o -DskipTests test-compile` | exit 0，BUILD SUCCESS；本地 protobuf POM 警告 | [原始日志](../../../../.evidence/R0-20260918/review/offline-test-compile.log)；主类为增量 up-to-date，测试类编译 8 个；未运行测试 |
+| 源码与 pom 是否被改动 | 按 SHA-256 对照初始 manifest | [文档检查](../../../../.evidence/R0-20260918/review/document-check.json)；数据另以只读检查为限 |
+| 文档路径、需求与 AC 唯一性、需求在阶段建议中的覆盖 | 自动检查和主 Agent 自审 | [文档检查](../../../../.evidence/R0-20260918/review/document-check.json)；不能替代用户决定或独立科研审查 |
 | diff 边界 | 原有 `.gitignore` 修改仍保留，新增 docs/vibe | 未提交、未推送；未将本地凭证写入文档 |
 
 ## 需求验证矩阵

@@ -17,8 +17,8 @@ from storage import atomic_json, decode, encode, fingerprint, durable_write
 
 
 ROOT = Path(__file__).resolve().parents[2]
-INTAKE = ROOT / 'docs/vibe/releases/R1/evidence/S3/first-batch-intake.json'
-ASSIGNMENT = ROOT / 'docs/vibe/releases/R1/evidence/S3/first-batch-assignment.json'
+INTAKE = ROOT / 'data/audit/r1/first-batch/first-batch-intake.json'
+ASSIGNMENT = ROOT / 'data/audit/r1/first-batch/first-batch-assignment.json'
 SOURCE_DIR = '.local/first-batch/sources'
 DIMENSION = 128
 

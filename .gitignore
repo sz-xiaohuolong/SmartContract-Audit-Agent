@@ -77,3 +77,6 @@ paper/**/*.toc
 paper/
 experiment-reports/
 thesis/
+
+# 新增原始运行证据默认只在本机暂存；已跟踪证据继续保留。
+/.evidence/

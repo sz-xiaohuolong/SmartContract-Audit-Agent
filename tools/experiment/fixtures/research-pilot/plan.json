@@ -15,7 +15,7 @@
   "targets": [
     {
       "id": "target",
-      "request": "docs/vibe/releases/R1/evidence/S2/demo/request.json",
+      "request": "tools/experiment/fixtures/retrieval/request.json",
       "caseSamples": {
         "vulnerable": "vulnerable",
         "defense": "defense"
