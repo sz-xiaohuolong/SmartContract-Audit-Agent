@@ -4,7 +4,7 @@ from time import monotonic
 import uuid
 from storage import durable_write
 
-from audit_run import model_runner as default_model_runner
+from audit_run import model_runner as default_model_runner, tool_runner as default_tool_runner
 from formal_recall import CONTEXT_BYTES, java_retrieval, select_strategy
 from program_facts import extract_facts
 from recall import _recall_candidates
@@ -33,14 +33,15 @@ def soft_without_risk(pool, mechanism):
     pairs.sort(key=lambda item: (-item[0], item[1]))
     selected, context = [], ''
     for _, _, before, after in pairs:
+        if len(selected) >= 4:
+            break
         snippets = [(before, 'SOFT_SUPPORT'), (after, 'SOFT_CONTRAST')]
         candidate_context = ''.join(f"[{row['caseId']}/{row['chunkId']}|{row['role']}]\n{row['text']}\n"
                                     for row, _ in snippets)
-        if len(candidate_context.encode()) <= CONTEXT_BYTES:
-            selected = [{'candidate': row, 'use': use, 'binding': {'applicability': 'UNKNOWN'}}
-                        for row, use in snippets]
-            context = candidate_context
-            break
+        if len((context + candidate_context).encode()) <= CONTEXT_BYTES:
+            selected.extend([{'candidate': row, 'use': use, 'binding': {'applicability': 'UNKNOWN'}}
+                             for row, use in snippets])
+            context += candidate_context
     evaluations = {row['chunkId']: {'applicability': 'SUPPORTED' if row['mechanism'] == mechanism
                    and row['conditions'] else 'UNKNOWN'} for row in pool['candidates']}
     return {'status': 'COMPLETED', 'selected': selected, 'context': context,
@@ -52,19 +53,22 @@ def _risk_fact(facts, target):
     if facts['status'] == 'FAILED':
         return None
     kinds = {'CALL'} if target['mechanism'] == 'REENTRANCY' else {'CALL', 'WRITE'}
+    scopes = {row['id'] for row in facts['scopes'] if row['name'] == target['function']
+              and (not target.get('contract') or row['contract'] == target['contract'])}
     matches = [row for row in facts['facts'] if row['kind'] in kinds
-               and row['line'] in target['vulnerableLines']
-               and target['function'] in row['scope']]
+               and (not target.get('vulnerableLines') or row['line'] in target['vulnerableLines'])
+               and row['scope'] in scopes]
     return matches[0] if len(matches) == 1 else None
 
 
 class BenchmarkRuntime:
     def __init__(self, root, index, encoder, model_runner=default_model_runner, java_runner=None,
-                 snapshot_root=None):
+                 snapshot_root=None, tool_runner=default_tool_runner):
         self.root = Path(root).resolve()
         self.index = index
         self.encoder = encoder
         self.model_runner = model_runner
+        self.tool_runner = tool_runner
         self.java_runner = java_runner or (lambda source, request: java_retrieval(self.root, source, request))
         self.store = Path(snapshot_root) if snapshot_root is not None else self.root / '.local/d1-kb-snapshots'
         self.pointer = active_snapshot(self.store, index)
@@ -80,11 +84,12 @@ class BenchmarkRuntime:
         self.views = {}
 
     def preview(self, target):
-        key = target['sampleId']
-        if key in self.views:
-            return self.views[key]
         if decode((self.store / 'active.json').read_bytes()) != self.pointer:
             raise ValueError('批量过程中活动知识快照已改变')
+        key = fingerprint({name: target.get(name) for name in
+                           ('sampleId', 'sourceHash', 'modelSourceHash', 'mechanism', 'function', 'vulnerableLines')})
+        if key in self.views:
+            return self.views[key]
         if hasattr(self.encoder, 'encode_query'):
             encoded, query_receipt = self.encoder.encode_query(target['modelSource'])
         else:
@@ -122,6 +127,8 @@ class BenchmarkRuntime:
         return view
 
     def run(self, target, strategy, mode):
+        from audit_workbench import assess, final_conclusion
+        pipeline_started = monotonic()
         view = select_strategy(self.preview(target), strategy)
         selected = view['d1'].get('selected', [])
         started = monotonic()
@@ -137,7 +144,29 @@ class BenchmarkRuntime:
             diagnostic.chmod(0o600)
             diagnostic_path = str(diagnostic.relative_to(self.root))
         model = {key: value for key, value in model.items() if key != '_rawResponse'}
-        return {'status': model['status'], 'prediction': interpret_model(model, mode),
+        tool_started = monotonic()
+        try:
+            tools = getattr(self, 'tool_runner', default_tool_runner)(self.root, target, mode)
+            if not isinstance(tools, list) or not tools or any(not isinstance(row, dict) for row in tools):
+                raise ValueError('工具结果缺失')
+        except Exception:
+            tools = [{'engine': 'SLITHER', 'status': 'PROCESS_ERROR', 'issues': [],
+                      'durationMs': round((monotonic() - tool_started) * 1000), 'version': None}]
+        failed_tools = any(row.get('status') not in ('OK', 'SKIPPED') for row in tools)
+        d2_failed = False
+        try:
+            d2 = assess(model, view.get('facts', {}), tools, target.get('fullSource'), target=target)
+        except Exception:
+            d2_failed = True
+            d2 = {'schemaVersion': '2', 'verdict': 'UNKNOWN', 'assessments': [], 'errorCategory': 'D2_EXECUTION_ERROR'}
+        failed = model['status'] != 'COMPLETED' or failed_tools or d2_failed
+        return {'pipelineVersion': 's9-v1', 'status': model['status'],
+                'pipelineStatus': 'FAILED' if failed else 'COMPLETED',
+                'prediction': interpret_model(model, mode),
+                'modelPrediction': interpret_model(model, mode),
+                'conclusion': final_conclusion(model, d2, failed, mode),
+                'tools': tools, 'd2': d2,
+                'retrieval': view, 'source': target.get('fullSource'),
                 'poolHash': fingerprint(view['pool']),
                 'queryEmbeddingReceipt': view.get('queryEmbeddingReceipt'),
                 'diagnosticPath': diagnostic_path, 'requestAttempts': model.get('requestAttempts'),
@@ -146,6 +175,7 @@ class BenchmarkRuntime:
                 'categoryHit': (any(row['candidate']['mechanism'] == target['mechanism'] for row in selected)
                                 if target['groundTruth']['hasVulnerability'] else None),
                 'retrievalGaps': view['d1'].get('gaps', []),
-                'errorCategory': model.get('errorCategory'),
+                'errorCategory': model.get('errorCategory') or ('TOOLS_FAILED' if failed_tools else 'D2_EXECUTION_ERROR' if d2_failed else None),
                 'inputTokens': model.get('inputTokens'), 'outputTokens': model.get('outputTokens'),
-                'durationMs': duration, 'model': model}
+                'durationMs': duration, 'modelDurationMs': duration,
+                'pipelineDurationMs': round((monotonic() - pipeline_started) * 1000), 'model': model}

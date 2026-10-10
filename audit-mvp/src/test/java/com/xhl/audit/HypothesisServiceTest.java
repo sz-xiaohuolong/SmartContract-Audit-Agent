@@ -5,6 +5,147 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HypothesisServiceTest {
+    @Test void caseSensitiveNamesBindTheExactDeclaredFunction() {
+        String source = "contract Vault { address owner; uint balance; uint credit; function withdraw() public { require(msg.sender == owner); balance = 1; } function Withdraw() public { credit = 1; } }";
+        var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+            "ACCESS_CONTROL", "Withdraw", "", List.of());
+        var service = new HypothesisService((name, system, user) -> new GatewayReply("""
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"ACCESS_CONTROL",
+            "contract":"Vault","function":"Withdraw","riskLine":1,"riskOperation":"WRITE",
+            "reason":"待核查","evidenceIds":[]}]}
+            """, "fixture", "fixture", null, null, 0, "stop", 1));
+        assertEquals("Withdraw", service.analyze(request, "fixture").hypotheses().getFirst().function());
+    }
+    @Test void ambiguousCaseFoldedFunctionNamesAreRejected() {
+        String source = "contract Vault { uint balance; function withdraw() public { balance = 1; } function Withdraw() public { balance = 2; } }";
+        var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+            "ACCESS_CONTROL", "withdraw", "", List.of());
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"ACCESS_CONTROL",
+            "contract":"Vault","function":"WITHDRAW","riskLine":1,"riskOperation":"WRITE",
+            "reason":"待核查","evidenceIds":[]}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(request, "fixture");
+        assertEquals("FAILED", result.status());
+        assertEquals("FUNCTION_MISMATCH", result.validationIssue());
+        assertTrue(result.hypotheses().isEmpty());
+    }
+
+    @Test void functionExcerptRejectsOtherExactFunctionAndAmbiguousTarget() {
+        String source = "contract Vault { uint balance; function withdraw() public { balance = 1; } function Withdraw() public { balance = 2; } }";
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"ACCESS_CONTROL",
+            "contract":"Vault","function":"Withdraw","riskLine":1,"riskOperation":"WRITE",
+            "reason":"待核查","evidenceIds":[]}]}
+            """;
+        for (String target : List.of("withdraw", "WITHDRAW")) {
+            var request = new HypothesisService.Request(source, source, null, "FUNCTION", 1, 1,
+                "ACCESS_CONTROL", target, "", List.of());
+            var result = service(body, null, null, "stop").analyze(request, "fixture");
+            assertEquals("FAILED", result.status(), target);
+            assertEquals("FUNCTION_MISMATCH", result.validationIssue(), target);
+            assertTrue(result.hypotheses().isEmpty(), target);
+        }
+    }
+
+    @Test void functionExcerptAllowsUniqueCaseFoldedName() {
+        var request = new HypothesisService.Request(SOURCE, SOURCE, null, "FUNCTION", 1, 1,
+            "REENTRANCY", "WITHDRAW", "", List.of());
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"REENTRANCY",
+            "contract":"Vault","function":"Withdraw()","riskLine":1,"riskOperation":"CALL",
+            "reason":"待核查","evidenceIds":[]}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(request, "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertEquals("withdraw", result.hypotheses().getFirst().function());
+    }
+
+    @Test void exactFunctionNameWithWrongRiskLineIsNotCaseFoldedToAnotherFunction() {
+        String source = """
+            contract Vault {
+                function withdraw() public {}
+                function Withdraw() public {}
+            }
+            """;
+        var request = new HypothesisService.Request(source, source, null, "FULL", 1, 4,
+            "ACCESS_CONTROL", "Withdraw", "", List.of());
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"ACCESS_CONTROL",
+            "contract":"Vault","function":"Withdraw","riskLine":2,"riskOperation":"WRITE",
+            "reason":"待核查","evidenceIds":[]}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(request, "fixture");
+        assertEquals("FAILED", result.status());
+        assertEquals("FUNCTION_MISMATCH", result.validationIssue());
+        assertTrue(result.hypotheses().isEmpty());
+    }
+
+    @Test void caseSensitiveContractNamesBindBothExactDeclarations() {
+        String source = "contract Vault { function withdraw() public {} } contract vault { function withdraw() public {} }";
+        var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+            "ACCESS_CONTROL", "withdraw", "", List.of());
+        String body = """
+            {"schemaVersion":"2","hypotheses":[
+            {"vulnerabilityType":"ACCESS_CONTROL","contract":"Vault","function":"withdraw",
+            "riskLine":1,"riskOperation":"WRITE","reason":"待核查","evidenceIds":[]},
+            {"vulnerabilityType":"ACCESS_CONTROL","contract":"vault","function":"withdraw",
+            "riskLine":1,"riskOperation":"WRITE","reason":"待核查","evidenceIds":[]}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(request, "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertEquals(List.of("Vault", "vault"), result.hypotheses().stream()
+            .map(HypothesisService.Hypothesis::contract).toList());
+        assertTrue(result.rejectedHypotheses().isEmpty());
+    }
+
+    @Test void contractNamesIgnoreDeclarationsInsideCommentsAndStrings() {
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"REENTRANCY",
+            "contract":"vAuLt","function":"withdraw","riskLine":1,"riskOperation":"CALL",
+            "reason":"待核查","evidenceIds":[]}]}
+            """;
+        for (String source : List.of(SOURCE + " // contract vault {}",
+                "/* contract vault {} */ " + SOURCE,
+                SOURCE.replace("contract Vault {", "contract Vault { string constant note = \"contract vault {}\";"))) {
+            var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+                "REENTRANCY", "withdraw", "", List.of());
+            var result = service(body, null, null, "stop").analyze(request, "fixture");
+            assertEquals("COMPLETED", result.status(), source);
+            assertEquals("Vault", result.hypotheses().getFirst().contract(), source);
+        }
+    }
+
+    @Test void commentOnlyContractNameIsRejected() {
+        String source = SOURCE + " /* contract Other {} */";
+        var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+            "REENTRANCY", "withdraw", "", List.of());
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"REENTRANCY",
+            "contract":"Other","function":"withdraw","riskLine":1,"riskOperation":"CALL",
+            "reason":"待核查","evidenceIds":[]}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(request, "fixture");
+        assertEquals("FAILED", result.status());
+        assertEquals("CONTRACT_MISMATCH", result.validationIssue());
+        assertTrue(result.hypotheses().isEmpty());
+    }
+
+    @Test void ambiguousCaseFoldedContractNamesRemainRejected() {
+        String source = "contract Vault { function withdraw() public {} } contract vault { function withdraw() public {} }";
+        var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+            "ACCESS_CONTROL", "withdraw", "", List.of());
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"ACCESS_CONTROL",
+            "contract":"VAULT","function":"withdraw","riskLine":1,"riskOperation":"WRITE",
+            "reason":"待核查","evidenceIds":[]}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(request, "fixture");
+        assertEquals("FAILED", result.status());
+        assertEquals("CONTRACT_MISMATCH", result.validationIssue());
+        assertTrue(result.hypotheses().isEmpty());
+    }
+
     private static final String SOURCE = "contract Vault { function withdraw() public { msg.sender.call(\"\"); } }";
     private HypothesisService.Request request() {
         return new HypothesisService.Request(SOURCE, SOURCE, null, "FULL", 1, 1,

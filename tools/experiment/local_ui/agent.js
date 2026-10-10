@@ -97,14 +97,16 @@ function renderAutoReport(report) {
   region.append(origin);
   const table = document.createElement('table'); table.className = 'agent-metrics';
   const head = document.createElement('tr');
-  for (const title of ['策略', 'TP', 'FP', 'FN', 'TN', 'Precision', 'Recall', 'F1', '类别命中@K', '平均输入 token', '平均输出 token', '平均耗时 ms', '失败/未知']) {
+  for (const title of ['策略', 'TP', 'FP', 'FN', 'TN', 'Precision', 'Recall', 'F1', '类别命中@K', '平均输入 token', '平均输出 token', '平均模型耗时 ms', '模型失败/未知', 'D2 支持/反驳/未知', '流水线失败']) {
     const cell = document.createElement('th'); cell.textContent = title; head.append(cell);
   }
   table.append(head);
   for (const [strategy, row] of Object.entries(report.metrics)) {
     const tr = document.createElement('tr');
     for (const value of [strategy, row.tp, row.fp, row.fn, row.tn, metric(row.precision), metric(row.recall), metric(row.f1),
-      metric(row.retrievalHitAtK), metric(row.avgInputTokens), metric(row.avgOutputTokens), metric(row.avgDurationMs), `${row.failed}/${row.unknown}`]) {
+      metric(row.retrievalHitAtK), metric(row.avgInputTokens), metric(row.avgOutputTokens), metric(row.avgDurationMs), `${row.failed}/${row.unknown}`,
+      row.d2NotRun === row.planned ? '未核验（历史版本）' : `${row.d2Supported || 0}/${row.d2Refuted || 0}/${row.d2Unknown || 0}`,
+      row.pipelineFailed ?? '—']) {
       const cell = document.createElement('td'); cell.textContent = String(value); tr.append(cell);
     }
     table.append(tr);
@@ -133,7 +135,7 @@ function renderAutoReport(report) {
   const progressWrap = document.createElement('div'); progressWrap.className = 'agent-progress-scroll';
   const progress = document.createElement('table'); progress.className = 'agent-metrics';
   const progressHead = document.createElement('tr');
-  for (const title of ['目标', '策略', '数据集标签', '状态', '模型结论', '错误类别', '耗时 ms']) {
+  for (const title of ['目标', '策略', '数据集标签', '模型状态', '模型结论', '流水线状态', 'D2 漏洞裁决', '最终结论', '错误类别', '模型耗时 ms']) {
     const cell = document.createElement('th'); cell.textContent = title; progressHead.append(cell);
   }
   progress.append(progressHead);
@@ -143,6 +145,7 @@ function renderAutoReport(report) {
     const tr = document.createElement('tr');
     const label = report.plan.labels[sampleId].hasVulnerability ? '漏洞' : '安全对照';
     for (const value of [sampleId, strategy, label, row?.status || '待处理', row?.prediction || '—',
+      row?.pipelineStatus || '—', row?.d2?.verdict || '未核验', row?.conclusion || '—',
       row?.errorCategory || '—', metric(row?.durationMs, '—')]) {
       const cell = document.createElement('td'); cell.textContent = String(value); tr.append(cell);
     }
@@ -150,7 +153,7 @@ function renderAutoReport(report) {
   }
   progressWrap.append(progress); region.append(progressWrap);
   const note = document.createElement('p'); note.className = 'agent-muted';
-  note.textContent = 'TP/FP/FN/TN 以数据集标签和结构化模型的“报告／未报告”为口径；未报告不等于证明安全。类别命中@K 仅按漏洞类型匹配，是检索代理指标；离线空假设及错误项保持未知。';
+  note.textContent = 'TP/FP/FN/TN 保留模型“报告／未报告”的原口径；工具失败另列流水线失败，最终结论保持未决。D2 裁决以漏洞假设为对象，反驳特定假设不表示全合约安全；旧报告未核验。类别命中仅为代理指标，离线空假设保持未知。';
   region.append(note);
   if (report.poolConflicts.length) {
     const conflict = document.createElement('p'); conflict.textContent = '候选池不一致：' + report.poolConflicts.join('、'); region.append(conflict);
@@ -367,7 +370,9 @@ function showResult(data) {
   show('result', json({sampleId: data.plan.sampleId, scope: data.plan.scope,
     strategy: data.plan.strategy, poolHash: data.plan.poolHash,
     status: data.status, conclusion: data.conclusion, model: data.model,
-    tools: data.tools, d2: data.d2, denominators: data.denominators,
+    tools: data.tools, d2: data.d2,
+    d2VerdictSubject: data.d2?.schemaVersion === '2' ? '漏洞假设' : '保护覆盖（历史版本）',
+    denominators: data.denominators,
     sourceHash: data.plan.sourceHash, snapshotId: data.plan.snapshotId}));
   const link = byId('report');
   link.href = '/api/agent/runs/' + data.runId + '/report';
@@ -377,7 +382,7 @@ async function run(mode) {
   const target = targets.find(item => item.sampleId === byId('sample').value);
   if (!target || !target.runnable) return;
   if (mode === 'real') {
-    const choice = window.confirm(`确认运行 ${target.sampleId}（${target.scope === 'FUNCTION' ? '函数级' : '整份源码'}）？\n策略：${byId('strategy').value}\n端点：${status.endpoint}\n模型：${status.model}\n最多 1 次请求，输出上限 2048 token，零重试。`);
+    const choice = window.confirm(`确认运行 ${target.sampleId}（${target.scope === 'FUNCTION' ? '函数级' : '整份源码'}）？\n策略：${byId('strategy').value}\n端点：${status.endpoint}\n模型：${status.model}\n最多 2 次请求（瞬时错误仅重试一次），输出上限 2048 token。`);
     if (!choice) return;
   }
   byId('offline').disabled = true;

@@ -38,6 +38,9 @@ public final class ToolCli {
                 Duration.ofSeconds(engine == ToolAnalyzer.Engine.SLITHER ? 30 : 60));
             Map<String,Object> output = new LinkedHashMap<>();
             output.put("engine", result.engine().name());
+            output.put("sourceHash", java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                .digest(source.getBytes(java.nio.charset.StandardCharsets.UTF_8))));
+            output.put("sourceFile", "Contract.sol");
             output.put("status", result.status().name());
             output.put("issues", result.issues());
             output.put("durationMs", result.process().durationMs());

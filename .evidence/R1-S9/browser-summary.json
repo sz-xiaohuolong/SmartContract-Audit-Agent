@@ -1,0 +1,106 @@
+{
+  "headers": {
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'",
+    "X-Frame-Options": "DENY"
+  },
+  "runs": [
+    {
+      "runId": "245bea7409f848288ea820b2f87d894a",
+      "mode": "offline",
+      "status": "COMPLETED",
+      "conclusion": "UNRESOLVED",
+      "contextBytes": 1627,
+      "scope": "FULL",
+      "stages": [
+        {
+          "durationMs": 0,
+          "name": "FACTS",
+          "reason": "受限语法结构与程序事实已在预览绑定",
+          "status": "PARTIAL"
+        },
+        {
+          "durationMs": 3736,
+          "name": "D1",
+          "reason": null,
+          "status": "COMPLETED"
+        },
+        {
+          "durationMs": 0,
+          "name": "MODEL",
+          "reason": null,
+          "status": "COMPLETED"
+        },
+        {
+          "durationMs": 0,
+          "name": "TOOLS",
+          "reason": null,
+          "status": "SKIPPED"
+        },
+        {
+          "durationMs": 0,
+          "name": "D2",
+          "reason": null,
+          "status": "UNKNOWN"
+        },
+        {
+          "durationMs": 0,
+          "name": "REPORT",
+          "reason": null,
+          "status": "COMPLETED"
+        }
+      ]
+    },
+    {
+      "runId": "3b3d0bdf0b8647be863e86bc0321ca95",
+      "mode": "offline",
+      "status": "COMPLETED",
+      "conclusion": "UNRESOLVED",
+      "contextBytes": 1559,
+      "scope": "FUNCTION",
+      "stages": [
+        {
+          "durationMs": 0,
+          "name": "FACTS",
+          "reason": "受限语法结构与程序事实已在预览绑定",
+          "status": "COMPLETE"
+        },
+        {
+          "durationMs": 3644,
+          "name": "D1",
+          "reason": null,
+          "status": "COMPLETED"
+        },
+        {
+          "durationMs": 0,
+          "name": "MODEL",
+          "reason": null,
+          "status": "COMPLETED"
+        },
+        {
+          "durationMs": 0,
+          "name": "TOOLS",
+          "reason": null,
+          "status": "SKIPPED"
+        },
+        {
+          "durationMs": 0,
+          "name": "D2",
+          "reason": null,
+          "status": "UNKNOWN"
+        },
+        {
+          "durationMs": 0,
+          "name": "REPORT",
+          "reason": null,
+          "status": "COMPLETED"
+        }
+      ]
+    }
+  ],
+  "externalPaidModelCalls": 0,
+  "consoleErrors": 0,
+  "mobileWidth": 390,
+  "mobilePageWidth": 390,
+  "injectedImages": 0,
+  "unknownObligationRows": 6
+}

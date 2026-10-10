@@ -50,6 +50,22 @@ class BenchmarkRuntimeTest(unittest.TestCase):
             self.assertEqual(raw, (runtime.root / result['diagnosticPath']).read_text())
             self.assertNotIn('_rawResponse', result['model'])
 
+    def test_工具失败与_d2_异常不改写原模型统计(self):
+        with TemporaryDirectory() as directory:
+            runtime = BenchmarkRuntime.__new__(BenchmarkRuntime)
+            runtime.root = Path(directory)
+            runtime.preview = lambda target: {'pool': {'candidates': []}, 'd1': {'selected': []}, 'facts': {}}
+            runtime.model_runner = lambda *args: {'status': 'COMPLETED', 'conclusion': 'VULNERABILITY_REPORTED',
+                'hypotheses': [{'riskLine': 0}], 'inputTokens': None, 'outputTokens': None}
+            runtime.tool_runner = lambda *args: [{'engine': 'SLITHER', 'status': 'TIMEOUT', 'issues': []}]
+            result = runtime.run({'groundTruth': {'hasVulnerability': True}}, 'D1', 'real')
+            self.assertEqual('COMPLETED', result['status'])
+            self.assertEqual('REPORT', result['prediction'])
+            self.assertEqual('FAILED', result['pipelineStatus'])
+            self.assertEqual('UNRESOLVED', result['conclusion'])
+            self.assertEqual('UNKNOWN', result['d2']['verdict'])
+            self.assertEqual('VULNERABILITY_REPORTED', result['model']['conclusion'])
+
 
 if __name__ == '__main__':
     unittest.main()

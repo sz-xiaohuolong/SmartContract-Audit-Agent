@@ -137,17 +137,41 @@ def select_context(source, pointer, payload, index):
     return '\n\n'.join(chunks), selected
 
 
-def _config_values(path):
+def _configuration_values(text, environment=None):
+    """在已捕获的文本和环境上校验供应商，避免重复读取产生配置漂移。"""
+    if not isinstance(text, str):
+        raise ValueError('本地供应商配置缺失')
+    environment = os.environ if environment is None else environment
     values = {}
-    for line in Path(path).read_text(encoding='utf-8').splitlines():
-        if '=' in line and not line.lstrip().startswith('#'):
-            key, value = line.split('=', 1)
-            values[key.strip()] = value.strip()
+    for line in text.splitlines():
+        if not line.strip() or line.lstrip().startswith(('#', '!')):
+            continue
+        match = re.fullmatch(r'\s*([A-Za-z0-9_.-]+)\s*=\s*(.*?)\s*', line)
+        if match is None or '\\' in match.group(2) or '\x00' in line:
+            raise ValueError('本机供应商配置仅支持单行 key=value，不支持转义键、冒号键或反斜杠续行')
+        values[match.group(1)] = match.group(2)
     if values.get('providers.ark.base-url') != 'https://ark.cn-beijing.volces.com/api/plan/v3' or values.get('providers.ark.model') not in ('deepseek-v4-flash', 'deepseek-v4.1-flash'):
         raise ValueError('真实运行只允许已核实的 Agent Plan 地址和 DeepSeek 型号')
-    if not values.get('providers.ark.api-key') and not os.environ.get(values.get('providers.ark.api-key-env', '')):
+    credential = values.get('providers.ark.api-key') or environment.get(values.get('providers.ark.api-key-env', ''))
+    if not isinstance(credential, str) or not credential.strip():
         raise ValueError('本地配置缺少已选供应商的凭证')
+    values['providers.ark.api-key'] = credential
+    values.pop('providers.ark.api-key-env', None)
     return values
+
+
+def _properties_text(values):
+    """将已校验值重建为 Java Properties，避免原文本改变键或凭证语义。"""
+    rows = []
+    for key, value in values.items():
+        units = value.encode('utf-16-be')
+        escaped = ''.join('\\u' + units[index:index + 2].hex() for index in range(0, len(units), 2))
+        rows.append(key + '=' + escaped)
+    return '\n'.join(rows) + '\n'
+
+
+def _config_values(path):
+    return _configuration_values(Path(path).read_text(encoding='utf-8'))
 
 
 def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=None, jar=None, index=None, executor=None):

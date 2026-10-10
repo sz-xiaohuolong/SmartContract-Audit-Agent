@@ -21,7 +21,7 @@ def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None,
             or embedding_profile not in ('bge', 'nomic')):
         raise ValueError('自动标注批量计划无效')
     labels = {key: indexed[key]['groundTruth'] for key in sample_ids}
-    plan = {'schemaVersion': 'auto-benchmark-1', 'sampleIds': sample_ids,
+    plan = {'schemaVersion': 'auto-benchmark-1', 'pipelineVersion': 's9-v1', 'sampleIds': sample_ids,
             'sourceHashes': {key: indexed[key]['sourceHash'] for key in sample_ids},
             'labels': labels, 'strategies': strategies, 'mode': mode,
             'snapshotId': snapshot_id, 'embeddingProfile': embedding_profile,
@@ -152,6 +152,12 @@ def replay_batch(store, batch_id):
                              'requestAttemptsObserved': sum(row.get('requestAttempts') or 0 for row in rows),
                              'requestAttemptsMissing': sum(row.get('requestAttempts') is None for row in rows),
                              'usageObserved': sum(type(row.get('inputTokens')) is int and type(row.get('outputTokens')) is int for row in rows)}
+        # 旧模型指标继续保留原口径，D2 是单独的证据裁决，不能用模型标签冒充其真值。
+        metrics[strategy]['d2Supported'] = sum(row.get('d2', {}).get('verdict') == 'SUPPORTED' for row in rows)
+        metrics[strategy]['d2Refuted'] = sum(row.get('d2', {}).get('verdict') == 'REFUTED' for row in rows)
+        metrics[strategy]['d2Unknown'] = sum(row.get('d2', {}).get('verdict') == 'UNKNOWN' for row in rows)
+        metrics[strategy]['d2NotRun'] = sum('d2' not in row for row in rows)
+        metrics[strategy]['pipelineFailed'] = sum(row.get('pipelineStatus') == 'FAILED' for row in rows)
     samples = [indexed[(sample, strategy)] for sample in plan['sampleIds']
                for strategy in plan['strategies'] if (sample, strategy) in indexed]
     paired_ids = [sample for sample in plan['sampleIds'] if all(
@@ -190,7 +196,8 @@ def export_csv(report):
     writer.writerow(['sampleId', 'strategy', 'label', 'labelSource', 'status', 'prediction',
                      'categoryHit', 'selectedEvidence', 'selectedIds', 'poolHash', 'snapshotId',
                      'inputTokens', 'outputTokens', 'durationMs', 'errorCategory', 'retrievalGaps', 'model',
-                     'requestAttempts', 'diagnosticPath', 'queryEmbeddingReceipt', 'parseReplay'])
+                     'requestAttempts', 'diagnosticPath', 'queryEmbeddingReceipt', 'parseReplay',
+                     'conclusion', 'd2Verdict', 'tools', 'd2'])
     labels = report['plan']['labels']
     for row in report['samples']:
         label = labels[row['sampleId']]
@@ -202,5 +209,7 @@ def export_csv(report):
                          json.dumps(row.get('retrievalGaps'), ensure_ascii=False),
                          json.dumps(row.get('model'), ensure_ascii=False), row.get('requestAttempts'), row.get('diagnosticPath'),
                          json.dumps(row.get('queryEmbeddingReceipt'), ensure_ascii=False),
-                         json.dumps(row.get('parseReplay'), ensure_ascii=False)])
+                         json.dumps(row.get('parseReplay'), ensure_ascii=False), row.get('conclusion'),
+                         row.get('d2', {}).get('verdict'), json.dumps(row.get('tools'), ensure_ascii=False),
+                         json.dumps(row.get('d2'), ensure_ascii=False)])
     return output.getvalue()

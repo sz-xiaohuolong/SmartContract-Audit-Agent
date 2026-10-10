@@ -1,10 +1,10 @@
 # VeriRAG 毕业论文工程：文档入口
 
-更新：2026-10-08。当前在主目录 `main` 开发，实际提交以 Git 历史为准。
+更新：2026-10-10。当前在主目录 `main` 开发，实际提交以 Git 历史为准。
 
 ## 当前定位
 
-- 当前 Release：`R1-S8` 批量准入与正式对照推进；本阶段[实施计划](releases/R1-S8/IMPLEMENTATION_PLAN.md)和[阶段验证](releases/R1-S8/VERIFICATION.md)记录已完成工程及剩余准入工作。D1 科研效果仍待证伪。
+- 当前 Release：`R1-S9` 单合约深度审计与 D2 闭环；[规格](releases/R1-S9/SPEC.md)、[实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md)和[验证记录](releases/R1-S9/VERIFICATION.md)描述当前工程。D1 科研效果仍待证伪，S8 的原始实验和准入记录保留。
 - 当前执行状态、验证及下一任务以 [PROGRESS](PROGRESS.md) 为准。
 - S0：新 `audit-mvp` 模块，多供应商单次 CLI 和离线测试；[验证记录](releases/R1-S0/VERIFICATION.md)。
 - S1a：只读清单、严格类型评估；S1b：审核划分、知识快照和实验恢复。见 [实施计划](releases/R1-S1/IMPLEMENTATION_PLAN.md)、[验证记录](releases/R1-S1/VERIFICATION.md)、[工具说明](../../tools/experiment/README.md)。
@@ -21,9 +21,9 @@
 | 内容 | 文档 |
 |---|---|
 | 当前执行位置、恢复入口、已知限制 | [PROGRESS](PROGRESS.md) |
-| 当前工程范围 | [R1-S8 实施计划](releases/R1-S8/IMPLEMENTATION_PLAN.md) |
+| 当前工程范围 | [R1-S9 规格](releases/R1-S9/SPEC.md)、[实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md) |
 | 下一研发阶段与研究门禁 | [R1-S6 研究设计](releases/R1-S6/RESEARCH_DESIGN.md)、[实施计划](releases/R1-S6/IMPLEMENTATION_PLAN.md)；科研准入仍以 R1-S3 为准 |
-| 实施步骤和验收证据 | [R1-S8 实施计划](releases/R1-S8/IMPLEMENTATION_PLAN.md)、[阶段验证](releases/R1-S8/VERIFICATION.md) |
+| 实施步骤和验收证据 | [R1-S9 实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md)、[验证记录](releases/R1-S9/VERIFICATION.md) |
 | 实际命令与数据契约 | [tools/experiment/README](../../tools/experiment/README.md) 和根 README |
 | 旧源码调查与重构动机 | [TECH_DESIGN](TECH_DESIGN.md)，历史观察以当前代码核验 |
 | 历史提案与研究路线 | [R0 审核记录](releases/R0-20260918/REVIEW.md)及同目录提案 |

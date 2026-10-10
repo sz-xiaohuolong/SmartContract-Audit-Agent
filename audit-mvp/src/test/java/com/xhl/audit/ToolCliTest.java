@@ -23,6 +23,8 @@ class ToolCliTest {
             assertEquals(0, code);
             assertTrue(output.toString().contains("\"status\":\"OK\""));
             assertTrue(output.toString().contains("\"issues\":[]"));
+            assertTrue(output.toString().contains("\"sourceFile\":\"Contract.sol\""));
+            assertTrue(output.toString().contains("\"sourceHash\""));
             assertFalse(output.toString().contains("SAFE"));
             Files.writeString(script, "#!/bin/sh\necho broken-json\n");
             output.reset();

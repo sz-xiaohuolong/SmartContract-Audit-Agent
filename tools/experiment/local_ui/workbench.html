@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+  <title>单合约审计工作台</title>
+  <link rel="stylesheet" href="/workbench.css">
+  <script src="/workbench.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#audit-input">跳到审计输入</a>
+  <header class="page-header">
+    <div><h1>单合约审计工作台</h1><p>从源码到结论，逐层查看假设与证据。</p></div>
+    <nav aria-label="工作台导航"><a href="/agent.html">批量实验台</a><a href="#history-section">报告历史</a></nav>
+  </header>
+  <main class="page-shell">
+    <section class="connection-bar" aria-label="当前服务状态">
+      <span id="service-state" class="badge neutral" role="status">正在连接</span>
+      <span id="snapshot-state">读取知识快照…</span>
+      <span id="real-state">真实调用状态待确认</span>
+      <button id="refresh-status" class="text-button" type="button">刷新状态</button>
+    </section>
+    <div class="workbench-layout">
+      <aside class="input-panel" aria-labelledby="input-title">
+        <form id="audit-input">
+          <h2 id="input-title">审计输入</h2>
+          <p class="help">仅覆盖访问控制与重入。粘贴输入 ≤128 KiB，模型片段 ≤16 KiB。</p>
+          <div class="tabs compact" role="tablist" aria-label="输入方式">
+            <button id="input-preset-tab" type="button" role="tab" aria-selected="true" aria-controls="input-preset">预置样本</button>
+            <button id="input-source-tab" type="button" role="tab" aria-selected="false" aria-controls="input-source" tabindex="-1">粘贴源码</button>
+          </div>
+          <div id="input-preset" role="tabpanel" aria-labelledby="input-preset-tab">
+            <label for="target-origin">预置来源</label>
+            <select id="target-origin" disabled><option value="all">全部来源</option></select>
+            <label for="sample-select">合约 / 目标</label>
+            <select id="sample-select" disabled><option value="">正在读取目标…</option></select>
+            <p id="sample-note" class="help">来源和可运行状态以服务端登记为准。</p>
+          </div>
+          <div id="input-source" role="tabpanel" aria-labelledby="input-source-tab" hidden>
+            <label for="source-input">完整 Solidity 源码</label>
+            <textarea id="source-input" rows="12" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="pragma solidity ^0.8.0;&#10;&#10;contract Example {&#10;    // 粘贴完整合约源码&#10;}"></textarea>
+            <p id="source-byte-count" class="help">0 / 131072 字节 · 风险行使用完整源码的行号。</p>
+          </div>
+          <label for="mechanism-select">审计方向</label>
+          <select id="mechanism-select"><option value="REENTRANCY">重入 · REENTRANCY</option><option value="ACCESS_CONTROL">访问控制 · ACCESS_CONTROL</option></select>
+          <label for="function-input">目标函数 <span class="optional">自定义时可选</span></label>
+          <input id="function-input" type="text" list="function-options" autocomplete="off" spellcheck="false" placeholder="例如 withdraw" aria-describedby="function-help">
+          <datalist id="function-options"></datalist>
+          <p id="function-help" class="help">预置样本使用登记的函数；自定义可填写合约名.函数名，留空由服务端选择。</p>
+          <label for="risk-line">风险行 <span class="optional">可选</span></label>
+          <input id="risk-line" type="number" min="1" step="1" inputmode="numeric" placeholder="由预览识别，或填写原始行号">
+          <div class="form-divider"></div>
+          <label for="strategy-select">检索策略</label>
+          <select id="strategy-select"><option value="D1">D1 · 漏洞 / 修复对比</option><option value="DENSE">DENSE · 向量召回</option><option value="FIELD_FILTER">FIELD_FILTER · 条件过滤</option></select>
+          <label for="embedding-select">知识向量模型</label>
+          <select id="embedding-select"><option value="nomic" selected>Nomic · 768 维（默认）</option><option value="bge">BGE-small · 384 维</option></select>
+          <label for="mode-select">运行模式</label>
+          <select id="mode-select"><option value="offline" selected>离线演练 · 零模型请求</option><option value="real">真实审计 · 调用已配置模型</option></select>
+          <p id="mode-note" class="help">离线演练验证审计链路；固定假设不代表真实检测结论。</p>
+          <div id="real-consent-region" class="consent-region" hidden>
+            <p id="real-limits">真实调用会发送本次审计输入，可能计费。每次输出最多 2048 token，最多 2 次请求。</p>
+            <label class="check-label" for="real-consent"><input id="real-consent" type="checkbox">我选择调用真实模型审计当前输入</label>
+          </div>
+          <div class="input-actions">
+            <button id="preview-button" class="button secondary" type="submit" disabled>预览审计计划</button>
+            <button id="run-button" class="button primary" type="button" disabled>开始离线演练</button>
+          </div>
+          <p id="plan-state" class="help">先预览源码范围与检索证据，再开始审计。</p>
+          <p id="action-message" class="action-message" role="status" aria-live="polite"></p>
+        </form>
+      </aside>
+      <div class="audit-panel">
+        <section class="overview" aria-labelledby="overview-title">
+          <div class="section-heading"><h2 id="overview-title">审计透视</h2><a id="report-link" class="button secondary small" hidden download>下载 JSONL</a></div>
+          <div id="result-summary" class="result-summary"><strong>等待预览</strong><p>选择样本或粘贴源码，查看本次审计将使用的范围和案例。</p></div>
+          <div id="result-meta" class="meta-strip"></div>
+          <ol id="stage-list" class="stage-list" aria-label="六阶段审计进度"></ol>
+          <details id="event-details" hidden><summary>运行事件</summary><div id="event-list" class="event-list"></div></details>
+        </section>
+        <section class="source-section" aria-labelledby="source-title">
+          <div class="section-heading"><h2 id="source-title">源码与定位</h2><span id="source-scope" class="help">完整源码等待预览</span></div>
+          <div class="source-toolbar">
+            <div class="tabs compact" role="tablist" aria-label="源码视图">
+              <button id="source-full-tab" type="button" role="tab" aria-selected="true" aria-controls="source-full">完整源码</button>
+              <button id="source-model-tab" type="button" role="tab" aria-selected="false" aria-controls="source-model" tabindex="-1">模型片段</button>
+            </div>
+            <form id="line-form" class="line-form"><label class="sr-only" for="line-jump">定位到行</label><input id="line-jump" type="number" min="1" step="1" placeholder="行号" aria-label="定位到行"><button class="text-button" type="submit">定位</button></form>
+          </div>
+          <div class="source-legend"><span class="legend-risk">风险行</span><span class="legend-hypothesis">模型假设</span><span class="legend-tool">工具告警</span><span class="legend-d2">D2 引用</span><span id="source-line-note">点击证据中的行号可定位</span></div>
+          <div id="source-full" class="source-view" role="tabpanel" aria-labelledby="source-full-tab" tabindex="0"><p class="empty-state">预览后展示完整源码，保留原始行号。</p></div>
+          <div id="source-model" class="source-view" role="tabpanel" aria-labelledby="source-model-tab" tabindex="0" hidden><p class="empty-state">预览后展示实际提供给模型的片段。</p></div>
+          <p id="source-message" class="help" role="status"></p>
+          <p id="syntax-summary" class="evidence-note">结构解析采用受限 SolidityStructure，不承诺完整编译 AST、类型解析或路径证明。</p>
+          <details><summary>结构解析、函数与限制</summary><div id="syntax-content"><p class="empty-state">预览后查看解析到的合约与函数。</p></div></details>
+          <details><summary>源码与计划摘要</summary><dl id="source-receipt" class="receipt"></dl></details>
+        </section>
+        <section class="evidence-section" aria-labelledby="evidence-title">
+          <div class="section-heading"><h2 id="evidence-title">证据与判定</h2></div>
+          <div class="tabs evidence-tabs" role="tablist" aria-label="审计证据">
+            <button id="retrieval-tab" type="button" role="tab" aria-selected="true" aria-controls="retrieval-panel">D1 检索</button>
+            <button id="hypotheses-tab" type="button" role="tab" aria-selected="false" aria-controls="hypotheses-panel" tabindex="-1">模型假设</button>
+            <button id="tools-tab" type="button" role="tab" aria-selected="false" aria-controls="tools-panel" tabindex="-1">工具告警</button>
+            <button id="d2-tab" type="button" role="tab" aria-selected="false" aria-controls="d2-panel" tabindex="-1">D2 核验</button>
+          </div>
+          <div id="retrieval-panel" class="evidence-content" role="tabpanel" aria-labelledby="retrieval-tab"><p class="empty-state">预览后展示候选案例、条件绑定与上下文预算。</p></div>
+          <div id="hypotheses-panel" class="evidence-content" role="tabpanel" aria-labelledby="hypotheses-tab" hidden><p class="empty-state">运行后展示模型提出的假设。</p></div>
+          <div id="tools-panel" class="evidence-content" role="tabpanel" aria-labelledby="tools-tab" hidden><p class="empty-state">运行后展示工具状态与可定位告警。</p></div>
+          <div id="d2-panel" class="evidence-content" role="tabpanel" aria-labelledby="d2-tab" hidden><p class="empty-state">运行后按六项保护义务核验证据，缺失信息保留未知。</p></div>
+        </section>
+      </div>
+    </div>
+    <section id="history-section" class="history-section" aria-labelledby="history-title">
+      <div class="section-heading"><div><h2 id="history-title">报告历史</h2><p class="help">点击仅查看已保存记录；读取历史与下载报告不会发起模型调用。</p></div><button id="refresh-history" class="text-button" type="button">刷新历史</button></div>
+      <div id="history-list" class="history-list" aria-live="polite"><p class="empty-state">正在读取运行记录…</p></div>
+    </section>
+    <footer>案例的自动标签需核验；未决或未确认漏洞均不能解释为合约安全。当前结果用于工程审查，不作为研究结论。</footer>
+  </main>
+  <noscript><p class="noscript">请启用 JavaScript 以预览计划和读取报告。</p></noscript>
+</body>
+</html>

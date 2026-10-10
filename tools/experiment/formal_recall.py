@@ -13,7 +13,7 @@ from storage import decode, encode, fingerprint
 
 
 SNAPSHOT_ROOT = Path('.local/d1-kb-snapshots')
-CONTEXT_BYTES = 2048
+CONTEXT_BYTES = 4096
 STRATEGIES = frozenset({'DENSE', 'FIELD_FILTER', 'D1'})
 
 
@@ -24,7 +24,9 @@ def select_strategy(view, strategy):
     pool = view['pool']
     pool_hash = fingerprint(pool)
     if strategy == 'D1':
-        return dict(view, strategy='D1', poolHash=pool_hash)
+        # Java EvidenceBundle 不含执行 status；通过身份校验后以完成状态统一编排契约。
+        return dict(view, d1={**view['d1'], 'status': view['d1'].get('status', 'COMPLETED')},
+                    strategy='D1', poolHash=pool_hash)
     evaluations = view['d1'].get('evaluations', {})
     selected, parts, used = [], [], 0
     for candidate in pool['candidates']:

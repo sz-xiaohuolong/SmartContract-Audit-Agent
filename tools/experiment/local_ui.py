@@ -149,7 +149,7 @@ def pending_knowledge_status(root, index):
 def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp_status=None,
                   agent_targets=None, agent_status=None, agent_preview=None, agent_runner=None, agent_store=None,
                   batch_store=None, exploratory_store=None, exploratory_runner=None,
-                  auto_store=None, auto_targets=None, auto_runtime=None):
+                  auto_store=None, auto_targets=None, auto_runtime=None, workbench=None):
     root = Path(root).resolve()
     store = Path(store) if store is not None else root / '.local/experiment-ui'
     runner = runner or (lambda: run_demo(root))
@@ -212,8 +212,16 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
         auto_runtime = default_auto_runtime
     run_lock = threading.Lock()
     exploratory_lock = threading.Lock()
+    preview_slots = threading.BoundedSemaphore(2)
+    if workbench is None:
+        from audit_workbench import AuditWorkbench
+        workbench = AuditWorkbench(root)
 
     class Handler(BaseHTTPRequestHandler):
+        def setup(self):
+            super().setup()
+            self.connection.settimeout(30)
+
         def _send(self, status, data, content_type='application/json; charset=utf-8', filename=None):
             body = encode(data) if content_type.startswith('application/json') else data
             self.send_response(status)
@@ -224,7 +232,8 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             if filename:
                 self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
             if content_type.startswith('text/html'):
-                self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'")
+                self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'")
+                self.send_header('X-Frame-Options', 'DENY')
             self.end_headers()
             self.wfile.write(body)
 
@@ -239,7 +248,33 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 self._send(403, {'error': '仅允许本机访问'})
                 return
             parsed = urlsplit(self.path)
-            if parsed.path == '/api/agent/auto-benchmark/targets' and not parsed.query:
+            if parsed.path in ('/workbench.html', '/workbench.js', '/workbench.css') and not parsed.query:
+                content_type = {'html': 'text/html', 'js': 'text/javascript', 'css': 'text/css'}[parsed.path.rsplit('.', 1)[-1]]
+                self._send(200, (FRONTEND / parsed.path[1:]).read_bytes(), content_type + '; charset=utf-8')
+            elif parsed.path.startswith('/api/workbench/'):
+                try:
+                    if parsed.path == '/api/workbench/status':
+                        query = parse_qs(parsed.query, strict_parsing=True)
+                        if set(query) - {'embeddingProfile'} or len(query.get('embeddingProfile', ['nomic'])) != 1:
+                            raise ValueError('嵌入选型参数无效')
+                        self._send(200, workbench.status(query.get('embeddingProfile', ['nomic'])[0]))
+                    elif parsed.path == '/api/workbench/targets' and not parsed.query:
+                        self._send(200, {'targets': workbench.targets()})
+                    elif parsed.path == '/api/workbench/runs' and not parsed.query:
+                        self._send(200, {'runs': workbench.history()})
+                    else:
+                        match = re.fullmatch(r'/api/workbench/runs/([0-9a-f]{32})(/report)?', parsed.path)
+                        if not match or parsed.query:
+                            self._not_found()
+                        elif match.group(2):
+                            self._send(200, workbench.report(match.group(1)), 'application/x-ndjson; charset=utf-8', 'audit.jsonl')
+                        else:
+                            self._send(200, workbench.read(match.group(1)))
+                except FileNotFoundError:
+                    self._not_found()
+                except (OSError, ValueError, KeyError, TypeError, RuntimeError, ImportError):
+                    self._send(400, {'error': '工作台输入参数或运行记录无效，请检查本机日志与快照'})
+            elif parsed.path == '/api/agent/auto-benchmark/targets' and not parsed.query:
                 try:
                     rows = [{key: value for key, value in row.items()
                              if key not in ('source', 'fullSource', 'modelSource')} for row in auto_targets()]
@@ -464,6 +499,43 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             origin = self.headers.get('Origin')
             if origin and origin != f'http://127.0.0.1:{self.server.server_port}':
                 self._send(403, {'error': '请求来源不允许'})
+                return
+            if self.path in ('/api/workbench/preview', '/api/workbench/runs'):
+                length = self.headers.get('Content-Length')
+                if (self.headers.get('Content-Type') != 'application/json' or length is None
+                        or not length.isdecimal() or not 0 < int(length) <= 1_000_000):
+                    self._send(400, {'error': '工作台请求类型或大小无效'}); return
+                try:
+                    payload = decode(self.rfile.read(int(length)))
+                except (ValueError, UnicodeError):
+                    self._send(400, {'error': '工作台 JSON 无效或存在重复字段'}); return
+                except OSError:
+                    self._send(408, {'error': '请求正文读取超时，请重新提交完整请求'}); return
+                if self.path.endswith('/preview'):
+                    if not preview_slots.acquire(blocking=False):
+                        self._send(429, {'error': '预览正在处理，请稍后再试'}); return
+                    try:
+                        self._send(200, workbench.preview(payload))
+                    except (OSError, ValueError, KeyError, TypeError, RuntimeError, ImportError):
+                        self._send(400, {'error': '预览失败：请检查源码、函数、风险行和本机知识快照'})
+                    finally:
+                        preview_slots.release()
+                    return
+                if not run_lock.acquire(blocking=False):
+                    self._send(409, {'error': '已有审计或批量实验正在运行'}); return
+                try:
+                    prepared = workbench.prepare(payload)
+                except (OSError, ValueError, KeyError, TypeError, RuntimeError, ImportError):
+                    run_lock.release()
+                    self._send(400, {'error': '预览已失效或输入无效，请重新预览'}); return
+                def workbench_work():
+                    try:
+                        workbench.execute(prepared)
+                    finally:
+                        workbench.running.discard(prepared['runId'])
+                        run_lock.release()
+                threading.Thread(target=workbench_work, daemon=True).start()
+                self._send(202, {'runId': prepared['runId']})
                 return
             resume_match = re.fullmatch(r'/api/agent/batches/([0-9a-f]{32})/resume', self.path)
             auto_resume_match = re.fullmatch(r'/api/agent/auto-benchmark/runs/([0-9a-f]{32})/resume', self.path)
