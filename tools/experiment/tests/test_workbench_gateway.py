@@ -48,7 +48,11 @@ class WorkbenchGatewayTest(unittest.TestCase):
                 executable = root / 'slither-fixture.sh'
                 executable.write_text('#!/bin/sh\nif [ "$1" = "--version" ]; then echo local-fixture; else echo \'{"success":true,"results":{"detectors":[]}}\'; fi\n')
                 executable.chmod(0o700)
-                (config / 'tools.local.properties').write_text('tools.slither.executable=' + str(executable))
+                compiler = root / 'solc-fixture.sh'
+                compiler.write_text('#!/bin/sh\necho "Version: 0.8.24+fixture"\n')
+                compiler.chmod(0o700)
+                (config / 'tools.local.properties').write_text(
+                    f'tools.slither.executable={executable}\ntools.slither.solc={compiler}\n')
                 runtime = Runtime()
                 def changed_config_model(*args):
                     # 执行身份检查后改变原配置；Java 必须消费冻结的模型与工具文件。

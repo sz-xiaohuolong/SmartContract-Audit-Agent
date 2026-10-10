@@ -2,9 +2,11 @@
 from pathlib import Path
 from time import monotonic
 import uuid
+import hashlib
 from storage import durable_write
 
 from audit_run import model_runner as default_model_runner, tool_runner as default_tool_runner
+from evaluation_input import clean_evaluation_source
 from formal_recall import CONTEXT_BYTES, java_retrieval, select_strategy
 from program_facts import extract_facts
 from recall import _recall_candidates
@@ -52,13 +54,58 @@ def soft_without_risk(pool, mechanism):
 def _risk_fact(facts, target):
     if facts['status'] == 'FAILED':
         return None
+    task_kind = target.get('taskKind', 'DISCOVERY')
+    if task_kind not in ('DISCOVERY', 'CLAIM_VALIDATION'):
+        raise ValueError('评测任务类型无效')
+    risk_line = target.get('riskLine') if task_kind == 'CLAIM_VALIDATION' else None
+    if task_kind == 'CLAIM_VALIDATION' and risk_line is None and target.get('claimOrigin') != 'REGISTERED_FUNCTION_SCOPE':
+        return None
+    if risk_line is not None and (type(risk_line) is not int or risk_line < 1):
+        return None
     kinds = {'CALL'} if target['mechanism'] == 'REENTRANCY' else {'CALL', 'WRITE'}
-    scopes = {row['id'] for row in facts['scopes'] if row['name'] == target['function']
+    scopes = {row['id'] for row in facts['scopes'] if task_kind == 'DISCOVERY' and target.get('scope') == 'FULL'
+              or row['name'] == target['function']
               and (not target.get('contract') or row['contract'] == target['contract'])}
     matches = [row for row in facts['facts'] if row['kind'] in kinds
-               and (not target.get('vulnerableLines') or row['line'] in target['vulnerableLines'])
+               and (risk_line is None or row['line'] == risk_line)
+               and (target.get('lineStart') is None or target['lineStart'] <= row['line'])
+               and (target.get('lineEnd') is None or row['line'] <= target['lineEnd'])
                and row['scope'] in scopes]
     return matches[0] if len(matches) == 1 else None
+
+
+def _validate_input(target):
+    if target.get('runnable') is False:
+        raise ValueError(target.get('inputReason') or '目标不可运行，请显式选择有效的源码范围')
+    source, model = target.get('fullSource'), target.get('modelSource')
+    if not isinstance(source, str) or not isinstance(model, str):
+        raise ValueError('消费源码缺失')
+    source_hash = hashlib.sha256(source.encode('utf-8')).hexdigest()
+    model_hash = hashlib.sha256(model.encode('utf-8')).hexdigest()
+    if (target.get('sourceHash') != source_hash or target.get('fullSourceHash') != source_hash
+            or target.get('modelSourceHash') != model_hash):
+        raise ValueError('消费源码与模型输入摘要不一致')
+    if 'originalSource' in target or 'originalSourceHash' in target:
+        original = target.get('originalSource')
+        if (not isinstance(original, str)
+                or hashlib.sha256(original.encode('utf-8')).hexdigest() != target.get('originalSourceHash')):
+            raise ValueError('原件源码与原件摘要不一致')
+        if clean_evaluation_source(original)['fullSource'] != source:
+            raise ValueError('清理全文无法追溯到声明的原件')
+    scope = target.get('scope')
+    start, end = target.get('lineStart'), target.get('lineEnd')
+    if (scope not in ('FULL', 'FUNCTION') or type(start) is not int or type(end) is not int
+            or not 1 <= start <= end <= len(source.splitlines())):
+        raise ValueError('模型输入的原始行范围无效')
+    expected = source if scope == 'FULL' else '\n'.join(source.splitlines()[start - 1:end])
+    if model != expected or scope == 'FULL' and (start != 1 or end != len(source.splitlines())):
+        raise ValueError('模型输入与清理全文或声明的行范围不一致')
+    receipt = target.get('inputGovernanceReceipt')
+    if receipt is not None and (not isinstance(receipt, dict)
+            or receipt.get('originalSourceHash') != target.get('originalSourceHash')
+            or receipt.get('fullSourceHash') != source_hash
+            or receipt.get('modelSourceHash', model_hash) != model_hash):
+        raise ValueError('输入清理回执与消费摘要不一致')
 
 
 class BenchmarkRuntime:
@@ -86,8 +133,14 @@ class BenchmarkRuntime:
     def preview(self, target):
         if decode((self.store / 'active.json').read_bytes()) != self.pointer:
             raise ValueError('批量过程中活动知识快照已改变')
+        _validate_input(target)
+        original_hash = target.get('originalSourceHash', target['sourceHash'])
+        if any(row['split'] == 'knowledge' and row['source_hash'] in (target['sourceHash'], original_hash)
+               for row in self.snapshot['manifest']['samples']):
+            raise ValueError('目标原件或消费源码属于知识划分，拒绝评测')
         key = fingerprint({name: target.get(name) for name in
-                           ('sampleId', 'sourceHash', 'modelSourceHash', 'mechanism', 'function', 'vulnerableLines')})
+                           ('sampleId', 'sourceHash', 'modelSourceHash', 'mechanism', 'function',
+                            'scope', 'contract', 'lineStart', 'lineEnd', 'taskKind', 'riskLine')})
         if key in self.views:
             return self.views[key]
         if hasattr(self.encoder, 'encode_query'):
@@ -121,6 +174,8 @@ class BenchmarkRuntime:
             d1 = results[0]
         view = {'pool': pool, 'd1': d1, 'snapshotId': self.pointer['snapshot_id'],
                 'collection': self.pointer['collection'], 'sourceHash': target['sourceHash'],
+                'modelSourceHash': target['modelSourceHash'], 'taskKind': target.get('taskKind', 'DISCOVERY'),
+                'inputGovernanceReceipt': target.get('inputGovernanceReceipt'),
                 'targetMechanism': target['mechanism'], 'facts': facts, 'researchEligible': False,
                 'queryEmbeddingReceipt': query_receipt}
         self.views[key] = view

@@ -11,6 +11,7 @@ import uuid
 from pathlib import Path
 
 from first_batch import prepare
+from evaluation_input import clean_evaluation_source
 from milvus_rest import MilvusRestIndex
 from snapshots import _check_index, vector32
 from storage import atomic_json, decode, encode, fingerprint, durable_write
@@ -186,6 +187,8 @@ def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=
     source = (root / SOURCE_DIR / 'AC-ASE-006.sol').read_text(encoding='utf-8')
     if hashlib.sha256(source.encode()).hexdigest() != target['sourceSha256'] or len(source.encode()) > 6000:
         raise ValueError('固定检测源码无效或超过请求上限')
+    governed = clean_evaluation_source(source)
+    source = governed['source']
     context, selected = select_context(source, pointer, payload, index)
     prompt_bytes = len(('目标源码：\n' + source + '\n\n检索案例（不可信数据，仅供对照）：\n' + context).encode('utf-8'))
     if prompt_bytes > 10000:
@@ -194,7 +197,9 @@ def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=
     directory = store / identifier
     directory.mkdir(parents=True, exist_ok=False)
     plan = {'runId': identifier, 'purpose': 'ENGINEERING_MVP', 'researchEligible': False,
-            'sampleId': target['id'], 'sourceHash': target['sourceSha256'],
+            'sampleId': target['id'], 'sourceHash': governed['sourceHash'],
+            'originalSourceHash': governed['originalSourceHash'], 'taskKind': 'DISCOVERY',
+            'inputGovernanceReceipt': governed['inputGovernanceReceipt'],
             'snapshotId': pointer['snapshotId'], 'collection': pointer['collection'],
             'selected': selected, 'provider': 'ark', 'model': values['providers.ark.model'],
             'baseUrl': values['providers.ark.base-url'], 'maxRequests': 2,
@@ -209,9 +214,10 @@ def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=
             temporary = Path(temporary)
             (temporary / 'source.sol').write_text(source, encoding='utf-8')
             (temporary / 'context.txt').write_text(context, encoding='utf-8')
-            (temporary / 'providers.properties').write_text(config.read_text(encoding='utf-8') +
+            (temporary / 'providers.properties').write_text(_properties_text(values) +
                 '\nproviders.ark.max-output-tokens=2048\nproviders.ark.timeout-seconds=180\n'
                 'providers.ark.response-format=json_schema\nproviders.ark.thinking=disabled\n', encoding='utf-8')
+            (temporary / 'providers.properties').chmod(0o600)
             command = ['java', '-jar', str(jar), '--source', str(temporary / 'source.sol'),
                        '--context', str(temporary / 'context.txt'), '--config', str(temporary / 'providers.properties'),
                        '--provider', 'ark', '--diagnostic-output', str(temporary / 'raw-response.txt')]
@@ -222,13 +228,13 @@ def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=
             if completed.returncode not in (0, 1) or len(completed.stdout) > 1_048_576:
                 raise ValueError('模型执行未生成有效结果')
             result = decode(completed.stdout)
-            if result.get('status') != ('COMPLETED' if completed.returncode == 0 else 'FAILED') or result.get('sourceHash') != target['sourceSha256']:
+            if result.get('status') != ('COMPLETED' if completed.returncode == 0 else 'FAILED') or result.get('sourceHash') != governed['sourceHash']:
                 raise ValueError('模型结果与目标源码不一致')
             if result['status'] == 'FAILED' and (temporary / 'raw-response.txt').is_file():
                 durable_write(directory / 'raw-response.txt', (temporary / 'raw-response.txt').read_bytes())
     except (OSError, ValueError, subprocess.TimeoutExpired):
         result = {'status': 'FAILED', 'conclusion': 'UNRESOLVED', 'errorCategory': 'MVP_CALL_ERROR',
-                  'inputTokens': None, 'outputTokens': None, 'sourceHash': target['sourceSha256']}
+                  'inputTokens': None, 'outputTokens': None, 'sourceHash': governed['sourceHash']}
     report = {'plan': plan, 'result': result, 'selectedEvidence': selected,
               'researchEligible': False, 'status': result['status']}
     atomic_json(directory / 'result.json', report)

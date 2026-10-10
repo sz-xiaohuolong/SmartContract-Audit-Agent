@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 
 from d1_embed import MODEL, REVISION, DIMENSION
+from audit_target import normalize_target
 from formal_targets import load_target
 from program_facts import extract_facts
 from recall import _recall_candidates
@@ -69,29 +70,46 @@ def java_retrieval(root, source, request):
 
 
 def _risk_fact(facts, target, catalog):
+    task_kind = target.get('taskKind', 'DISCOVERY')
+    if task_kind not in ('DISCOVERY', 'CLAIM_VALIDATION'):
+        raise ValueError('正式审计任务类型无效')
+    risk_line = target.get('riskLine') if task_kind == 'CLAIM_VALIDATION' else None
+    if task_kind == 'CLAIM_VALIDATION' and risk_line is None and target.get('claimOrigin') != 'REGISTERED_FUNCTION_SCOPE':
+        return None
+    if risk_line is not None and (type(risk_line) is not int or risk_line < 1):
+        return None
     risk_kinds = ({'CALL', 'WRITE'} if target['mechanism'] == 'ACCESS_CONTROL'
                   and any(not row['reviewed'] for row in catalog['cases'].values()) else
                   {row['riskKind'] for row in catalog['cases'].values()
                    if row['mechanism'] == target['mechanism']})
+    function = target['function'].rsplit('.', 1)[-1]
+    contract = target.get('contract') or (target['function'].rsplit('.', 1)[0] if '.' in target['function'] else None)
+    scopes = {row['id'] for row in facts['scopes']
+              if task_kind == 'DISCOVERY' and target.get('scope') == 'FULL'
+              or row['name'] == function and (not contract or row['contract'] == contract)}
     matches = [fact for fact in facts['facts'] if fact['kind'] in risk_kinds
-               and target['function'] in fact['scope']
+               and fact['scope'] in scopes and (risk_line is None or fact['line'] == risk_line)
                and target['lineStart'] <= fact['line'] <= target['lineEnd']]
-    if target['sampleId'] == 'RE-SCRUBD-001':
-        matches = [fact for fact in matches if fact['line'] == 608 and fact['kind'] == 'CALL']
     return matches[0] if len(matches) == 1 else None
 
 
 def preview(root, target, index, encoder, java_runner=None):
     root = Path(root).resolve()
     current = load_target(root, target.get('sampleId'))
-    required = ('fullSourceHash', 'modelSourceHash', 'assignmentHash', 'formalLedgerHash', 'scope', 'groupId')
-    if any(target.get(key) != current[key] for key in required):
+    required = ('fullSourceHash', 'modelSourceHash', 'assignmentHash', 'formalLedgerHash', 'scope', 'groupId',
+                'function', 'mechanism', 'lineStart', 'lineEnd', 'taskKind', 'riskLine', 'originalSourceHash')
+    if any(target.get(key) != current.get(key) for key in required):
         raise ValueError('目标已变化，请重新选择并校验源码')
+    current = normalize_target(current)
     store = root / SNAPSHOT_ROOT
     pointer = active_snapshot(store, index)
     if (pointer['backend'] != 'milvus' or not re.fullmatch(r's1b_[0-9a-f]{32}', pointer['collection'])):
         raise ValueError('正式知识快照未激活到受控 Milvus 集合')
     snapshot = verify_snapshot(store, pointer['snapshot_id'])
+    if any(row['split'] == 'knowledge'
+           and row['source_hash'] in (current['fullSourceHash'], current['originalSourceHash'])
+           for row in snapshot['manifest']['samples']):
+        raise ValueError('正式查询目标原件或消费源码属于知识划分')
     if snapshot['embedding'] != {'model': MODEL, 'dimension': DIMENSION, 'revision': REVISION}:
         raise ValueError('正式快照与本地固定 BGE 模型不一致')
     catalog = decode((store / 'catalogs' / (pointer['snapshot_id'] + '.json')).read_bytes())
@@ -131,5 +149,7 @@ def preview(root, target, index, encoder, java_runner=None):
     return {'snapshotId': pointer['snapshot_id'], 'collection': pointer['collection'],
             'catalogHash': fingerprint(catalog), 'sampleId': current['sampleId'],
             'sourceHash': current['fullSourceHash'], 'modelSourceHash': current['modelSourceHash'],
+            'originalSourceHash': current['originalSourceHash'], 'taskKind': current['taskKind'],
+            'inputGovernanceReceipt': current['inputGovernanceReceipt'],
             'scope': current['scope'], 'pool': recalled['pool'], 'recall': recalled['recall'],
             'facts': facts, 'd1': d1, 'researchEligible': False}

@@ -102,6 +102,9 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
     directory = root / STORE / uuid.uuid4().hex
     directory.mkdir(parents=True, exist_ok=False)
     plan = {'schemaVersion': '1', 'runId': directory.name, 'sampleId': sample_id, 'mode': mode,
+            'taskKind': target.get('taskKind', 'DISCOVERY'),
+            'originalSourceHash': target.get('originalSourceHash'),
+            'inputGovernanceReceipt': target.get('inputGovernanceReceipt'),
             'scope': target['scope'], 'lineStart': target['lineStart'], 'lineEnd': target['lineEnd'],
             'sourceHash': target['fullSourceHash'], 'modelSourceHash': target['modelSourceHash'],
             'assignmentHash': target['assignmentHash'], 'formalLedgerHash': target['formalLedgerHash'],
@@ -248,37 +251,76 @@ def tool_runner(root, target, mode):
     if mode == 'offline':
         return [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': [], 'durationMs': 0,
                  'version': None, 'reason': '固定离线演练不运行真实静态工具'}]
-    from program_facts import _tokens
-    try:
-        has_import = any(token[0] == 'import' for token in _tokens(target['fullSource'])[0])
-    except ValueError:
-        has_import = True
-    if has_import:
-        return [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': [], 'durationMs': 0,
-                 'version': None, 'reason': '目标依赖原项目导入路径与固定编译器版本；单文件环境无法可靠编译，静态工具未运行'}]
+    from tool_environment import _configuration, resolve_environment
+    from mvp_runtime import _properties_text
+    root = Path(root).resolve()
+    source_text = target['fullSource']
+    source_hash = hashlib.sha256(source_text.encode('utf-8')).hexdigest()
+    def failure(category, environment=None):
+        return [{'engine': 'SLITHER', 'status': 'PROCESS_ERROR', 'issues': [],
+                 'durationMs': None, 'version': None, 'sourceHash': source_hash,
+                 'errorCategory': category, 'environment': environment,
+                 'configHash': environment.get('configHash') if environment else None}]
+    if any(target[key] != source_hash for key in ('sourceHash', 'fullSourceHash') if key in target):
+        return failure('SOURCE_HASH_MISMATCH')
     jar = root / 'audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar'
     config = Path(target['_toolConfigPath']) if '_toolConfigPath' in target else root / 'config/tools.local.properties'
-    if not config.is_file():
+    if '_toolConfiguration' not in target and not config.is_file():
         return [{'engine': 'SLITHER', 'status': 'NOT_CONFIGURED', 'issues': [], 'durationMs': None, 'version': None}]
+    try:
+        configuration = _configuration(target.get('_toolConfiguration', config))
+    except (OSError, ValueError, TypeError):
+        return failure('CONFIG_ERROR')
+    environment = resolve_environment(source_text, configuration)
+    expected = target.get('_toolEnvironment')
+    if expected is not None and (expected.get('configHash') != environment['configHash']
+                                 or expected.get('sourceHash', source_hash) != source_hash):
+        return failure('ENVIRONMENT_CHANGED', environment)
+    if environment['status'] != 'OK':
+        return failure(environment['errorCategory'], environment)
     with tempfile.TemporaryDirectory(prefix='audit-tool-') as temp:
         source = Path(temp) / 'source.sol'
-        source.write_bytes(target['fullSource'].encode('utf-8'))
+        source.write_bytes(source_text.encode('utf-8'))
+        frozen_config = Path(temp) / 'tools.properties'
+        frozen = {**configuration, 'tools.slither.solc': environment['compiler']['path']}
+        frozen_config.touch(mode=0o600)
+        frozen_config.write_text(_properties_text(frozen), encoding='utf-8')
         results = []
-        configs = config.read_text(encoding='utf-8')
         for engine, timeout in (('slither', 45), ('mythril', 75)):
-            if 'tools.' + engine + '.executable=' not in configs:
+            if not configuration.get('tools.' + engine + '.executable'):
                 if engine == 'mythril': continue
                 results.append({'engine': 'SLITHER', 'status': 'NOT_CONFIGURED', 'issues': [],
                                 'durationMs': None, 'version': None})
                 continue
+            if engine == 'mythril':
+                results.append({**failure('ENGINE_COMPILER_UNSUPPORTED', environment)[0],
+                                'engine': 'MYTHRIL', 'compiler': None,
+                                'reason': '当前 Mythril 网关不能可靠消费固定编译器路径，未执行该工具'})
+                continue
             try:
                 completed = subprocess.run(['java', '-jar', str(jar), '--tools', '--source', str(source),
-                                            '--config', str(config), '--engine', engine],
+                                            '--config', str(frozen_config), '--engine', engine],
                                            cwd=root, capture_output=True, timeout=timeout)
                 if completed.returncode not in (0, 1) or not completed.stdout:
                     raise ValueError('工具输出无效')
-                results.append(decode(completed.stdout))
-            except (ValueError, OSError, subprocess.TimeoutExpired):
-                results.append({'engine': engine.upper(), 'status': 'PROCESS_ERROR', 'issues': [],
-                                'durationMs': None, 'version': None})
+                value = decode(completed.stdout)
+                if not isinstance(value, dict) or value.get('sourceHash') != source_hash:
+                    raise ValueError('工具结果未绑定实际源码')
+                actual_compiler = value.get('compiler')
+                current_environment = resolve_environment(source_text, configuration)
+                if (current_environment.get('status') != 'OK'
+                        or current_environment.get('configHash') != environment['configHash']
+                        or current_environment.get('sourceHash') != source_hash
+                        or value.get('status') == 'OK' and (not isinstance(actual_compiler, dict)
+                        or any(actual_compiler.get(key) != environment['compiler'][key]
+                               for key in ('path', 'version', 'sha256')))):
+                    value = {**value, 'status': 'PROCESS_ERROR', 'issues': [], 'errorCategory': 'ENVIRONMENT_CHANGED'}
+                results.append({**value, 'executionConfigHash': value.get('configHash'),
+                                'environment': environment, 'configHash': environment['configHash']})
+            except subprocess.TimeoutExpired:
+                results.append({**failure('TOOL_TIMEOUT', environment)[0], 'engine': engine.upper()})
+            except OSError:
+                results.append({**failure('TOOL_START_FAILED', environment)[0], 'engine': engine.upper()})
+            except ValueError:
+                results.append({**failure('TOOL_OUTPUT_INVALID', environment)[0], 'engine': engine.upper()})
         return results

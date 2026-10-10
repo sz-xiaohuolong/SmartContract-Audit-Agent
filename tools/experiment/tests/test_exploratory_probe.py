@@ -1,9 +1,11 @@
 """探索性三策略必须共享候选池与暂定成对补全。"""
 import tempfile
 import unittest
+import hashlib
 from pathlib import Path
 
-from exploratory_probe import build_pool, run_probe, replay_probe
+from exploratory_probe import build_pool, compare_target, run_probe, replay_probe
+from evaluation_input import clean_evaluation_source
 from exploratory_corpus import load_corpus
 from formal_recall import select_strategy
 from storage import atomic_json, fingerprint
@@ -78,6 +80,62 @@ class ExploratoryProbeTest(unittest.TestCase):
                 'd1': {'evaluations': {'reference': {'applicability': 'SUPPORTED'}}}}
         self.assertEqual([], select_strategy(view, 'FIELD_FILTER')['d1']['selected'])
         self.assertEqual(1, len(select_strategy(view, 'DENSE')['d1']['selected']))
+
+    def test_默认发现清理查询且评分行变化不改变风险选择(self):
+        source = '// 答案：第3行重入漏洞\ncontract C {\nfunction take() external { msg.sender.call(""); }\n}'
+        cleaned = clean_evaluation_source(source)
+        queries, requests = [], []
+        def encoder(values):
+            queries.extend(values)
+            return [[1.0, 0.0]]
+        def java(source, request):
+            requests.append((source, request))
+            return {'results': [{'strategy': 'D1', 'sourceHash': cleaned['sourceHash'],
+                'snapshotId': self.corpus['receipt']['identity'], 'selected': [], 'context': '',
+                'evaluations': {}, 'gaps': []}]}
+        target = {'sampleId': 'target', 'source': source,
+            'sourceHash': hashlib.sha256(source.encode()).hexdigest(),
+            'mechanism': 'REENTRANCY', 'vulnerableLines': [3]}
+        first = compare_target(self.root, self.corpus, target, SearchIndex(), encoder, java, 1)
+        second = compare_target(self.root, self.corpus, dict(target, vulnerableLines=[1]),
+            SearchIndex(), encoder, java, 1)
+        self.assertEqual('COMPLETED', first['status'])
+        self.assertEqual(first, second)
+        self.assertEqual([cleaned['source'], cleaned['source']], queries)
+        self.assertEqual(requests[0], requests[1])
+        self.assertEqual(cleaned['source'], requests[0][0])
+
+    def test_默认发现多风险保持未知_显式候选行独立于评分行(self):
+        source = 'contract C {\nfunction take() external {\nmsg.sender.call("");\nmsg.sender.call("");\n}\n}'
+        target = {'sampleId': 'two', 'source': source,
+            'sourceHash': hashlib.sha256(source.encode()).hexdigest(),
+            'mechanism': 'REENTRANCY', 'vulnerableLines': [3]}
+        def java(source, request):
+            return {'results': [{'strategy': 'D1', 'sourceHash': target['sourceHash'],
+                'snapshotId': self.corpus['receipt']['identity'], 'selected': [], 'context': '',
+                'evaluations': {}, 'gaps': []}]}
+        unknown = compare_target(self.root, self.corpus, target, SearchIndex(), lambda v: [[1.0, 0.0]], java, 1)
+        self.assertEqual('UNKNOWN', unknown['status'])
+        claim = dict(target, taskKind='CLAIM_VALIDATION', riskLine=4, claimOrigin='USER_RISK_LINE')
+        answer = compare_target(self.root, self.corpus, claim, SearchIndex(), lambda v: [[1.0, 0.0]], java, 1)
+        self.assertEqual('COMPLETED', answer['status'])
+        self.assertEqual('CLAIM_VALIDATION', answer['taskKind'])
+
+    def test_计划绑定清理摘要与原件_不传评分行给执行器(self):
+        source = '// vulnerable line 2\ncontract C {}'
+        cleaned = clean_evaluation_source(source)
+        target = {'sampleId': 'A', 'source': source,
+            'sourceHash': hashlib.sha256(source.encode()).hexdigest(), 'vulnerableLines': [2]}
+        consumed = []
+        def runner(row):
+            consumed.append(row)
+            return {'sampleId': 'A', 'status': 'UNKNOWN'}
+        batch = run_probe(self.root / 'reports', [target], self.corpus['receipt'], runner)
+        plan = replay_probe(self.root / 'reports', batch)['plan']
+        self.assertEqual(cleaned['sourceHash'], plan['targetHashes']['A'])
+        self.assertEqual(cleaned['originalSourceHash'], plan['targetMetadata']['A']['originalSourceHash'])
+        self.assertNotIn('vulnerableLines', consumed[0])
+        self.assertEqual(cleaned['source'], consumed[0]['source'])
 
 
 if __name__ == '__main__':

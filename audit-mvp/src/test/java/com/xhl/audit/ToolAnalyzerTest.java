@@ -4,6 +4,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ToolAnalyzerTest {
+    @Test void legacyAnalyzeExecutesConfiguredLocalTool(@org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) throws Exception {
+        var script = directory.resolve("tool.sh");
+        java.nio.file.Files.writeString(script, "#!/bin/sh\necho '{\"success\":true,\"results\":{\"detectors\":[]}}'\n");
+        assertTrue(script.toFile().setExecutable(true));
+        var result = new ToolAnalyzer(new ProcessRunner()).analyze(ToolAnalyzer.Engine.SLITHER, script.toString(),
+            "contract C {}", java.time.Duration.ofSeconds(2));
+        assertEquals(ToolAnalyzer.Status.OK, result.status());
+    }
     private ProcessRunner.Result output(String text) {
         return new ProcessRunner.Result(ProcessRunner.Status.OK,0,text,"",false,true,1);
     }

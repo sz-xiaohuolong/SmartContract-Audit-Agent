@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 import mvp_runtime
+from evaluation_input import clean_evaluation_source
 
 
 class FakeIndex:
@@ -31,6 +32,36 @@ class FakeIndex:
 
 
 class MvpRuntimeTest(unittest.TestCase):
+    def test_旧入口模型和检索只消费清理文本并绑定独立摘要(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'sources').mkdir()
+            source = '// 答案：访问控制漏洞\ncontract C {}'
+            governed = clean_evaluation_source(source)
+            (root / 'sources/AC-ASE-006.sol').write_text(source, encoding='utf-8')
+            (root / 'intake.json').write_text(json.dumps({'cases': [{'id': 'AC-ASE-006',
+                'sourceSha256': governed['originalSourceHash']}]}))
+            config = root / 'config.properties'
+            config.write_text('fixture=value\n')
+            def executor(command):
+                consumed = Path(command[command.index('--source') + 1]).read_text()
+                self.assertEqual(governed['source'], consumed)
+                return SimpleNamespace(returncode=0, stdout=json.dumps({'status': 'COMPLETED',
+                    'sourceHash': governed['sourceHash'], 'inputTokens': None, 'outputTokens': None}).encode())
+            with patch.object(mvp_runtime, 'INTAKE', mvp_runtime.ROOT / 'intake.json'), \
+                    patch.object(mvp_runtime, 'SOURCE_DIR', 'sources'), \
+                    patch.object(mvp_runtime, '_config_values', return_value={
+                        'providers.ark.model': 'deepseek-v4-flash',
+                        'providers.ark.base-url': 'https://ark.cn-beijing.volces.com/api/plan/v3'}), \
+                    patch.object(mvp_runtime, 'active', return_value=({'snapshotId': 's', 'collection': 'c'}, {}, None)), \
+                    patch.object(mvp_runtime, 'select_context', return_value=('案例', ['d'])) as selection:
+                report = mvp_runtime.run_once(root=root, config=config, jar=root / 'fake.jar', executor=executor)
+            self.assertEqual(governed['source'], selection.call_args.args[0])
+            self.assertEqual('COMPLETED', report['status'])
+            self.assertEqual(governed['sourceHash'], report['plan']['sourceHash'])
+            self.assertEqual(governed['originalSourceHash'], report['plan']['originalSourceHash'])
+            self.assertEqual('DISCOVERY', report['plan']['taskKind'])
+
     def test_failed_reply_keeps_local_raw_diagnostic_without_retry(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)

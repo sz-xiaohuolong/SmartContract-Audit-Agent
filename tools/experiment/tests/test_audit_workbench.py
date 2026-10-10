@@ -82,6 +82,15 @@ class WorkbenchTest(unittest.TestCase):
         preview = self.workbench.preview(choice)
         return self.workbench.execute(self.workbench.prepare({**choice, 'planHash': preview['planHash']}))
 
+    def test_目标摘要列表不携带源码原件与评分答案(self):
+        target = {**pasted_target(SOURCE, 'REENTRANCY'), 'originalSource': '// answer\n' + SOURCE,
+                  'groundTruth': {'hasVulnerability': True}, 'vulnerableLines': [4]}
+        self.workbench.target_loader = lambda: [target]
+        listed = self.workbench.targets()[0]
+        self.assertNotIn('originalSource', listed)
+        self.assertNotIn('groundTruth', listed)
+        self.assertNotIn('vulnerableLines', listed)
+
     def _batch_result(self, target, model):
         runtime = BenchmarkRuntime.__new__(BenchmarkRuntime)
         runtime.root = self.root

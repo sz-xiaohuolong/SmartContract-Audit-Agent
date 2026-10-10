@@ -18,7 +18,11 @@
 
 ## 构建边界与运行入口
 
-已验工程基线为 `4dfc7e1`。当前 R2 工作区正在补工具环境、清理输入与派生重放；其验收状态见[R2 矩阵](releases/R2-20261010/VERIFICATION.md)，目标方案见[R2 设计](releases/R2-20261010/PROPOSED_DESIGN.md)。
+S9 已验工程基线为 `4dfc7e1`；R2 的 S10 局部工程验收已通过，当前状态见[R2 矩阵](releases/R2-20261010/VERIFICATION.md)，目标方案见[R2 设计](releases/R2-20261010/PROPOSED_DESIGN.md)。
+
+S10 增加 `evaluation_input.py`：原件和清理文本分别绑定摘要，注释以空白遮蔽并保留行列，字符串原样保存。发现任务不能用评分真值选函数、风险或查询；已有候选核验显式标为 `CLAIM_VALIDATION`。模型与查询消费清理输入，历史模型保持原污染限制。
+
+`tool_environment.py` 按全部有效 pragma 交集选择固定 solc，并绑定工具、依赖、参数和实际二进制摘要。Java 工具网关保存编译探测与运行的版本、耗时、退出码及脱敏诊断；Python 在执行前后重新核验完整环境。`tool_replay.py` 对保存候选执行零模型派生重放，源码/环境/代码身份控制缓存，封口时核对原批次全部文件和当前实现/JAR，不覆盖原输出。53 次真实运行中 51 成功、2 因 Slither 旧 tuple IR 兼容断言失败；这些故障保留未知。真实编译事实和 D2 路径提供器仍属于 S11 待接入部分。
 
 默认构建为 `mvn clean verify`；Python 离线验证为 `PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`。CLI 为 `java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help`。本机页面由 `tools/experiment/local_ui.py` 提供，启动与配置见[工具说明](../../tools/experiment/README.md)。
 

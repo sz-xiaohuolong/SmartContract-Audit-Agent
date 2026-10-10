@@ -3,6 +3,7 @@ import hashlib
 from pathlib import Path
 
 from exploratory_targets import load_targets
+from evaluation_input import clean_evaluation_source
 from program_facts import _tokens as solidity_tokens
 from s3 import _tokens as clone_tokens
 
@@ -39,23 +40,22 @@ def _similarity(source, rows):
 
 
 def _record(sample_id, source, mechanism, function, span, truth, label_source, project, document_hash=None):
-    lines = source.splitlines()
-    start, end = span if span is not None else (1, len(lines))
-    excerpt = '\n'.join(lines[start - 1:end]) if span is not None else source
-    full = source if len(source.encode()) <= 6000 else excerpt
-    scope = 'FULL' if full == source else 'FUNCTION'
-    if span is not None and not truth:
-        full, scope = excerpt, 'FUNCTION'
-    line_start, line_end = (start, end) if scope == 'FUNCTION' else (1, len(lines))
-    return {'sampleId': sample_id, 'split': 'validation', 'source': source,
-            'fullSource': source, 'modelSource': full, 'scope': scope,
-            'sourceHash': hashlib.sha256(source.encode()).hexdigest(),
-            'fullSourceHash': hashlib.sha256(source.encode()).hexdigest(),
-            'modelSourceHash': hashlib.sha256(full.encode()).hexdigest(),
+    governed = clean_evaluation_source(source)
+    full = governed['fullSource']
+    within_budget = len(full.encode('utf-8')) <= 6000
+    governed['inputGovernanceReceipt'].update(taskKind='DISCOVERY', modelSourceHash=governed['fullSourceHash'])
+    return {**governed, 'sampleId': sample_id, 'split': 'validation',
+            'sourceKind': 'BENCHMARK',
+            'modelSource': full, 'scope': 'FULL', 'taskKind': 'DISCOVERY',
+            'modelSourceHash': governed['fullSourceHash'],
             'documentHash': document_hash, 'projectGroup': project,
             'mechanism': mechanism, 'function': function or '',
-            'lineStart': line_start, 'lineEnd': line_end,
-            'runnable': bool(function and len(full.encode()) <= 6000),
+            'lineStart': 1, 'lineEnd': len(full.splitlines()),
+            'runnable': bool(function and within_budget),
+            'inputStatus': 'READY' if function and within_budget else 'EXPLICIT_SCOPE_REQUIRED' if not within_budget else 'NO_FUNCTION',
+            'inputReason': (None if function and within_budget else
+                '清理后的完整源码超过 6000 字节；请显式选择函数范围，发现路径不使用评分真值自动缩小范围'
+                if not within_budget else '未找到可定位的 Solidity 函数'),
             'groundTruth': {'hasVulnerability': truth,
                             'vulnerabilityType': mechanism if truth else None,
                             'labelSource': label_source}, 'researchEligible': False}
@@ -68,8 +68,7 @@ def load_benchmark_targets(root, knowledge_rows):
     for row in positives:
         source = row['source']
         scopes = _scopes(source)
-        matches = [item for item in scopes if any(item[1] <= line <= item[2] for line in row['vulnerableLines'])]
-        selected = min(matches, key=lambda item: item[2] - item[1]) if matches else None
+        selected = scopes[0] if scopes else None
         item = _record(row['sampleId'], source, row['mechanism'], selected[0] if selected else None,
                        selected[1:] if selected else None, True, 'SMARTBUGS_CURATED_HEADER',
                        row['projectHint'], row['documentHash'])
@@ -85,7 +84,7 @@ def load_benchmark_targets(root, knowledge_rows):
             continue
         source = path.read_text(encoding='utf-8')
         similarity = _similarity(source, knowledge_rows)
-        if similarity >= .85 or any(row['sourceHash'] == hashlib.sha256(source.encode()).hexdigest() for row in targets):
+        if similarity >= .85 or any(row['originalSourceHash'] == hashlib.sha256(source.encode()).hexdigest() for row in targets):
             continue
         spans = [item[1:] for item in _scopes(source) if item[0] == function]
         selected = spans[-1] if spans else None

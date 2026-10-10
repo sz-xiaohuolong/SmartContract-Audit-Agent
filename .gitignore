@@ -2,6 +2,8 @@ application-local.yml
 application-coding-plan.yml
 /config/providers.local.properties
 /config/tools.local.properties
+/.local/r2/
+/.evidence/R2-20261010/
 /.local/experiment-ui/
 /.local/first-batch/
 /.local/d1-kb-candidates/

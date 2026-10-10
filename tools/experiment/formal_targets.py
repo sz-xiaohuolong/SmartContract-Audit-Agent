@@ -3,6 +3,7 @@ import hashlib
 from pathlib import Path
 
 from first_batch import prepare
+from evaluation_input import clean_evaluation_source
 from program_facts import _tokens
 from s3 import audit_lineage
 from storage import decode, fingerprint
@@ -65,7 +66,9 @@ def _records(root):
     runnable_rows = targets + ([row for row in formal['samples'] if row['split'] == 'validation']
                                if formal_path == FORMAL_V2_LEDGER else [])
     for row in sorted(runnable_rows, key=lambda value: value['id']):
-        source = (root / row['path']).read_bytes().decode('utf-8')
+        original = (root / row['path']).read_bytes().decode('utf-8')
+        governed = clean_evaluation_source(original)
+        source = governed['fullSource']
         name = row.get('evaluationFunction') if row['split'] == 'validation' else FUNCTION_SCOPE.get(row['id'])
         if row['split'] == 'validation' and name is None:
             name = FUNCTION_SCOPE.get(row['id'])
@@ -78,16 +81,19 @@ def _records(root):
             start, end, model_source = 1, len(source.splitlines()), source
             scope = 'FULL'
         size = len(model_source.encode('utf-8'))
-        result.append({'sampleId': row['id'], 'split': row['split'], 'scope': scope,
+        model_hash = hashlib.sha256(model_source.encode('utf-8')).hexdigest()
+        governed['inputGovernanceReceipt'].update(taskKind='CLAIM_VALIDATION', scope=scope,
+            lineStart=start, lineEnd=end, modelSourceHash=model_hash)
+        result.append({**governed, 'sampleId': row['id'], 'split': row['split'], 'scope': scope,
+                       'sourceKind': 'FORMAL',
+                       'taskKind': 'CLAIM_VALIDATION', 'claimOrigin': 'REGISTERED_FUNCTION_SCOPE',
                        'function': name or cases[row['id']]['function'],
                        'mechanism': row['vulnerabilityType'] if row['split'] == 'validation' else
                        ('REENTRANCY' if cases[row['id']]['direction'] == '重入' else 'ACCESS_CONTROL'),
                        'runnable': size <= MAX_MODEL_SOURCE_BYTES,
                        'reason': None if size <= MAX_MODEL_SOURCE_BYTES else '超过首版单次提示上限',
                        'lineStart': start, 'lineEnd': end,
-                       'fullSource': source, 'modelSource': model_source,
-                       'fullSourceHash': row['sourceHash'],
-                       'modelSourceHash': hashlib.sha256(model_source.encode('utf-8')).hexdigest(),
+                       'modelSource': model_source, 'modelSourceHash': model_hash,
                        'assignmentHash': fingerprint(assignment),
                        'formalLedgerHash': fingerprint(formal), 'groupId': audit['groupIds'][row['id']],
                        'projectId': row['projectId'], 'eventId': row['eventId'],
@@ -96,7 +102,7 @@ def _records(root):
 
 
 def list_targets(root):
-    return [{key: value for key, value in row.items() if key not in ('fullSource', 'modelSource')}
+    return [{key: value for key, value in row.items() if key not in ('source', 'fullSource', 'modelSource', 'originalSource')}
             for row in _records(root)]
 
 

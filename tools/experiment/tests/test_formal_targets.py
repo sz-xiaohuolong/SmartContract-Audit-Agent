@@ -73,6 +73,25 @@ class FormalTargetsTest(unittest.TestCase):
         self.assertEqual(selected['modelSourceHash'], hashlib.sha256(selected['modelSource'].encode()).hexdigest())
         self.assertFalse(selected['researchEligible'])
 
+    def test_历史登记范围明确为候选核验且列表不返回原件正文(self):
+        source = '// <yes> REENTRANCY https://example.test/answer\r\n' + self.sources['RE-SCRUBD-001']
+        path = self.root / '.local/first-batch/sources/RE-SCRUBD-001.sol'
+        path.write_bytes(source.encode())
+        self.cases[2]['sourceSha256'] = hashlib.sha256(source.encode()).hexdigest()
+        atomic_json(self.intake_path, {'schemaVersion': '1', 'cases': self.cases})
+        selected = load_target(self.root, 'RE-SCRUBD-001')
+        self.assertNotIn('<yes>', selected['fullSource'])
+        self.assertEqual(source, selected['originalSource'])
+        self.assertEqual(self.cases[2]['sourceSha256'], selected['originalSourceHash'])
+        self.assertEqual('CLAIM_VALIDATION', selected['taskKind'])
+        self.assertEqual('REGISTERED_FUNCTION_SCOPE', selected['claimOrigin'])
+        self.assertEqual((607, 610), (selected['lineStart'], selected['lineEnd']))
+        self.assertEqual(hashlib.sha256(selected['fullSource'].encode()).hexdigest(), selected['fullSourceHash'])
+        self.assertEqual(selected['modelSourceHash'], selected['inputGovernanceReceipt']['modelSourceHash'])
+        self.assertEqual(selected['originalSourceHash'], selected['inputGovernanceReceipt']['originalSourceHash'])
+        summaries = list_targets(self.root)
+        self.assertTrue(all('originalSource' not in row for row in summaries))
+
     def test_source_hash_and_group_mismatch_fail_closed(self):
         path = self.root / '.local/first-batch/sources/AC-ASE-006.sol'
         path.write_text('篡改')

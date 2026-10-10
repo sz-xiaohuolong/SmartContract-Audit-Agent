@@ -223,8 +223,8 @@
       const target = selectedTarget();
       if (['REENTRANCY', 'ACCESS_CONTROL'].includes(target?.mechanism)) byId('mechanism-select').value = target.mechanism;
       byId('function-input').value = target?.function || '';
-      byId('risk-line').value = target?.riskLine || list(target?.vulnerableLines)[0] || '';
-      byId('sample-note').textContent = target ? `${originLabel(originKey(target))} · ${label(target.mechanism)} · ${target.scope === 'FUNCTION' ? '函数范围' : '完整源码'}。${target.runnable ? '可运行。' : '暂不可运行。'} ${asText(target.reason, '')}` : '当前没有登记目标，可切换至粘贴源码。';
+      byId('risk-line').value = target?.riskLine || '';
+      byId('sample-note').textContent = target ? `${originLabel(originKey(target))} · ${label(target.mechanism)} · ${target.scope === 'FUNCTION' ? '函数范围' : '完整源码'}。${target.runnable ? '可运行。' : '暂不可运行。'} ${asText(target.inputReason || target.reason, '')}` : '当前没有登记目标，可切换至粘贴源码。';
     }
     updateActions();
   }
@@ -474,7 +474,7 @@
     if (modelStart == null) state.modelLines.clear();
     byId('source-line-note').textContent = modelStart != null ? '两种视图均使用原始源码行号' : '模型片段使用局部行号；引用定位完整源码';
     byId('source-scope').textContent = `${target.scope === 'FUNCTION' ? '模型使用函数范围' : '模型使用完整范围'} · 原始行 ${asText(target.lineStart)}–${asText(target.lineEnd)} · ${asText(target.function, '函数待确认')}`;
-    mark({lines: target.vulnerableLines, line: target.riskLine}, 'risk');
+    if (target.taskKind === 'CLAIM_VALIDATION') mark({line: target.riskLine}, 'risk');
     receipt(byId('source-receipt'), [
       ['目标编号', target.sampleId], ['审计方向', label(target.mechanism)], ['模型范围', target.scope],
       ['完整源码字节', bytes(source)], ['模型片段字节', bytes(target.modelSource)],

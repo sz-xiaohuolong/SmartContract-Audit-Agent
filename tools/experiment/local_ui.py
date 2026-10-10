@@ -277,7 +277,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             elif parsed.path == '/api/agent/auto-benchmark/targets' and not parsed.query:
                 try:
                     rows = [{key: value for key, value in row.items()
-                             if key not in ('source', 'fullSource', 'modelSource')} for row in auto_targets()]
+                             if key not in ('source', 'fullSource', 'modelSource', 'originalSource')} for row in auto_targets()]
                     self._send(200, {'targets': rows})
                 except (OSError, ValueError, KeyError, TypeError):
                     self._send(503, {'error': '自动知识验证目标暂不可用'})

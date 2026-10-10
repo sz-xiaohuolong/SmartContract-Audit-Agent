@@ -44,6 +44,14 @@ public final class ToolAnalyzer {
     }
 
     public Result analyze(Engine engine, String executable, String source, Duration timeout) throws java.io.IOException {
+        return analyze(engine, executable, source, timeout, null);
+    }
+
+    public Result analyze(Engine engine, String executable, String source, Duration timeout, String compiler) throws java.io.IOException {
+        return analyze(engine, executable, source, timeout, compiler, List.of());
+    }
+
+    public Result analyze(Engine engine, String executable, String source, Duration timeout, String compiler, List<String> compilationArguments) throws java.io.IOException {
         if (source == null || source.isBlank()) throw new IllegalArgumentException("源码不能为空");
         // 将相对可执行文件路径在进入临时目录前固定；命令名仍由 PATH 解析。
         String command = executable.contains("/") ? Path.of(executable).toAbsolutePath().toString() : executable;
@@ -51,7 +59,8 @@ public final class ToolAnalyzer {
         try {
             Path contract = directory.resolve("Contract.sol");
             Files.writeString(contract, source);
-            List<String> args = command(engine, command, contract);
+            var args = new java.util.ArrayList<>(command(engine, command, contract, compiler));
+            if (engine == Engine.SLITHER) args.addAll(compilationArguments);
             return parse(engine, runner.run(args, directory, timeout, 2 * 1024 * 1024));
         } finally {
             try (var paths = Files.walk(directory)) {
@@ -61,9 +70,20 @@ public final class ToolAnalyzer {
     }
 
     static List<String> command(Engine engine, String executable, Path contract) {
-        return engine == Engine.SLITHER
+        return command(engine, executable, contract, null);
+    }
+
+    static List<String> command(Engine engine, String executable, Path contract, String compiler) {
+        List<String> arguments = engine == Engine.SLITHER
             ? List.of(executable, contract.toString(), "--json", "-", "--fail-none")
             : List.of(executable, "analyze", contract.toString(), "-o", "json");
+        if (engine == Engine.SLITHER && compiler != null) {
+            var fixed = new java.util.ArrayList<>(arguments);
+            fixed.add("--solc");
+            fixed.add(compiler);
+            return List.copyOf(fixed);
+        }
+        return arguments;
     }
 
     private Result failure(Engine engine, Status status, ProcessRunner.Result process) {

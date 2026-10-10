@@ -1,6 +1,7 @@
 """绑定本机审计输入与受限 Solidity 语法树，不替代编译器和控制流证明。"""
 import hashlib
 
+from evaluation_input import clean_evaluation_source
 from program_facts import _tokens, extract_facts
 from storage import fingerprint
 
@@ -52,6 +53,8 @@ def pasted_target(source, mechanism, function=None, risk_line=None):
     if (not isinstance(source, str) or not source.strip() or '\x00' in source
             or len(source.encode('utf-8')) > MAX_SOURCE_BYTES or mechanism not in MECHANISMS):
         raise ValueError('源码为空、超过 128 KiB，或审计方向无效')
+    governed = clean_evaluation_source(source)
+    source = governed['fullSource']
     facts = extract_facts(source)
     tree = syntax_tree(source, facts)
     functions = [(contract['name'], row) for contract in tree['contracts'] for row in contract['functions']]
@@ -76,15 +79,22 @@ def pasted_target(source, mechanism, function=None, risk_line=None):
     if len(model_source.encode('utf-8')) > MAX_MODEL_BYTES:
         raise ValueError('模型源码超过 16 KiB，请选择更小的目标函数')
     source_hash = hashlib.sha256(source.encode('utf-8')).hexdigest()
+    model_hash = hashlib.sha256(model_source.encode('utf-8')).hexdigest()
+    task_kind = 'CLAIM_VALIDATION' if risk_line is not None else 'DISCOVERY'
+    scope = 'FULL' if full else 'FUNCTION'
+    governed['inputGovernanceReceipt'].update(taskKind=task_kind, scope=scope,
+        lineStart=start, lineEnd=end, modelSourceHash=model_hash)
     identity = fingerprint({'sourceHash': source_hash, 'mechanism': mechanism,
                             'function': selected['name'], 'contract': contract,
                             'lineStart': start, 'lineEnd': end, 'riskLine': risk_line})
-    return {'sampleId': 'pasted-' + identity[:20], 'source': source, 'fullSource': source,
+    return {**governed, 'sampleId': 'pasted-' + identity[:20],
             'modelSource': model_source, 'fullSourceHash': source_hash, 'sourceHash': source_hash,
-            'modelSourceHash': hashlib.sha256(model_source.encode('utf-8')).hexdigest(),
-            'scope': 'FULL' if full else 'FUNCTION', 'lineStart': start, 'lineEnd': end,
+            'modelSourceHash': model_hash,
+            'scope': scope, 'lineStart': start, 'lineEnd': end,
             'mechanism': mechanism, 'function': selected['name'], 'contract': contract,
-            'vulnerableLines': [risk_line] if risk_line is not None else [], 'runnable': True,
+            'taskKind': task_kind, 'riskLine': risk_line,
+            'claimOrigin': 'USER_RISK_LINE' if risk_line is not None else None,
+            'vulnerableLines': [], 'runnable': True,
             'inputKind': 'PASTED', 'researchEligible': False, 'syntax': tree}
 
 
@@ -131,9 +141,37 @@ def normalize_target(target):
     actual = hashlib.sha256(source.encode('utf-8')).hexdigest()
     if actual != row['fullSourceHash']:
         raise ValueError('预置源码摘要不一致')
-    row.update(source=source, sourceHash=actual, syntax=syntax_tree(source), researchEligible=False)
+    model = row.get('modelSource')
+    if (not isinstance(model, str)
+            or hashlib.sha256(model.encode('utf-8')).hexdigest() != row.get('modelSourceHash')
+            or row.get('sourceHash', actual) != actual):
+        raise ValueError('预置模型输入或消费源码摘要不一致')
+    start, end = row.get('lineStart'), row.get('lineEnd')
+    scope = row.get('scope')
+    if (scope not in ('FULL', 'FUNCTION') or type(start) is not int or type(end) is not int
+            or not 1 <= start <= end <= len(source.splitlines())):
+        raise ValueError('预置模型范围无效')
+    expected = source if scope == 'FULL' else '\n'.join(source.splitlines()[start - 1:end])
+    if model != expected or scope == 'FULL' and (start != 1 or end != len(source.splitlines())):
+        raise ValueError('预置模型输入与声明范围不一致')
+    original = row.get('originalSource', source)
+    governed = clean_evaluation_source(original)
+    if ('originalSource' in row or 'originalSourceHash' in row) and (
+            row.get('originalSourceHash') != governed['originalSourceHash']
+            or governed['fullSource'] != source):
+        raise ValueError('预置原件摘要或清理全文关联不一致')
+    task_kind = row.get('taskKind', 'DISCOVERY')
+    if task_kind not in ('DISCOVERY', 'CLAIM_VALIDATION'):
+        raise ValueError('预置任务类型无效')
+    clean = governed['fullSource']
+    clean_model = clean if scope == 'FULL' else '\n'.join(clean.splitlines()[start - 1:end])
+    model_hash = hashlib.sha256(clean_model.encode('utf-8')).hexdigest()
+    governed['inputGovernanceReceipt'].update(taskKind=task_kind, scope=scope,
+        lineStart=start, lineEnd=end, modelSourceHash=model_hash)
+    row.update(governed, modelSource=clean_model, modelSourceHash=model_hash,
+               syntax=syntax_tree(clean), taskKind=task_kind, researchEligible=False)
     row.setdefault('vulnerableLines', [])
     row.setdefault('inputKind', 'PRESET')
     if not row.get('runnable'):
-        raise ValueError('预置目标不满足单次输入范围')
+        raise ValueError(row.get('inputReason') or row.get('reason') or '预置目标不满足单次输入范围')
     return row

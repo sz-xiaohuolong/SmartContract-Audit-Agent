@@ -84,7 +84,7 @@ class AuditWorkbench:
 
     def targets(self):
         return [{key: value for key, value in row.items()
-                 if key not in ('source', 'fullSource', 'modelSource', 'groundTruth')}
+                 if key not in ('source', 'fullSource', 'modelSource', 'originalSource', 'groundTruth', 'vulnerableLines')}
                 for row in self.target_loader()]
 
     def _provider(self, mode):
@@ -175,6 +175,9 @@ class AuditWorkbench:
             raise ValueError('模型源码与上下文超过单次输入上限')
         duration = round((monotonic() - started) * 1000)
         plan = {'schemaVersion': '2', 'pipelineVersion': 's9-v1', 'sampleId': target['sampleId'],
+                'taskKind': target.get('taskKind', 'DISCOVERY'),
+                'originalSourceHash': target.get('originalSourceHash'),
+                'inputGovernanceReceipt': target.get('inputGovernanceReceipt'),
                 'previewId': preview_id,
                 'mode': mode, 'strategy': strategy, 'embeddingProfile': profile,
                 'sourceHash': target['fullSourceHash'], 'modelSourceHash': target['modelSourceHash'],

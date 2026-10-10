@@ -8,6 +8,7 @@ from pathlib import Path
 from d1_embed import DIMENSION, MODEL_MANIFEST, load_local_encoder
 from exploratory_corpus import candidate_metadata, load_corpus, verify_remote
 from exploratory_targets import load_targets
+from evaluation_input import clean_evaluation_source
 from formal_recall import CONTEXT_BYTES, java_retrieval, select_strategy
 from milvus_rest import MilvusRestIndex
 from program_facts import extract_facts
@@ -66,18 +67,38 @@ def build_pool(corpus, target, query_vector, index, limit=80):
             'sourceHash': target['sourceHash'], 'candidates': candidates}
 
 
+def _govern_target(target):
+    """探索入口保持原件证据；默认发现不传评分位置给消费链。"""
+    if hashlib.sha256(target['source'].encode()).hexdigest() != target['sourceHash']:
+        raise ValueError('探索目标源码摘要不符')
+    governed = clean_evaluation_source(target.get('originalSource', target['source']))
+    if 'originalSource' in target and (target.get('originalSourceHash') != governed['originalSourceHash']
+            or target['source'] != governed['source']):
+        raise ValueError('探索目标原件与清理文本不一致')
+    kind = target.get('taskKind', 'DISCOVERY')
+    if kind not in ('DISCOVERY', 'CLAIM_VALIDATION'):
+        raise ValueError('探索任务类型无效')
+    governed['inputGovernanceReceipt'].update(taskKind=kind, scope='FULL')
+    return {**{key: value for key, value in target.items() if key != 'vulnerableLines'},
+            **governed, 'taskKind': kind}
+
+
 def _risk_fact(facts, target):
     kinds = {'CALL'} if target['mechanism'] == 'REENTRANCY' else {'WRITE', 'CALL'}
+    risk_line = target.get('riskLine') if target['taskKind'] == 'CLAIM_VALIDATION' else None
+    if target['taskKind'] == 'CLAIM_VALIDATION' and (type(risk_line) is not int or risk_line < 1):
+        return None
     exact = [fact for fact in facts['facts'] if fact['kind'] in kinds
-             and fact['line'] in target['vulnerableLines']]
+             and (risk_line is None or fact['line'] == risk_line)]
     if len(exact) == 1:
         return exact[0]
     return None
 
 
 def compare_target(root, corpus, target, index, encoder, java_runner=None, limit=80):
-    if hashlib.sha256(target['source'].encode()).hexdigest() != target['sourceHash']:
-        raise ValueError('探索目标源码摘要不符')
+    target = _govern_target(target)
+    provenance = {key: target.get(key) for key in
+        ('taskKind', 'claimOrigin', 'originalSourceHash', 'inputGovernanceReceipt')}
     encoded = encoder([target['source']])
     if len(encoded) != 1:
         raise ValueError('查询模型未返回唯一向量')
@@ -85,7 +106,7 @@ def compare_target(root, corpus, target, index, encoder, java_runner=None, limit
     facts = extract_facts(target['source'])
     risk = _risk_fact(facts, target) if facts['status'] != 'FAILED' else None
     if risk is None:
-        return {'sampleId': target['sampleId'], 'status': 'UNKNOWN', 'reason': 'NO_UNIQUE_RISK_FACT',
+        return {**provenance, 'sampleId': target['sampleId'], 'status': 'UNKNOWN', 'reason': 'NO_UNIQUE_RISK_FACT',
                 'poolHash': fingerprint(pool), 'poolSize': len(pool['candidates']), 'riskStatus': 'UNKNOWN',
                 'selected': {'DENSE': [], 'FIELD_FILTER': [], 'D1': []}}
     resource = risk['resource'] if risk['kind'] == 'WRITE' else 'owner'
@@ -104,7 +125,7 @@ def compare_target(root, corpus, target, index, encoder, java_runner=None, limit
     for strategy in ('DENSE', 'FIELD_FILTER', 'D1'):
         choice = select_strategy(view, strategy)['d1']
         selected[strategy] = [item['candidate']['chunkId'] for item in choice['selected']]
-    return {'sampleId': target['sampleId'], 'status': 'COMPLETED', 'poolHash': fingerprint(pool),
+    return {**provenance, 'sampleId': target['sampleId'], 'status': 'COMPLETED', 'poolHash': fingerprint(pool),
             'poolSize': len(pool['candidates']), 'riskStatus': facts['status'],
             'selected': selected, 'd1Gaps': d1.get('gaps', []),
             'candidateRoles': {item['chunkId']: item['role'] for item in pool['candidates']}}
@@ -122,6 +143,7 @@ def run_probe(store, targets, receipt, runner, batch_id=None, parameters=None):
         raise ValueError('探索目标缺失或重复')
     if receipt.get('candidateOnly') is not True or receipt.get('formalD1Enabled') is not False:
         raise ValueError('只允许待审候选库')
+    targets = [_govern_target(row) if 'source' in row else dict(row) for row in targets]
     parameters = parameters or {'candidateLimit': 80, 'textExcerptCharacters': 700}
     batch_id = batch_id or fingerprint({'targets': targets, 'receipt': receipt['identity'],
                                         'parameters': parameters})[:32]
@@ -131,7 +153,8 @@ def run_probe(store, targets, receipt, runner, batch_id=None, parameters=None):
             'targetIds': [row['sampleId'] for row in targets],
             'targetHashes': {row['sampleId']: row['sourceHash'] for row in targets},
             'targetMetadata': {row['sampleId']: {key: row.get(key) for key in
-                ('documentHash', 'projectHint', 'mechanism', 'vulnerableLines', 'split',
+                ('documentHash', 'projectHint', 'mechanism', 'split', 'taskKind', 'riskLine',
+                 'claimOrigin', 'originalSourceHash', 'inputGovernanceReceipt',
                  'labelStatus', 'maxCandidateCloneSimilarity')} for row in targets},
             'mode': 'EXPLORATORY_RETRIEVAL_ONLY', 'modelCalls': 0,
             'researchEligible': False, 'parameters': parameters,

@@ -17,12 +17,12 @@ class AuditRunTest(unittest.TestCase):
         self.assertEqual(['chunk-1'], selected_ids([{'candidate': {'chunkId': 'chunk-1'}, 'use': 'SUPPORT'}]))
         with self.assertRaises(ValueError): selected_ids([{'chunkId': 'wrong-level'}])
 
-    def test_imported_source_skips_unreproducible_single_file_slither(self):
+    def test_imported_source_without_configuration_keeps_unresolved(self):
         target = {'fullSource': 'pragma solidity 0.8.17;\nimport "src/Well.sol";\ncontract C {}'}
-        result = tool_runner(Path('.'), target, 'real')
-        self.assertEqual('SKIPPED', result[0]['status'])
+        with tempfile.TemporaryDirectory() as directory:
+            result = tool_runner(Path(directory), target, 'real')
+        self.assertEqual('NOT_CONFIGURED', result[0]['status'])
         self.assertEqual([], result[0]['issues'])
-        self.assertIn('原项目', result[0]['reason'])
 
     def test_once_and_replay(self):
         with tempfile.TemporaryDirectory() as directory:
