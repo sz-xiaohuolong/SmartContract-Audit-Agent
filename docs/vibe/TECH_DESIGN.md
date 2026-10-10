@@ -1,6 +1,6 @@
 # 当前架构（2026-10-10）
 
-现行工程为 Java 21 / Spring Boot 4.1.1 / Spring AI 2.0.1 与 Python 混合管线。[R1-S9 规格](releases/R1-S9/SPEC.md)、[实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md)和[验证记录](releases/R1-S9/VERIFICATION.md)描述当前完整闭环。命令行不启动 Spring 容器，Python 本机 HTTP 服务提供单合约工作台和批量对照。
+现行工程为 Java 21 / Spring Boot 4.1.1 / Spring AI 2.0.1 与 Python 混合管线。[R1-S9 规格](releases/R1/SPEC.md#s9-spec)、[实施计划](releases/R1/IMPLEMENTATION_PLAN.md#s9-implementation-plan)和[验证记录](releases/R1/VERIFICATION.md#s9-verification)描述当前完整闭环。命令行不启动 Spring 容器，Python 本机 HTTP 服务提供单合约工作台和批量对照。
 
 | 模块 | 当前职责 |
 |---|---|

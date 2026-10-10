@@ -1,6 +1,6 @@
 # VeriRAG-Agent 毕业论文重构
 
-当前 [R1-S9](docs/vibe/releases/R1-S9/SPEC.md) 打通预置或粘贴 Solidity、受限语法与事实、Nomic D1 配对检索、Java 结构化假设、Slither、D2 六项义务和持久化报告。单合约工作台可查看全部阶段、源码位置与保护证据，批量入口继续比较同池三策略。工程验收见[验证记录](docs/vibe/releases/R1-S9/VERIFICATION.md)；D1 的科研改进与 D2 的核验准确率尚未建立，2026-09-24 的[第二轮查新](thesis/D1_D2第二轮查新与立题裁决_20260924.md)撤回 D2 宽创新主张。
+当前 [R1-S9](docs/vibe/releases/R1/SPEC.md#s9-spec) 打通预置或粘贴 Solidity、受限语法与事实、Nomic D1 配对检索、Java 结构化假设、Slither、D2 六项义务和持久化报告。单合约工作台可查看全部阶段、源码位置与保护证据，批量入口继续比较同池三策略。工程验收见[验证记录](docs/vibe/releases/R1/VERIFICATION.md#s9-verification)；D1 的科研改进与 D2 的核验准确率尚未建立，2026-09-24 的[第二轮查新](thesis/D1_D2第二轮查新与立题裁决_20260924.md)撤回 D2 宽创新主张。
 
 新模块使用 Java 21。根 `pom.xml` 通过 Spring Boot 4.1.1 的父工程管理构建，并通过 Spring AI 2.0.1 BOM 管理依赖版本；`audit-mvp/pom.xml` 直接声明 `spring-ai-openai`。`SpringAiGateway` 在显式单次审计时调用 Spring AI 模型接口。命令行不启动 Spring 应用容器；D1 检索与 S3 离线实验使用普通 Java/Python 代码，不经过 Spring AI 的 RAG 组件。
 
@@ -64,11 +64,11 @@ java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar \
 旧示例曾把供应商密钥写入源码，现改为从 `DASHSCOPE_API_KEY` 环境变量读取；旧值已进入历史提交，需在供应商侧撤销或轮换。不要把真实凭证写入受 Git 跟踪的配置或提交记录。
 
 - [当前进度](docs/vibe/PROGRESS.md)
-- [S0 有效需求](docs/vibe/releases/R1-S0/SPEC.md)
-- [S0 实施计划](docs/vibe/releases/R1-S0/IMPLEMENTATION_PLAN.md)
-- [S0 验证记录](docs/vibe/releases/R1-S0/VERIFICATION.md)
-- [S2 验证记录](docs/vibe/releases/R1-S2/VERIFICATION.md)
-- [S3 需求与实施计划](docs/vibe/releases/R1-S3/SPEC.md)
+- [S0 有效需求](docs/vibe/releases/R1/SPEC.md#s0-spec)
+- [S0 实施计划](docs/vibe/releases/R1/IMPLEMENTATION_PLAN.md#s0-implementation-plan)
+- [S0 验证记录](docs/vibe/releases/R1/VERIFICATION.md#s0-verification)
+- [S2 验证记录](docs/vibe/releases/R1/VERIFICATION.md#s2-verification)
+- [S3 需求与实施计划](docs/vibe/releases/R1/SPEC.md#s3-spec)
 - [历史 README](legacy/README-historical.md)：仅为旧状态存档。
 
 依赖依据：[Spring AI 官方入门](https://docs.spring.io/spring-ai/reference/getting-started.html)、[OpenAI 适配文档](https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html)。Agent Plan 端点依据：[火山引擎 OpenViking 配置示例](https://github.com/volcengine/OpenViking/blob/main/examples/ov.conf.example)。

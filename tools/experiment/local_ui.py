@@ -19,8 +19,8 @@ from urllib.parse import urlsplit, parse_qs
 from storage import decode
 
 
-DEMO = Path('docs/vibe/releases/R1-S3/evidence/demo')
-S2_DEMO = Path('docs/vibe/releases/R1-S2/evidence/demo')
+DEMO = Path('docs/vibe/releases/R1/evidence/S3/demo')
+S2_DEMO = Path('docs/vibe/releases/R1/evidence/S2/demo')
 FRONTEND = Path(__file__).with_name('local_ui')
 RUN_ID = re.compile(r'[0-9a-f]{32}')
 PENDING_COLLECTION = re.compile(r'r1pending_[0-9a-f]{32}')
