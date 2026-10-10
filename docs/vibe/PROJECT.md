@@ -4,33 +4,57 @@
 
 ## 当前定位
 
-- 当前 Release：`R1-S9` 单合约深度审计与 D2 闭环；[规格](releases/R1-S9/SPEC.md)、[实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md)和[验证记录](releases/R1-S9/VERIFICATION.md)描述当前工程。D1 科研效果仍待证伪，S8 的原始实验和准入记录保留。
+- 最近工程工作包：S9「单合约深度审计与 D2 闭环」，存量路径标识为 `R1-S9`；其[规格](releases/R1-S9/SPEC.md)、[实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md)和[验证记录](releases/R1-S9/VERIFICATION.md)继续提供该局部范围的批准与验收依据。
+- 整体 Release 边界与完整有效需求尚未统一；不能仅凭 `R1-Sx` 目录名认定每个 Slice 都是独立 Release，也不能把 S9 的局部验收状态扩展为 R1 整体验收。历史局部批准与验证记录保留。
 - 当前执行状态、验证及下一任务以 [PROGRESS](PROGRESS.md) 为准。
 - 最新真实 API 批量实验：[2026-10-10 三策略与 D2 报告](experiments/2026-10-10_API_BATCH_REPORT.md)，159 次真实请求已结束；模型标签指标与工具／D2 结果分别列出。
-- S0：新 `audit-mvp` 模块，多供应商单次 CLI 和离线测试；[验证记录](releases/R1-S0/VERIFICATION.md)。
-- S1a：只读清单、严格类型评估；S1b：审核划分、知识快照和实验恢复。见 [实施计划](releases/R1-S1/IMPLEMENTATION_PLAN.md)、[验证记录](releases/R1-S1/VERIFICATION.md)、[工具说明](../../tools/experiment/README.md)。
-- S2：D1 条件对比检索、轻量程序事实与四策略独立比较；工程测试、独立复审及本地 Milvus 冒烟已通过；真实效果实验尚未执行。见 [S2 验证](releases/R1-S2/VERIFICATION.md)。
-- S3：已完成[定向查新裁决](../../thesis/D1_D2第二轮查新与立题裁决_20260924.md)；工程部分已实现来源登记、谱系门禁和合成夹具离线先导。真实数据 G1 未通过，D1/D2 效果未验证。见 [S3 验证](releases/R1-S3/VERIFICATION.md)。D1 仅谨慎保留，D2 宽版本撤回创新主张。
-- S4：固定开发样本的正式知识快照、D1、结构化假设、本机工具、D2 初版、持久化报告和本机页面已接通；可交互的[当前架构图](releases/R1-S4/SYSTEM_ARCHITECTURE.html)展示实际模块与研究边界，离线工程验收及剩余限制见 [S4 验证](releases/R1-S4/VERIFICATION.md)。工程演练不产生科研效果结论。
-- S5：正式知识增至三个真实补丁对的六条片段，独立验证三组；三策略单样本页面可试跑，见 [S5 验证](releases/R1-S5/VERIFICATION.md)。
-- S6：批量对照页面、逐项 JSONL、续跑防重复和保守指标展示已实施；数据规模与后续实验方案见[研究设计](releases/R1-S6/RESEARCH_DESIGN.md)，工程证据见[验证](releases/R1-S6/VERIFICATION.md)。
-- S7：442 组待审语料生成 742 条向量并与正式知识隔离；S8 正逐项核验原件、扩展批量入口，尚未完成候选转正。见 [S8 阶段验证](releases/R1-S8/VERIFICATION.md)。
 - 使用者为论文作者与审核者；正式标签、数据比例及 D1/D2 方法创新结论仍需后续审核与研究证据。
 
-## 事实源职责
+## 唯一文档地图
 
-| 内容 | 文档 |
+本表是仓库唯一权威地图，只导航职责与来源。恢复时先读本表和 PROGRESS，再按当前任务读取对应事实源；不默认拼接全部历史 Slice 文档。
+
+| 职责 | 实际路径 | 状态 | 定位依据 |
+|---|---|---|---|
+| Agent 规则与验证命令 | [AGENTS](../../AGENTS.md) | 现行 | 主目录开发、离线测试及提交同步约定；末段旧架构仅适用于历史 `src/` |
+| 当前执行位置、缺口与下一任务 | [PROGRESS](PROGRESS.md) | 现行 | 首屏为当前任务；下方按时间保留实验与工程记录 |
+| 当前完整有效需求与整体 Release 边界 | 尚无统一入口；局部依据见 [S0 规格](releases/R1-S0/SPEC.md)、[S9 规格](releases/R1-S9/SPEC.md)及相关历史切片 | 待整合 | 存量批准覆盖各局部范围；未建立统一 R1 基线，目录名不能证明发布边界 |
+| 最近 S9 工作包的局部需求 | [S9 规格](releases/R1-S9/SPEC.md) | 已冻结的局部范围，暂沿用 | 文件记录需求来源、八项验收条件与边界；不覆盖全部既有产品行为 |
+| 最近工作包的计划与工程验收 | [S9 实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md)、[验收](releases/R1-S9/VERIFICATION.md)、[评审](releases/R1-S9/REVIEW.md) | 既有工程证据，暂沿用 | 工程提交 `4dfc7e1`；验收指向本机 `.evidence/R1-S9/`，本次 init 未重跑应用测试 |
+| 当前实际架构 | [TECH_DESIGN](TECH_DESIGN.md) 的「当前架构（2026-10-10）」部分 | 现行部分；同文件混有历史调查 | Java/Python、D1、工具、D2 与工作台入口；下半部为 2026-09-18 旧源码调查，待分离 |
+| 操作命令与数据契约 | [实验工具说明](../../tools/experiment/README.md)、[根 README](../../README.md) | 沿用，按实际模块核对 | 当前实现入口为 `audit-mvp/` 与 `tools/experiment/`；历史 `src/` 单独构建 |
+| 最新真实 API 实验结论 | [2026-10-10 实验报告](experiments/2026-10-10_API_BATCH_REPORT.md) | 已记录的实验事实 | 报告提交 `9beb7b8`；模型指标、工具失败和 D2 未知分别列出 |
+| 实验原始证据与可复核快照 | `.evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/`；完整原件 `.local/auto-benchmark-runs/546fe566368e4b0ea7b6aeb58b235939/` | 小型快照已跟踪；完整原件仅本机 | 执行清单、计划、验证 JSON 与浏览器记录在 Git；完整 JSONL/CSV 不宣称可跨机器取回 |
+| 研究准入、标签与来源依据 | [S3 来源登记](releases/R1-S3/SOURCE_REGISTRY.json)、[准入记录](releases/R1-S3/D1_KB_READINESS.md)、[S5 数据验收](releases/R1-S5/VERIFICATION.md)、[S8 自动标注验收](releases/R1-S8/AUTO_EXPERIMENT_VERIFICATION.md) | 各自记录的资料层级，暂沿用 | 已审案例、待审候选和自动标注知识须保留来源与准入区别；不以目录日期替代审核 |
+| 研究目标、设计与创新边界 | [论文总体图](THESIS_ARCHITECTURE.md)、[S6 研究设计](releases/R1-S6/RESEARCH_DESIGN.md)、[第二轮查新裁决](../../thesis/D1_D2第二轮查新与立题裁决_20260924.md) | 研究方案及历史裁决 | 总体图核查时间为 2026-10-04，混合目标与当时进度；当前研究验证结果读最新实验报告 |
+| 被程序读取的登记与分配资产 | [首批登记](releases/R1-S3/evidence/first-batch-intake.json)、[首批分配](releases/R1-S3/evidence/first-batch-assignment.json)；本机 `.local/r1-s5/formal-v2/ledger.json` | 运行依赖，保留原路径 | `mvp_runtime.py` 与 `formal_targets.py` 显式读取上述登记／分配，后者还读取本机 ledger；迁移需同步引用 |
+| 历史切片规格、计划与验证 | [存量目录](releases/)中的 `R1-S0` 至 `R1-S9` | 历史切片组织，部分仍承担当前职责 | 十个 Slice 独立建目录；尚未物理搬迁。以上单列的局部契约、研究资料和运行资产继续沿用 |
+| 历史重构提案与旧源码调查 | [R0 提案](releases/R0-20260918/PROJECT_BRIEF.md)、[审核记录](releases/R0-20260918/REVIEW.md)及 TECH_DESIGN 历史部分 | 历史 | R0 提案为 DRAFT；2026-09-18 调查基于当时代码，不覆盖后续批准或当前架构 |
+
+## 文档整理方向（建议，尚未执行整合）
+
+日常浏览按职责组织。沿用 `docs/vibe/` 和本地图；以下缺失的统一文件是建议目标，本次 init 不创建空文档或把它们标成已生效需求。
+
+| 建议入口 | 只维护的主要内容 |
 |---|---|
-| 当前执行位置、恢复入口、已知限制 | [PROGRESS](PROGRESS.md) |
-| 最新真实 API 批量实验、模型对照与 D2 缺口 | [2026-10-10 实验报告](experiments/2026-10-10_API_BATCH_REPORT.md)；运行证据 `.evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/` |
-| 当前工程范围 | [R1-S9 规格](releases/R1-S9/SPEC.md)、[实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md) |
-| 下一研发阶段与研究门禁 | [R1-S6 研究设计](releases/R1-S6/RESEARCH_DESIGN.md)、[实施计划](releases/R1-S6/IMPLEMENTATION_PLAN.md)；科研准入仍以 R1-S3 为准 |
-| 实施步骤和验收证据 | [R1-S9 实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md)、[验证记录](releases/R1-S9/VERIFICATION.md) |
-| 实际命令与数据契约 | [tools/experiment/README](../../tools/experiment/README.md) 和根 README |
-| 旧源码调查与重构动机 | [TECH_DESIGN](TECH_DESIGN.md)，历史观察以当前代码核验 |
-| 历史提案与研究路线 | [R0 审核记录](releases/R0-20260918/REVIEW.md)及同目录提案 |
+| `PROJECT.md` | 唯一文档地图与当前项目定位 |
+| `SPEC.md` | 经核对的完整有效行为、REQ/AC、批准来源和验收接缝；整合时保留原标识 |
+| `TECH_DESIGN.md` | 当前代码与配置能够支持的实际架构 |
+| `IMPLEMENTATION_PLAN.md` | 一份实施计划；Slice Map 记录 S0–S9 的范围、依赖、需求映射与证据链接 |
+| `PROGRESS.md` | 当前任务、状态、缺口、下一步；每个 Slice 一条状态记录，详细证据通过链接定位 |
+| `VERIFICATION.md` | 统一需求—验收—证据矩阵，逐项保留结果、提交与限制 |
+| `experiments/` | 按实验保存独立报告，记录输入、配置、结果与证据来源 |
 
-R0 文档保留历史状态，其旧待审核说明不覆盖后续用户批准。论文需求与工程实现分开管理，不把工程修复收益当作方法创新。
+真正具有明确基线和交付边界的 Release 可继续使用 `releases/<release-id>/`；发布后的材料封存。日常入口直接导航到有效事实源，同一 Release 内的 Slice 使用计划表和进度记录，不再新建独立目录或整套文档。复杂调查按具体职责增加单份文件并链接。
+
+整理顺序：
+
+1. 先修正文档地图和当前恢复入口，区分现行事实、研究方案、历史记录与运行依赖；本次 init 完成这一层。
+2. 逐项核对既有批准与后续变更，整合完整有效需求、统一 Slice Map 和验证矩阵；未确认或未验证项明确保留缺口。
+3. 将 TECH_DESIGN 的当前架构与旧源码调查分离；研究目标和准入资料按职责导航，保持来源可追溯。
+4. 核对代码、测试、文档链接和数据保留要求后，再处理历史目录的物理归档与运行资产位置；不直接整包搬走 `evidence/`。
+
+本次审计沿用现有路径，未移动或改写历史切片文件。论文需求与工程实现分别按其事实源核对，工程验收不证明方法创新。
 
 ## 开发与验证
 

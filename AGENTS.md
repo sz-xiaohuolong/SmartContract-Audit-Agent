@@ -6,7 +6,9 @@
 每完成一个小版本并通过相应验证后，先检查待提交内容与凭证，再在当前主目录提交并同步至远程 `origin/main`；若远程已有新提交，先整合并重新验证。未完成的小版本不得以完成名义同步。
 
 - Python 离线工具验证：`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`；实现位于 `tools/experiment/`。
-- S0 基础切片：`docs/vibe/releases/R1-S0/SPEC.md`，执行计划位于同目录。
+- 文档恢复：先读 `docs/vibe/PROJECT.md` 的唯一文档地图和 `docs/vibe/PROGRESS.md` 首屏，再按当前任务读取地图中的规格、架构、计划或验证入口。
+- Slice 组织：同一 Release 内的切片记录在统一实施计划的 Slice Map 和进度表中，不新增切片独立目录或整套规格／计划／验证文件；存量目录按地图标明职责，移动前核对代码与证据引用。
+- S0 历史基础切片：`docs/vibe/releases/R1-S0/SPEC.md`，原执行计划位于同目录；当前任务入口以唯一地图为准。
 - 根构建使用 Java 21、Spring Boot 4.1.1、Spring AI 2.0.1；默认模块 `audit-mvp`。
 - 默认验证：`mvn clean verify`；命令行：`java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help`。
 - 测试不得依赖真实 API、Milvus 或工具环境；使用本地 HTTP 与子进程夹具。
