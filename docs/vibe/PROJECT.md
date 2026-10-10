@@ -6,6 +6,7 @@
 
 - 当前 Release：`R1-S9` 单合约深度审计与 D2 闭环；[规格](releases/R1-S9/SPEC.md)、[实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md)和[验证记录](releases/R1-S9/VERIFICATION.md)描述当前工程。D1 科研效果仍待证伪，S8 的原始实验和准入记录保留。
 - 当前执行状态、验证及下一任务以 [PROGRESS](PROGRESS.md) 为准。
+- 最新真实 API 批量实验：[2026-10-10 三策略与 D2 报告](experiments/2026-10-10_API_BATCH_REPORT.md)，159 次真实请求已结束；模型标签指标与工具／D2 结果分别列出。
 - S0：新 `audit-mvp` 模块，多供应商单次 CLI 和离线测试；[验证记录](releases/R1-S0/VERIFICATION.md)。
 - S1a：只读清单、严格类型评估；S1b：审核划分、知识快照和实验恢复。见 [实施计划](releases/R1-S1/IMPLEMENTATION_PLAN.md)、[验证记录](releases/R1-S1/VERIFICATION.md)、[工具说明](../../tools/experiment/README.md)。
 - S2：D1 条件对比检索、轻量程序事实与四策略独立比较；工程测试、独立复审及本地 Milvus 冒烟已通过；真实效果实验尚未执行。见 [S2 验证](releases/R1-S2/VERIFICATION.md)。
@@ -21,6 +22,7 @@
 | 内容 | 文档 |
 |---|---|
 | 当前执行位置、恢复入口、已知限制 | [PROGRESS](PROGRESS.md) |
+| 最新真实 API 批量实验、模型对照与 D2 缺口 | [2026-10-10 实验报告](experiments/2026-10-10_API_BATCH_REPORT.md)；运行证据 `.evidence/experiments/2026-10-10-546fe566368e4b0ea7b6aeb58b235939/` |
 | 当前工程范围 | [R1-S9 规格](releases/R1-S9/SPEC.md)、[实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md) |
 | 下一研发阶段与研究门禁 | [R1-S6 研究设计](releases/R1-S6/RESEARCH_DESIGN.md)、[实施计划](releases/R1-S6/IMPLEMENTATION_PLAN.md)；科研准入仍以 R1-S3 为准 |
 | 实施步骤和验收证据 | [R1-S9 实施计划](releases/R1-S9/IMPLEMENTATION_PLAN.md)、[验证记录](releases/R1-S9/VERIFICATION.md) |
