@@ -9,11 +9,12 @@ from batch_compare import _append, _lines, _repair_tail
 from storage import decode, durable_write, exclusive_lock, fingerprint
 
 
-STRATEGIES = frozenset({'DENSE', 'FIELD_FILTER', 'D1'})
+STRATEGIES = frozenset({'VANILLA', 'DENSE', 'FIELD_FILTER', 'D1'})
 
 
-def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None, embedding_profile='bge'):
-    indexed = {row['sampleId']: row for row in targets if row.get('runnable')}
+def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None, embedding_profile='bge',
+              include_blocked=False):
+    indexed = {row['sampleId']: row for row in targets if row.get('runnable') or include_blocked}
     if (not sample_ids or len(set(sample_ids)) != len(sample_ids) or not set(sample_ids) <= set(indexed)
             or not strategies or len(set(strategies)) != len(strategies)
             or not set(strategies) <= STRATEGIES or mode not in ('offline', 'real')
@@ -21,14 +22,18 @@ def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None,
             or embedding_profile not in ('bge', 'nomic')):
         raise ValueError('自动标注批量计划无效')
     labels = {key: indexed[key]['groundTruth'] for key in sample_ids}
+    runnable_units = sum(bool(indexed[key].get('runnable')) for key in sample_ids) * len(strategies)
     plan = {'schemaVersion': 'auto-benchmark-1', 'pipelineVersion': 's9-v1', 'sampleIds': sample_ids,
             'sourceHashes': {key: indexed[key]['sourceHash'] for key in sample_ids},
             'labels': labels, 'strategies': strategies, 'mode': mode,
             'snapshotId': snapshot_id, 'embeddingProfile': embedding_profile,
             'provider': provider if mode == 'real' else None,
-            'requestBounds': {'maxRequests': 2 * len(sample_ids) * len(strategies) if mode == 'real' else 0,
-                              'maxOutputTokens': 2 * len(sample_ids) * len(strategies) * 2048 if mode == 'real' else 0},
+            'requestBounds': {'maxRequests': 2 * runnable_units if mode == 'real' else 0,
+                              'maxOutputTokens': 2 * runnable_units * 2048 if mode == 'real' else 0},
             'researchEligible': False, 'metricTier': 'DATASET_LABEL_EXPLORATORY'}
+    if include_blocked:
+        plan['inputEligibility'] = {key: {'runnable': bool(indexed[key].get('runnable')),
+                                         'reason': indexed[key].get('inputReason')} for key in sample_ids}
     return {**plan, 'planHash': fingerprint(plan)}
 
 
@@ -80,7 +85,19 @@ def run_batch(store, plan, runner, batch_id=None):
                     _append(directory / 'events.jsonl', {'kind': 'STARTED',
                             'sampleId': sample, 'strategy': strategy})
                     try:
-                        value = runner(sample, strategy, plan['mode'])
+                        eligibility = plan.get('inputEligibility', {}).get(sample, {'runnable': True})
+                        if not eligibility['runnable']:
+                            # 输入阻断仍占计划分母；禁止调用模型或把未执行结果计为安全。
+                            value = {'status': 'FAILED', 'pipelineStatus': 'FAILED', 'prediction': 'UNKNOWN',
+                                     'modelPrediction': 'UNKNOWN', 'conclusion': 'UNRESOLVED',
+                                     'errorCategory': 'EVALUATION_INPUT_BLOCKED', 'inputReason': eligibility.get('reason'),
+                                     'categoryHit': None, 'selectedEvidence': 0, 'selectedIds': [],
+                                     'inputTokens': None, 'outputTokens': None, 'durationMs': None,
+                                     'requestAttempts': 0, 'model': {}, 'tools': [],
+                                     'd2': {'schemaVersion': '2', 'verdict': 'UNKNOWN', 'assessments': [],
+                                            'errorCategory': 'EVALUATION_INPUT_BLOCKED'}}
+                        else:
+                            value = runner(sample, strategy, plan['mode'])
                         if (not isinstance(value, dict) or value.get('status') not in ('COMPLETED', 'FAILED')
                                 or value.get('prediction') not in ('REPORT', 'NO_REPORT', 'UNKNOWN')
                                 or value['status'] == 'FAILED' and value['prediction'] != 'UNKNOWN'):
@@ -158,6 +175,7 @@ def replay_batch(store, batch_id):
         metrics[strategy]['d2Unknown'] = sum(row.get('d2', {}).get('verdict') == 'UNKNOWN' for row in rows)
         metrics[strategy]['d2NotRun'] = sum('d2' not in row for row in rows)
         metrics[strategy]['pipelineFailed'] = sum(row.get('pipelineStatus') == 'FAILED' for row in rows)
+        metrics[strategy]['inputBlocked'] = sum(row.get('errorCategory') == 'EVALUATION_INPUT_BLOCKED' for row in rows)
     samples = [indexed[(sample, strategy)] for sample in plan['sampleIds']
                for strategy in plan['strategies'] if (sample, strategy) in indexed]
     paired_ids = [sample for sample in plan['sampleIds'] if all(
@@ -197,7 +215,7 @@ def export_csv(report):
                      'categoryHit', 'selectedEvidence', 'selectedIds', 'poolHash', 'snapshotId',
                      'inputTokens', 'outputTokens', 'durationMs', 'errorCategory', 'retrievalGaps', 'model',
                      'requestAttempts', 'diagnosticPath', 'queryEmbeddingReceipt', 'parseReplay',
-                     'conclusion', 'd2Verdict', 'tools', 'd2'])
+                     'conclusion', 'd2Verdict', 'tools', 'd2', 'inputReason'])
     labels = report['plan']['labels']
     for row in report['samples']:
         label = labels[row['sampleId']]
@@ -211,5 +229,5 @@ def export_csv(report):
                          json.dumps(row.get('queryEmbeddingReceipt'), ensure_ascii=False),
                          json.dumps(row.get('parseReplay'), ensure_ascii=False), row.get('conclusion'),
                          row.get('d2', {}).get('verdict'), json.dumps(row.get('tools'), ensure_ascii=False),
-                         json.dumps(row.get('d2'), ensure_ascii=False)])
+                         json.dumps(row.get('d2'), ensure_ascii=False), row.get('inputReason')])
     return output.getvalue()

@@ -135,6 +135,20 @@ class FormalRecallTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '策略'):
             select_strategy(view, 'UNKNOWN')
 
+    def test_无检索策略清空模型上下文而保留对照池身份(self):
+        view = {'pool': {'candidates': [{'text': '不应传给模型的检索信息'}]},
+                'd1': {'selected': ['旧证据'], 'context': '旧上下文',
+                       'evaluations': {'旧证据': {'applicability': 'SUPPORTED'}}},
+                'snapshotId': self.snapshot}
+        before = copy.deepcopy(view)
+        vanilla = select_strategy(view, 'VANILLA')
+        self.assertEqual('', vanilla['d1']['context'])
+        self.assertEqual([], vanilla['d1']['selected'])
+        self.assertEqual({}, vanilla['d1']['evaluations'])
+        self.assertEqual(fingerprint(view['pool']), vanilla['poolHash'])
+        self.assertEqual(self.snapshot, vanilla['snapshotId'])
+        self.assertEqual(before, view)
+
     def test_样本编号和历史608行不替代实际风险事实选择(self):
         source = ('\n' * 604 + 'contract C {\nfunction f() public {\nuint value = 1;\n'
                   'msg.sender.call("");\nmsg.sender.call("");\n}\n}')

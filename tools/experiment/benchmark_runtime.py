@@ -249,6 +249,8 @@ class BenchmarkRuntime:
                 'modelPrediction': interpret_model(model, mode),
                 'conclusion': final_conclusion(model, d2, failed, mode),
                 'tools': tools, 'd2': d2,
+                'compilationManifest': target.get('compilerManifest'),
+                'compilationError': compilation_error,
                 'retrieval': view, 'source': target.get('fullSource'),
                 'poolHash': fingerprint(view['pool']),
                 'queryEmbeddingReceipt': view.get('queryEmbeddingReceipt'),
@@ -256,7 +258,7 @@ class BenchmarkRuntime:
                 'selectedIds': [row['candidate']['chunkId'] for row in selected],
                 'selectedEvidence': len(selected),
                 'categoryHit': (any(row['candidate']['mechanism'] == target['mechanism'] for row in selected)
-                                if target['groundTruth']['hasVulnerability'] else None),
+                                if strategy != 'VANILLA' and target['groundTruth']['hasVulnerability'] else None),
                 'retrievalGaps': view['d1'].get('gaps', []),
                 'errorCategory': model.get('errorCategory') or ('TOOLS_FAILED' if failed_tools else 'D2_EXECUTION_ERROR' if d2_failed else None),
                 'inputTokens': model.get('inputTokens'), 'outputTokens': model.get('outputTokens'),

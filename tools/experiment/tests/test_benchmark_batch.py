@@ -51,6 +51,42 @@ class BenchmarkBatchTest(unittest.TestCase):
         self.assertEqual(['a'], calls)
         self.assertIsNone(replay_batch(self.store, 'e' * 32)['metrics']['D1']['avgInputTokens'])
 
+    def test_无检索和两种检索策略计划明确区分且共享请求边界(self):
+        plan = make_plan(['a'], ['VANILLA', 'DENSE', 'D1'], 'real', self.targets, 'f' * 64)
+        self.assertEqual(['VANILLA', 'DENSE', 'D1'], plan['strategies'])
+        self.assertEqual(6, plan['requestBounds']['maxRequests'])
+        self.assertEqual(6 * 2048, plan['requestBounds']['maxOutputTokens'])
+        legacy = make_plan(['a'], ['FIELD_FILTER'], 'offline', self.targets, 'f' * 64)
+        self.assertEqual(['FIELD_FILTER'], legacy['strategies'])
+
+    def test_阻断目标保留计划分母且零请求零安全裁决(self):
+        self.targets[0].update(runnable=False, inputReason='全文超出预算，需要显式范围')
+        with self.assertRaises(ValueError):
+            make_plan(['a', 'b'], ['VANILLA', 'D1'], 'real', self.targets, 'f' * 64)
+        plan = make_plan(['a', 'b'], ['VANILLA', 'D1'], 'real', self.targets, 'f' * 64,
+                         include_blocked=True)
+        self.assertEqual(4, plan['requestBounds']['maxRequests'])
+        calls = []
+        def runner(sample, strategy, mode):
+            calls.append(sample)
+            return {'status': 'COMPLETED', 'prediction': 'REPORT', 'requestAttempts': 1,
+                    'selectedEvidence': 0, 'model': {}}
+        batch_id = run_batch(self.store, plan, runner, 'd' * 32)
+        report = replay_batch(self.store, batch_id)
+        self.assertEqual(['b', 'b'], calls)
+        self.assertEqual({'planned': 4, 'completed': 2, 'failed': 2, 'unknown': 2, 'pending': 0},
+                         report['denominators'])
+        self.assertEqual(1, report['metrics']['VANILLA']['inputBlocked'])
+        blocked = report['samples'][0]
+        self.assertEqual('UNKNOWN', blocked['d2']['verdict'])
+        self.assertEqual(0, blocked['requestAttempts'])
+        self.assertIsNone(blocked['inputTokens'])
+
+    def test_纯阻断计划没有真实请求预算(self):
+        self.targets[0].update(runnable=False, inputReason='全文超出预算')
+        plan = make_plan(['a'], ['VANILLA'], 'real', self.targets, 'f' * 64, include_blocked=True)
+        self.assertEqual({'maxRequests': 0, 'maxOutputTokens': 0}, plan['requestBounds'])
+
     def test_零精确率和零召回率对应零_f1(self):
         plan = make_plan(['a', 'c'], ['D1'], 'real', self.targets, 'f' * 64)
         run_batch(self.store, plan, lambda sample, strategy, mode: {

@@ -15,7 +15,7 @@ from storage import decode, encode, fingerprint
 
 SNAPSHOT_ROOT = Path('.local/d1-kb-snapshots')
 CONTEXT_BYTES = 4096
-STRATEGIES = frozenset({'DENSE', 'FIELD_FILTER', 'D1'})
+STRATEGIES = frozenset({'VANILLA', 'DENSE', 'FIELD_FILTER', 'D1'})
 
 
 def select_strategy(view, strategy):
@@ -24,6 +24,12 @@ def select_strategy(view, strategy):
         raise ValueError('检索策略未登记')
     pool = view['pool']
     pool_hash = fingerprint(pool)
+    if strategy == 'VANILLA':
+        # 同池身份仅供实验对照；模型请求不携带任何检索文本、证据或适用性评价。
+        choice = {'status': 'COMPLETED', 'strategy': strategy, 'selected': [],
+                  'context': '', 'gaps': [], 'evaluations': {},
+                  'poolHash': pool_hash, 'budgetKind': 'NONE'}
+        return dict(view, d1=choice, strategy=strategy, poolHash=pool_hash)
     if strategy == 'D1':
         # Java EvidenceBundle 不含执行 status；通过身份校验后以完成状态统一编排契约。
         return dict(view, d1={**view['d1'], 'status': view['d1'].get('status', 'COMPLETED')},

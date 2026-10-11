@@ -25,6 +25,27 @@ class LocalIndex:
 
 
 class BenchmarkRuntimeTest(unittest.TestCase):
+    def test_无检索策略模型输入为空且检索命中率不适用(self):
+        with TemporaryDirectory() as directory:
+            runtime = BenchmarkRuntime.__new__(BenchmarkRuntime)
+            runtime.root = Path(directory)
+            runtime.preview = lambda target: {'pool': {'candidates': [{'text': '检索文本'}]},
+                'd1': {'selected': ['检索证据'], 'context': '检索文本'}, 'facts': {}}
+            requests = []
+            def model_runner(root, target, view, mode):
+                requests.append((view['d1']['context'], view['d1']['selected']))
+                return {'status': 'COMPLETED', 'conclusion': 'NO_CONFIRMED_FINDINGS',
+                        'hypotheses': [], 'inputTokens': 10, 'outputTokens': 5}
+            runtime.model_runner = model_runner
+            runtime.tool_runner = lambda *args: [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': []}]
+            result = runtime.run({'groundTruth': {'hasVulnerability': True}}, 'VANILLA', 'real')
+            self.assertEqual([('', [])], requests)
+            self.assertEqual([], result['selectedIds'])
+            self.assertEqual(0, result['selectedEvidence'])
+            self.assertIsNone(result['categoryHit'])
+            self.assertEqual('NO_REPORT', result['prediction'])
+            self.assertEqual('UNKNOWN', result['d2']['verdict'])
+
     def runtime(self, root, knowledge_hash='a' * 64):
         store = root / '.local/d1-kb-snapshots'
         manifest = {'schema_version': '1', 'categories': ['REENTRANCY'], 'samples': [{

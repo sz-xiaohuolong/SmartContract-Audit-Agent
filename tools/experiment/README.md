@@ -263,3 +263,34 @@ PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py --compiled -
 同一 `/agent.html` 页面新增批量区域。勾选已登记的独立验证目标和 `DENSE`、`FIELD_FILTER`、`D1` 策略，先点击“查看运行计划”，再开始批量对照。每项结果同步写入 `.local/audit-batches/<批量编号>/samples.jsonl`，页面显示按策略的完成、失败、未知、入选证据、usage 和待核验指标；下载链接直接返回逐样本 JSONL。重新打开历史不会发起模型请求；异常中断的计划可在历史中续跑，已启动但没有结果的项记为未决，不自动重发。
 
 “真实模型批量运行”可查看当前端点、模型、样本数 × 策略数 × 重复次数 × 模型阶段 × 尝试次数以及请求和输出 token 上界。用户已授权显式启动真实批量；完整输入 token 与费用上界仍为 `null`，输入 UTF-8 字节上限不是 token 公平。页面的检测召回、检索 Recall@K 和 nDCG 只有取得独立审核的目标—案例标签后才能计算，当前显示“待核验”。数据规模依据和后续实验方案见 [R1-S6 研究设计](../../docs/vibe/releases/R1/attachments/RESEARCH_DESIGN.md)。
+
+## 真实 API 的 Vanilla／Dense／D1 对照与离线报告
+
+`benchmark_cli.py` 默认策略为 `VANILLA DENSE D1`。Vanilla 的模型上下文与证据 ID 为空；固定候选池仅用于对照身份和 Dense／D1 共池，模型不消费该池。`FIELD_FILTER` 仍可显式选择，历史计划和结果不改写。
+
+真实运行沿用本机已核实供应商配置、Nomic 768 维活动快照及固定工具。启动前检查凭证、本地服务、模型摘要，并先对单一样本执行真实冒烟；未通过路由、usage 与结构化解析时不启动正式批次。以下真实命令仅在已有对应批次授权时执行，自动测试继续使用本地夹具。
+
+```bash
+PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_cli.py \
+  --mode real --embedding-profile nomic \
+  --sample-ids access_control__dataset_access_control_FibonacciBalance__4b0dfd1088 \
+  --strategies DENSE D1
+
+PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_cli.py \
+  --mode real --embedding-profile nomic --include-blocked \
+  --strategies VANILLA DENSE D1
+```
+
+默认只选择可运行目标；`--include-blocked` 将已登记的阻断目标保留在计划分母中，输出 `EVALUATION_INPUT_BLOCKED`、失败／UNKNOWN、请求次数 0 和 usage=null，绝不按评分真值裁剪源码或调用模型。请求边界仅按可运行目标计算。正式运行的逐单元结果还保存编译清单及编译失败分类，便于回读双收据与 D2 引用。
+
+仅从保存文件重算中文报告和逐假设明细，不再调用模型或工具：
+
+```bash
+PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_report.py \
+  --run .local/auto-benchmark-runs/dcf98eef6475433f80f228c9ab5a29fb \
+  --output .evidence/R2-20261010/API-batch-20261011/重算报告.md \
+  --detail-output .evidence/R2-20261010/API-batch-20261011/重算明细.json \
+  --metadata .evidence/R2-20261010/API-batch-20261011/report-metadata.json
+```
+
+模型 Precision／Recall／F1 与 D2 裁决独立统计。D2 反驳率为 REFUTED／有效保存假设数；UNKNOWN 不当作误报或安全，缺失核验仍计入未知。自动知识和数据集标签使当前报告属于探索性评测，完整 token 公平、独立适用性真值与研究效果验收仍需单列。

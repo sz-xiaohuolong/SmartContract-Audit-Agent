@@ -3,7 +3,7 @@
 | 当前事实 | 状态 |
 |---|---|
 | R2-20261010 | 整体验证 UNVERIFIED；S11 有限引擎／双收据与 S12 页面接缝工程 VERIFIED，完整学术正反与方法效果仍未验收 |
-| 研究效果 | UNVERIFIED；新增模型请求预算 0 |
+| 研究效果 | UNVERIFIED；2026-10-11单次授权采集已结束，未观察到D1增益，D2未知仍占97.04%；后续新增请求默认预算0 |
 | 证据入口 | `.evidence/R2-20261010/`；历史证据仍按 PROJECT 导航 |
 
 基线：[SPEC](SPEC.md)；任务：[统一计划](IMPLEMENTATION_PLAN.md)。历史 S9 的局部验证保留在原文件，不扩展为本轮完成证据。
@@ -114,3 +114,32 @@ S10 提交为 `dd7eb97`，已按精确文件范围检查凭证并同步 `origin/
 ## 完成审计规则
 
 逐项检查当前源码、适用自动测试、真实程序及浏览器证据；没有支持某项的证据时保持未验证。指标由保存结果重算。UNKNOWN、故障与标签缺失单列分母。没有独立审核或新模型实验时，不把工程完成改写为方法已验证。
+
+## 真实 API 三策略采集（2026-10-11）
+
+本次仅完成用户授权的单次探索性采集；正式批次 `dcf98eef6475433f80f228c9ab5a29fb`、冒烟 `2a2097291b4242d98ce380167307f5d0`。原始证据 `.evidence/R2-20261010/API-batch-20261011/`，逐单元原件 `.local/auto-benchmark-runs/`；均保持本机留存，不提交凭证或新增原始日志。
+
+| 验收事项 | 新鲜结果与证据 |
+| --- | --- |
+| 授权与范围 | 用户明确授权真实批次并确认全部53目标×三策略；发现六个超长输入后，用户确认保留18个阻断单元的失败／UNKNOWN且不发请求。未根据评分真值裁剪 |
+| 前置检查 | 配置存在、凭证通过校验且未打印；Milvus 127.0.0.1:29531可读；Nomic 768d、摘要与活动快照一致，600向量读回。`preflight.json` |
+| 冒烟 | 两个模型单元成功，JSON与usage均有效，输入3909／输出322 token。DENSE旧AST引用152无法解析，D2保持UNKNOWN；D1无假设、工具OK。无重复付费请求。`smoke-result.json`与`smoke-compilation-diagnostic.json` |
+| 正式模型 | 159/159落盘；141次真实请求，139项有效，2项MODEL_OUTPUT_INVALID，18项输入阻断。零重试，usage完整141/141，输入185816／输出19984 token。`formal-execution.json`、原samples.jsonl |
+| 策略与公平分母 | Vanilla上下文和证据ID为空；Dense／D1同池，冲突0。共同有效45目标上F1为0.8056／0.7887／0.7536；D1比最高基线低0.0519，未观察到增益。UTF-8上下文上限不等于token公平 |
+| 静态工具与D2 | 工具执行135 OK／6 PROCESS_ERROR；流水线111完成／48失败。单元支持4／反驳0／未知155；135假设支持4／反驳0／未知131（97.04%），其中9条缺失核验仍占未知分母。支持来自Reentrance三策略及SimpleDAO的Dense；不生成利用代码 |
+| 只读报告 | 新`benchmark_report.py`从保存计划、事件与样本重算，输出中文报告、六义务、逐假设、usage与未知原因；生成报告零模型与工具请求。`d2-detail.json`与[本次报告](experiments/2026-10-11_API_BATCH_REPORT.md) |
+| 本机身份封存 | 配置执行前后、JAR与批次流水线Python源码摘要一致，原无关diff不变。JAR为`c49fbf20ab4423f3eee568bfef14586bb4ec8f9cfdc1d57e756f40459cc0d028`，其中含启动时未提交Java修改；以实测产物身份为准。`formal-system-identity.json`、`final-manifest.json` |
+| 补丁与回归 | 原生规格／代码核对无本轮采集阻断，`review.md`。Python3.12全量518项通过、Java88项通过、CLI帮助退出0；`python-submission-regression.log`、`maven-verify.log`、`cli-help.log`。自动测试仍只用离线夹具 |
+| Git边界 | 仅本次工具、测试、README和现行中文文档；原Java修改、R1提案修改、三项脚本删除、.aris和.local保留。凭证检查与同步身份留`git-sync.json` |
+
+重算命令：
+
+```bash
+PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_report.py \
+  --run .local/auto-benchmark-runs/dcf98eef6475433f80f228c9ab5a29fb \
+  --output .evidence/R2-20261010/API-batch-20261011/重算报告.md \
+  --detail-output .evidence/R2-20261010/API-batch-20261011/重算明细.json \
+  --metadata .evidence/R2-20261010/API-batch-20261011/report-metadata.json
+```
+
+本次采集工程VERIFIED，研究效果仍UNVERIFIED。原模型标签指标与D2裁决独立；UNKNOWN、失败和无假设不构成安全。两个有效安全对照、自动知识／标签、有限证明范围及未锁定精确token预算限制了推广性；新旧批次输入治理与策略不同，不作同候选因果比较。不得用97.04%的未知弃权宣称误报拦截，也不自动启动第二批付费实验。

@@ -42,20 +42,22 @@ def main():
     parser.add_argument('--mode', choices=('offline', 'real'), default='offline')
     parser.add_argument('--embedding-profile', choices=('bge', 'nomic'), default='bge')
     parser.add_argument('--sample-ids', nargs='*')
-    parser.add_argument('--strategies', nargs='+', default=['DENSE', 'FIELD_FILTER', 'D1'])
+    parser.add_argument('--include-blocked', action='store_true',
+                        help='保留输入阻断目标的失败与未知记录；这些目标不调用模型')
+    parser.add_argument('--strategies', nargs='+', default=['VANILLA', 'DENSE', 'D1'])
     parser.add_argument('--report-dir', default='.local/auto-benchmark-runs')
     parser.add_argument('--batch-id')
     args = parser.parse_args()
     root = Path.cwd()
     targets, runtime = prepare_runtime(root, embedding_profile=args.embedding_profile)
-    selected = args.sample_ids or [row['sampleId'] for row in targets if row['runnable']]
+    selected = args.sample_ids or [row['sampleId'] for row in targets if row['runnable'] or args.include_blocked]
     provider = None
     if args.mode == 'real':
         from mvp_runtime import _config_values
         config = _config_values(root / 'config/providers.local.properties')
         provider = {'endpoint': config['providers.ark.base-url'], 'model': config['providers.ark.model']}
     plan = make_plan(selected, args.strategies, args.mode, targets,
-                     runtime.pointer['snapshot_id'], provider, args.embedding_profile)
+                     runtime.pointer['snapshot_id'], provider, args.embedding_profile, args.include_blocked)
     indexed = {row['sampleId']: row for row in targets}
     batch_id = run_batch(root / args.report_dir, plan,
         lambda sample, strategy, mode: runtime.run(indexed[sample], strategy, mode), args.batch_id)

@@ -3,19 +3,19 @@
 | 当前事项 | 状态与入口 |
 | --- | --- |
 | 当前工作 | R2-20261010 长目标已由用户冻结；[统一规格](releases/R2-20261010/SPEC.md)、[统一计划](releases/R2-20261010/IMPLEMENTATION_PLAN.md)、[验收矩阵](releases/R2-20261010/VERIFICATION.md)已建立 |
-| 当前缺口 | S11 有限 D2、双收据及 S12 页面接缝工程已验；172 条历史假设 UNKNOWN 从 100% 降至 96.51%，未达到显著下降目标。整个 R2 研究效果仍 UNVERIFIED，新增模型请求预算 0 |
-| 下一步 | 按[工程报告](releases/R2-20261010/S11_S12_ENGINE_REPORT.md)的166条未知原因追踪范围与来源缺口；继续独立案例审核、维护者修复正反及四基线验证 |
+| 当前缺口 | 单次[真实 API 三策略采集](releases/R2-20261010/experiments/2026-10-11_API_BATCH_REPORT.md)已结束；共同45目标的D1 F1为0.7536，低于Vanilla 0.8056。D2的135条新假设仍有131条未知（97.04%），整个R2研究效果仍UNVERIFIED；本次授权已消费，后续新增模型请求默认预算0 |
+| 下一步 | 从新批次87条风险／跨度／调用绑定缺口与旧[工程报告](releases/R2-20261010/S11_S12_ENGINE_REPORT.md)的166条历史未知分别追踪；继续独立案例审核、维护者修复正反及四基线验证，不自动启动第二批模型实验 |
 
 ## 当前恢复位置
 
 | 字段 | 核验事实 |
 |---|---|
-| 当前任务 | S11／S12 有限工程闭环 VERIFIED；真实 SimpleDAO／Reentrance CALL 候选获支持，严格 CEI 防御对照获反驳；最终派生运行 `cd592f4847454f939dfc75e87fecc9fd` 已封口，原件全文件摘要不变 |
-| 本次检查 | Java 88 项、Python 3.12 的509项、CLI 均通过，无失败或跳过；独立评审及增量复审无阻断。实际 Chromium 演练、预览后离线审计、彩色矩阵、历史与导出通过，三种屏宽无溢出，控制台错误0；详见[本轮验收](releases/R2-20261010/VERIFICATION.md#s11s12-防御静态核验闭环) |
+| 当前任务 | 新批次 `dcf98eef6475433f80f228c9ab5a29fb` 159/159单元落盘；141次真实请求、139项有效、2项输出失败、18项输入阻断；另有2次冒烟，未触发重试。D2单元支持4／反驳0／未知155；原S11派生运行 `cd592f4847454f939dfc75e87fecc9fd` 保留 |
+| 本次检查 | Python 3.12全量518项、Java88项、CLI通过；Vanilla空上下文、阻断零请求、旧FIELD_FILTER兼容与离线报告回归通过。运行前后配置、流水线源码和JAR摘要不变，无关修改保留；[本轮采集验收](releases/R2-20261010/VERIFICATION.md#真实-api-三策略采集2026-10-11)；原Chromium验收仍按S11／S12记录 |
 | 当前整体 Release / Workflow State | R2-20261010 / BUILDING / ACTIVE；本轮需求 FROZEN，验证 UNVERIFIED，正式部署未授权 |
 | 最近工程工作包 | S9 单合约深度审计与 D2 闭环，存量标识 `R1-S9`；原局部批准及验收依据继续沿用 |
-| 最近已验工程提交 | 本轮起点 `9638ef4`；S11／S12 本轮源码和同步身份见 `.evidence/R2-20261010/S11-S12-final/final-system-identity.json` 与 `git-sync.json`；S10 `dd7eb97`、Apple `27c3d56` 的已同步记录保留；上一完整工程闭环基线仍为 S9 `4dfc7e1` |
-| 最近实验报告提交 | `9beb7b8`；159 次真实请求的结果与限制见[报告](releases/R1/experiments/2026-10-10_API_BATCH_REPORT.md) |
+| 最近已验工程提交 | 本次起点 `e45dc4b`；本轮源码、运行与同步身份见 `.evidence/R2-20261010/API-batch-20261011/final-manifest.json` 与 `git-sync.json`；S10 `dd7eb97`、Apple `27c3d56` 与 S9 `4dfc7e1` 记录保留 |
+| 最近实验报告 | [2026-10-11 三策略报告](releases/R2-20261010/experiments/2026-10-11_API_BATCH_REPORT.md)；上一报告提交 `9beb7b8` 和 [2026-10-10 原报告](releases/R1/experiments/2026-10-10_API_BATCH_REPORT.md)继续保留，输入治理和策略不同，不作同候选因果比较 |
 | 执行目录与分支 | 当前主目录，分支 `main`；无关未提交修改保留 |
 
 本轮初始提交为 `00fecf5`。基线证据 `.evidence/R2-20261010/baseline.json`，无关改动恢复材料 `.local/r2/preexisting.patch`。环境与输入任务文件所有权独立，公共编排串行整合；小版本验证后依 AGENTS 提交同步。尚未完成的真实路径、先导、页面与毕设交付不得以S10局部结果替代。
