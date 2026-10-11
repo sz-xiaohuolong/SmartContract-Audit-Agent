@@ -1,5 +1,9 @@
 """D2 核验漏洞假设；保护义务与漏洞结论使用相反的三态语义。"""
+import argparse
+import hashlib
+import json
 import re
+from pathlib import Path
 from pathlib import PurePosixPath
 
 from program_facts import _tokens, extract_facts
@@ -330,13 +334,35 @@ def _tool_references(hypothesis, facts, tools):
     return result
 
 
-def evaluate(hypothesis, facts, tools, *, source=None):
+def _unknown_result(reason):
+    return {'schemaVersion': '2', 'verdict': 'UNKNOWN', 'protectionVerdict': 'UNKNOWN',
+            'obligations': [{'name': name, 'status': 'UNKNOWN', 'references': [], 'reason': reason}
+                            for name in OBLIGATIONS], 'references': [],
+            'pathEvidence': {'status': 'UNKNOWN', 'references': [], 'reason': reason}, 'note': reason}
+
+
+def evaluate(hypothesis, facts, tools, *, source=None, compilation_manifest=None, root=None):
     """核验保护义务与程序路径；失败计数属于运行层，不在此推断。
 
     SUPPORTED 需要具体可行反例及同文件同类别工具佐证；REFUTED 需要
     六项保护与路径阻断证据。缺失、失败或未绑定的工具仍保留程序义务结果，
     最终 UNKNOWN。受限直线语法不等于完整控制流或经济语义证明。
     """
+    if compilation_manifest is not None:
+        if not isinstance(hypothesis, dict) or not isinstance(tools, list) or root is None:
+            raise ValueError('编译路径需要假设、工具列表和显式项目根目录')
+        bound = dict(hypothesis)
+        if source is not None:
+            if not isinstance(source, str):
+                raise ValueError('绑定源码必须为文本')
+            source_hash = hashlib.sha256(source.encode('utf-8')).hexdigest()
+            if bound.get('sourceHash', source_hash) != source_hash:
+                return {**_unknown_result('调用方摘要与实际源码不一致，不能消费编译路径'),
+                        'status': 'FAILED', 'provider': 'solc-standard-json',
+                        'errorCategory': 'SOURCE_HASH_MISMATCH'}
+            bound['sourceHash'] = source_hash
+        from compiled_d2 import evaluate_compiled
+        return evaluate_compiled(bound, compilation_manifest, tools, root=root)
     if not isinstance(hypothesis, dict) or not isinstance(facts, dict) or not isinstance(tools, list):
         raise ValueError('D2 输入结构无效')
     line = hypothesis.get('riskLine')
@@ -409,3 +435,32 @@ def evaluate(hypothesis, facts, tools, *, source=None):
     result['note'] = ('结论仅针对绑定的漏洞假设，不是合约整体安全或经济语义证明' if result['verdict'] != 'UNKNOWN' else
                       '程序证据保留；路径、六项覆盖或绑定工具证据不足，最终未知')
     return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description='使用绑定编译产物核验保存假设的有限路径，模型请求为零')
+    parser.add_argument('--manifest', required=True, help='显式编译产物清单')
+    parser.add_argument('--hypothesis', required=True, help='保存的单项假设 JSON')
+    parser.add_argument('--tools', help='保存的工具结果 JSON 列表；缺失时保持未知')
+    parser.add_argument('--source', help='可选绑定源码；字节摘要须与编译目标相同')
+    parser.add_argument('--root', default='.', help='清单中的相对路径根目录')
+    args = parser.parse_args()
+    from storage import decode
+    try:
+        hypothesis = decode(Path(args.hypothesis).read_bytes())
+        tools = decode(Path(args.tools).read_bytes()) if args.tools else []
+        source = Path(args.source).read_bytes().decode('utf-8') if args.source else None
+        result = evaluate(hypothesis, {}, tools, source=source,
+                          compilation_manifest=args.manifest, root=args.root)
+        exit_code = int(result.get('status') == 'FAILED')
+    except (OSError, UnicodeError, ValueError, TypeError) as error:
+        result = {**_unknown_result(f'编译路径输入失败：{error}'), 'status': 'FAILED',
+                  'provider': 'solc-standard-json'}
+        exit_code = 1
+    result.update(paidModelRequests=0, researchEligible=False, taskKind='CLAIM_VALIDATION')
+    print(json.dumps(result, ensure_ascii=False, allow_nan=False))
+    return exit_code
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

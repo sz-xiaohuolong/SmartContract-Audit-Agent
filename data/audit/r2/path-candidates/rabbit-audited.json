@@ -1,0 +1,17 @@
+{
+  "contract": "RabbitHoleReceipt",
+  "function": "mint(address,string)",
+  "sourceHash": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+  "sourceFile": "contracts/RabbitHoleReceipt.sol",
+  "vulnerabilityType": "ACCESS_CONTROL",
+  "riskOperation": "WRITE",
+  "riskLine": 101,
+  "riskSpan": {
+    "sourceUnit": "contracts/RabbitHoleReceipt.sol",
+    "start": 3703,
+    "length": 40
+  },
+  "taskKind": "CLAIM_VALIDATION",
+  "claimOrigin": "FIXED_SOURCE_LOCATION",
+  "researchEligible": false
+}

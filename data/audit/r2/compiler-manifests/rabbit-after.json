@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "provider": "solc-standard-json",
+  "bindingPath": ".local/r2/feasibility/rabbit-after/compiler-ir-binding.json",
+  "bindingSha256": "2dc2301206bc32c0b0761a3f84b382b242c628328c6db0b05fa9dadc44081a6a",
+  "inputPath": ".local/r2/feasibility/rabbit-after/compiler-ir-input.json",
+  "outputPath": ".local/r2/feasibility/rabbit-after/compiler-ir-output.json",
+  "targetSourceUnit": "contracts/RabbitHoleReceipt.sol",
+  "targetContract": "RabbitHoleReceipt",
+  "expectedSourceHash": "8075bdae170c3b63b5a156f19f2b63072b6d82e25c5d6f2a7078b583dac52fdd"
+}

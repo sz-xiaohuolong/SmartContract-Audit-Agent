@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "provider": "solc-standard-json",
+  "bindingPath": ".local/r2/feasibility/atomic-after/compiler-binding.json",
+  "bindingSha256": "7613a01eca5eed22fdaec63b7e22be6a940f087b49da55eb354345fdd91b1e95",
+  "inputPath": ".local/r2/feasibility/atomic-after/compiler-input.json",
+  "outputPath": ".local/r2/feasibility/atomic-after/compiler-output.json",
+  "targetSourceUnit": "contracts/Loans.sol",
+  "targetContract": "Loans",
+  "expectedSourceHash": "6f3a1d1934b41d498d56631a43db8dfbf368b76141316946c5f321478c180167"
+}

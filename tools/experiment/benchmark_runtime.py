@@ -185,6 +185,12 @@ class BenchmarkRuntime:
         from audit_workbench import assess, final_conclusion
         pipeline_started = monotonic()
         view = select_strategy(self.preview(target), strategy)
+        if target.get('compilerManifest') is not None:
+            from compiler_facts import extract_compiler_facts, load_bound_compilation
+            bundle = load_bound_compilation(target['compilerManifest'], self.root)
+            if bundle['sourceHash'] != target.get('fullSourceHash'):
+                raise ValueError('编译目标与批量消费源码字节不一致')
+            view['compiledFacts'] = extract_compiler_facts(bundle)
         selected = view['d1'].get('selected', [])
         started = monotonic()
         model = self.model_runner(self.root, target, view, mode)
@@ -210,7 +216,9 @@ class BenchmarkRuntime:
         failed_tools = any(row.get('status') not in ('OK', 'SKIPPED') for row in tools)
         d2_failed = False
         try:
-            d2 = assess(model, view.get('facts', {}), tools, target.get('fullSource'), target=target)
+            d2 = assess(model, view.get('facts', {}), tools, target.get('fullSource'), target=target,
+                        compilation_manifest=target.get('compilerManifest'), root=self.root)
+            d2_failed = d2.get('status') == 'FAILED'
         except Exception:
             d2_failed = True
             d2 = {'schemaVersion': '2', 'verdict': 'UNKNOWN', 'assessments': [], 'errorCategory': 'D2_EXECUTION_ERROR'}

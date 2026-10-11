@@ -1,0 +1,17 @@
+{
+  "contract": "Loans",
+  "function": "pull(bytes32,bytes32,bool)",
+  "sourceHash": "6f3a1d1934b41d498d56631a43db8dfbf368b76141316946c5f321478c180167",
+  "sourceFile": "contracts/Loans.sol",
+  "vulnerabilityType": "REENTRANCY",
+  "riskOperation": "CALL",
+  "riskLine": 306,
+  "riskSpan": {
+    "sourceUnit": "contracts/Loans.sol",
+    "start": 11425,
+    "length": 56
+  },
+  "taskKind": "CLAIM_VALIDATION",
+  "claimOrigin": "FIXED_SOURCE_LOCATION",
+  "researchEligible": false
+}

@@ -224,6 +224,26 @@ PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py \
 
 输出目录必须不存在。重放仅重新执行工具和 D2，新增模型请求为 0；原模型、usage 与全部原文件摘要保持。派生结果绑定源码、完整工具环境、当前代码与 JAR，并封口保存 manifest、summary、逐单元 JSONL 和报告。历史输入的答案污染限制仍保留，不能把派生核验当作清理后模型发现实验。S10 局部验收与真实工具兼容缺口见 [R2 验收矩阵](../../docs/vibe/releases/R2-20261010/VERIFICATION.md)。
 
+## R2-S11：真实编译事实与有限路径
+
+`compiler_facts.py` 每次读取显式 manifest，核对完整源码闭包、固定 solc 与版本、settings、输入输出、声明及 UTF-8 跨度，随后实际重新编译并比较完整 JSON。执行前后编译器摘要必须一致。ABI 函数、继承入口、自动 getter、fallback／receive 分别盘点；构造与初始化语义仍单独保留缺口。编译对照成功为 `RECOMPILED_MATCH`，结构事实整体保持 `PARTIAL`。
+
+```bash
+python3 tools/experiment/compiler_facts.py \
+  --manifest data/audit/r2/compiler-manifests/rabbit-after.json --root .
+python3 tools/experiment/d2_verify.py \
+  --manifest data/audit/r2/compiler-manifests/atomic-after.json \
+  --hypothesis data/audit/r2/path-candidates/atomic-after.json --root .
+```
+
+六份清单登记本机 `.local/r2/` 中的原始编译产物和固定二进制。换机器须按相同来源恢复原件及环境；路径或摘要不匹配时失败，不生成替代 AST。保存假设和可选 `--tools` 工具 JSON 仅用于 `CLAIM_VALIDATION`，新增模型请求为 0；命令退出 0 表示核验已运行，不能从最终 `UNKNOWN` 推断安全。非法输入或编译绑定失败退出 1，裁决仍为未知。
+
+编译 D2 从 AST 构造有限 CFG，展开内部调用和单占位符修饰器，按实际支配与声明／映射 key／struct 字段／状态版本计算义务。`localPathEvidence` 记录局部命题、范围及条件前提；`pathEvidence` 和 `proofScope` 保留全候选、全入口与早期调用缺口。Rabbit 修复后的权限检查、Atomic 首付款前置锁只提供相应局部证据；Atomic 三版仍有置锁前的 `ACEXT()` 调用。静态可达与工具告警不足以支持可行漏洞。
+
+共享接口 `d2_verify.evaluate`、`audit_workbench.assess` 支持显式 `compilation_manifest` 和 `root`。本机登记目标可携带 `compilerManifest`；单样本预览保存 `compiledFacts` 和计划身份，执行前重核验；批量也在模型前核验绑定。页面请求不能任意指定清单路径。清理后的消费源码须与编译输入字节一致，默认未登记目标继续现有词法流程，旧报告只读。真实六环境本轮由 CLI 核验，页面中的完整路径展示由 S12 接续。
+
+真实工具结果的配置摘要与 standard-json 环境摘要含义不同；当前没有把二者复制为相同值。缺少编译／工具双收据身份桥时记录 `TOOL_ENVIRONMENT_BINDING`，整体裁决保留 `UNKNOWN`。真实正反验收、完整入口与交易可行性仍见 [R2 验收矩阵](../../docs/vibe/releases/R2-20261010/VERIFICATION.md)。
+
 ## R1-S6：独立验证样本批量对照
 
 同一 `/agent.html` 页面新增批量区域。勾选已登记的独立验证目标和 `DENSE`、`FIELD_FILTER`、`D1` 策略，先点击“查看运行计划”，再开始批量对照。每项结果同步写入 `.local/audit-batches/<批量编号>/samples.jsonl`，页面显示按策略的完成、失败、未知、入选证据、usage 和待核验指标；下载链接直接返回逐样本 JSONL。重新打开历史不会发起模型请求；异常中断的计划可在历史中续跑，已启动但没有结果的项记为未决，不自动重发。

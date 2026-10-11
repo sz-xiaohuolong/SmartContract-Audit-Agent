@@ -10,6 +10,7 @@ from time import monotonic
 
 from audit_run import _event, _model_error, tool_runner
 from audit_target import MAX_MODEL_BYTES, hypothesis_matches_target, normalize_target, pasted_target
+from compiler_facts import extract_compiler_facts, load_bound_compilation
 from d2_verify import evaluate
 from formal_recall import CONTEXT_BYTES, STRATEGIES, select_strategy
 from storage import atomic_json, decode, fingerprint
@@ -18,12 +19,22 @@ RUN_ID = re.compile(r'[0-9a-f]{32}')
 STAGES = ('FACTS', 'D1', 'MODEL', 'TOOLS', 'D2', 'REPORT')
 
 
-def assess(model, facts, tools, source=None, *, target=None):
+def _compiler_binding(bundle):
+    return {key: bundle[key] for key in ('provider', 'manifestDigest', 'receiptDigest', 'environmentHash',
+                                        'sourceHash', 'verificationStatus', 'verifiedOutputSha256')}
+
+
+def assess(model, facts, tools, source=None, *, target=None, compilation_manifest=None, root=None):
     assessments = []
     if model.get('status') == 'COMPLETED':
         for index, hypothesis in enumerate(model.get('hypotheses', [])):
-            bound = target is None or hypothesis_matches_target(hypothesis, target, source)
-            assessment = evaluate(hypothesis, facts, tools, source=source if bound else None)
+            range_hypothesis = hypothesis
+            if compilation_manifest is not None and isinstance(hypothesis.get('function'), str):
+                # 行范围仍用声明名称校验；完整签名交由类型化编译入口核验。
+                range_hypothesis = {**hypothesis, 'function': hypothesis['function'].split('(', 1)[0]}
+            bound = target is None or hypothesis_matches_target(range_hypothesis, target, source)
+            assessment = evaluate(hypothesis, facts, tools, source=source if bound else None,
+                                  compilation_manifest=compilation_manifest if bound else None, root=root)
             if not bound:
                 reason = '假设未绑定审计类别、源码或当前范围内的合约与函数'
                 assessment['note'] = reason
@@ -37,7 +48,9 @@ def assess(model, facts, tools, source=None, *, target=None):
     elif (assessments and all(row['verdict'] == 'REFUTED' for row in assessments)
           and not model.get('rejectedHypotheses') and not model.get('validationIssue')):
         verdict = 'REFUTED'
-    return {'schemaVersion': '2', 'verdict': verdict, 'verdictSubject': 'VULNERABILITY',
+    failed = any(row.get('status') == 'FAILED' for row in assessments)
+    return {'schemaVersion': '2', 'status': 'FAILED' if failed else 'COMPLETED',
+            'verdict': verdict, 'verdictSubject': 'VULNERABILITY',
             'scope': target.get('scope') if target is not None else None, 'assessments': assessments}
 
 
@@ -168,6 +181,14 @@ class AuditWorkbench:
         view['modelSourceHash'] = target['modelSourceHash']
         if view.get('sourceHash') != target['fullSourceHash']:
             raise ValueError('检索源码摘要与目标不一致')
+        compiler_binding = None
+        if target.get('compilerManifest') is not None:
+            # 仅消费本机登记目标携带的清单；页面请求不能指定任意文件路径。
+            bundle = load_bound_compilation(target['compilerManifest'], self.root)
+            if bundle['sourceHash'] != target['fullSourceHash']:
+                raise ValueError('编译目标与当前消费源码字节不一致，请提供对应清理输入的编译产物')
+            compiler_binding = _compiler_binding(bundle)
+            view['compiledFacts'] = extract_compiler_facts(bundle)
         context = view['d1'].get('context', '')
         if not isinstance(context, str) or len(context.encode('utf-8')) > CONTEXT_BYTES:
             raise ValueError('检索上下文超过 4096 字节')
@@ -187,6 +208,8 @@ class AuditWorkbench:
                 'configurationHash': configuration['hash'],
                 'contextBytes': len(context.encode('utf-8')), 'maxOutputTokens': 2048,
                 'maxRequests': 2 if mode == 'real' else 0, 'provider': configuration['provider'], 'researchEligible': False}
+        if compiler_binding is not None:
+            plan.update(factsProvider='solc-standard-json', compilerBinding=compiler_binding)
         return {'target': target, 'retrieval': view, 'plan': plan, 'planHash': fingerprint(plan),
                 'embedding': runtime.snapshot['embedding'], 'previewDurationMs': duration}, runtime, configuration
 
@@ -254,6 +277,11 @@ class AuditWorkbench:
                 raise ValueError('真实模型或工具配置已改变')
             if configuration.get('hash') != plan['configurationHash']:
                 raise ValueError('冻结配置与运行计划不一致')
+            if plan.get('factsProvider') == 'solc-standard-json':
+                bundle = load_bound_compilation(target['compilerManifest'], self.root)
+                if (_compiler_binding(bundle) != plan['compilerBinding']
+                        or extract_compiler_facts(bundle) != view.get('compiledFacts')):
+                    raise ValueError('执行前编译产物或事实已改变')
             call_target = dict(target)
             if plan['mode'] == 'real':
                 for name, field in (('providers.local.properties', '_providerConfigPath'),
@@ -268,7 +296,9 @@ class AuditWorkbench:
             runtime = prepared['runtime']
             if hasattr(runtime, 'store') and decode((runtime.store / 'active.json').read_bytes()) != runtime.pointer:
                 raise ValueError('执行前知识快照已改变')
-            stage('FACTS', view['facts']['status'], 0, '受限语法结构与程序事实已在预览绑定')
+            compiled = view.get('compiledFacts')
+            stage('FACTS', (compiled or view['facts'])['status'], 0,
+                  '实际重编译对照的 AST 事实已绑定，路径完整性单独核验' if compiled else '受限语法结构与程序事实已在预览绑定')
             stage('D1', view['d1']['status'], prepared['previewDurationMs'])
             for name in ('MODEL', 'TOOLS', 'D2'):
                 _event(events, name + '_STARTED', {'mode': plan['mode']})
@@ -298,8 +328,11 @@ class AuditWorkbench:
                             errors.append('TOOLS_FAILED')
                         status = 'FAILED' if failed_tools else 'SKIPPED' if all(row['status'] == 'SKIPPED' for row in tools) else 'COMPLETED'
                     else:
-                        d2 = assess(model, view['facts'], tools, target['fullSource'], target=target)
-                        status = d2['verdict']
+                        d2 = assess(model, view['facts'], tools, target['fullSource'], target=target,
+                                    compilation_manifest=target.get('compilerManifest'), root=self.root)
+                        if d2.get('status') == 'FAILED':
+                            errors.append('D2_BINDING_FAILED')
+                        status = 'FAILED' if d2.get('status') == 'FAILED' else d2['verdict']
                     stage(name, status, round((monotonic() - started) * 1000))
                 except Exception:
                     errors.append(name + '_EXECUTION_ERROR')
