@@ -11,6 +11,9 @@
 | `d2_verify.py` | 绑定假设、事实和工具，逐项输出 actor/resource/pre_risk_guard/entry_coverage/state_version/bypass；漏洞裁决与保护裁决分开 |
 | `compiler_facts.py` | 显式绑定 standard-json 输入、输出、源码闭包、固定 solc、声明和 ABI 入口；每次实际重新编译完整 JSON 对照，执行前后核对编译器摘要 |
 | `compiled_d2.py` | 从类型化 AST 展开内部调用和修饰器，按实际 CFG 支配、声明／key／字段和状态版本计算六义务；局部路径、条件前提与整候选缺口分别保存 |
+| `bound_slither.py` / `compilation_runtime.py` | 生成固定编译与官方 Slither 独立收据，重新核验源码闭包、设置、AST 和产物；单文件自动编译，含导入须有完整模板 |
+| `candidate_proofs.py` / `reentrancy_proofs.py` | 有限权限委派与全入口保护闭包；CEI／统一锁覆盖及合法入账、正常退出的防御顺序反例，缺口保持未知 |
+| `audit_runner.py` / `tool_replay.py` | 保存候选的零模型核验与只读派生；逐假设未知前后率、原件和实现身份封口 |
 | `audit_workbench.py` / `local_ui.py` | 预览摘要、一次性运行票据、单写者锁、六阶段事件、报告与只读历史；`workbench.html` 展示过程，`agent.html` 保留批量比较 |
 
 工作台先绑定源码、范围、池、检索上下文和配置摘要，再执行模型及工具。真实配置与环境凭证捕获后只在内存及权限 600 的临时文件消费，执行结束清理；报告保存摘要，不保存凭证。历史摘要校验失败拒绝回放，服务重启后未封口运行显示 INTERRUPTED，不自动重发模型。新报告 schemaVersion=2，旧历史只读。
@@ -26,7 +29,11 @@ S9 已验工程基线为 `4dfc7e1`；R2 的 S10 局部工程验收已通过，�
 
 S10 增加 `evaluation_input.py`：原件和清理文本分别绑定摘要，注释以空白遮蔽并保留行列，字符串原样保存。发现任务不能用评分真值选函数、风险或查询；已有候选核验显式标为 `CLAIM_VALIDATION`。模型与查询消费清理输入，历史模型保持原污染限制。
 
-`tool_environment.py` 按全部有效 pragma 交集选择固定 solc，并绑定工具、依赖、参数和实际二进制摘要。Java 工具网关保存编译探测与运行的版本、耗时、退出码及脱敏诊断；Python 在执行前后重新核验完整环境。`tool_replay.py` 对保存候选执行零模型派生重放，源码/环境/代码身份控制缓存，封口时核对原批次全部文件和当前实现/JAR，不覆盖原输出。53 次真实运行中 51 成功、2 因 Slither 旧 tuple IR 兼容断言失败；这些故障保留未知。S11 已增加显式编译事实和有限路径提供器；真实案例的整候选正反裁决仍待完整入口和可行性证据。
+`tool_environment.py` 按全部有效 pragma 交集选择固定 solc，并绑定工具、依赖、参数和实际二进制摘要。Java 工具网关保存编译探测与运行的版本、耗时、退出码及脱敏诊断；Python 在执行前后重新核验完整环境。`tool_replay.py` 对保存候选执行零模型派生重放，源码/环境/代码身份控制缓存，封口时核对原批次全部文件和当前实现/JAR，不覆盖原输出。S10 的 53 次真实运行中 51 成功、2 因 Slither 旧 tuple IR 兼容断言失败；这些故障保留未知。
+
+S11／S12 接缝已接通独立编译／工具双收据和有限证明分派。完整六义务及闭包与双收据匹配才能反驳假设；合法资金建态、正常退出的有限 CEI 顺序反例及匹配工具的同类告警才能支持假设。构造语义、其他入口、未知求值、循环、动态调用等缺口阻止完整裁决。实际 SimpleDAO 已支持登记候选；不能将该证据泛化为其他机制或整合约安全。
+
+配置固定编译器目录时，正式执行器在模型之后、工具之前为每个候选合约生成 AST 收据；显式登记案例在预览与模型之前重验。旧单 solc 网关保持原兼容入口。工作台的公开案例演练实际执行静态核验，复用登记候选且 usage 缺失为 null；六义务与所选候选同步，离线总审计结论保持未决。派生历史只消费封口产物，逐字节下载并核对可得原件，不重发模型。研究有效性与完整 S12 仍按[R2 验收矩阵](releases/R2-20261010/VERIFICATION.md)分别记录。
 
 默认构建为 `mvn clean verify`；Python 离线验证为 `PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`。CLI 为 `java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help`。本机页面由 `tools/experiment/local_ui.py` 提供，启动与配置见[工具说明](../../tools/experiment/README.md)。
 

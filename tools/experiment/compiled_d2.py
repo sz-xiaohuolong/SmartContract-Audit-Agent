@@ -499,7 +499,8 @@ class _Graph:
 
             def wrapped(bt, be, invocation=invocation, modifier=modifier, inner=inner):
                 actuals = []
-                for argument in invocation.get('arguments', []):
+                # 旧 compact AST 将无括号修饰器的实参表示为 null。
+                for argument in invocation.get('arguments') or []:
                     bt, value, be = self.expr(argument, bt, be, stack, context)
                     actuals.append(value)
                 if len(actuals) != len(modifier['parameters']):
@@ -595,8 +596,18 @@ def _path(status, nodes, bundle, reason):
             'kind': 'STATIC_CONTROL_FLOW', 'transactionFeasibility': 'UNVERIFIED'}
 
 
-def _tool_binding(tools, bundle):
-    """现有工具配置摘要与编译收据不是同一身份，缺双收据桥时明确未知。"""
+def _tool_binding(tools, bundle, root):
+    """编译与工具分别实际执行并重放；不把环境摘要相等当作第二收据。"""
+    from bound_slither import verify_bound_tool
+    indexes = [index for index, tool in enumerate(tools) if tool.get('engine') == 'SLITHER'
+                and tool.get('targetContract', bundle['targetContract']) == bundle['targetContract']
+                and tool.get('sourceFile', bundle['targetSourceUnit']) == bundle['targetSourceUnit']
+                and (tool.get('compilationReceipt') is None or
+                     tool.get('sourceHash') == bundle['sourceHash'])]
+    bindings = [verify_bound_tool(tools[index], bundle, root=root) for index in indexes]
+    if bindings and all(binding['status'] == 'MATCH' for binding in bindings):
+        return {'status': 'MATCH', 'reason': '实际编译第一收据与独立 Slither 第二收据重放匹配',
+                'receipts': bindings, 'matchedToolIndexes': indexes, 'paidModelRequests': 0}
     if not tools:
         reason = '没有原工具运行收据；静态路径仍保留'
     elif any(tool.get('sourceHash') != bundle['sourceHash'] for tool in tools):
@@ -606,7 +617,81 @@ def _tool_binding(tools, bundle):
     else:
         reason = '工具 configHash/executionConfigHash 与编译 environmentHash 含义不同；尚未核验固定编译器、依赖与设置的双收据桥'
     return {'status': 'UNKNOWN', 'errorCategory': 'TOOL_ENVIRONMENT_BINDING', 'reason': reason,
+            'receipts': bindings,
             'requirements': ['同源码', '固定编译器版本与二进制', '完整依赖闭包', '有效编译设置', '原工具运行收据']}
+
+
+def _corroboration(hypothesis, tools, bundle, risk_span, root, matched_tool_indexes):
+    """同检测类别、真实函数和源码跨度佐证；相同文件名不构成绑定。"""
+    from d2_verify import ISSUE_TYPES
+    from pathlib import Path
+    references = []
+    function_name = hypothesis['function'].split('(', 1)[0]
+    for tool_index in matched_tool_indexes:
+        tool = tools[tool_index]
+        if tool.get('engine') != 'SLITHER' or tool.get('status') != 'OK' or tool.get('sourceHash') != bundle['sourceHash']:
+            continue
+        for index, issue in enumerate(tool.get('issues', [])):
+            if ISSUE_TYPES.get(issue.get('check')) != (hypothesis['vulnerabilityType'], hypothesis['riskOperation']):
+                continue
+            elements = issue.get('elements', [])
+            for element in elements:
+                if element.get('type') != 'function' or element.get('name') != function_name:
+                    continue
+                parent = element.get('type_specific_fields', {}).get('parent', {})
+                mapping = element.get('source_mapping', {})
+                if parent.get('name') != hypothesis['contract'] or hypothesis['riskLine'] not in mapping.get('lines', []):
+                    continue
+                unit = next((unit for unit in bundle['units'].values()
+                             if unit['sourceUnit'] == risk_span['sourceUnit']), None)
+                paths = [mapping.get(key) for key in ('filename_absolute', 'filename_relative') if mapping.get(key)]
+                cwd = Path(root).resolve()
+                # 实际映射须解析到已绑定源码原件，禁止 basename 匹配。
+                if unit is None or not paths or not all((Path(path) if Path(path).is_absolute() else cwd / path).resolve()
+                        == Path(unit['path']).resolve() for path in paths):
+                    continue
+                start, length = mapping.get('start'), mapping.get('length')
+                if type(start) is not int or type(length) is not int or not (
+                        start <= risk_span['start'] and risk_span['start'] + risk_span['length'] <= start + length):
+                    continue
+                references.append({'engine': 'SLITHER', 'toolIndex': tool_index, 'issueIndex': index, 'check': issue['check'],
+                    'line': hypothesis['riskLine'], 'sourceHash': bundle['sourceHash'], 'sourceFile': unit['sourceUnit'],
+                    'span': {'start': start, 'length': length}, 'scope': hypothesis['contract'] + '.' + function_name})
+    return references
+
+
+def _apply_proof(result, proof, hypothesis, tools, bundle, root):
+    result['candidateProof'] = proof
+    if proof.get('status') not in {'PROVED', 'COUNTEREXAMPLE'}:
+        return
+    result['status'] = 'PARTIAL'
+    result.pop('errorCategory', None)
+    result['proofScope'] = copy.deepcopy(proof['proofScope'])
+    result['proofScope']['candidate'] = copy.deepcopy(hypothesis)
+    result['pathEvidence'] = copy.deepcopy(proof['pathEvidence'])
+    result['obligations'] = copy.deepcopy(proof['obligations'])
+    result['references'] = copy.deepcopy(proof.get('references', []))
+    if 'cfg' in proof:
+        result['cfg'] = copy.deepcopy(proof['cfg'])
+    if result['toolBinding']['status'] != 'MATCH':
+        return
+    if (proof['status'] == 'PROVED' and proof['proofScope']['complete']
+            and proof['pathEvidence']['status'] == 'BLOCKED'
+            and len(proof['obligations']) == len(OBLIGATIONS)
+            and {item['name'] for item in proof['obligations']} == set(OBLIGATIONS)
+            and all(item['status'] == 'SUPPORTED' for item in proof['obligations'])):
+        result.update(verdict='REFUTED', protectionVerdict='SUPPORTED', status='COMPLETED')
+    elif (proof['status'] == 'COUNTEREXAMPLE' and proof['pathEvidence']['status'] == 'FEASIBLE'
+          and proof['pathEvidence'].get('normalExit') is True
+          and proof['pathEvidence'].get('witness', {}).get('initialization', {}).get('funded') is True):
+        risk_span = proof['proofScope'].get('riskSpan')
+        if isinstance(risk_span, dict):
+            corroboration = _corroboration(hypothesis, tools, bundle, risk_span, root,
+                                          result['toolBinding'].get('matchedToolIndexes', []))
+            result['corroboration'] = corroboration
+            if corroboration:
+                result.update(verdict='SUPPORTED', protectionVerdict='REFUTED', status='COMPLETED')
+                result['references'].extend(corroboration)
 
 
 def _risk_matches(node, hypothesis, bundle, facts):
@@ -677,11 +762,17 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
         if not isinstance(name, str) or not isinstance(signature, str) or (name != signature if '(' in name else name != signature.split('(', 1)[0]):
             result.update(status='FAILED', errorCategory='HYPOTHESIS_BINDING_MISMATCH', note='函数名与完整签名不一致')
             return result
-    result['toolBinding'] = _tool_binding(tools, bundle)
+    result['toolBinding'] = _tool_binding(tools, bundle, root)
+    if mechanism == 'ACCESS_CONTROL':
+        from candidate_proofs import prove_candidate
+        proof = prove_candidate(bundle, hypothesis)
+    else:
+        from reentrancy_proofs import prove_reentrancy
+        proof = prove_reentrancy(bundle, hypothesis)
     function_name = hypothesis.get('functionSignature', hypothesis.get('function'))
     candidates = [e for e in bundle['entries'] if e['matched'] and e['kind'] != 'getter' and
                   (e['signature'] == function_name or '(' not in str(function_name)
-                   and bundle['functions'][e['declarationId']]['node'].get('name') == function_name)]
+                   and e['signature'].split('(', 1)[0] == function_name)]
     if len(candidates) != 1:
         result['note'] = '运行期函数签名不唯一；重载必须显式绑定完整签名'
         return result
@@ -694,6 +785,9 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
             result.update(status='FAILED', errorCategory='RISK_BINDING_MISMATCH')
         result['cfg'] = graph.public()
         result['proofScope']['gaps'] = graph.gaps + [result['note']]
+        _apply_proof(result, proof, hypothesis, tools, bundle, root)
+        if result['verdict'] != 'UNKNOWN':
+            result['note'] = '结论仅针对绑定候选与有限静态防御属性，不代表整合约安全或可利用性'
         return result
     risk = risks[0]
     result['riskBinding'] = _reference(risk, bundle)
@@ -803,12 +897,12 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
     if mechanism == 'ACCESS_CONTROL' and result['localPathEvidence']['status'] == 'BLOCKED' and not all_gaps:
         _set(result, 'bypass', 'SUPPORTED', [risk], bundle, '所有相关入口的风险与权限写入均由稳定的实际主体保护阻断')
         result['pathEvidence'] = copy.deepcopy(result['localPathEvidence'])
-        # 本轮未接双收据工具桥和真实反例；即使静态六义务齐备，最终仍 UNKNOWN。
-        # 不能通过复制 environmentHash 或空告警伪造独立工具绑定。
+    _apply_proof(result, proof, hypothesis, tools, bundle, root)
     for item in result['obligations'] + [result['pathEvidence'], result['localPathEvidence']]:
         for reference in item['references']:
             if reference not in result['references']:
                 result['references'].append(reference)
     result['note'] = ('结论仅针对绑定候选与完整编译证明范围' if result['verdict'] == 'REFUTED' else
-                      '局部静态证据保留；真实交易可行性、入口覆盖或工具绑定不足，最终未知')
+                      '已核验有限静态反例与同类工具证据；不代表攻击可利用性' if result['verdict'] == 'SUPPORTED' else
+                      '局部静态证据保留；路径可满足性、入口覆盖或工具绑定不足，最终未知')
     return result

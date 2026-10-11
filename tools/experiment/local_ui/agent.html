@@ -30,7 +30,7 @@
         </fieldset>
         <label class="ws-model-label" for="ws-embedding">向量模型</label>
         <select id="ws-embedding" class="ws-model"><option value="nomic">Nomic · 768 维</option><option value="bge">BGE · 384 维</option></select>
-        <button id="ws-simulate" class="ws-button ws-secondary" type="button"><svg class="ws-icon" aria-hidden="true"><use href="#ws-play-icon"/></svg>运行模拟</button>
+        <button id="ws-simulate" class="ws-button ws-secondary" type="button"><svg class="ws-icon" aria-hidden="true"><use href="#ws-play-icon"/></svg>离线演练</button>
         <button id="ws-run" class="ws-button ws-primary" type="button" disabled>开始审计</button>
       </div>
     </header>
@@ -53,6 +53,7 @@
             <select id="ws-sample"><option value="">正在读取样本…</option></select>
             <span id="ws-byte-count" class="ws-caption" hidden>0 / 131072 字节</span>
           </div>
+          <p id="ws-case-note" class="ws-caption">典型学术案例保留来源登记；离线演练核验保存候选，不调用模型。</p>
           <div id="ws-source-view" class="ws-source-view" tabindex="0" aria-label="合约源码，保留原始行号"><div class="ws-empty"><svg class="ws-empty-icon" aria-hidden="true"><use href="#ws-code-icon"/></svg><strong>从一份合约开始</strong><p>选择预置样本，或粘贴 Solidity 源码。<br>也可以运行模拟，查看完整的证据布局。</p></div></div>
           <label class="ws-sr-only" for="ws-source-input">完整 Solidity 源码</label>
           <textarea id="ws-source-input" class="ws-source-input" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="pragma solidity ^0.8.0;&#10;&#10;contract Vault {&#10;    // 在此粘贴完整 Solidity 源码&#10;}" hidden></textarea>
@@ -89,6 +90,7 @@
             <div class="ws-card-head"><h2 id="ws-d2-title">D2 保护义务矩阵</h2><span class="ws-caption">6 项核验</span></div>
             <label class="ws-sr-only" for="ws-assessment">选择待核验假设</label><select id="ws-assessment" hidden></select>
             <div id="ws-obligations" class="ws-obligations"></div>
+            <p class="ws-caption">绿色：保护成立；红色：保护被反证；灰色：证据不足。漏洞假设裁决单独展示。</p>
             <p id="ws-path" class="ws-caption">路径尚未核验，缺少证据的义务保持未知。</p>
           </section>
         </div>
@@ -197,6 +199,9 @@
       <section id="history-panel" class="ws-history-panel" role="tabpanel" aria-labelledby="history-tab" tabindex="0" hidden>
         <div class="ws-history-heading"><div><h2>运行历史</h2><p class="ws-muted">回放已保存的证据与报告，零新增模型请求。</p></div><button id="ws-history-refresh" class="ws-button ws-secondary" type="button">刷新历史</button></div>
         <div id="ws-history-list" class="ws-history-list">打开此视图后读取运行记录。</div>
+        <h3>保存候选的派生重放</h3>
+        <p class="ws-muted">保留原模型假设与原批次，核对封口摘要后展示 UNKNOWN 前后比例和剩余未知原因。</p>
+        <div id="ws-derived-list" class="ws-history-list">打开此视图后读取派生报告。</div>
         <a class="ws-history-link" href="/workbench.html#history-section">查看原单合约工作台与历史报告</a>
       </section>
     </main>

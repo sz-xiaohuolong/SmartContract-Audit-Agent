@@ -240,9 +240,23 @@ python3 tools/experiment/d2_verify.py \
 
 编译 D2 从 AST 构造有限 CFG，展开内部调用和单占位符修饰器，按实际支配与声明／映射 key／struct 字段／状态版本计算义务。`localPathEvidence` 记录局部命题、范围及条件前提；`pathEvidence` 和 `proofScope` 保留全候选、全入口与早期调用缺口。Rabbit 修复后的权限检查、Atomic 首付款前置锁只提供相应局部证据；Atomic 三版仍有置锁前的 `ACEXT()` 调用。静态可达与工具告警不足以支持可行漏洞。
 
-共享接口 `d2_verify.evaluate`、`audit_workbench.assess` 支持显式 `compilation_manifest` 和 `root`。本机登记目标可携带 `compilerManifest`；单样本预览保存 `compiledFacts` 和计划身份，执行前重核验；批量也在模型前核验绑定。页面请求不能任意指定清单路径。清理后的消费源码须与编译输入字节一致，默认未登记目标继续现有词法流程，旧报告只读。真实六环境本轮由 CLI 核验，页面中的完整路径展示由 S12 接续。
+共享接口 `d2_verify.evaluate`、`audit_workbench.assess` 支持显式 `compilation_manifest` 和 `root`。本机登记目标可携带 `compilerManifest`；单样本预览保存 `compiledFacts` 和计划身份，执行前重核验；批量也在模型前核验绑定。页面请求不能任意指定清单路径。清理后的消费源码须与编译输入字节一致，旧报告只读。配置 `tools.compiler.directory` 时，正式工作台与批量执行器在模型假设返回后自动生成单文件编译收据；仅配置 `tools.slither.solc` 的旧网关仍沿用原入口。含导入的源码须使用完整依赖模板，缺依赖、固定编译器或工具收据时保持未知。
 
-真实工具结果的配置摘要与 standard-json 环境摘要含义不同；当前没有把二者复制为相同值。缺少编译／工具双收据身份桥时记录 `TOOL_ENVIRONMENT_BINDING`，整体裁决保留 `UNKNOWN`。真实正反验收、完整入口与交易可行性仍见 [R2 验收矩阵](../../docs/vibe/releases/R2-20261010/VERIFICATION.md)。
+`bound_slither.py` 使用固定 solc 和官方 Slither 编译适配器生成独立收据，重新核对源码闭包、设置、AST、ABI、字节码及工具输出。两个摘要各自保存，通过实际对账建立 `MATCH`，不复制摘要。`candidate_proofs.py` 证明访问控制的权限委派和相关写入口闭包；`reentrancy_proofs.py` 证明有限 CEI 或统一互斥锁覆盖。保护完整且双收据匹配才能 `REFUTED`；合法入账建态、正常退出的 CEI 顺序反例及同源同类告警共同成立才能 `SUPPORTED`。局部保护、工具无告警及未建态路径仍为 `UNKNOWN`。
+
+保存候选可通过统一入口零模型核验：
+
+```bash
+PYTHONPATH=tools/experiment python3 tools/experiment/audit_runner.py \
+  --source /本机/已登记源码.sol --hypotheses /本机/保存假设数组.json --root .
+PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py --compiled --root . \
+  --original-run .local/auto-benchmark-runs/546fe566368e4b0ea7b6aeb58b235939 \
+  --output-run .local/r2/tool-replays/新的32位十六进制运行编号
+```
+
+`audit_runner.py` 的假设文件是 JSON 数组；含导入时增加 `--manifest`。重放不改变原假设或 usage，导出 `assessments.jsonl`、`summary.json` 和 `REPORT.md`；UNKNOWN 对照分母包含全部保存假设，缺失 assessment 仍计为未知。输出目录必须不存在；用于页面展示的运行编号须为 32 位十六进制，不能直接复制示例占位文字。先构建 Java，再重放；期间修改生产实现或 JAR 会拒绝封口。
+
+`agent.html` 下拉菜单预置 Unprotected、SimpleDAO，以及本机原件可用时的 RabbitHole／Atomic Loans 修复前后版本。点击「离线演练」会实际运行固定编译器、Slither 和 D2，仅复用登记候选，零模型请求；绿色表示该项保护成立，红色表示被反证，灰色表示缺证据。预览后「开始审计」亦支持该离线流程。合成机制模拟继续单独标明 D2 未执行。运行历史展示已封口派生报告、逐样本矩阵与原字节下载；登记候选不参与模型发现效果指标，离线总审计结论保留未决。实际结果和证明边界见 [R2 验收矩阵](../../docs/vibe/releases/R2-20261010/VERIFICATION.md)。
 
 ## R1-S6：独立验证样本批量对照
 

@@ -1,5 +1,6 @@
 """仅监听本机的实验页面；真实工程试跑须点击独立入口。"""
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -12,6 +13,7 @@ import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from time import monotonic
 
 from storage import atomic_json, durable_write, encode, sync_directory
 import mvp_runtime
@@ -97,6 +99,169 @@ def workspace_simulation(root, strategy='D1'):
         'model': {'status': 'SKIPPED', 'hypotheses': [], 'inputTokens': None, 'outputTokens': None},
         'tools': [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': [], 'durationMs': None}],
         'conclusion': 'UNRESOLVED', 'researchEligible': False})
+
+
+def workspace_case_targets(root, targets):
+    """登记演示候选；保留原划分，风险位置只从源码事实定位，不读取评分标签。"""
+    from audit_target import pasted_target
+    from program_facts import extract_facts
+    root = Path(root)
+    definitions = {
+        'access_control__dataset_access_control_unprotected0__fbc3cd8ad4':
+            ('访问控制 · Unprotected · 公开学术基准', 'changeOwner', 'changeOwner(address)', 'WRITE'),
+        'reentrancy__dataset_reentrancy_simple_dao__1dca773a63':
+            ('重入 · SimpleDAO · 公开学术基准', 'withdraw', 'withdraw(uint256)', 'CALL'),
+    }
+    registered = []
+    remaining = []
+    for original in targets:
+        row = dict(original)
+        definition = definitions.get(row['sampleId'])
+        if definition is None:
+            remaining.append(row)
+            continue
+        label, function, signature, operation = definition
+        facts = extract_facts(row['fullSource'])
+        scopes = [scope for scope in facts['scopes'] if scope['name'] == function]
+        risks = [fact for fact in facts['facts'] if len(scopes) == 1
+                 and fact['scope'] == scopes[0]['id'] and fact['kind'] == operation]
+        if len(risks) != 1:
+            remaining.append(row)
+            continue
+        hypothesis = {'contract': scopes[0]['contract'], 'function': signature,
+            'vulnerabilityType': row['mechanism'], 'riskOperation': operation,
+            'riskLine': risks[0]['line'], 'sourceHash': facts['sourceHash'],
+            'reason': '公开基准的防御审查登记候选；裁决须由绑定程序事实和工具证据产生',
+            'taskKind': 'CLAIM_VALIDATION', 'claimOrigin': 'REGISTERED_DEFENSIVE_DEMONSTRATION'}
+        row.update(caseLabel=label, caseGroup='SMARTBUGS_DEFENSIVE',
+            contract=scopes[0]['contract'], function=function, riskLine=risks[0]['line'],
+            savedHypotheses=[hypothesis], taskKind='CLAIM_VALIDATION',
+            claimOrigin='REGISTERED_DEFENSIVE_DEMONSTRATION', researchEligible=False,
+            sourceProvenance={'dataset': 'SmartBugs Curated', 'source': row.get('projectGroup'),
+                'registration': str(Path('src/main/resources/document/smartbugs_kb') / (row['sampleId'] + '.md'))})
+        registered.append(row)
+    registered.sort(key=lambda row: list(definitions).index(row['sampleId']))
+    pilots = [('rabbit-before', '访问控制 · RabbitHole · 修复前'),
+              ('rabbit-after', '访问控制 · RabbitHole · 维护者修复'),
+              ('atomic-before', '重入 · Atomic Loans · 修复前'),
+              ('atomic-after', '重入 · Atomic Loans · 维护者修复')]
+    for identifier, label in pilots:
+        try:
+            manifest_path = Path('data/audit/r2/compiler-manifests') / (identifier + '.json')
+            manifest = _json(root / manifest_path)
+            candidate = _json(root / 'data/audit/r2/path-candidates' / (identifier + '.json'))
+            compiler_input = _json(root / manifest['inputPath'])
+            source = compiler_input['sources'][manifest['targetSourceUnit']]['content']
+            if hashlib.sha256(source.encode('utf-8')).hexdigest() != manifest['expectedSourceHash']:
+                raise ValueError('先导原件与登记摘要不一致')
+            target = pasted_target(source, candidate['vulnerabilityType'],
+                                   candidate['function'].split('(', 1)[0], candidate['riskLine'])
+            hypothesis = {**candidate, 'sourceHash': target['fullSourceHash'],
+                'reason': '真实公开项目的固定源码候选；不是新增模型发现或人工安全标签'}
+            target.update(sampleId='R2-' + identifier.upper(), inputKind='PRESET',
+                caseLabel=label, caseGroup='REAL_CASE_PILOT', sourceKind='REAL_CASE_PILOT',
+                split='knowledge', savedHypotheses=[hypothesis], compilerTemplate=str(manifest_path),
+                claimOrigin=candidate.get('claimOrigin', 'FIXED_SOURCE_LOCATION'),
+                sourceProvenance={'dataset': '已登记真实案例先导',
+                    'registration': 'docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md',
+                    'version': identifier, 'sourceUnit': manifest['targetSourceUnit']})
+            registered.append(target)
+        except (OSError, ValueError, KeyError, TypeError):
+            # 原件未在本机恢复时不提供替身或伪造编译收据。
+            continue
+    existing = {row['sampleId'] for row in registered}
+    return registered + [row for row in remaining if row['sampleId'] not in existing]
+
+
+def workspace_rehearsal(root, target, strategy='D1', *, analyzer=None, preview=None):
+    """显式运行本机工具核验登记候选；模型和历史原件均不重跑。"""
+    hypotheses = target.get('savedHypotheses')
+    if not isinstance(hypotheses, list) or not hypotheses:
+        raise ValueError('当前样本没有登记的防御审查候选')
+    started = monotonic()
+    try:
+        if analyzer is None:
+            from audit_runner import analyze_saved
+            analyzer = analyze_saved
+        analysis = analyzer(root, target, hypotheses)
+        if not isinstance(analysis, dict) or analysis.get('newModelRequests') != 0:
+            raise ValueError('离线核验未提供零模型调用收据')
+        failed = (analysis.get('status') == 'FAILED' or analysis.get('d2', {}).get('status') == 'FAILED'
+                  or any(tool.get('status') != 'OK' for tool in analysis.get('tools', [])))
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError, ImportError, subprocess.TimeoutExpired):
+        failed = True
+        analysis = {'facts': {}, 'tools': [{'engine': 'SLITHER', 'status': 'PROCESS_ERROR', 'issues': []}],
+                    'd2': {'status': 'FAILED', 'verdict': 'UNKNOWN', 'assessments': []}}
+    retrieval = dict((preview or {}).get('retrieval') or {})
+    retrieval.setdefault('facts', analysis.get('facts') or {})
+    if analysis.get('compiledFacts') is not None:
+        retrieval['compiledFacts'] = analysis['compiledFacts']
+    retrieval.setdefault('d1', {'status': 'NOT_RUN', 'selected': [],
+                              'reason': '固定知识服务暂不可用；本次仅核验已登记候选'})
+    return workspace_document({'kind': 'OFFLINE_REHEARSAL', 'status': 'FAILED' if failed else 'COMPLETED',
+        'modelCalls': 0, 'newModelRequests': 0, 'analysisDurationMs': round((monotonic() - started) * 1000),
+        'notice': '公开案例离线演练 · 登记候选核验 · 零模型请求；彩色义务来自本机真实分析，研究有效性仍待独立验证。',
+        'target': target, 'plan': {**((preview or {}).get('plan') or {}), 'mode': 'offline',
+            'sampleId': target['sampleId'], 'strategy': strategy, 'maxRequests': 0,
+            'taskKind': 'CLAIM_VALIDATION', 'claimOrigin': target.get('claimOrigin'), 'researchEligible': False},
+        'model': {'status': 'COMPLETED', 'fixture': True, 'hypotheses': hypotheses,
+                  'hypothesisOrigin': target.get('claimOrigin'), 'inputTokens': None, 'outputTokens': None},
+        'retrieval': retrieval, 'tools': analysis.get('tools') or [], 'd2': analysis.get('d2') or {},
+        'compilerBinding': analysis.get('compilerBinding'), 'environment': analysis.get('environment'),
+        'conclusion': 'UNRESOLVED', 'researchEligible': False})
+
+
+def workspace_derived_report(root, store, identifier, artifact=None):
+    """只读已封口派生结果；结果和可得原件均逐文件核对摘要。"""
+    if not isinstance(identifier, str) or not RUN_ID.fullmatch(identifier):
+        raise ValueError('派生运行编号无效')
+    root, store = Path(root).resolve(), Path(store).resolve()
+    directory = (store / identifier).resolve()
+    if not directory.is_relative_to(store):
+        raise ValueError('派生目录超出已登记报告目录')
+    manifest = decode((directory / 'manifest.json').read_bytes())
+    names = {'samples.jsonl', 'assessments.jsonl', 'summary.json', 'REPORT.md'}
+    if artifact is not None and artifact not in names:
+        raise ValueError('派生下载文件未登记')
+    if manifest.get('status') != 'COMPLETED' or set(manifest.get('outputHashes') or {}) != names:
+        raise ValueError('派生结果未封口或输出登记不完整')
+    contents = {}
+    for name in names:
+        path = (directory / name).resolve()
+        if not path.is_relative_to(directory):
+            raise ValueError('派生产物路径超出当前运行')
+        contents[name] = path.read_bytes()
+        if hashlib.sha256(contents[name]).hexdigest() != manifest['outputHashes'][name]:
+            raise ValueError('派生产物与封口摘要不一致')
+    summary = decode(contents['summary.json'])
+    provenance = manifest.get('provenance')
+    samples = [decode(line) for line in contents['samples.jsonl'].splitlines() if line]
+    if (not isinstance(provenance, dict) or summary.get('provenance') != provenance
+            or summary.get('newModelRequests') != 0 or summary.get('researchEligible') is not False
+            or len(samples) != summary.get('units') or len(samples) != manifest.get('completedUnits')
+            or any(any(row.get('provenance', {}).get(key) != value for key, value in provenance.items())
+                   for row in samples)):
+        raise ValueError('派生汇总、逐样本来源或零模型调用身份不一致')
+    original_value = provenance.get('originalRun')
+    if not isinstance(original_value, str) or not original_value:
+        raise ValueError('原批次目录缺失')
+    original = Path(original_value).resolve()
+    original_available = original.is_dir()
+    if original_available:
+        original_hashes = provenance.get('originalFileHashes')
+        if not original.is_relative_to(root) or not isinstance(original_hashes, dict) or not original_hashes:
+            raise ValueError('原批次不在本项目或摘要登记缺失')
+        for name, expected in original_hashes.items():
+            path = (original / name).resolve()
+            if (not path.is_relative_to(original) or not path.is_file()
+                    or hashlib.sha256(path.read_bytes()).hexdigest() != expected):
+                raise ValueError('原批次文件与派生来源摘要不一致')
+        if original_hashes.get('samples.jsonl') != provenance.get('originalSamplesSha256'):
+            raise ValueError('原批次逐样本摘要不一致')
+    if artifact is not None:
+        return contents[artifact]
+    return {'runId': identifier, 'kind': 'DERIVED_REPLAY', 'manifest': manifest,
+            'summary': summary, 'samples': samples, 'originalAvailable': original_available}
 
 
 def run_demo(root):
@@ -200,7 +365,8 @@ def pending_knowledge_status(root, index):
 def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp_status=None,
                   agent_targets=None, agent_status=None, agent_preview=None, agent_runner=None, agent_store=None,
                   batch_store=None, exploratory_store=None, exploratory_runner=None,
-                  auto_store=None, auto_targets=None, auto_runtime=None, workbench=None):
+                  auto_store=None, auto_targets=None, auto_runtime=None, workbench=None, workspace_analyzer=None,
+                  derived_store=None):
     root = Path(root).resolve()
     store = Path(store) if store is not None else root / '.local/experiment-ui'
     runner = runner or (lambda: run_demo(root))
@@ -210,6 +376,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
     batch_store = Path(batch_store) if batch_store is not None else root / '.local/audit-batches'
     exploratory_store = Path(exploratory_store) if exploratory_store is not None else root / '.local/d1-exploratory-runs'
     auto_store = Path(auto_store) if auto_store is not None else root / '.local/auto-benchmark-runs'
+    derived_store = Path(derived_store) if derived_store is not None else root / '.local/r2/tool-replays'
     if agent_targets is None or agent_status is None or agent_preview is None or agent_runner is None:
         from audit_run import run_once
         from formal_targets import list_targets, load_target
@@ -267,6 +434,8 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
     if workbench is None:
         from audit_workbench import AuditWorkbench
         workbench = AuditWorkbench(root)
+        original_loader = workbench.target_loader
+        workbench.target_loader = lambda: workspace_case_targets(root, original_loader())
 
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
@@ -274,7 +443,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             self.connection.settimeout(30)
 
         def _send(self, status, data, content_type='application/json; charset=utf-8', filename=None):
-            body = encode(data) if content_type.startswith('application/json') else data
+            body = encode(data) if content_type.startswith('application/json') and not isinstance(data, bytes) else data
             self.send_response(status)
             self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(body)))
@@ -344,6 +513,34 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                             except (OSError, ValueError, KeyError):
                                 continue
                         self._send(200, {'runs': rows})
+                    elif parsed.path == '/api/agent/workspace/derived' and not query:
+                        rows = []
+                        for path in derived_store.glob('*/manifest.json'):
+                            if not RUN_ID.fullmatch(path.parent.name):
+                                continue
+                            try:
+                                report = workspace_derived_report(root, derived_store, path.parent.name)
+                                rows.append({'runId': report['runId'], 'kind': report['kind'],
+                                    'finishedAt': report['manifest'].get('finishedAt'),
+                                    'summary': report['summary'], 'originalAvailable': report['originalAvailable']})
+                            except (OSError, ValueError, KeyError, TypeError):
+                                continue
+                        self._send(200, {'runs': sorted(rows, key=lambda row: row['finishedAt'] or '', reverse=True)[:20]})
+                    elif parsed.path.startswith('/api/agent/workspace/derived/') and not query:
+                        match = re.fullmatch(r'/api/agent/workspace/derived/([0-9a-f]{32})(?:/(samples\.jsonl|assessments\.jsonl|summary\.json|REPORT\.md))?', parsed.path)
+                        if not match:
+                            self._not_found()
+                        else:
+                            if match.group(2):
+                                name = match.group(2)
+                                content_type = ('text/markdown; charset=utf-8' if name == 'REPORT.md'
+                                                else 'application/json; charset=utf-8' if name == 'summary.json'
+                                                else 'application/x-ndjson; charset=utf-8')
+                                content = workspace_derived_report(root, derived_store, match.group(1), name)
+                                self._send(200, content, content_type, name)
+                            else:
+                                report = workspace_derived_report(root, derived_store, match.group(1))
+                                self._send(200, report)
                     else:
                         match = re.fullmatch(r'/api/agent/workspace/runs/([0-9a-f]{32})', parsed.path)
                         if not match or query:
@@ -607,6 +804,39 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
             origin = self.headers.get('Origin')
             if origin and origin != f'http://127.0.0.1:{self.server.server_port}':
                 self._send(403, {'error': '请求来源不允许'})
+                return
+            if self.path == '/api/agent/workspace/rehearsal':
+                length = self.headers.get('Content-Length')
+                if (self.headers.get('Content-Type') != 'application/json' or length is None
+                        or not length.isdecimal() or not 0 < int(length) <= 1024):
+                    self._send(400, {'error': '离线演练请求类型或大小无效'}); return
+                try:
+                    payload = decode(self.rfile.read(int(length)))
+                    if (not isinstance(payload, dict) or set(payload) != {'sampleId', 'strategy', 'embeddingProfile'}
+                            or payload['strategy'] not in ('D1', 'DENSE', 'FIELD_FILTER')
+                            or payload['embeddingProfile'] not in ('nomic', 'bge')):
+                        raise ValueError('离线演练参数无效')
+                    matches = [row for row in workbench.target_loader()
+                               if row['sampleId'] == payload['sampleId'] and row.get('runnable')
+                               and row.get('savedHypotheses')]
+                    if len(matches) != 1:
+                        raise ValueError('样本没有登记候选')
+                    from audit_target import normalize_target
+                    target = normalize_target(matches[0])
+                except (OSError, ValueError, KeyError, TypeError, RuntimeError, ImportError):
+                    self._send(400, {'error': '只能对已登记的典型学术案例运行离线核验'}); return
+                if not run_lock.acquire(blocking=False):
+                    self._send(409, {'error': '已有审计或批量实验正在运行'}); return
+                try:
+                    try:
+                        preview = workbench.preview({**payload, 'mode': 'offline'})
+                    except (OSError, ValueError, KeyError, TypeError, RuntimeError, ImportError):
+                        preview = None
+                    result = workspace_rehearsal(root, target, payload['strategy'],
+                                                 analyzer=workspace_analyzer, preview=preview)
+                    self._send(200, result)
+                finally:
+                    run_lock.release()
                 return
             if self.path in ('/api/workbench/preview', '/api/workbench/runs'):
                 length = self.headers.get('Content-Length')

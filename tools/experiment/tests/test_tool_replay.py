@@ -13,6 +13,33 @@ SOURCE = 'pragma solidity ^0.8.20; contract C { uint x; function f() public { x 
 
 
 class ToolReplayTest(unittest.TestCase):
+    def test_未知比例以全部保存假设为分母且逐条保留迁移(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); original = self.original(root)
+            source_path = original / 'samples.jsonl'
+            rows = [json.loads(line) for line in source_path.read_text().splitlines()]
+            for row in rows:
+                row['model']['hypotheses'] = [{'contract': 'C', 'function': 'f', 'riskLine': 1,
+                    'riskOperation': 'WRITE', 'vulnerabilityType': 'ACCESS_CONTROL'}]
+                row['d2'] = {'assessments': [{'hypothesisIndex': 0, 'verdict': 'UNKNOWN'}]}
+            source_path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+            before = source_path.read_bytes()
+            outcomes = [{'status': 'COMPLETED', 'verdict': verdict, 'assessments': [
+                {'hypothesisIndex': 0, 'verdict': verdict, 'note': '本地接缝夹具'}]}
+                for verdict in ('SUPPORTED', 'REFUTED', 'UNKNOWN')]
+            with patch('tool_replay.assess', side_effect=outcomes):
+                summary = self.module().replay(root, original, root / 'derived',
+                    tool_runner=lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}],
+                    environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
+                    code_identity={'commit': 'fixture'})
+            comparison = summary['unknownComparison']
+            self.assertEqual(3, comparison['denominator'])
+            self.assertEqual(3, comparison['beforeUnknown'])
+            self.assertEqual(1, comparison['afterUnknown'])
+            self.assertEqual(1 / 3, comparison['afterRate'])
+            self.assertEqual(before, source_path.read_bytes())
+            self.assertEqual(3, len((root / 'derived/assessments.jsonl').read_text().splitlines()))
+
     def module(self):
         self.assertIsNotNone(importlib.util.find_spec('tool_replay'), '尚未提供保护原件的工具派生重放')
         return importlib.import_module('tool_replay')
@@ -133,6 +160,60 @@ class ToolReplayTest(unittest.TestCase):
             module.write_text('版本二')
             after = self.module()._code_identity(root)
             self.assertNotEqual(before, after)
+
+    def test_编译提供器接入共享评估并保留原候选(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); original = self.original(root)
+            manifest = {'provider': 'solc-standard-json', 'expectedSourceHash': hashlib.sha256(SOURCE.encode()).hexdigest()}
+            bundle = {'sourceHash': manifest['expectedSourceHash'], 'environmentHash': 'compiled-env',
+                      'manifestDigest': 'manifest-one', 'receiptDigest': 'receipt-one'}
+            compiled = {'status': 'PARTIAL', 'facts': [], 'provider': 'solc-standard-json'}
+            result = {'status': 'COMPLETED', 'verdict': 'UNKNOWN', 'assessments': []}
+            calls = []
+            def tools(task_root, target, mode):
+                self.assertEqual(manifest, target['compilerManifest'])
+                calls.append(target['sampleId'])
+                return [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}]
+            with patch('tool_replay.load_bound_compilation', return_value=bundle), \
+                 patch('tool_replay.extract_compiler_facts', return_value=compiled), \
+                 patch('tool_replay.assess', return_value=result) as assessment:
+                self.module().replay(root, original, root / 'derived', tool_runner=tools,
+                    environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
+                    compilation_resolver=lambda target: manifest, code_identity={'commit': 'fixture'})
+            self.assertEqual(['case'], calls)
+            for call in assessment.call_args_list:
+                self.assertEqual(manifest, call.kwargs['compilation_manifest'])
+                self.assertEqual(root.resolve(), call.kwargs['root'])
+            derived = [json.loads(line) for line in (root / 'derived/samples.jsonl').read_text().splitlines()]
+            self.assertTrue(all(row['compiledFacts'] == compiled for row in derived))
+            self.assertTrue(all(row['model']['inputTokens'] is None for row in derived))
+
+    def test_结构化D2失败进入重放失败分母(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); original = self.original(root)
+            with patch('tool_replay.assess', return_value={'status': 'FAILED', 'verdict': 'UNKNOWN', 'assessments': []}):
+                self.module().replay(root, original, root / 'derived',
+                    tool_runner=lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}],
+                    environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
+                    code_identity={'commit': 'fixture'})
+            derived = [json.loads(line) for line in (root / 'derived/samples.jsonl').read_text().splitlines()]
+            self.assertTrue(all(row['pipelineStatus'] == 'FAILED' for row in derived))
+            self.assertTrue(all(row['conclusion'] == 'UNRESOLVED' for row in derived))
+
+    def test_编译源码身份不一致不能退回词法判定(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); original = self.original(root)
+            with patch('tool_replay.load_bound_compilation', return_value={'sourceHash': '0' * 64}), \
+                 patch('tool_replay.assess') as assessment:
+                self.module().replay(root, original, root / 'derived',
+                    tool_runner=lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}],
+                    environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
+                    compilation_resolver=lambda target: {'provider': 'solc-standard-json'},
+                    code_identity={'commit': 'fixture'})
+            assessment.assert_not_called()
+            derived = [json.loads(line) for line in (root / 'derived/samples.jsonl').read_text().splitlines()]
+            self.assertTrue(all(row['pipelineStatus'] == 'FAILED' for row in derived))
+            self.assertTrue(all(row['d2']['verdict'] == 'UNKNOWN' for row in derived))
 
 
 if __name__ == '__main__':

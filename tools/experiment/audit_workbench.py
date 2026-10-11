@@ -28,13 +28,21 @@ def assess(model, facts, tools, source=None, *, target=None, compilation_manifes
     assessments = []
     if model.get('status') == 'COMPLETED':
         for index, hypothesis in enumerate(model.get('hypotheses', [])):
+            selected_manifest = compilation_manifest
+            if isinstance(compilation_manifest, dict) and compilation_manifest.get('provider') == 'contract-map':
+                selected_manifest = compilation_manifest.get('manifests', {}).get(hypothesis.get('contract'))
+                if selected_manifest is None:
+                    from d2_verify import _unknown_result
+                    assessments.append({**_unknown_result('该候选合约缺少有效编译收据'),
+                        'hypothesisIndex': index, 'status': 'FAILED', 'errorCategory': 'COMPILATION_BINDING_FAILED'})
+                    continue
             range_hypothesis = hypothesis
-            if compilation_manifest is not None and isinstance(hypothesis.get('function'), str):
+            if selected_manifest is not None and isinstance(hypothesis.get('function'), str):
                 # 行范围仍用声明名称校验；完整签名交由类型化编译入口核验。
                 range_hypothesis = {**hypothesis, 'function': hypothesis['function'].split('(', 1)[0]}
             bound = target is None or hypothesis_matches_target(range_hypothesis, target, source)
             assessment = evaluate(hypothesis, facts, tools, source=source if bound else None,
-                                  compilation_manifest=compilation_manifest if bound else None, root=root)
+                                  compilation_manifest=selected_manifest if bound else None, root=root)
             if not bound:
                 reason = '假设未绑定审计类别、源码或当前范围内的合约与函数'
                 assessment['note'] = reason
@@ -169,6 +177,10 @@ class AuditWorkbench:
                 raise ValueError('粘贴源码请求字段无效')
             target = pasted_target(payload.get('source'), payload.get('mechanism'),
                                    payload.get('function'), payload.get('riskLine'))
+        if target.get('compilerTemplate') is not None or target.get('savedHypotheses'):
+            from compilation_runtime import prepare_compilation
+            target['candidateContracts'] = sorted({h['contract'] for h in target.get('savedHypotheses', [])})
+            target['compilerManifest'] = prepare_compilation(self.root, target)
         mode = payload.get('mode', 'offline')
         profile = payload.get('embeddingProfile', 'nomic')
         strategy = payload.get('strategy', 'D1')
@@ -305,7 +317,14 @@ class AuditWorkbench:
                 started = monotonic()
                 try:
                     if name == 'MODEL':
-                        candidate = prepared['runtime'].model_runner(self.root, call_target, view, plan['mode'])
+                        if plan['mode'] == 'offline' and target.get('savedHypotheses'):
+                            candidate = {'schemaVersion': '2', 'status': 'COMPLETED',
+                                'hypotheses': target['savedHypotheses'], 'fixture': True,
+                                'claimOrigin': target.get('claimOrigin'), 'requestAttempts': 0,
+                                'inputTokens': None, 'outputTokens': None,
+                                'conclusion': 'VULNERABILITY_REPORTED'}
+                        else:
+                            candidate = prepared['runtime'].model_runner(self.root, call_target, view, plan['mode'])
                         if not isinstance(candidate, dict) or candidate.get('status') not in ('COMPLETED', 'FAILED'):
                             raise ValueError('模型结果无效')
                         # 原始诊断不进入浏览器；失败信息保持结构化并且 usage 缺失为 null。
@@ -320,6 +339,16 @@ class AuditWorkbench:
                             errors.append('MODEL_FAILED')
                         status = model['status']
                     elif name == 'TOOLS':
+                        if (plan['mode'] == 'real' and call_target.get('compilerManifest') is None
+                                and Path(call_target.get('_toolConfigPath', '')).is_file()
+                                and model.get('hypotheses')):
+                            from compilation_runtime import prepare_candidate_compilations
+                            from tool_environment import _configuration
+                            call_target['_toolConfiguration'] = _configuration(call_target['_toolConfigPath'])
+                            # 编译器目录启用新版 AST 流程；旧网关的单 solc 配置继续沿用原入口。
+                            if call_target['_toolConfiguration'].get('tools.compiler.directory'):
+                                call_target['candidateContracts'] = sorted({h['contract'] for h in model['hypotheses']})
+                                call_target['compilerManifest'] = prepare_candidate_compilations(self.root, call_target)
                         tools = self.tool(self.root, call_target, plan['mode'])
                         if not isinstance(tools, list) or not tools or any(not isinstance(row, dict) for row in tools):
                             raise ValueError('工具结果缺失或无效')
@@ -329,7 +358,7 @@ class AuditWorkbench:
                         status = 'FAILED' if failed_tools else 'SKIPPED' if all(row['status'] == 'SKIPPED' for row in tools) else 'COMPLETED'
                     else:
                         d2 = assess(model, view['facts'], tools, target['fullSource'], target=target,
-                                    compilation_manifest=target.get('compilerManifest'), root=self.root)
+                                    compilation_manifest=call_target.get('compilerManifest'), root=self.root)
                         if d2.get('status') == 'FAILED':
                             errors.append('D2_BINDING_FAILED')
                         status = 'FAILED' if d2.get('status') == 'FAILED' else d2['verdict']

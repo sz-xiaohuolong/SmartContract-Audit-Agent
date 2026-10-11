@@ -158,8 +158,19 @@ def _type_name(node, nodes, visiting=None):
     return None
 
 
+def _function_kind(node):
+    """旧 compact AST 用 isConstructor 与空名称标记入口，不按源码文本猜测。"""
+    if node.get('nodeType') == 'ModifierDefinition':
+        return 'modifier'
+    if node.get('kind') is not None:
+        return node['kind']
+    if node.get('isConstructor') is True:
+        return 'constructor'
+    return 'fallback' if node.get('name') == '' else 'function'
+
+
 def _signature(node, nodes):
-    kind = node.get('kind', 'function')
+    kind = _function_kind(node)
     if node.get('nodeType') == 'FunctionDefinition' and kind in {'fallback', 'receive', 'constructor'}:
         return kind + '()'
     parameters = node.get('parameters', {}).get('parameters', [])
@@ -246,7 +257,7 @@ def _contract_indices(nodes, units):
                     'parameters': member.get('parameters', {}).get('parameters', []),
                     'returnParameters': member.get('returnParameters', {}).get('parameters', []),
                     'modifiers': member.get('modifiers', []), 'visibility': member.get('visibility'),
-                    'stateMutability': member.get('stateMutability'), 'kind': member.get('kind', 'modifier'),
+                    'stateMutability': member.get('stateMutability'), 'kind': _function_kind(member),
                     'sourceUnit': span['sourceUnit'], 'span': span}
     for identity, contract in contracts.items():
         seen = {'effectiveFunctions': set(), 'effectiveModifiers': set(), 'effectiveStateVariables': set()}
@@ -254,7 +265,7 @@ def _contract_indices(nodes, units):
             for member in nodes[base].get('nodes', []):
                 kind = member.get('nodeType')
                 if kind == 'FunctionDefinition':
-                    if member.get('kind') == 'constructor' or (base != identity and member.get('visibility') == 'private'):
+                    if _function_kind(member) == 'constructor' or (base != identity and member.get('visibility') == 'private'):
                         continue
                     group, key = 'effectiveFunctions', functions[member['id']]['signature']
                 elif kind == 'ModifierDefinition':
@@ -278,7 +289,7 @@ def _entry_indices(abi, contract, functions, nodes, units):
     for identity in contract['effectiveFunctions']:
         function = functions[identity]
         node = function['node']
-        if function['visibility'] not in {'public', 'external'} and node.get('kind') not in {'fallback', 'receive'}:
+        if function['visibility'] not in {'public', 'external'} and function['kind'] not in {'fallback', 'receive'}:
             continue
         signature = function['signature']
         if signature:
@@ -365,7 +376,7 @@ def _load_bound_compilation(manifest, root):
     compiler_output, output_bytes = _read_json(_path(root, manifest['outputPath']))
     _check_hash(input_bytes, binding.get('inputSha256'), '编译输入')
     _check_hash(output_bytes, binding.get('outputSha256'), '编译输出')
-    if compiler_input.get('language') != 'Solidity' or binding.get('settings') != compiler_input.get('settings'):
+    if compiler_input.get('language') != 'Solidity' or _canonical(binding.get('settings')) != _canonical(compiler_input.get('settings')):
         _fail('编译语言或设置不匹配')
     statuses = [binding[key] for key in ('exitCode', 'returnCode') if key in binding]
     if not statuses or any(not _integer(code) or code != 0 for code in statuses):
@@ -441,7 +452,7 @@ def _load_bound_compilation(manifest, root):
     if compiled.returncode != 0:
         _fail(f'固定编译器重新编译退出失败：{compiled.returncode}')
     observed_output = _parse_json(compiled.stdout, '固定编译器重新编译输出')
-    if observed_output != compiler_output:
+    if _canonical(observed_output) != _canonical(compiler_output):
         _fail('固定编译器重新编译结果与绑定输出不一致')
     nodes, declarations, builtin_references = {}, {}, {}
     for unit_id, unit in units.items():

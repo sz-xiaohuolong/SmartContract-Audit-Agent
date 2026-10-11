@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from audit_workbench import assess, final_conclusion
+from compiler_facts import CompilationBindingError, extract_compiler_facts, load_bound_compilation
 from program_facts import extract_facts
 from storage import atomic_json, decode, encode, fingerprint
 
@@ -75,7 +76,7 @@ def _target(row, metadata):
 
 
 def replay(root, original_run, output_run, *, tool_runner=None, environment_resolver=None,
-           code_identity=None):
+           compilation_resolver=None, code_identity=None):
     """生成不可覆盖的派生批次；缓存身份包含源码、环境和当前实现。"""
     root, original, output = Path(root).resolve(), Path(original_run).resolve(), Path(output_run).resolve()
     if output == original or original in output.parents or output in original.parents:
@@ -104,18 +105,45 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
                 'provenance': provenance, 'plannedUnits': len(rows), 'completedUnits': 0}
     atomic_json(output / 'manifest.json', manifest)
     cache, collected, tool_executions = {}, [], 0
+    candidate_contracts = {}
+    for row in rows:
+        candidate_contracts.setdefault(row['sampleId'], set()).update(
+            hypothesis.get('contract') for hypothesis in row['model'].get('hypotheses', [])
+            if isinstance(hypothesis.get('contract'), str))
     try:
         with (output / 'samples.jsonl').open('xb') as saved:
             for row in rows:
                 target = _target(row, targets.get(row['sampleId'], {}))
+                target['candidateContracts'] = sorted(candidate_contracts[row['sampleId']])
                 environment = environment_resolver(target['fullSource'])
                 if not isinstance(environment, dict) or not isinstance(environment.get('configHash'), str):
                     raise ValueError('工具环境缺少可绑定的配置摘要')
                 target['_toolEnvironment'] = environment
                 if configuration is not None:
                     target['_toolConfiguration'] = configuration
+                compilation_manifest, compiled_facts, binding, binding_error = None, None, None, None
+                if compilation_resolver is not None:
+                    try:
+                        compilation_manifest = compilation_resolver(target)
+                        if compilation_manifest is not None:
+                            target['compilerManifest'] = compilation_manifest
+                            manifests = (compilation_manifest['manifests'] if isinstance(compilation_manifest, dict)
+                                and compilation_manifest.get('provider') == 'contract-map' else {'target': compilation_manifest})
+                            bindings, fact_sets = {}, {}
+                            for contract, manifest_value in manifests.items():
+                                bundle = load_bound_compilation(manifest_value, root)
+                                if bundle['sourceHash'] != target['sourceHash']:
+                                    raise CompilationBindingError('编译源码与原批次不一致')
+                                fact_sets[contract] = extract_compiler_facts(bundle)
+                                bindings[contract] = {name: bundle[name] for name in
+                                           ('sourceHash', 'environmentHash', 'manifestDigest', 'receiptDigest')}
+                            compiled_facts = fact_sets.get('target', fact_sets)
+                            binding = bindings.get('target', bindings)
+                    except (ValueError, OSError, subprocess.TimeoutExpired):
+                        binding_error = 'COMPILATION_BINDING_FAILED'
                 key = fingerprint({'sourceHash': target['sourceHash'], 'environmentHash': environment['configHash'],
-                                   'codeIdentityHash': identity_hash})
+                                   'codeIdentityHash': identity_hash, 'compilerBinding': binding,
+                                   'compilationError': binding_error})
                 cached = key in cache
                 if not cached:
                     try:
@@ -133,14 +161,21 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
                 tools = cache[key]
                 facts = extract_facts(target['fullSource'])
                 try:
-                    d2 = assess(row['model'], facts, tools, target['fullSource'], target=target)
+                    if binding_error:
+                        d2 = {'schemaVersion': '2', 'status': 'FAILED', 'verdict': 'UNKNOWN',
+                              'assessments': [], 'errorCategory': binding_error}
+                    else:
+                        d2 = assess(row['model'], facts, tools, target['fullSource'], target=target,
+                                    compilation_manifest=compilation_manifest, root=root)
                 except (ValueError, KeyError, TypeError):
                     d2 = {'schemaVersion': '2', 'verdict': 'UNKNOWN', 'assessments': [],
                           'errorCategory': 'D2_EXECUTION_ERROR'}
-                failed = (row['model'].get('status') != 'COMPLETED' or bool(d2.get('errorCategory'))
+                failed = (row['model'].get('status') != 'COMPLETED' or d2.get('status') == 'FAILED'
+                          or bool(d2.get('errorCategory'))
                           or any(t.get('status') != 'OK' for t in tools))
                 derived = {**row, 'tools': tools, 'd2': d2, 'facts': facts,
-                           'pipelineVersion': 'r2-derived-v1', 'pipelineStatus': 'FAILED' if failed else 'COMPLETED',
+                           'compiledFacts': compiled_facts, 'compilerBinding': binding,
+                           'pipelineVersion': 'r2-derived-v2', 'pipelineStatus': 'FAILED' if failed else 'COMPLETED',
                            'conclusion': final_conclusion(row['model'], d2, failed, 'real'),
                            'environment': environment, 'toolCacheHit': cached, 'newModelRequests': 0,
                            'provenance': {**provenance, 'originalUnitHash': fingerprint(row), 'toolCacheKey': key},
@@ -158,22 +193,54 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
                    'newModelRequests': 0, 'researchEligible': False, 'provenance': provenance,
                    'toolStatuses': dict(Counter(t.get('status', 'UNKNOWN') for row in collected for t in row['tools'])),
                    'd2Verdicts': dict(Counter(row['d2']['verdict'] for row in collected)),
+                   'assessmentVerdicts': dict(Counter(a['verdict'] for row in collected for a in row['d2']['assessments'])),
+                   'pipelineStatuses': dict(Counter(row['pipelineStatus'] for row in collected)),
                    'factsStatuses': dict(Counter(row['facts']['status'] for row in
                        {item['sampleId']: item for item in collected}.values())),
                    'pathStates': dict(Counter(a.get('pathEvidence', {}).get('status', 'UNKNOWN')
                        for row in collected for a in row['d2']['assessments'])),
                    'hypotheses': sum(len(row['model'].get('hypotheses', [])) for row in collected)}
+        comparisons = []
+        for original_row, derived in zip(rows, collected):
+            original_assessments = {a.get('hypothesisIndex', i): a for i, a in
+                                    enumerate(original_row.get('d2', {}).get('assessments', []))}
+            new_assessments = {a.get('hypothesisIndex', i): a for i, a in
+                               enumerate(derived['d2'].get('assessments', []))}
+            for index, hypothesis in enumerate(original_row['model'].get('hypotheses', [])):
+                old, new = original_assessments.get(index, {}), new_assessments.get(index, {})
+                comparisons.append({'sampleId': derived['sampleId'], 'strategy': derived['strategy'],
+                    'hypothesisIndex': index, 'hypothesis': hypothesis, 'before': old.get('verdict', 'UNKNOWN'),
+                    'after': new.get('verdict', 'UNKNOWN'), 'status': new.get('status', derived['pipelineStatus']),
+                    'reason': new.get('note', derived['d2'].get('errorCategory', '证据不足')),
+                    'gaps': new.get('candidateProof', {}).get('proofScope', new.get('proofScope', {})).get('gaps', []),
+                    'toolBinding': new.get('toolBinding'), 'pathEvidence': new.get('pathEvidence'),
+                    'references': new.get('references', [])})
+        denominator = len(comparisons)
+        before_unknown = sum(row['before'] == 'UNKNOWN' for row in comparisons)
+        after_unknown = sum(row['after'] == 'UNKNOWN' for row in comparisons)
+        summary['unknownComparison'] = {'denominator': denominator, 'beforeUnknown': before_unknown,
+            'afterUnknown': after_unknown, 'beforeRate': before_unknown / denominator if denominator else None,
+            'afterRate': after_unknown / denominator if denominator else None,
+            'reductionPercentagePoints': (before_unknown - after_unknown) * 100 / denominator if denominator else None}
+        summary['transitions'] = dict(Counter(row['before'] + '→' + row['after'] for row in comparisons))
+        summary['unknownReasons'] = dict(Counter(row['reason'] for row in comparisons if row['after'] == 'UNKNOWN'))
+        with (output / 'assessments.jsonl').open('xb') as assessment_file:
+            for comparison in comparisons:
+                assessment_file.write(encode(comparison) + b'\n')
         atomic_json(output / 'summary.json', summary)
         report = ('# 保存候选的工具与D2派生重放\n\n'
                   f"原批次：`{provenance['originalBatchId']}`；单元 {summary['units']}，唯一目标 {summary['targets']}。\n\n"
                   f"工具执行 {tool_executions} 次；新增模型请求 0。\n\n"
                   f"工具状态：{summary['toolStatuses']}。D2：{summary['d2Verdicts']}。\n\n"
+                  f"保存假设分母 {denominator}；UNKNOWN 从 {before_unknown} 降至 {after_unknown}。"
+                  f"下降百分点：{summary['unknownComparison']['reductionPercentagePoints']}。\n\n"
+                  f"逐假设迁移：{summary['transitions']}。完整对照与剩余未知原因见 `assessments.jsonl`。\n\n"
                   '原模型输出与usage保留，原批次samples摘要封口前再次核对。'
                   '本报告仅评价保存候选的核验，不是清理输入后的模型发现实验；研究资格未验证。\n')
         (output / 'REPORT.md').write_text(report, encoding='utf-8')
         manifest.update(status='COMPLETED', finishedAt=datetime.now(timezone.utc).isoformat(),
                         outputHashes={name: _sha((output / name).read_bytes()) for name in
-                                      ('samples.jsonl', 'summary.json', 'REPORT.md')})
+                                      ('samples.jsonl', 'assessments.jsonl', 'summary.json', 'REPORT.md')})
         atomic_json(output / 'manifest.json', manifest)
         return summary
     except BaseException:
@@ -187,8 +254,13 @@ def main():
     parser.add_argument('--original-run', required=True)
     parser.add_argument('--output-run', required=True)
     parser.add_argument('--root', default='.')
+    parser.add_argument('--compiled', action='store_true', help='生成固定编译双收据并使用新的 D2 引擎')
     args = parser.parse_args()
-    result = replay(args.root, args.original_run, args.output_run)
+    resolver = None
+    if args.compiled:
+        from compilation_runtime import prepare_candidate_compilations
+        resolver = lambda target: prepare_candidate_compilations(args.root, target)
+    result = replay(args.root, args.original_run, args.output_run, compilation_resolver=resolver)
     print(encode(result).decode())
     return 0
 

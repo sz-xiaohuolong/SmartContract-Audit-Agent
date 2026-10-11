@@ -437,7 +437,7 @@ byId('exploratory-refresh').onclick = loadExploratory;
     OK: '运行成功', COMPLETED: '已完成', FAILED: '失败', PROCESS_ERROR: '进程错误',
     PARSE_ERROR: '解析错误', TIMEOUT: '超时', SKIPPED: '未执行', RUNNING: '运行中',
     INTERRUPTED: '已中断', PARTIAL: '部分覆盖', COMPLETE: '范围完整',
-    REACHABLE: '路径可达', BLOCKED: '路径阻断', NOT_STARTED: '待执行'};
+    REACHABLE: '路径可达', BLOCKED: '路径阻断', FEASIBLE: '路径可行', CONDITIONAL: '有条件路径', NOT_STARTED: '待执行'};
   const textValue = (value, fallback = '—') => value === null || value === undefined || value === '' ? fallback : String(value);
   const list = value => Array.isArray(value) ? value : [];
   const node = (tag, className, value) => {
@@ -463,6 +463,8 @@ byId('exploratory-refresh').onclick = loadExploratory;
       (real && (!state.status.realReady || !byId('ws-consent').checked));
     byId('ws-run').textContent = state.busy ? '处理中…' : real ? '开始真实审计' : '开始审计';
     byId('ws-simulate').disabled = state.busy;
+    byId('ws-simulate').lastChild.textContent = byId('ws-input-mode').value === 'preset' && list(selected?.savedHypotheses).length
+      ? '离线演练' : '合成演示';
     byId('ws-refresh').disabled = state.busy;
     byId('ws-export').disabled = !state.data || state.busy;
     byId('ws-print').disabled = !state.data || state.busy;
@@ -490,12 +492,15 @@ byId('exploratory-refresh').onclick = loadExploratory;
       state.targets = list(data.targets);
       const oldValue = byId('ws-sample').value;
       const options = state.targets.map(target => {
-        const option = node('option', '', target.sampleId + (target.runnable ? '' : ' · 不可运行'));
+        const option = node('option', '', (target.caseLabel || target.sampleId) + (target.runnable ? '' : ' · 不可运行'));
         option.value = target.sampleId; option.disabled = !target.runnable; return option;
       });
-      byId('ws-sample').replaceChildren(...options);
+      const typical = node('optgroup'); typical.label = '典型学术案例 · 保存候选核验';
+      const other = node('optgroup'); other.label = '其他已登记样本';
+      options.forEach((option, index) => (state.targets[index].caseLabel ? typical : other).append(option));
+      byId('ws-sample').replaceChildren(...[typical, other].filter(group => group.children.length));
       if (state.targets.some(row => row.sampleId === oldValue && row.runnable)) byId('ws-sample').value = oldValue;
-      else byId('ws-sample').selectedIndex = state.targets.findIndex(row => row.runnable);
+      else byId('ws-sample').value = state.targets.find(row => row.runnable)?.sampleId || '';
       if (!options.length) byId('ws-sample').append(node('option', '', '暂无预置样本，支持粘贴源码'));
       byId('ws-refresh').className = 'ws-service ws-badge' + (data.status.ready ? ' ws-good' : '');
       show('ws-service-text', data.status.ready ? '系统就绪' : '服务待配置');
@@ -522,6 +527,7 @@ byId('exploratory-refresh').onclick = loadExploratory;
       show('ws-file', sampleId + '.sol');
       show('ws-scope', `${data.target.scope === 'FUNCTION' ? '函数范围' : '完整源码'} · 原始行 ${data.target.lineStart}–${data.target.lineEnd}`);
       show('ws-scope-label', data.target.function || '已登记范围');
+      showCaseOrigin(data.target);
     } catch (error) { if (revision === state.revision) message(error.message, 'error'); }
   }
   function choice() {
@@ -550,12 +556,18 @@ byId('exploratory-refresh').onclick = loadExploratory;
   async function simulate() {
     if (state.busy) return;
     setBusy(true); state.revision++; state.preview = null;
-    message('正在读取本机合成证据…', 'busy');
+    const selected = state.targets.find(row => row.sampleId === byId('ws-sample').value);
+    const rehearsal = byId('ws-input-mode').value === 'preset' && list(selected?.savedHypotheses).length > 0;
+    message(rehearsal ? '正在使用本机编译与静态分析核验登记候选…' : '正在读取本机合成证据…', 'busy');
     try {
-      const data = await request('/api/agent/workspace/simulation?strategy=' + encodeURIComponent(selectedStrategy()));
-      useSourceInput(data);
+      const data = rehearsal
+        ? await request('/api/agent/workspace/rehearsal', {method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: json({sampleId: selected.sampleId, strategy: selectedStrategy(), embeddingProfile: byId('ws-embedding').value})})
+        : await request('/api/agent/workspace/simulation?strategy=' + encodeURIComponent(selectedStrategy()));
+      if (rehearsal) { byId('ws-mode').value = 'offline'; byId('ws-consent-region').hidden = true; }
+      else useSourceInput(data);
       renderDocument(data);
-      message(data.notice);
+      message(data.notice, data.status === 'FAILED' ? 'error' : '');
     } catch (error) { message(error.message, 'error'); }
     finally { setBusy(false); }
   }
@@ -744,8 +756,10 @@ byId('exploratory-refresh').onclick = loadExploratory;
     for (const [key, title] of obligations) {
       const obligation = list(assessment.obligations).find(row => row.name === key) || {status: 'UNKNOWN'};
       const card = node('div', 'ws-obligation');
+      card.dataset.obligation = key;
+      card.dataset.status = obligation.status;
       const badge = node('span', 'ws-badge' + (obligation.status === 'SUPPORTED' ? ' ws-good' : obligation.status === 'REFUTED' ? ' ws-bad' : ''),
-        obligation.status === 'SUPPORTED' ? '保护获支持' : obligation.status === 'REFUTED' ? '保护被反证' : '未知');
+        obligation.status === 'SUPPORTED' ? '保护成立' : obligation.status === 'REFUTED' ? '保护被反证' : '未知');
       card.append(node('h3', '', title), badge);
       card.title = obligation.reason || '尚无充分证据';
       const refs = list(obligation.references).filter(ref => Number.isInteger(ref.line));
@@ -764,14 +778,16 @@ byId('exploratory-refresh').onclick = loadExploratory;
   function renderHypothesis(data, index = 0) {
     const region = byId('ws-hypothesis'); region.replaceChildren();
     const hypothesis = list(data.model?.hypotheses)[index];
+    const assessment = list(data.d2?.assessments)[index];
     const target = data.target || {};
-    show('ws-hypothesis-status', hypothesis ? `${list(data.model.hypotheses).length} 项候选` : '未生成');
+    const saved = data.model?.fixture && list(target.savedHypotheses).length;
+    show('ws-hypothesis-status', hypothesis ? `${list(data.model.hypotheses).length} 项${saved ? '登记' : ''}候选` : '未生成');
     meta(region, '合约', hypothesis?.contract || target.contract || target.sampleId);
     meta(region, '函数', hypothesis?.function || target.function);
     const line = hypothesis?.riskLine || target.riskLine;
     meta(region, '风险位置', Number.isInteger(line) ? lineLink(line) : '—');
     meta(region, '审计范围', target.scope === 'FUNCTION' ? '指定函数' : target.scope ? '完整源码' : '等待输入');
-    meta(region, 'D2 裁决', {SUPPORTED: '漏洞假设获支持', REFUTED: '漏洞假设被反驳', UNKNOWN: '未知'}[data.d2?.verdict] || '未知');
+    meta(region, 'D2 裁决', {SUPPORTED: '漏洞假设获支持', REFUTED: '漏洞假设被反驳', UNKNOWN: '未知'}[assessment?.verdict] || '未知');
     const reason = hypothesis?.reason || (data.model?.rejectedHypotheses?.length ? '部分模型假设未通过绑定校验，结果保持未决。' : '尚无模型假设。无假设不代表全合约安全。');
     region.append(node('p', 'ws-hypothesis-note', reason));
   }
@@ -784,6 +800,7 @@ byId('exploratory-refresh').onclick = loadExploratory;
       UNRESOLVED: ['审计结论未决', '当前证据不足，保留未知。', '']};
     let entry = mapping[conclusion] || ['等待审计', '让每一个结论都有证据。', ''];
     if (isSimulation(data)) entry = ['模拟 · 保持未决', '合成夹具仅展示证据，不构成真实检测结果。', ''];
+    else if (data.kind === 'OFFLINE_REHEARSAL' && data.status !== 'FAILED') entry = ['离线候选已核验', '六项义务使用真实分析结果；登记候选不作为模型发现效果或全合约安全证明。', ''];
     else if (data.status === 'RUNNING') entry = ['正在审计', '证据逐阶段保存，请稍候。', ''];
     else if (data.status === 'FAILED' || data.status === 'INTERRUPTED') entry = ['运行未完成', '阶段失败或中断，审计结论保持未决。', ''];
     else if (data.planHash && !data.status) entry = ['计划已就绪', '已固定本次输入、检索证据与请求上限。', ''];
@@ -795,7 +812,7 @@ byId('exploratory-refresh').onclick = loadExploratory;
     show('ws-tokens', telemetry.totalTokens == null ? '—' : Number(telemetry.totalTokens).toLocaleString('zh-CN'));
     show('ws-latency', duration == null ? '—' : duration < 1000 ? `${duration}ms` : `${(duration / 1000).toFixed(1)}s`);
     show('ws-cost', telemetry.cost == null ? '—' : String(telemetry.cost));
-    show('ws-run-kind', isSimulation(data) ? '合成模拟' : data.plan?.mode === 'real' ? '真实运行' : data.status ? '离线演练' : '未运行');
+    show('ws-run-kind', data.kind === 'DERIVED_REPLAY' ? '派生重放' : isSimulation(data) ? '合成模拟' : data.plan?.mode === 'real' ? '真实运行' : data.status ? '离线演练' : '未运行');
     show('ws-usage-note', `输入 ${textValue(telemetry.inputTokens)} / 输出 ${textValue(telemetry.outputTokens)} token。${telemetry.totalTokens == null ? '缺失用量保留 null；费用未提供。' : '费用以返回记录为准。'}`);
     const region = byId('ws-stages'); region.replaceChildren();
     const recorded = new Map(list(data.stages).map(stage => [stage.name, stage]));
@@ -812,7 +829,7 @@ byId('exploratory-refresh').onclick = loadExploratory;
   }
   function renderEvidence(data) {
     renderRetrieval(data); renderTools(data); renderObligations(data); renderVerdict(data); renderTelemetry(data);
-    const facts = data.retrieval?.facts || {};
+    const facts = data.retrieval?.compiledFacts || data.retrieval?.facts || {};
     const types = [...new Set(list(facts.facts).map(fact => fact.kind))];
     const names = {CALL: '外部调用', WRITE: '状态写入', CHECK: '权限检查', READ: '状态读取', LOCK: '互斥保护'};
     byId('ws-facts').replaceChildren(...(types.length ? types.slice(0, 4).map(type => node('span', 'ws-chip', names[type] || type)) : [node('span', 'ws-chip', '等待预览')]));
@@ -822,12 +839,21 @@ byId('exploratory-refresh').onclick = loadExploratory;
   function renderDocument(data) {
     state.data = data;
     if (data.target) renderSource(data);
+    showCaseOrigin(data.target || {});
     show('ws-scope-label', data.target?.function || '访问控制 / 重入');
     byId('ws-stage-details').open = data.status === 'RUNNING';
     renderEvidence(data);
     updateControls();
   }
+  function showCaseOrigin(target) {
+    const origin = target.sourceProvenance || {};
+    const parts = [target.caseLabel, origin.dataset, origin.sourceUnit || origin.source].filter(Boolean);
+    if (target.taskKind === 'CLAIM_VALIDATION') parts.push('固定候选核验 · 不参与模型发现指标');
+    if (origin.registration) parts.push(`来源登记：${origin.registration}`);
+    show('ws-case-note', parts.length ? parts.join(' · ') : '保留输入范围与原始行号；所有裁决须有绑定证据。');
+  }
   async function loadWorkspaceHistory() {
+    loadDerivedHistory();
     const region = byId('ws-history-list'); region.replaceChildren(node('p', 'ws-muted', '正在读取本机报告…'));
     try {
       const data = await request('/api/agent/workspace/runs');
@@ -854,6 +880,64 @@ byId('exploratory-refresh').onclick = loadExploratory;
       }
       if (!list(data.runs).length) region.append(node('div', 'ws-empty', '暂无保存记录。完成一次审计后，可在此回放并导出。'));
     } catch (error) { region.replaceChildren(node('p', 'ws-muted', error.message + '。点击刷新历史重试。')); }
+  }
+  async function loadDerivedHistory() {
+    const region = byId('ws-derived-list'); region.replaceChildren(node('p', 'ws-muted', '正在核对已封口派生报告…'));
+    const rate = value => value == null ? '—' : `${(Number(value) * 100).toFixed(1)}%`;
+    try {
+      const data = await request('/api/agent/workspace/derived');
+      region.replaceChildren();
+      for (const item of list(data.runs)) {
+        const summary = item.summary || {};
+        const comparison = summary.unknownComparison || {};
+        const card = node('details', 'ws-card ws-detail');
+        const title = node('summary', '', `派生记录 · ${textValue(summary.provenance?.originalBatchId)} · ${textValue(item.finishedAt)}`);
+        card.append(title, node('p', 'ws-caption', `保存假设 ${textValue(comparison.denominator)} 项；UNKNOWN ${rate(comparison.beforeRate)} → ${rate(comparison.afterRate)}；新增模型请求 ${textValue(summary.newModelRequests)} 次。`));
+        card.append(node('p', 'ws-caption', item.originalAvailable ? '派生封口与原批次摘要核对通过。' : '派生封口摘要核对通过；原批次目前不在本机，来源摘要保留。'));
+        const links = node('div', 'ws-export-actions');
+        for (const [filename, label] of [['samples.jsonl', '下载逐样本 JSONL'], ['assessments.jsonl', '下载逐假设对照'], ['REPORT.md', '下载派生报告']]) {
+          const link = node('a', 'ws-line-link', label);
+          link.href = '/api/agent/workspace/derived/' + item.runId + '/' + filename;
+          links.append(link);
+        }
+        card.append(links);
+        const samples = node('div', 'ws-history-list');
+        card.append(samples);
+        let loaded = false;
+        card.ontoggle = async () => {
+          if (!card.open || loaded) return;
+          loaded = true;
+          samples.append(node('p', 'ws-muted', '正在读取保存候选…'));
+          try {
+            const report = await request('/api/agent/workspace/derived/' + item.runId);
+            samples.replaceChildren(node('p', 'ws-caption', '剩余未知原因：' + json(report.summary.unknownReasons || {})));
+            for (const sample of list(report.samples)) {
+              const button = node('button', 'ws-history-row', `${textValue(sample.sampleId)} · ${textValue(sample.strategy)} · ${statusLabels[sample.d2?.verdict] || '未知'}`);
+              button.type = 'button';
+              button.onclick = () => {
+                if (state.busy) { message('当前审计仍在处理，完成后可回放派生记录。'); return; }
+                const hypothesis = list(sample.model?.hypotheses)[0] || {};
+                const record = {...sample, kind: 'DERIVED_REPLAY', status: sample.pipelineStatus || sample.status,
+                  plan: {mode: 'replay', strategy: sample.strategy, toolReplay: sample.provenance},
+                  target: sample.target || {sampleId: sample.sampleId, fullSource: sample.source,
+                    modelSource: sample.source, scope: sample.d2?.scope || 'FULL', lineStart: 1,
+                    mechanism: hypothesis.vulnerabilityType, contract: hypothesis.contract, function: hypothesis.function},
+                  telemetry: {inputTokens: sample.model?.inputTokens, outputTokens: sample.model?.outputTokens,
+                    totalTokens: Number.isInteger(sample.model?.inputTokens) && Number.isInteger(sample.model?.outputTokens)
+                      ? sample.model.inputTokens + sample.model.outputTokens : null}};
+                state.preview = null; state.revision++;
+                useSourceInput(record);
+                renderDocument(record); switchPanel('workspace');
+                message(`派生记录 ${item.runId.slice(0, 8)} · 原批次 ${textValue(summary.provenance?.originalBatchId)} · 零新增模型请求。`);
+              };
+              samples.append(button);
+            }
+          } catch (error) { loaded = false; samples.replaceChildren(node('p', 'ws-muted', error.message)); }
+        };
+        region.append(card);
+      }
+      if (!list(data.runs).length) region.append(node('p', 'ws-muted', '暂无已封口派生结果。重放报告保存后，可在此只读回放并下载。'));
+    } catch (error) { region.replaceChildren(node('p', 'ws-muted', error.message)); }
   }
   function switchPanel(name) {
     for (const key of ['workspace', 'batch', 'history']) {

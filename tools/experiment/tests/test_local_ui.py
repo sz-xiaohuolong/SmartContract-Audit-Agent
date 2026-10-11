@@ -1,6 +1,7 @@
 """本地实验页面的离线接口回归。"""
 import http.client
 import json
+import hashlib
 from copy import deepcopy
 import threading
 import unittest
@@ -8,10 +9,180 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from local_ui import create_server
+import local_ui
 
 
 ROOT = Path(__file__).resolve().parents[3]
 DEMO = json.loads((ROOT / 'tools/experiment/fixtures/research-pilot/pilot.json').read_text(encoding='utf-8'))
+
+
+class WorkspaceCaseTest(unittest.TestCase):
+    def test_公开案例的登记候选不读取真值行(self):
+        from benchmark_targets import load_benchmark_targets
+        rows = load_benchmark_targets(ROOT, [])
+        registered = local_ui.workspace_case_targets(ROOT, rows)
+        cases = [row for row in registered if row.get('caseGroup') == 'SMARTBUGS_DEFENSIVE']
+        self.assertEqual({'ACCESS_CONTROL', 'REENTRANCY'}, {row['mechanism'] for row in cases})
+        self.assertTrue(all(row['savedHypotheses'] and not row['researchEligible'] for row in cases))
+        altered = deepcopy(rows)
+        for row in altered:
+            row['vulnerableLines'] = [1]
+            row['groundTruth'] = {'hasVulnerability': False}
+        repeated = local_ui.workspace_case_targets(ROOT, altered)
+        self.assertEqual({row['sampleId']: row['savedHypotheses'] for row in cases},
+            {row['sampleId']: row['savedHypotheses'] for row in repeated
+             if row.get('caseGroup') == 'SMARTBUGS_DEFENSIVE'})
+        self.assertEqual(['changeOwner(address)', 'withdraw(uint256)'],
+                         [row['savedHypotheses'][0]['function'] for row in cases])
+
+    def test_离线演练保留核验矩阵且不能升级为学术安全结论(self):
+        from audit_target import pasted_target
+        target = pasted_target('contract C { uint x; function f() public { x = 1; } }', 'ACCESS_CONTROL')
+        target.update(savedHypotheses=[{'contract': 'C', 'function': 'f()', 'riskLine': 1}],
+                      caseLabel='公开案例的登记候选', claimOrigin='REGISTERED_DEFENSIVE_DEMONSTRATION')
+        calls = []
+        def analyze(root, current, hypotheses):
+            calls.append((current, hypotheses))
+            return {'facts': {'status': 'COMPLETE'}, 'tools': [{'engine': 'SLITHER', 'status': 'OK'}],
+                    'd2': {'verdict': 'SUPPORTED', 'assessments': [{'obligations': [
+                        {'name': 'actor', 'status': 'REFUTED', 'references': [{'line': 1}]}]}]},
+                    'newModelRequests': 0}
+        result = local_ui.workspace_rehearsal(ROOT, target, analyzer=analyze)
+        self.assertEqual('OFFLINE_REHEARSAL', result['kind'])
+        self.assertEqual('SUPPORTED', result['d2']['verdict'])
+        self.assertEqual('REFUTED', result['d2']['assessments'][0]['obligations'][0]['status'])
+        self.assertEqual(6, len(result['d2']['assessments'][0]['obligations']))
+        self.assertEqual('UNRESOLVED', result['conclusion'])
+        self.assertEqual(0, result['newModelRequests'])
+        self.assertIsNone(result['telemetry']['totalTokens'])
+        self.assertFalse(result['researchEligible'])
+        self.assertEqual(1, len(calls))
+
+    def test_离线演练工具失败仍未知(self):
+        from audit_target import pasted_target
+        target = pasted_target('contract C { uint x; function f() public { x = 1; } }', 'ACCESS_CONTROL')
+        target['savedHypotheses'] = [{'contract': 'C', 'function': 'f()', 'riskLine': 1}]
+        def analyze(*args):
+            raise RuntimeError('编译工具不可用')
+        result = local_ui.workspace_rehearsal(ROOT, target, analyzer=analyze)
+        self.assertEqual('FAILED', result['status'])
+        self.assertEqual('UNKNOWN', result['d2']['verdict'])
+        self.assertEqual({'UNKNOWN'}, {row['status'] for row in result['d2']['assessments'][0]['obligations']})
+        self.assertEqual('UNRESOLVED', result['conclusion'])
+
+    def test_显式演练接口只接受登记候选且读取不执行工具(self):
+        from audit_target import pasted_target
+        target = pasted_target('contract C { uint x; function f() public { x = 1; } }', 'ACCESS_CONTROL')
+        target.update(sampleId='academic-ac', savedHypotheses=[{'contract': 'C', 'function': 'f()', 'riskLine': 1}])
+        calls = []
+        class Workbench:
+            def target_loader(self):
+                return [target]
+            def targets(self):
+                return [{'sampleId': target['sampleId'], 'runnable': True, 'savedHypotheses': target['savedHypotheses']}]
+            def status(self, profile):
+                return {'ready': False}
+            def preview(self, payload):
+                raise RuntimeError('固定快照不可用')
+        def analyze(*args):
+            calls.append(args)
+            return {'newModelRequests': 0, 'tools': [{'engine': 'SLITHER', 'status': 'OK'}],
+                    'd2': {'verdict': 'REFUTED', 'assessments': [{'obligations': [
+                        {'name': 'actor', 'status': 'SUPPORTED'}]}]}}
+        server = create_server(ROOT, 0, workbench=Workbench(), workspace_analyzer=analyze,
+            agent_targets=lambda: [], agent_status=lambda: {}, agent_preview=lambda _: {},
+            agent_runner=lambda *args: self.fail('离线演练不能调用模型'))
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        def request(method, path, payload=None, headers=None):
+            connection = http.client.HTTPConnection('127.0.0.1', server.server_port, timeout=5)
+            body = json.dumps(payload) if payload is not None else None
+            connection.request(method, path, body, headers or {'Content-Type': 'application/json'})
+            response = connection.getresponse()
+            result = response.status, json.loads(response.read())
+            connection.close()
+            return result
+        try:
+            self.assertEqual(200, request('GET', '/api/agent/workspace')[0])
+            self.assertEqual([], calls)
+            payload = {'sampleId': 'academic-ac', 'strategy': 'D1', 'embeddingProfile': 'nomic'}
+            self.assertEqual(400, request('POST', '/api/agent/workspace/rehearsal', {**payload, 'source': '替身'})[0])
+            self.assertEqual(400, request('POST', '/api/agent/workspace/rehearsal', {**payload, 'sampleId': 'missing'})[0])
+            self.assertEqual([], calls)
+            code, result = request('POST', '/api/agent/workspace/rehearsal', payload)
+            self.assertEqual(200, code)
+            self.assertEqual('REFUTED', result['d2']['verdict'])
+            self.assertEqual('SUPPORTED', result['d2']['assessments'][0]['obligations'][0]['status'])
+            self.assertEqual(1, len(calls))
+        finally:
+            server.shutdown(); server.server_close(); thread.join(2)
+
+    def test_派生报告读回核对封口摘要和原件且不重跑(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            original = root / 'original'
+            original.mkdir()
+            (original / 'samples.jsonl').write_text('原批次\n', encoding='utf-8')
+            provenance = {'originalRun': str(original), 'originalBatchId': 'original-batch',
+                'originalSamplesSha256': hashlib.sha256((original / 'samples.jsonl').read_bytes()).hexdigest(),
+                'originalFileHashes': {'samples.jsonl': hashlib.sha256((original / 'samples.jsonl').read_bytes()).hexdigest()},
+                'newModelRequests': 0}
+            store = root / 'derived'
+            identifier = 'a' * 32
+            output = store / identifier
+            output.mkdir(parents=True)
+            values = {'samples.jsonl': json.dumps({'sampleId': 'public-sample', 'provenance': provenance}) + '\n',
+                'assessments.jsonl': '{}\n', 'REPORT.md': '派生报告',
+                'summary.json': json.dumps({'units': 1, 'newModelRequests': 0,
+                    'researchEligible': False, 'provenance': provenance,
+                    'unknownComparison': {'denominator': 1, 'beforeRate': 1, 'afterRate': 0}})}
+            for name, content in values.items():
+                (output / name).write_text(content, encoding='utf-8')
+            manifest = {'status': 'COMPLETED', 'provenance': provenance, 'completedUnits': 1,
+                        'outputHashes': {name: hashlib.sha256((output / name).read_bytes()).hexdigest() for name in values}}
+            (output / 'manifest.json').write_text(json.dumps(manifest))
+            result = local_ui.workspace_derived_report(root, store, identifier)
+            self.assertEqual(0, result['summary']['newModelRequests'])
+            self.assertTrue(result['originalAvailable'])
+            self.assertEqual('public-sample', result['samples'][0]['sampleId'])
+            server = create_server(root, 0, derived_store=store, workbench=object(),
+                agent_targets=lambda: [], agent_status=lambda: {}, agent_preview=lambda _: {},
+                agent_runner=lambda *args: self.fail('派生读回不得执行模型'))
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            def get(path):
+                connection = http.client.HTTPConnection('127.0.0.1', server.server_port, timeout=5)
+                connection.request('GET', path)
+                response = connection.getresponse()
+                result = response.status, response.getheader('Content-Disposition'), response.read()
+                connection.close()
+                return result
+            try:
+                code, _, body = get('/api/agent/workspace/derived')
+                self.assertEqual(200, code)
+                self.assertEqual(identifier, json.loads(body)['runs'][0]['runId'])
+                code, _, body = get('/api/agent/workspace/derived/' + identifier)
+                self.assertEqual(200, code)
+                self.assertEqual('public-sample', json.loads(body)['samples'][0]['sampleId'])
+                for name in values:
+                    code, disposition, body = get('/api/agent/workspace/derived/' + identifier + '/' + name)
+                    self.assertEqual(200, code)
+                    self.assertIn(name, disposition)
+                    self.assertEqual((output / name).read_bytes(), body)
+                self.assertEqual(404, get('/api/agent/workspace/derived/' + identifier + '/secret')[0])
+            finally:
+                server.shutdown(); server.server_close(); thread.join(2)
+            (original / 'samples.jsonl').write_text('原件被修改')
+            with self.assertRaises(ValueError):
+                local_ui.workspace_derived_report(root, store, identifier)
+            (original / 'samples.jsonl').unlink()
+            original.rmdir()
+            self.assertFalse(local_ui.workspace_derived_report(root, store, identifier)['originalAvailable'])
+            (output / 'samples.jsonl').write_text('结果被修改')
+            with self.assertRaises(ValueError):
+                local_ui.workspace_derived_report(root, store, identifier)
+            with self.assertRaises(ValueError):
+                local_ui.workspace_derived_report(root, store, '../original')
 
 
 class LocalUiTest(unittest.TestCase):

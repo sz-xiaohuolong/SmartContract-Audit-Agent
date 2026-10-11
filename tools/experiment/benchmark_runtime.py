@@ -183,6 +183,10 @@ class BenchmarkRuntime:
 
     def run(self, target, strategy, mode):
         from audit_workbench import assess, final_conclusion
+        target = dict(target)
+        if target.get('compilerTemplate') is not None:
+            from compilation_runtime import prepare_compilation
+            target['compilerManifest'] = prepare_compilation(self.root, target)
         pipeline_started = monotonic()
         view = select_strategy(self.preview(target), strategy)
         if target.get('compilerManifest') is not None:
@@ -205,6 +209,20 @@ class BenchmarkRuntime:
             diagnostic.chmod(0o600)
             diagnostic_path = str(diagnostic.relative_to(self.root))
         model = {key: value for key, value in model.items() if key != '_rawResponse'}
+        compilation_error = None
+        if (mode == 'real' and target.get('compilerManifest') is None
+                and (self.root / 'config/tools.local.properties').is_file() and model.get('hypotheses')):
+            from compilation_runtime import prepare_candidate_compilations
+            from tool_environment import _configuration
+            try:
+                configuration = _configuration(self.root / 'config/tools.local.properties')
+                # 编译器目录启用新版 AST 流程；显式编译清单不受此兼容开关限制。
+                if configuration.get('tools.compiler.directory'):
+                    target['_toolConfiguration'] = configuration
+                    target['candidateContracts'] = sorted({h['contract'] for h in model['hypotheses']})
+                    target['compilerManifest'] = prepare_candidate_compilations(self.root, target)
+            except (ValueError, OSError):
+                compilation_error = 'COMPILATION_BINDING_FAILED'
         tool_started = monotonic()
         try:
             tools = getattr(self, 'tool_runner', default_tool_runner)(self.root, target, mode)
@@ -216,6 +234,8 @@ class BenchmarkRuntime:
         failed_tools = any(row.get('status') not in ('OK', 'SKIPPED') for row in tools)
         d2_failed = False
         try:
+            if compilation_error:
+                raise ValueError(compilation_error)
             d2 = assess(model, view.get('facts', {}), tools, target.get('fullSource'), target=target,
                         compilation_manifest=target.get('compilerManifest'), root=self.root)
             d2_failed = d2.get('status') == 'FAILED'

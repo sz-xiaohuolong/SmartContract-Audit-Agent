@@ -248,6 +248,17 @@ def selected_ids(selected):
 
 
 def tool_runner(root, target, mode):
+    if target.get('compilerManifest') is not None and (mode == 'real' or target.get('savedHypotheses')):
+        from bound_slither import analyze_bound
+        manifest = target['compilerManifest']
+        if isinstance(manifest, dict) and manifest.get('provider') == 'contract-map':
+            tools = [{**analyze_bound(value, root=root), 'targetContract': contract}
+                     for contract, value in manifest['manifests'].items()]
+            if manifest.get('errors'):
+                tools.append({'engine': 'SLITHER', 'status': 'PROCESS_ERROR', 'issues': [],
+                              'errorCategory': 'COMPILATION_BINDING_FAILED'})
+            return tools
+        return [analyze_bound(manifest, root=root)]
     if mode == 'offline':
         return [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': [], 'durationMs': 0,
                  'version': None, 'reason': '固定离线演练不运行真实静态工具'}]
