@@ -27,25 +27,51 @@ def _code_identity(root):
             'artifactHash': _sha(jar.read_bytes()) if jar.is_file() else None}
 
 
+def _input_blocked(row, plan):
+    """缺源码只接受冻结计划登记的零请求输入阻断，不能放宽普通源码校验。"""
+    eligibility = plan.get('inputEligibility', {}).get(row.get('sampleId'), {})
+    source_hash = row.get('sourceHash')
+    d2 = row.get('d2', {})
+    return (isinstance(eligibility, dict) and eligibility.get('runnable') is False
+            and 'source' not in row and isinstance(source_hash, str) and len(source_hash) == 64
+            and all(character in '0123456789abcdef' for character in source_hash)
+            and plan.get('sourceHashes', {}).get(row.get('sampleId')) == source_hash
+            and row.get('errorCategory') == 'EVALUATION_INPUT_BLOCKED'
+            and row.get('inputReason') == eligibility.get('reason')
+            and row.get('status') == 'FAILED' and row.get('pipelineStatus') == 'FAILED'
+            and row.get('prediction') == 'UNKNOWN' and row.get('modelPrediction') == 'UNKNOWN'
+            and row.get('conclusion') == 'UNRESOLVED'
+            and type(row.get('requestAttempts')) is int and row['requestAttempts'] == 0
+            and row.get('model') == {} and row.get('inputTokens') is None and row.get('outputTokens') is None
+            and row.get('tools') == [] and isinstance(d2, dict) and d2.get('verdict') == 'UNKNOWN'
+            and d2.get('assessments') == [] and d2.get('errorCategory') == 'EVALUATION_INPUT_BLOCKED')
+
+
 def _load_original(original):
     raw = (original / 'samples.jsonl').read_bytes()
     rows = [decode(line) for line in raw.splitlines() if line.strip()]
     if not rows:
         raise ValueError('原批次没有保存的单元')
+    plan = decode((original / 'plan.json').read_bytes()) if (original / 'plan.json').exists() else {}
+    if (not isinstance(plan, dict) or not isinstance(plan.get('inputEligibility', {}), dict)
+            or not isinstance(plan.get('sourceHashes', {}), dict)):
+        raise ValueError('原批次计划结构无效')
     seen, sources = set(), {}
     for row in rows:
-        source = row.get('source')
-        if (not isinstance(source, str) or not source.strip() or len(source.encode()) > 1_048_576
-                or row.get('sourceHash') != _sha(source.encode())):
-            raise ValueError('原批次源码摘要无效或不一致')
-        if (not isinstance(row.get('sampleId'), str) or not isinstance(row.get('strategy'), str)
+        if (not isinstance(row, dict) or not isinstance(row.get('sampleId'), str) or not isinstance(row.get('strategy'), str)
                 or not isinstance(row.get('model'), dict)):
             raise ValueError('原批次单元结构无效')
+        blocked = _input_blocked(row, plan)
+        if row.get('errorCategory') == 'EVALUATION_INPUT_BLOCKED' and not blocked:
+            raise ValueError('原批次输入阻断身份无效或与冻结计划不一致')
+        source = row.get('source')
+        if not blocked and (not isinstance(source, str) or not source.strip() or len(source.encode()) > 1_048_576
+                or row.get('sourceHash') != _sha(source.encode())):
+            raise ValueError('原批次源码摘要无效或不一致')
         key = (row['sampleId'], row['strategy'])
         if key in seen or row['sampleId'] in sources and sources[row['sampleId']] != row['sourceHash']:
             raise ValueError('原批次单元重复或同一目标源码发生变化')
         seen.add(key); sources[row['sampleId']] = row['sourceHash']
-    plan = decode((original / 'plan.json').read_bytes()) if (original / 'plan.json').exists() else {}
     target_path = original / 'target-manifest.json'
     targets = decode(target_path.read_bytes()).get('targets', []) if target_path.exists() else []
     return rows, plan, {target['sampleId']: target for target in targets}, _sha(raw)
@@ -90,7 +116,8 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
     configuration = None
     if environment_resolver is None:
         from tool_environment import _configuration, resolve_environment
-        configuration = _configuration(root / 'config/tools.local.properties')
+        configuration = (_configuration(root / 'config/tools.local.properties')
+                         if any(not _input_blocked(row, plan) for row in rows) else {})
         environment_resolver = lambda source: resolve_environment(source, configuration)
     identity = code_identity if code_identity is not None else _code_identity(root)
     identity_hash = fingerprint(identity)
@@ -113,6 +140,19 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
     try:
         with (output / 'samples.jsonl').open('xb') as saved:
             for row in rows:
+                if _input_blocked(row, plan):
+                    # 没有消费源码时不能编译或追加证据；原阻断、模型和用量原样保留。
+                    derived = {**row, 'facts': {'status': 'SKIPPED', 'sourceHash': row['sourceHash'],
+                        'facts': [], 'scopes': [], 'limitations': ['原输入已阻断，未提供可消费源码']},
+                        'compiledFacts': None, 'compilerBinding': None, 'environment': None,
+                        'pipelineVersion': 'r2-derived-v2', 'toolCacheHit': False, 'newModelRequests': 0,
+                        'provenance': {**provenance, 'originalUnitHash': fingerprint(row), 'toolCacheKey': None},
+                        'researchEligible': False}
+                    saved.write(encode(derived) + b'\n'); saved.flush()
+                    collected.append(derived)
+                    manifest['completedUnits'] = len(collected)
+                    atomic_json(output / 'manifest.json', manifest)
+                    continue
                 target = _target(row, targets.get(row['sampleId'], {}))
                 target['candidateContracts'] = sorted(candidate_contracts[row['sampleId']])
                 environment = environment_resolver(target['fullSource'])
@@ -190,6 +230,7 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
             raise ValueError('重放期间实现或构建产物变化，结果不能封口')
         summary = {'schemaVersion': '1', 'units': len(collected),
                    'targets': len({row['sampleId'] for row in collected}), 'toolExecutions': tool_executions,
+                   'inputBlockedUnits': sum(_input_blocked(row, plan) for row in rows),
                    'newModelRequests': 0, 'researchEligible': False, 'provenance': provenance,
                    'toolStatuses': dict(Counter(t.get('status', 'UNKNOWN') for row in collected for t in row['tools'])),
                    'd2Verdicts': dict(Counter(row['d2']['verdict'] for row in collected)),
@@ -230,6 +271,7 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
         atomic_json(output / 'summary.json', summary)
         report = ('# 保存候选的工具与D2派生重放\n\n'
                   f"原批次：`{provenance['originalBatchId']}`；单元 {summary['units']}，唯一目标 {summary['targets']}。\n\n"
+                  f"输入阻断 {summary['inputBlockedUnits']} 项保留在单元分母中，未编译、未执行工具；原未知与失败状态保留。\n\n"
                   f"工具执行 {tool_executions} 次；新增模型请求 0。\n\n"
                   f"工具状态：{summary['toolStatuses']}。D2：{summary['d2Verdicts']}。\n\n"
                   f"保存假设分母 {denominator}；UNKNOWN 从 {before_unknown} 降至 {after_unknown}。"

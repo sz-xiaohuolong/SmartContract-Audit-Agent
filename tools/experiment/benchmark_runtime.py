@@ -12,6 +12,7 @@ from program_facts import extract_facts
 from recall import _recall_candidates
 from snapshots import active_snapshot, vector32, verify_snapshot
 from storage import decode, fingerprint
+from d1_consumption import risk_bindings, soft_pairs
 
 
 def interpret_model(model, mode):
@@ -22,33 +23,7 @@ def interpret_model(model, mode):
 
 
 def soft_without_risk(pool, mechanism):
-    pairs = []
-    for before in pool['candidates']:
-        if before['role'] != 'VULNERABLE' or before['mechanism'] != mechanism:
-            continue
-        for after in pool['candidates']:
-            if (after['role'] != 'DEFENSE' or after['pairId'] != before['pairId']
-                    or after['mechanism'] != mechanism or after['text'] == before['text']):
-                continue
-            score = min(before['denseScore'], after['denseScore']) + .25 * abs(before['denseScore'] - after['denseScore'])
-            pairs.append((score, before['chunkId'], before, after))
-    pairs.sort(key=lambda item: (-item[0], item[1]))
-    selected, context = [], ''
-    for _, _, before, after in pairs:
-        if len(selected) >= 4:
-            break
-        snippets = [(before, 'SOFT_SUPPORT'), (after, 'SOFT_CONTRAST')]
-        candidate_context = ''.join(f"[{row['caseId']}/{row['chunkId']}|{row['role']}]\n{row['text']}\n"
-                                    for row, _ in snippets)
-        if len((context + candidate_context).encode()) <= CONTEXT_BYTES:
-            selected.extend([{'candidate': row, 'use': use, 'binding': {'applicability': 'UNKNOWN'}}
-                             for row, use in snippets])
-            context += candidate_context
-    evaluations = {row['chunkId']: {'applicability': 'SUPPORTED' if row['mechanism'] == mechanism
-                   and row['conditions'] else 'UNKNOWN'} for row in pool['candidates']}
-    return {'status': 'COMPLETED', 'selected': selected, 'context': context,
-            'gaps': ['无唯一风险事实；使用自动标注软配对，不宣称防护适用性'],
-            'evaluations': evaluations}
+    return soft_pairs(pool, mechanism, CONTEXT_BYTES, 4)
 
 
 def _risk_fact(facts, target):
@@ -161,9 +136,8 @@ class BenchmarkRuntime:
         if risk is None:
             d1 = soft_without_risk(pool, target['mechanism'])
         else:
-            resource = risk['resource'] if risk['kind'] == 'WRITE' else 'owner'
             request = {'target': {'mechanism': target['mechanism'], 'riskFactId': risk['id'],
-                       'bindings': {'actor': 'msg.sender', 'resource': resource, 'authority': resource}},
+                       'bindings': risk_bindings(facts, risk)},
                        'pool': pool, 'budget': {'maxBytes': CONTEXT_BYTES, 'maxCases': 4}}
             response = self.java_runner(target['fullSource'], request)
             results = response.get('results') if isinstance(response, dict) else None
@@ -172,11 +146,13 @@ class BenchmarkRuntime:
                     or results[0].get('snapshotId') != self.pointer['snapshot_id']):
                 raise ValueError('Java D1 返回的源码或快照身份无效')
             d1 = results[0]
+            d1 = {**d1, 'consumptionVersion': recalled['recall']['consumptionVersion']}
         view = {'pool': pool, 'd1': d1, 'snapshotId': self.pointer['snapshot_id'],
                 'collection': self.pointer['collection'], 'sourceHash': target['sourceHash'],
                 'modelSourceHash': target['modelSourceHash'], 'taskKind': target.get('taskKind', 'DISCOVERY'),
                 'inputGovernanceReceipt': target.get('inputGovernanceReceipt'),
                 'targetMechanism': target['mechanism'], 'facts': facts, 'researchEligible': False,
+                'recall': recalled['recall'],
                 'queryEmbeddingReceipt': query_receipt}
         self.views[key] = view
         return view

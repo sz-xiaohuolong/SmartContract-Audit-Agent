@@ -359,9 +359,10 @@ class HypothesisServiceTest {
         assertTrue(captured.get(1).contains("3 | msg.sender.call"));
         assertTrue(captured.get(1).contains("vulnerabilityType 必须等于上述机制"));
     }
-    @Test void fullSourceContractHintUsesTargetFunctionOwner() {
+    @Test void 全文发现提示覆盖其他合约并将检索作为比较材料() {
         var captured = new java.util.ArrayList<String>();
         var service = new HypothesisService((p, system, user) -> {
+            captured.add(system);
             captured.add(user);
             return new GatewayReply("{\"schemaVersion\":\"2\",\"hypotheses\":[]}", "fixture", "fixture", null, null, 1);
         });
@@ -369,6 +370,31 @@ class HypothesisServiceTest {
         var full = new HypothesisService.Request(source, source, null, "FULL", 1, 4,
             "ACCESS_CONTROL", "f", "", List.of());
         assertEquals("COMPLETED", service.analyze(full, "fixture").status());
-        assertTrue(captured.get(0).contains("目标所属合约：Target"));
+        assertTrue(captured.get(1).contains("全文所有真实合约及运行期入口"));
+        assertFalse(captured.get(1).contains("目标所属合约：Target"));
+        assertTrue(captured.get(1).contains("contract Other"));
+        assertTrue(captured.get(0).contains("先独立检查待审源码"));
+    }
+    @Test void 全文范围必须覆盖实际源码且兼容末尾换行() {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        var service = new HypothesisService((p, system, user) -> {
+            calls.incrementAndGet();
+            return new GatewayReply("{\"schemaVersion\":\"2\",\"hypotheses\":[]}", "fixture", "fixture", null, null, 1);
+        });
+        String source = "contract Target {\nfunction f() public {}\n}\ncontract Other {}";
+        for (int[] range : List.of(new int[]{1, 2}, new int[]{2, 4})) {
+            var invalid = new HypothesisService.Request(source, source, null, "FULL", range[0], range[1],
+                "ACCESS_CONTROL", "f", "", List.of());
+            assertEquals("INPUT_INVALID", service.analyze(invalid, "fixture").errorCategory());
+        }
+        assertEquals(0, calls.get());
+        for (String ending : List.of("", "\n", "\n\n")) {
+            String fullSource = source + ending;
+            int end = ending.equals("\n\n") ? 5 : 4;
+            var valid = new HypothesisService.Request(fullSource, fullSource, null, "FULL", 1, end,
+                "ACCESS_CONTROL", "f", "", List.of());
+            assertEquals("COMPLETED", service.analyze(valid, "fixture").status());
+        }
+        assertEquals(3, calls.get());
     }
 }

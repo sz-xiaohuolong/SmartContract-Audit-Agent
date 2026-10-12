@@ -101,7 +101,12 @@ class _ReentrancyGraph(_Graph):
                             transferValue=value, arguments=tuple(arguments), lowLevelValueCall=True)
             env['epoch'] += 1
             env['stateValues'].clear()
-            return [node], ('call-result', node), env
+            return_type = ast.get('expression', {}).get('typeDescriptions', {}).get('typeIdentifier', '')
+            value = ('call-result', node)
+            if 'returns$_t_bool_$_t_bytes_memory_ptr_$' in return_type:
+                # 只绑定编译器确定的成功布尔量，返回数据内容仍未建模。
+                value = ('tuple', value, ('unknown', 'return-data', node))
+            return [node], value, env
         if ast.get('kind') == 'typeConversion' and len(ast.get('arguments', [])) == 1:
             result_type = ast.get('typeDescriptions', {}).get('typeIdentifier', '')
             if result_type in {'t_address', 't_address_payable'}:
@@ -189,18 +194,20 @@ def _funded_deposit(graph, balance):
                 return False
     for write in writes:
         value, resource = write['value'], write['resource']
-        if (resource[1] != balance[1] or len(resource[2]) != 1 or resource[2][0][0] != 'index'
-                or value[:2] != ('binary', '+') or value[3] != ('builtin', 'msg.value')
-                or value[2][:1] != ('read',) or value[2][1] != resource or not _current_read(write, value[2])):
+        account = resource[1] == balance[1] and len(resource[2]) == 1 and resource[2][0][0] == 'index'
+        if (not account and resource[2] or value[:2] != ('binary', '+')
+                or value[3] != ('builtin', 'msg.value') or value[2][:1] != ('read',)
+                or _uint_width(value[2]) is None or value[2][1] != resource or not _current_read(write, value[2])):
             return False
-        key = resource[2][0][1]
-        if key != _SENDER:
+        key = resource[2][0][1] if account else _SENDER
+        if account and key != _SENDER:
             declaration = graph.bundle['declarations'].get(key[1], {}) if key[:1] == ('parameter',) else {}
             if declaration.get('typeDescriptions', {}).get('typeIdentifier') not in {'t_address', 't_address_payable'}:
                 return False
     if any(node['kind'] == 'EVAL' and node['value'] not in [write['value'] for write in writes] for node in graph.nodes):
         return False
-    return len(writes) == 1
+    return (sum(write['resource'][1] == balance[1] for write in writes) == 1
+            and len({write['resource'] for write in writes}) == len(writes))
 
 
 def _parameter_initial_value(parameter):
@@ -492,6 +499,8 @@ def _value(term, assignments, initial, versions, calls):
         return _literal(term)
     if term == _SENDER:
         return '调用主体 A'
+    if term == ('builtin', 'msg.value') and term in assignments:
+        return assignments[term]
     if kind == 'parameter':
         if term not in assignments:
             raise _Unevaluated('形参类型或数值未绑定')
@@ -541,7 +550,48 @@ def _value(term, assignments, initial, versions, calls):
     raise _Unevaluated('未知 AST 表达式、调用结果或算术语义')
 
 
-def _witness(graph, path, edges, bundle, risk):
+def _funding_state(graph, amount):
+    """从默认初值执行已限定的线性入账 AST；辅助总账不能独立猜值。"""
+    function = graph.bundle['functions'][graph.entry['declarationId']]
+    assignments = {('builtin', 'msg.value'): amount}
+    assignments.update({('parameter', p['id']): _parameter_initial_value(p) for p in function['parameters']})
+    for node in graph.nodes:
+        for symbol in _symbols(node.get('value')):
+            if symbol[:1] == ('read',):
+                assignments[symbol] = 0 if _uint_width(symbol) is not None else False
+    initial, versions, state = {}, {}, {}
+    try:
+        for node in graph.nodes:
+            if node['kind'] in {'WRITE', 'EVAL'}:
+                value = _value(node['value'], assignments, initial, versions, {})
+                type_id = node.get('valueType') or node['value'][2][3]
+                width = re.fullmatch(r't_uint(\d+)', type_id)
+                if not width or type(value) is not int or not 0 <= value < 2 ** int(width.group(1)):
+                    return None
+                if node['kind'] == 'WRITE':
+                    slot = _slot(node['resource'], assignments)
+                    versions[(slot, node['id'])] = value
+                    state[slot] = value
+        return state
+    except (KeyError, IndexError, TypeError, _Unevaluated):
+        return None
+
+
+def _funding_matches(witness, graph, balance):
+    credited = next((item['value'] for item in witness['initialStorage']
+                     if item['root'] == balance[1] and item['keys'] == ['调用主体 A']), None)
+    if type(credited) is not int or credited < witness['environment']['contractBalanceAtLeast']:
+        return False
+    state = _funding_state(graph, credited)
+    return state is not None and all(
+        type(item['value']) is type(state.get((item['root'], tuple(item['keys'])),
+            False if type(item['value']) is bool else 0))
+        and item['value'] == state.get((item['root'], tuple(item['keys'])),
+            False if type(item['value']) is bool else 0)
+        for item in witness['initialStorage'])
+
+
+def _witness(graph, path, edges, bundle, risk, funding_graphs=(), balance=None):
     nodes = [graph.nodes[identity] for identity in path]
     terms = [node.get(field) for node in nodes for field in ('condition', 'value', 'transferValue', 'targetValue')]
     symbols = list(dict.fromkeys(symbol for term in terms for symbol in _symbols(term)))
@@ -562,6 +612,7 @@ def _witness(graph, path, edges, bundle, risk):
                 return None
             domains.append((0, 1, 2))
     selected = {edge['from']: edge['kind'] for edge in edges if edge['kind'] in {'true', 'false'}}
+    conditional = None
     for values in itertools.product(*domains):
         assignments = dict(zip(symbols, values))
         initial, versions, calls, call_data, checked = {}, {}, {}, [], []
@@ -601,18 +652,22 @@ def _witness(graph, path, edges, bundle, risk):
                         raise _Unevaluated('表达式结果越过编译整数类型范围')
             if not any(call['nodeId'] == risk['nodeId'] and call['success'] for call in call_data):
                 continue
-            return {'normalExit': True, 'cfgNodeIds': path, 'conditions': checked, 'calls': call_data,
+            witness = {'normalExit': True, 'cfgNodeIds': path, 'conditions': checked, 'calls': call_data,
                 'initialStorage': [{'root': slot[0], 'keys': list(slot[1]), 'value': value} for slot, value in initial.items()],
                 'parameters': [{'declarationId': symbol[1], 'value': assignments[symbol]} for symbol in symbols if symbol[:1] == ('parameter',)],
                 'environment': {'caller': '调用主体 A', 'contractBalanceAtLeast': sum(call['value'] for call in call_data)},
                 'scope': '有限 AST 数值与布尔约束；正常 EXIT 的 CEI 顺序反例，不表示攻击交易或漏洞利用证明'}
+            if not funding_graphs or any(_funding_matches(witness, funding, balance) for funding in funding_graphs):
+                return witness
+            if conditional is None:
+                conditional = witness
         except (KeyError, TypeError, _Unevaluated):
             continue
-    return None
+    return conditional
 
 
-def _counterexample(graph, risk, balance, bundle):
-    if graph.gaps or not _prebalance(graph, risk) or _mutex_for(graph, risk):
+def _counterexample(graph, risk, balance, bundle, funding_graphs=()):
+    if graph.gaps or _mutex_for(graph, risk):
         return None
     writes = [node for node in graph.nodes if node['kind'] == 'WRITE' and node['resource'] == balance
               and _debit(node['value'], balance, risk.get('transferValue'))
@@ -622,7 +677,7 @@ def _counterexample(graph, risk, balance, bundle):
         return None
     for write in writes:
         for path, edges in _path_candidates(graph, risk, write):
-            witness = _witness(graph, path, edges, bundle, risk)
+            witness = _witness(graph, path, edges, bundle, risk, funding_graphs, balance)
             if witness is not None:
                 return [graph.nodes[identity] for identity in path], witness
     return None
@@ -735,24 +790,25 @@ def prove_reentrancy(bundle, hypothesis):
             reason='所有相关运行入口均受相同全局互斥锁或前置余额归零规则覆盖',
             transactionFeasibility='NOT_REQUIRED_FOR_UNIVERSAL_PROTECTION')
         return result
-    counterexample = _counterexample(graph, risk, balance, bundle)
+    deposits = [(other, graphs[other['declarationId']]) for other in entries if other['declarationId'] in graphs
+                and _funded_deposit(graphs[other['declarationId']], balance)]
+    counterexample = _counterexample(graph, risk, balance, bundle, [item[1] for item in deposits])
     if counterexample is not None:
         nodes, witness = counterexample
         initialization_gaps = _initialization_gaps(bundle)
         gaps.extend(initialization_gaps)
-        deposits = [(other, graphs[other['declarationId']]) for other in entries if other['declarationId'] in graphs
-                    and _funded_deposit(graphs[other['declarationId']], balance)]
+        deposits.sort(key=lambda item: not _funding_matches(witness, item[1], balance))
         if deposits:
             deposit, deposit_graph = deposits[0]
             amount = next(item['value'] for item in witness['initialStorage'] if item['root'] == balance[1])
             function = bundle['functions'][deposit['declarationId']]
-            funded = not initialization_gaps and amount >= witness['environment']['contractBalanceAtLeast'] and all(
-                item['root'] == balance[1] and item['keys'] == ['调用主体 A'] or item['value'] in {0, False}
-                for item in witness['initialStorage'])
+            funded = not initialization_gaps and _funding_matches(witness, deposit_graph, balance)
             witness['initialization'] = {'funded': funded, 'entry': deposit['signature'], 'msgValue': amount,
                 'parameters': [{'declarationId': parameter['id'], 'value': _parameter_initial_value(parameter)}
                                for parameter in function['parameters']],
                 'creditedValue': amount, 'normalExit': True,
+                'storageAfter': [{'root': slot[0], 'keys': list(slot[1]), 'value': value}
+                    for slot, value in (_funding_state(deposit_graph, amount) or {}).items()],
                 'cfgNodeIds': [node['id'] for node in deposit_graph.nodes],
                 'reason': '编译 AST 证明 payable 入账以同一 msg.value 增加余额与合约资金；小额数值不溢出',
                 'references': _references(result, bundle, [node for node in deposit_graph.nodes if node['kind'] == 'WRITE'])}
@@ -774,9 +830,10 @@ def prove_reentrancy(bundle, hypothesis):
         scope['conditionedOnInitialState'] = False
         scope['rules'].append('NORMAL_EXIT_SATISFIABLE_CEI_ORDER')
         for obligation in result['obligations']:
-            protected = obligation['name'] in {'actor', 'resource', 'pre_risk_guard'}
+            protected = (obligation['name'] in {'actor', 'resource'}
+                         or obligation['name'] == 'pre_risk_guard' and bool(_prebalance(graph, risk)))
             obligation.update(status='SUPPORTED' if protected else 'REFUTED', references=refs,
-                reason='同主体余额与前置条件可满足；数值 CALL 后才归零且存在正常 EXIT 的有限防御断言反例')
+                reason='同主体数值 CALL 的非零余额与路径约束已满足；后置归零有正常 EXIT 的有限防御断言反例')
         result['pathEvidence'].update(status='FEASIBLE', references=refs, witness=witness, normalExit=True,
             reason='已给出可调用资金建态、满足受支持路径约束且正常提交的 CEI 顺序反例；不声称攻击可利用性',
             transactionFeasibility='SATISFIABLE_ABSTRACTION')

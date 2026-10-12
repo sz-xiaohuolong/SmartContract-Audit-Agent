@@ -6,13 +6,14 @@
 |---|---|
 | `audit_target.py` / `program_facts.py` | 校验预置或粘贴目标，提取受限合约/函数语法结构、调用、状态写入与 CEI；保持全文摘要与绝对行号 |
 | `BenchmarkRuntime` / Java retrieval | 固定本机 Nomic 768 维活动快照，复用 300 组/600 条自动标注知识；三策略同池，D1 对照上下文最多 4096 UTF-8 字节 |
+| `d1_consumption.py` / `AutomaticContrast` | 从冻结全文生成可见机制窗口，拒绝纯改名、多义和不完整配对；Java／Python统一两对预算，自动入选绑定及评估全部未知 |
 | `HypothesisCli` / `HypothesisService` | Java 结构化模型网关，最多三项假设，校验名称、操作、位置、引用；缺失 usage 保留 null |
 | `ToolCli` / `ToolAnalyzer` | Slither 与可选 Mythril 子进程，保存状态、版本、耗时、告警和目标源码身份 |
 | `d2_verify.py` | 绑定假设、事实和工具，逐项输出 actor/resource/pre_risk_guard/entry_coverage/state_version/bypass；漏洞裁决与保护裁决分开 |
 | `compiler_facts.py` | 显式绑定 standard-json 输入、输出、源码闭包、固定 solc、声明和 ABI 入口；每次实际重新编译完整 JSON 对照，执行前后核对编译器摘要 |
 | `compiled_d2.py` | 从类型化 AST 展开内部调用和修饰器，按实际 CFG 支配、声明／key／字段和状态版本计算六义务；局部路径、条件前提与整候选缺口分别保存 |
 | `bound_slither.py` / `compilation_runtime.py` | 生成固定编译与官方 Slither 独立收据，重新核验源码闭包、设置、AST 和产物；单文件自动编译，含导入须有完整模板 |
-| `candidate_proofs.py` / `reentrancy_proofs.py` | 有限权限委派与全入口保护闭包；CEI／统一锁覆盖及合法入账、正常退出的防御顺序反例，缺口保持未知 |
+| `candidate_proofs.py` / `reentrancy_proofs.py` / `access_call_proofs.py` | 有限权限委派与全入口保护闭包；CEI／统一锁覆盖、同次入账状态对账与正常退出反例；终止调用只给真实初态的有限访问义务反例，缺口保持未知 |
 | `audit_runner.py` / `tool_replay.py` | 保存候选的零模型核验与只读派生；逐假设未知前后率、原件和实现身份封口 |
 | `audit_workbench.py` / `local_ui.py` | 预览摘要、一次性运行票据、单写者锁、六阶段事件、报告与只读历史；`workbench.html` 展示过程，`agent.html` 保留批量比较 |
 
@@ -32,6 +33,8 @@ S10 增加 `evaluation_input.py`：原件和清理文本分别绑定摘要，注
 `tool_environment.py` 按全部有效 pragma 交集选择固定 solc，并绑定工具、依赖、参数和实际二进制摘要。Java 工具网关保存编译探测与运行的版本、耗时、退出码及脱敏诊断；Python 在执行前后重新核验完整环境。`tool_replay.py` 对保存候选执行零模型派生重放，源码/环境/代码身份控制缓存，封口时核对原批次全部文件和当前实现/JAR，不覆盖原输出。S10 的 53 次真实运行中 51 成功、2 因 Slither 旧 tuple IR 兼容断言失败；这些故障保留未知。
 
 S11／S12 接缝已接通独立编译／工具双收据和有限证明分派。完整六义务及闭包与双收据匹配才能反驳假设；合法资金建态、正常退出的有限 CEI 顺序反例及匹配工具的同类告警才能支持假设。构造语义、其他入口、未知求值、循环、动态调用等缺口阻止完整裁决。实际 SimpleDAO 已支持登记候选；不能将该证据泛化为其他机制或整合约安全。
+
+2026-10-12 根因修复统一了顶层与机制专用风险图，支持经编译类型核实的旧内置别名、Throw、现代CALL布尔返回解构及精确数值单位。重入资金见证重放同次payable入账的全部相关槽。访问终止CALL只对actor／entry_coverage／bypass给出有限反证，其他义务保持UNKNOWN，完整性为false；最终正裁决只接受suicidal双收据同函数与跨度佐证。原输入阻断按冻结计划核对后纳入派生而不执行工具。证据和限制见[根因修复报告](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md)。
 
 配置固定编译器目录时，正式执行器在模型之后、工具之前为每个候选合约生成 AST 收据；显式登记案例在预览与模型之前重验。旧单 solc 网关保持原兼容入口。工作台的公开案例演练实际执行静态核验，复用登记候选且 usage 缺失为 null；六义务与所选候选同步，离线总审计结论保持未决。派生历史只消费封口产物，逐字节下载并核对可得原件，不重发模型。研究有效性与完整 S12 仍按[R2 验收矩阵](releases/R2-20261010/VERIFICATION.md)分别记录。
 

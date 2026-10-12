@@ -1,5 +1,6 @@
 """绑定编译 AST 的有限控制流核验；静态可达与工具告警不等于可行漏洞。"""
 import copy
+from fractions import Fraction
 
 from compiler_facts import CompilationBindingError, extract_compiler_facts, load_bound_compilation, source_span
 
@@ -174,6 +175,14 @@ class _Graph:
                 return ('builtin', 'msg.sender')
             return ('member', base, ast.get('referencedDeclaration'), ast.get('memberName'))
         if kind == 'Literal':
+            if ast.get('kind') == 'number' and ast.get('subdenomination'):
+                factors = {'wei': 1, 'gwei': 10 ** 9, 'ether': 10 ** 18, 'seconds': 1,
+                           'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 604800}
+                try:
+                    scaled = Fraction(ast['value']) * factors[ast['subdenomination']]
+                    return ('literal', 'number', str(scaled.numerator)) if scaled.denominator == 1 else _unknown(identity)
+                except (KeyError, ValueError, ZeroDivisionError):
+                    return _unknown(identity)
             return ('literal', ast.get('kind'), ast.get('value', ast.get('hexValue')))
         if kind == 'BinaryOperation':
             return ('binary', ast.get('operator'), self.pure(ast.get('leftExpression'), env),
@@ -413,15 +422,20 @@ class _Graph:
         if kind == 'VariableDeclarationStatement':
             declarations = ast.get('declarations', [])
             tails, value, env = self.expr(ast.get('initialValue'), tails, env, stack, context)
-            if len(declarations) != 1 or declarations[0] is None:
+            values = (list(value[1:]) if isinstance(value, tuple) and value[:1] == ('tuple',)
+                      else [value])
+            if len(declarations) != len(values) or not declarations:
                 self.gap('多变量声明或解构赋值尚未支持')
-            else:
-                declaration = declarations[0]
+                # 未识别的返回形状不能让后续引用继承已有局部值。
+                values = [_unknown(ast['id'])] * len(declarations)
+            for declaration, item in zip(declarations, values):
+                if declaration is None:
+                    continue
                 if declaration.get('storageLocation') == 'storage':
                     self.gap('局部 storage 引用别名尚未支持')
-                    value = _unknown(declaration['id'])
+                    item = _unknown(declaration['id'])
                     tails = [self.add('UNKNOWN', ast, tails, context, env)]
-                env['values'][declaration['id']] = value
+                env['values'][declaration['id']] = item
             return tails, env
         if kind == 'IfStatement':
             tails, condition, env = self.expr(ast.get('condition'), tails, env, stack, context)
@@ -440,7 +454,7 @@ class _Graph:
             node = self.add('RETURN', ast, tails, context, env, value=value)
             self.return_frames[-1].append(([node], value, copy.deepcopy(env)))
             return [], env
-        if kind == 'RevertStatement':
+        if kind in {'RevertStatement', 'Throw'}:
             self.add('ABORT', ast, tails, context, env)
             return [], env
         if kind == 'EmitStatement':
@@ -621,17 +635,19 @@ def _tool_binding(tools, bundle, root):
             'requirements': ['同源码', '固定编译器版本与二进制', '完整依赖闭包', '有效编译设置', '原工具运行收据']}
 
 
-def _corroboration(hypothesis, tools, bundle, risk_span, root, matched_tool_indexes):
+def _corroboration(hypothesis, tools, bundle, risk_span, root, matched_tool_indexes, required_check=None):
     """同检测类别、真实函数和源码跨度佐证；相同文件名不构成绑定。"""
     from d2_verify import ISSUE_TYPES
     from pathlib import Path
     references = []
-    function_name = hypothesis['function'].split('(', 1)[0]
+    function_name = hypothesis.get('functionSignature', hypothesis.get('function', '')).split('(', 1)[0]
     for tool_index in matched_tool_indexes:
         tool = tools[tool_index]
         if tool.get('engine') != 'SLITHER' or tool.get('status') != 'OK' or tool.get('sourceHash') != bundle['sourceHash']:
             continue
         for index, issue in enumerate(tool.get('issues', [])):
+            if required_check is not None and issue.get('check') != required_check:
+                continue
             if ISSUE_TYPES.get(issue.get('check')) != (hypothesis['vulnerabilityType'], hypothesis['riskOperation']):
                 continue
             elements = issue.get('elements', [])
@@ -683,11 +699,16 @@ def _apply_proof(result, proof, hypothesis, tools, bundle, root):
         result.update(verdict='REFUTED', protectionVerdict='SUPPORTED', status='COMPLETED')
     elif (proof['status'] == 'COUNTEREXAMPLE' and proof['pathEvidence']['status'] == 'FEASIBLE'
           and proof['pathEvidence'].get('normalExit') is True
-          and proof['pathEvidence'].get('witness', {}).get('initialization', {}).get('funded') is True):
+          and (hypothesis['vulnerabilityType'] == 'REENTRANCY'
+               and proof['pathEvidence'].get('witness', {}).get('initialization', {}).get('funded') is True
+               or hypothesis['vulnerabilityType'] == 'ACCESS_CONTROL'
+               and proof.get('proofKind') == 'ACCESS_CONTROL_TERMINATION'
+               and proof['pathEvidence'].get('witness', {}).get('initialization', {}).get('runtimeInitialized') is True)):
         risk_span = proof['proofScope'].get('riskSpan')
         if isinstance(risk_span, dict):
             corroboration = _corroboration(hypothesis, tools, bundle, risk_span, root,
-                                          result['toolBinding'].get('matchedToolIndexes', []))
+                result['toolBinding'].get('matchedToolIndexes', []),
+                required_check='suicidal' if proof.get('proofKind') == 'ACCESS_CONTROL_TERMINATION' else None)
             result['corroboration'] = corroboration
             if corroboration:
                 result.update(verdict='SUPPORTED', protectionVerdict='REFUTED', status='COMPLETED')
@@ -764,11 +785,18 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
             return result
     result['toolBinding'] = _tool_binding(tools, bundle, root)
     if mechanism == 'ACCESS_CONTROL':
-        from candidate_proofs import prove_candidate
-        proof = prove_candidate(bundle, hypothesis)
+        if hypothesis['riskOperation'] == 'CALL':
+            from access_call_proofs import _AccessCallGraph, prove_access_call
+            proof = prove_access_call(bundle, hypothesis)
+            graph_type = _AccessCallGraph
+        else:
+            from candidate_proofs import _PermissionGraph, prove_candidate
+            proof = prove_candidate(bundle, hypothesis)
+            graph_type = _PermissionGraph
     else:
-        from reentrancy_proofs import prove_reentrancy
+        from reentrancy_proofs import _ReentrancyGraph, prove_reentrancy
         proof = prove_reentrancy(bundle, hypothesis)
+        graph_type = _ReentrancyGraph
     function_name = hypothesis.get('functionSignature', hypothesis.get('function'))
     candidates = [e for e in bundle['entries'] if e['matched'] and e['kind'] != 'getter' and
                   (e['signature'] == function_name or '(' not in str(function_name)
@@ -776,7 +804,8 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
     if len(candidates) != 1:
         result['note'] = '运行期函数签名不唯一；重载必须显式绑定完整签名'
         return result
-    graph = _Graph(bundle, candidates[0])
+    # 展示、绑定与专用证明共享同一编译语义，避免低级 CALL 再次退化为 UNKNOWN。
+    graph = graph_type(bundle, candidates[0])
     facts = extract_compiler_facts(bundle)
     risks = [n for n in graph.nodes if _risk_matches(n, hypothesis, bundle, facts)]
     if len(risks) != 1:
@@ -792,6 +821,16 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
     risk = risks[0]
     result['riskBinding'] = _reference(risk, bundle)
     result['cfg'] = graph.public()
+    if proof.get('proofKind') == 'ACCESS_CONTROL_TERMINATION':
+        # 终止调用仅支持有限反例，不能由通用局部检查升级为全入口保护证明。
+        for name in ('proofScope', 'pathEvidence', 'obligations', 'references'):
+            result[name] = copy.deepcopy(proof[name])
+        result['proofScope']['candidate'] = copy.deepcopy(hypothesis)
+        _apply_proof(result, proof, hypothesis, tools, bundle, root)
+        result['note'] = ('已核验有限访问义务反例与终止调用工具证据；不代表攻击可利用性'
+                          if result['verdict'] == 'SUPPORTED' else
+                          '终止调用仅保留有限访问义务证据；未建立反例或缺双收据时保持未知')
+        return result
     guards = graph.guards(risk)
     local_gaps = list(graph.gaps)
     authority = None
@@ -860,7 +899,7 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
         elif entry['kind'] == 'getter':
             item.update(complete=True, related=False, reason='ABI 与声明对账的自动 getter 只有读取，无调用或写入')
         else:
-            other = graph if entry['declarationId'] == candidates[0]['declarationId'] else _Graph(bundle, entry)
+            other = graph if entry['declarationId'] == candidates[0]['declarationId'] else graph_type(bundle, entry)
             closure.update(other.closure)
             all_gaps.extend(entry['signature'] + '：' + gap for gap in other.gaps)
             effects = [n for n in other.nodes if n['kind'] in {'WRITE', 'CALL'}]

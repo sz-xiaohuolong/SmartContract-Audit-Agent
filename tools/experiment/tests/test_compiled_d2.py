@@ -1,6 +1,9 @@
 """编译 D2 的有限控制流与保守边界；合成 AST 不代表真实漏洞。"""
 import copy
+from pathlib import Path
+import sys
 import unittest
+from unittest.mock import patch
 
 import test_compiler_facts as fixtures
 from compiler_facts import extract_compiler_facts
@@ -171,6 +174,148 @@ class CompiledD2Test(unittest.TestCase):
             result = evaluate_compiled(hypothesis, self.fixture.manifest, tools, root=self.fixture.root)
             self.assertEqual('BLOCKED', result['localPathEvidence']['status'])
             self.assertEqual('UNKNOWN', result['verdict'])
+
+    def terminal_case(self):
+        sender = self.node('MemberAccess', memberName='sender', typeDescriptions={'typeIdentifier': 't_address'},
+            expression=self.node('Identifier', name='msg', referencedDeclaration=-15,
+                typeDescriptions={'typeIdentifier': 't_magic_message'}))
+        call = self.node('FunctionCall', kind='functionCall', arguments=[sender],
+            expression=self.node('Identifier', name='selfdestruct', referencedDeclaration=-900,
+                typeDescriptions={'typeIdentifier': 't_function_selfdestruct_nonpayable$_t_address_$returns$__$'}))
+        self.function()['body']['statements'] = [self.node('ExpressionStatement', expression=call)]
+        return {'contract': 'C', 'function': 'f()', 'riskLine': 1,
+                'riskOperation': 'CALL', 'vulnerabilityType': 'ACCESS_CONTROL'}
+
+    def terminal_tool(self, *, check='suicidal', mismatch=None, replay_change=False):
+        """原工具与独立重放各生成原件；公共入口仍走真实收据读取和比对。"""
+        import bound_slither
+        bundle = self._sealed_bundle()
+        call = self.function()['body']['statements'][-1]['expression']
+        span = next(fact['span'] for fact in extract_compiler_facts(bundle)['facts'] if fact['nodeId'] == call['id'])
+        function_span = bundle['functions'][self.function()['id']]['span']
+        element = {'type': 'function', 'name': 'f', 'type_specific_fields': {'parent': {'name': 'C'}},
+            'source_mapping': {'start': function_span['start'], 'length': function_span['length'], 'lines': [1],
+                'filename_absolute': str(self.fixture.root / 'contracts/C.sol'),
+                'filename_relative': 'contracts/C.sol'}}
+        if mismatch == 'function':
+            element['name'] = 'other'
+        elif mismatch == 'contract':
+            element['type_specific_fields']['parent']['name'] = 'Other'
+        elif mismatch == 'span':
+            element['source_mapping']['start'] = span['start'] + span['length']
+        elif mismatch == 'file':
+            element['source_mapping']['filename_relative'] = 'other/C.sol'
+        issue = {'check': check, 'elements': [element]}
+        self.terminal_worker_runs = 0
+
+        def worker(manifest_path, *, root, python_executable, directory):
+            self.terminal_worker_runs += 1
+            directory.mkdir(parents=True, exist_ok=True)
+            replay_issue = copy.deepcopy(issue)
+            if replay_change and self.terminal_worker_runs > 1:
+                replay_issue['check'] = 'unrelated'
+            raw = {'success': True, 'error': None, 'results': {'detectors': [replay_issue]}}
+            identity = {'schemaVersion': 'bound-slither-1', 'manifestDigest': bundle['manifestDigest'],
+                'compilerReceiptDigest': bundle['receiptDigest'], 'sourceHash': bundle['sourceHash'],
+                'sourceFile': bundle['targetSourceUnit'], 'pythonExecutable': str(Path(sys.executable).resolve()),
+                'detectorsRun': [check], 'effectSummaries': []}
+            raw_path = directory / 'slither-detectors.json'
+            raw_path.write_bytes(fixtures.canonical(raw))
+            receipt = {'identity': identity, 'status': 'MATCH',
+                'rawResultCanonicalSha256': fixtures.digest(fixtures.canonical(raw))}
+            receipt_path = directory / 'receipt.json'
+            receipt_path.write_bytes(fixtures.canonical(receipt))
+            return {'engine': 'SLITHER', 'status': 'OK', 'sourceHash': bundle['sourceHash'],
+                'sourceFile': bundle['targetSourceUnit'], 'targetContract': 'C', 'issues': [replay_issue],
+                'rawResultPath': str(raw_path.relative_to(root)), 'rawResultSha256': fixtures.digest(raw_path.read_bytes()),
+                'compilationReceipt': {'schemaVersion': 'bound-slither-1',
+                    'path': str(receipt_path.relative_to(root)), 'sha256': fixtures.digest(receipt_path.read_bytes())},
+                'paidModelRequests': 0}
+
+        tool = worker(None, root=self.fixture.root, python_executable=Path(sys.executable),
+            directory=self.fixture.root / '.evidence/R2-20261010/S11-resolution/tool-bridge/original')
+        backend = patch.object(bound_slither, '_invoke_worker', side_effect=worker)
+        backend.start()
+        self.addCleanup(backend.stop)
+        return tool
+
+    def evaluate_terminal(self, hypothesis, tools):
+        return evaluate_compiled(hypothesis, self.fixture.manifest, tools, root=self.fixture.root)
+
+    def test_终止权限有限反例经实际双收据重放后才能正裁决(self):
+        hypothesis = self.terminal_case()
+        result = self.evaluate_terminal(hypothesis, [self.terminal_tool()])
+        self.assertEqual(2, self.terminal_worker_runs)
+        self.assertEqual('MATCH', result['toolBinding']['status'])
+        self.assertEqual('SUPPORTED', result['verdict'])
+        self.assertEqual('COMPLETED', result['status'])
+        self.assertFalse(result['proofScope']['complete'])
+        self.assertTrue(result['proofScope']['counterexampleComplete'])
+        self.assertTrue(result['pathEvidence']['normalExit'])
+        self.assertNotIn('funded', result['pathEvidence']['witness']['initialization'])
+        self.assertEqual({'actor', 'entry_coverage', 'bypass'},
+            {item['name'] for item in result['obligations'] if item['status'] == 'REFUTED'})
+        self.assertEqual({'resource', 'pre_risk_guard', 'state_version'},
+            {item['name'] for item in result['obligations'] if item['status'] == 'UNKNOWN'})
+
+    def test_终止候选仅给完整签名也能完成同函数佐证(self):
+        hypothesis = self.terminal_case()
+        hypothesis['functionSignature'] = hypothesis.pop('function')
+        result = self.evaluate_terminal(hypothesis, [self.terminal_tool()])
+        self.assertEqual('SUPPORTED', result['verdict'])
+
+    def test_终止风险不能借其他权限CALL检测器正裁决(self):
+        hypothesis = self.terminal_case()
+        tool = self.terminal_tool(check='arbitrary-send-eth')
+        self.assertGreater(tool['issues'][0]['elements'][0]['source_mapping']['length'], 1)
+        result = self.evaluate_terminal(hypothesis, [tool])
+        self.assertEqual('MATCH', result['toolBinding']['status'])
+        self.assertEqual('UNKNOWN', result['verdict'])
+
+    def test_终止候选第二收据缺失或重放漂移始终未知(self):
+        hypothesis = self.terminal_case()
+        tool = self.terminal_tool(replay_change=True)
+        result = self.evaluate_terminal(hypothesis, [tool])
+        self.assertEqual(2, self.terminal_worker_runs)
+        self.assertEqual('UNKNOWN', result['verdict'])
+        self.assertEqual('UNKNOWN', result['toolBinding']['status'])
+        tool.pop('compilationReceipt')
+        result = self.evaluate_terminal(hypothesis, [tool])
+        self.assertEqual('COUNTEREXAMPLE', result['candidateProof']['status'])
+        self.assertEqual('UNKNOWN', result['verdict'])
+
+    def test_终止风险佐证必须绑定检测类别合约函数文件与跨度(self):
+        hypothesis = self.terminal_case()
+        for mismatch in ['function', 'contract', 'span', 'file']:
+            with self.subTest(mismatch=mismatch):
+                result = self.evaluate_terminal(hypothesis, [self.terminal_tool(mismatch=mismatch)])
+                self.assertEqual('MATCH', result['toolBinding']['status'])
+                self.assertEqual('UNKNOWN', result['verdict'])
+        result = self.evaluate_terminal(hypothesis, [self.terminal_tool(check='reentrancy-eth')])
+        self.assertEqual('UNKNOWN', result['verdict'])
+
+    def test_真实构造权限与路径约束阻止反例时不推断安全(self):
+        hypothesis = self.terminal_case()
+        owner = self.fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0]['nodes'][0]
+        sender = self.fresh(self.function()['body']['statements'][0]['expression']['arguments'][0])
+        constructor = self.node('FunctionDefinition', name='', kind='constructor', visibility='public',
+            stateMutability='nonpayable', modifiers=[], parameters=self.node('ParameterList', parameters=[]),
+            returnParameters=self.node('ParameterList', parameters=[]), body=self.node('Block', statements=[
+                self.node('ExpressionStatement', expression=self.node('Assignment', operator='=',
+                    leftHandSide=self.node('Identifier', name='owner', referencedDeclaration=owner['id'],
+                        typeDescriptions={'typeIdentifier': 't_address'}), rightHandSide=sender))]))
+        self.fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0]['nodes'].append(constructor)
+        condition = self.node('BinaryOperation', operator='==', leftExpression=self.fresh(sender),
+            rightExpression=self.node('Identifier', name='owner', referencedDeclaration=owner['id'],
+                typeDescriptions={'typeIdentifier': 't_address'}))
+        self.function()['body']['statements'].insert(0, self.node('ExpressionStatement', expression=self.node(
+            'FunctionCall', kind='functionCall', arguments=[condition], expression=self.node('Identifier', name='require',
+                referencedDeclaration=-18, typeDescriptions={'typeIdentifier': 't_function_require_pure$_t_bool_$returns$__$'}))))
+        result = self.evaluate_terminal(hypothesis, [self.terminal_tool()])
+        self.assertEqual('MATCH', result['toolBinding']['status'])
+        self.assertEqual('UNKNOWN', result['candidateProof']['status'])
+        self.assertEqual('UNKNOWN', result['verdict'])
+        self.assertFalse(result['proofScope']['complete'])
 
     def mapping_case(self, *, write_first=True, different_field=False, different_key=False, prior_call=False):
         """构造同 key struct 锁与真实声明绑定的内部 getter/外部调用结构。"""

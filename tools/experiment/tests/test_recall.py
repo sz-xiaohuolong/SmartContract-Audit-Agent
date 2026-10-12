@@ -5,7 +5,7 @@ from pathlib import Path
 from test_isolation import manifest
 from snapshots import build_snapshot
 from storage import fingerprint
-from recall import recall_pool
+from recall import _recall_candidates, recall_pool
 
 
 class RecallTest(unittest.TestCase):
@@ -48,3 +48,22 @@ class RecallTest(unittest.TestCase):
                      [{"id": fingerprint("a"), "distance": .5}, {"id": fingerprint("b"), "distance": .9701425}]]:
             with self.assertRaises(ValueError):
                 recall_pool(self.root, self.snapshot, self.catalog, [1, 0], "", 2, target_source_hash="b" * 64, search=lambda query, limit: hits)
+
+    def test_多义登记即使普通召回也显式阻止后续猜配对(self):
+        data = manifest()
+        for sample in data['samples']:
+            sample.update(review_status='AUTO_LABELED', evidence_tier='HEURISTIC', label_rule='测试自动标签')
+        documents = [{'id': 'first', 'sample_id': 'a', 'text': 'value = next;'},
+                     {'id': 'second', 'sample_id': 'a', 'text': 'otherValue = next;'},
+                     {'id': 'after', 'sample_id': 'a', 'text': 'require(msg.sender == admin); value = next;'}]
+        snapshot = build_snapshot(self.root, data, documents,
+            {'model': 'fixture', 'dimension': 2, 'revision': '1'}, {'version': 'fixture'},
+            {row['id']: [1, 0] for row in documents})
+        cases = {row['id']: {'caseId': row['id'], 'pairId': 'ambiguous', 'role':
+                 'DEFENSE' if row['id'] == 'after' else 'VULNERABLE', 'mechanism': 'ACCESS_CONTROL',
+                 'riskKind': 'WRITE', 'conditions': [], 'reviewed': False} for row in documents}
+        result = _recall_candidates(self.root, snapshot, {'snapshotId': snapshot, 'cases': cases},
+            [1, 0], 'value', 1, None, 'f' * 64, allow_external=True)
+        self.assertEqual(3, len(result['pool']['candidates']))
+        self.assertTrue(all(row['text'].startswith('【配对关系不唯一，禁止软配对】')
+                            for row in result['pool']['candidates']))

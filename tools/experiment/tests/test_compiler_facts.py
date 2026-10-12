@@ -234,6 +234,37 @@ class CompilerFactsTest(unittest.TestCase):
         require['referencedDeclaration'] = -18
         with self.assertRaises(CompilationBindingError): self.load()
 
+    def test_旧编译器sha3须按实际类型绑定而非放行悬空声明(self):
+        expression = self.function()['body']['statements'][0]['expression']['expression']
+        self.write_compiler('0.4.26+fixture')
+        self.binding['compilerSha256'] = digest(self.binary.read_bytes())
+        self.binding['compilerVersion'] = 'solc fixture\nVersion: 0.4.26+fixture'
+        expression.update(name='sha3', referencedDeclaration=5021,
+                          typeDescriptions={'typeIdentifier': 't_function_sha3_pure$__$returns$_t_bytes32_$'})
+        self.seal()
+        self.assertEqual('keccak256', self.load()['builtinReferences'][5021])
+        expression['name'] = 'keccak256'
+        self.seal()
+        self.assertEqual('keccak256', self.load()['builtinReferences'][5021])
+        expression['typeDescriptions']['typeIdentifier'] = 't_function_internal_pure$__$returns$_t_bytes32_$'
+        self.seal()
+        with self.assertRaises(CompilationBindingError):
+            self.load()
+
+    def test_旧suicide别名只接受编译器确认的终止调用类型(self):
+        expression = self.function()['body']['statements'][0]['expression']['expression']
+        self.write_compiler('0.4.26+fixture')
+        self.binding['compilerSha256'] = digest(self.binary.read_bytes())
+        self.binding['compilerVersion'] = 'solc fixture\nVersion: 0.4.26+fixture'
+        expression.update(name='suicide', referencedDeclaration=5021,
+                          typeDescriptions={'typeIdentifier': 't_function_selfdestruct_nonpayable$_t_address_$returns$__$'})
+        self.seal()
+        self.assertEqual('selfdestruct', self.load()['builtinReferences'][5021])
+        expression['typeDescriptions']['typeIdentifier'] = 't_function_internal_nonpayable$_t_address_$returns$__$'
+        self.seal()
+        with self.assertRaises(CompilationBindingError):
+            self.load()
+
     def test_ast_expressions_distinguish_check_bare_comparison_and_state_write(self):
         bundle = self.load()
         facts = extract_compiler_facts(bundle)

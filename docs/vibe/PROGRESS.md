@@ -3,19 +3,19 @@
 | 当前事项 | 状态与入口 |
 | --- | --- |
 | 当前工作 | R2-20261010 长目标已由用户冻结；[统一规格](releases/R2-20261010/SPEC.md)、[统一计划](releases/R2-20261010/IMPLEMENTATION_PLAN.md)、[验收矩阵](releases/R2-20261010/VERIFICATION.md)已建立 |
-| 当前缺口 | 单次[真实 API 三策略采集](releases/R2-20261010/experiments/2026-10-11_API_BATCH_REPORT.md)已结束；共同45目标的D1 F1为0.7536，低于Vanilla 0.8056。D2的135条新假设仍有131条未知（97.04%），整个R2研究效果仍UNVERIFIED；本次授权已消费，后续新增模型请求默认预算0 |
-| 下一步 | 从新批次87条风险／跨度／调用绑定缺口与旧[工程报告](releases/R2-20261010/S11_S12_ENGINE_REPORT.md)的166条历史未知分别追踪；继续独立案例审核、维护者修复正反及四基线验证，不自动启动第二批模型实验 |
+| 当前缺口 | 旧共同45目标的D1 F1为0.7536，低于Vanilla 0.8056。[根因修复](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md)与零模型复验通过；135条保存假设的UNKNOWN由131降至124（91.85%），仍无新增REFUTED。新模型F1、独立标签与四基线仍未验证；前次单次API授权已消费 |
+| 下一步 | 已完成可审查的[根因修复与复验方案](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md#待授权的真实模型复验方案)；新增模型请求默认预算0，第二批须另行授权。整个R2保持ACTIVE／UNVERIFIED，不以消费质量和局部证明覆盖代替方法效果 |
 
 ## 当前恢复位置
 
 | 字段 | 核验事实 |
 |---|---|
-| 当前任务 | 新批次 `dcf98eef6475433f80f228c9ab5a29fb` 159/159单元落盘；141次真实请求、139项有效、2项输出失败、18项输入阻断；另有2次冒烟，未触发重试。D2单元支持4／反驳0／未知155；原S11派生运行 `cd592f4847454f939dfc75e87fecc9fd` 保留 |
-| 本次检查 | Python 3.12全量518项、Java88项、CLI通过；Vanilla空上下文、阻断零请求、旧FIELD_FILTER兼容与离线报告回归通过。运行前后配置、流水线源码和JAR摘要不变，无关修改保留；[本轮采集验收](releases/R2-20261010/VERIFICATION.md#真实-api-三策略采集2026-10-11)；原Chromium验收仍按S11／S12记录 |
+| 当前任务 | 原批次 `dcf98eef6475433f80f228c9ab5a29fb` 保留；新派生 `78c078d884e64cf69a65c54565824386` 已封口，159单元／53目标／135假设，11支持／0反驳／124未知；18输入阻断保留，新增模型请求0。原S11派生运行亦保留 |
+| 本次检查 | Python 3.12全量579项、Java97项与CLI通过；独立审查发现的六处接口问题均已修复并复审；47目标同池D1为94对、全部UNKNOWN，Java／Python一致。真实静态重放双收据、原模型／usage、原件与代码／JAR身份、工作台派生读取与原字节下载通过；[本轮验收](releases/R2-20261010/VERIFICATION.md#d1d2根因修复与零模型复验2026-10-12) |
 | 当前整体 Release / Workflow State | R2-20261010 / BUILDING / ACTIVE；本轮需求 FROZEN，验证 UNVERIFIED，正式部署未授权 |
 | 最近工程工作包 | S9 单合约深度审计与 D2 闭环，存量标识 `R1-S9`；原局部批准及验收依据继续沿用 |
-| 最近已验工程提交 | 本次起点 `e45dc4b`；本轮源码、运行与同步身份见 `.evidence/R2-20261010/API-batch-20261011/final-manifest.json` 与 `git-sync.json`；S10 `dd7eb97`、Apple `27c3d56` 与 S9 `4dfc7e1` 记录保留 |
-| 最近实验报告 | [2026-10-11 三策略报告](releases/R2-20261010/experiments/2026-10-11_API_BATCH_REPORT.md)；上一报告提交 `9beb7b8` 和 [2026-10-10 原报告](releases/R1/experiments/2026-10-10_API_BATCH_REPORT.md)继续保留，输入治理和策略不同，不作同候选因果比较 |
+| 最近已验工程提交 | 根因修复起点 `ab6ddaf`；本轮代码、回归、派生完整性与同步身份见 `.evidence/R2-20261010/D1-D2-root-cause-20261012/verification-final.json`、`integrity-final.json` 与 `git-sync.json`；原采集与S10／Apple／S9身份继续保留 |
+| 最近实验报告 | [2026-10-12 根因修复](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md)与[2026-10-11 三策略报告](releases/R2-20261010/experiments/2026-10-11_API_BATCH_REPORT.md)；前者只评价保存候选和消费契约，不提供新模型F1；历史报告继续保留 |
 | 执行目录与分支 | 当前主目录，分支 `main`；无关未提交修改保留 |
 
 本轮初始提交为 `00fecf5`。基线证据 `.evidence/R2-20261010/baseline.json`，无关改动恢复材料 `.local/r2/preexisting.patch`。环境与输入任务文件所有权独立，公共编排串行整合；小版本验证后依 AGENTS 提交同步。尚未完成的真实路径、先导、页面与毕设交付不得以S10局部结果替代。

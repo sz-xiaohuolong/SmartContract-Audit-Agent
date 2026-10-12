@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from snapshots import verify_snapshot, vector32, active_snapshot
 from storage import decode, encode, fingerprint
+from d1_consumption import CONSUMPTION_VERSION, UNPAIRABLE, pair_snippets
 
 
 def cosine(a, b):
@@ -46,11 +47,27 @@ def _recall_candidates(root, snapshot_id, catalog, query_vector, query_text, lim
     seen, selected = set(), []
     origins = {s['id']: s for s in snapshot['manifest']['samples']}
     query_terms = set(re.findall(r'\w+', query_text.lower()))
+    excerpts = {}
+    if auto:
+        documents = {row['document']['id']: row['document']['text'] for row in rows.values()}
+        paired = {}
+        for identity, metadata in catalog['cases'].items():
+            paired.setdefault(metadata['pairId'], {}).setdefault(metadata['role'], []).append(identity)
+        for roles in paired.values():
+            # 登记不能唯一确定前后对应关系时，普通召回保留文本，但阻止后续子池猜配对。
+            if len(roles.get('VULNERABLE', [])) == len(roles.get('DEFENSE', [])) == 1 and sum(map(len, roles.values())) == 2:
+                before, after = roles['VULNERABLE'][0], roles['DEFENSE'][0]
+                if catalog['cases'][before]['mechanism'] == catalog['cases'][after]['mechanism']:
+                    excerpts[before], excerpts[after] = pair_snippets(documents[before], documents[after], catalog['cases'][before]['mechanism'])
+            else:
+                for identities in roles.values():
+                    for identity in identities:
+                        excerpts[identity] = UNPAIRABLE + '\n' + documents[identity][:700]
     def append_candidate(key, score):
         document = rows[key]['document']
         metadata = catalog['cases'][document['id']]
         origin = origins[document['sample_id']]
-        excerpt = document['text'][:700] if auto else document['text']
+        excerpt = excerpts.get(document['id'], document['text'][:700]) if auto else document['text']
         words = set(re.findall(r'\w+', excerpt.lower()))
         union = query_terms | words
         lexical = len(query_terms & words) / len(union) if union else 0.0
@@ -79,6 +96,7 @@ def _recall_candidates(root, snapshot_id, catalog, query_vector, query_text, lim
     selected.sort(key=lambda c: (-c['denseScore'], c['caseId'], c['chunkId']))
     return {'pool': {'schemaVersion': 'auto-1' if auto else '1', 'snapshotId': snapshot_id, 'sourceHash': target_source_hash, 'candidates': selected},
             'recall': {'version': 'cosine-jaccard-v1', 'queryHash': fingerprint({'vector': query, 'text': query_text}),
+                       'consumptionVersion': CONSUMPTION_VERSION if auto else 'reviewed-fulltext-v1',
                        'catalogHash': fingerprint(catalog), 'embedding': snapshot['embedding'], 'limit': limit,
                        'backend': 'local' if search is None else 'milvus'}}
 

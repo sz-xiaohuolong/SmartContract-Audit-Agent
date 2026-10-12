@@ -6,7 +6,8 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+from copy import deepcopy
 
 
 SOURCE = 'pragma solidity ^0.8.20; contract C { uint x; function f() public { x = 1; } }'
@@ -56,6 +57,110 @@ class ToolReplayTest(unittest.TestCase):
         (path / 'samples.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in rows))
         (path / 'plan.json').write_text(json.dumps({'batchId': 'original-batch'}))
         return path
+
+    def add_blocked(self, original, *, only_blocked=False):
+        path = original / 'samples.jsonl'
+        eligible = [json.loads(line) for line in path.read_text().splitlines()]
+        blocked_hash = hashlib.sha256('未进入模型的完整输入'.encode()).hexdigest()
+        reason = '完整源码超出预算；需要显式范围'
+        blocked = [{'sampleId': 'blocked', 'strategy': strategy, 'sourceHash': blocked_hash,
+                    'status': 'FAILED', 'pipelineStatus': 'FAILED', 'prediction': 'UNKNOWN',
+                    'modelPrediction': 'UNKNOWN', 'conclusion': 'UNRESOLVED',
+                    'errorCategory': 'EVALUATION_INPUT_BLOCKED', 'inputReason': reason,
+                    'inputTokens': None, 'outputTokens': None, 'requestAttempts': 0,
+                    'model': {}, 'tools': [], 'd2': {'verdict': 'UNKNOWN', 'assessments': [],
+                        'errorCategory': 'EVALUATION_INPUT_BLOCKED'}}
+                   for strategy in ('DENSE', 'FIELD_FILTER', 'D1')]
+        rows = blocked if only_blocked else eligible + blocked
+        path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+        plan = {'batchId': 'original-batch', 'sourceHashes': {
+            'case': eligible[0]['sourceHash'], 'blocked': blocked_hash},
+            'inputEligibility': {'case': {'runnable': True, 'reason': None},
+                                 'blocked': {'runnable': False, 'reason': reason}}}
+        (original / 'plan.json').write_text(json.dumps(plan))
+        return rows, plan
+
+    def test_输入阻断保留计划分母和原模型且不调用工具接缝(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); original = self.original(root)
+            rows, _ = self.add_blocked(original)
+            before = {file.name: file.read_bytes() for file in original.iterdir()}
+            environment = Mock(return_value={'status': 'OK', 'configHash': 'cfg'})
+            compilation = Mock(return_value=None)
+            tools = Mock(return_value=[{'engine': 'SLITHER', 'status': 'OK', 'issues': []}])
+            with patch('audit_run.model_runner', side_effect=AssertionError('不得新增模型请求')):
+                summary = self.module().replay(root, original, root / 'derived', tool_runner=tools,
+                    environment_resolver=environment, compilation_resolver=compilation,
+                    code_identity={'commit': 'fixture'})
+            self.assertEqual(6, summary['units'])
+            self.assertEqual(3, summary['inputBlockedUnits'])
+            self.assertEqual(0, summary['newModelRequests'])
+            self.assertEqual(1, summary['toolExecutions'])
+            self.assertEqual(3, environment.call_count)
+            self.assertEqual(3, compilation.call_count)
+            self.assertEqual(1, tools.call_count)
+            self.assertTrue(all(call.args[0]['sampleId'] == 'case' for call in compilation.call_args_list))
+            derived = [json.loads(line) for line in (root / 'derived/samples.jsonl').read_text().splitlines()]
+            self.assertEqual(6, len(derived))
+            for prior, current in zip(rows, derived):
+                self.assertEqual(prior['model'], current['model'])
+                if prior['sampleId'] == 'blocked':
+                    self.assertNotIn('source', current)
+                    self.assertEqual(prior['d2'], current['d2'])
+                    self.assertEqual(prior['inputTokens'], current['inputTokens'])
+                    self.assertEqual(prior['outputTokens'], current['outputTokens'])
+                    self.assertEqual('SKIPPED', current['facts']['status'])
+                    self.assertEqual('FAILED', current['pipelineStatus'])
+                    self.assertEqual('UNRESOLVED', current['conclusion'])
+                    self.assertEqual([], current['tools'])
+                    self.assertIsNone(current['compilerBinding'])
+                    self.assertIsNone(current['environment'])
+            self.assertEqual(before, {file.name: file.read_bytes() for file in original.iterdir()})
+            manifest = json.loads((root / 'derived/manifest.json').read_text())
+            self.assertEqual('COMPLETED', manifest['status'])
+            self.assertEqual(6, manifest['plannedUnits'])
+            self.assertEqual(6, manifest['completedUnits'])
+
+    def test_全部输入阻断无需工具配置仍可封口(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); original = self.original(root)
+            self.add_blocked(original, only_blocked=True)
+            tools = Mock(side_effect=AssertionError('输入阻断不得执行工具'))
+            compilation = Mock(side_effect=AssertionError('输入阻断不得编译'))
+            with patch('tool_environment._configuration', side_effect=AssertionError('无需工具配置')):
+                summary = self.module().replay(root, original, root / 'derived', tool_runner=tools,
+                    compilation_resolver=compilation, code_identity={'commit': 'fixture'})
+            self.assertEqual(3, summary['units'])
+            self.assertEqual(3, summary['inputBlockedUnits'])
+            self.assertEqual(0, summary['toolExecutions'])
+            self.assertEqual(0, summary['hypotheses'])
+            self.assertEqual({'UNKNOWN': 3}, summary['d2Verdicts'])
+            tools.assert_not_called(); compilation.assert_not_called()
+
+    def test_伪造或矛盾的输入阻断仍在发布前拒绝(self):
+        mutations = [
+            ('未登记阻断', lambda rows, plan: plan.pop('inputEligibility')),
+            ('计划仍可运行', lambda rows, plan: plan['inputEligibility']['blocked'].update(runnable=True)),
+            ('摘要错绑', lambda rows, plan: rows[0].update(sourceHash='0' * 64)),
+            ('请求已发生', lambda rows, plan: rows[0].update(requestAttempts=1)),
+            ('布尔冒充零请求', lambda rows, plan: rows[0].update(requestAttempts=False)),
+            ('模型已有结果', lambda rows, plan: rows[0].update(model={'hypotheses': []})),
+            ('缺失不等于空源码', lambda rows, plan: rows[0].update(source='')),
+            ('伪造安全结论', lambda rows, plan: rows[0].update(conclusion='HYPOTHESES_REFUTED')),
+        ]
+        for title, mutate in mutations:
+            with self.subTest(title=title), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp); original = self.original(root)
+                rows, plan = self.add_blocked(original, only_blocked=True)
+                rows, plan = deepcopy(rows), deepcopy(plan)
+                mutate(rows, plan)
+                (original / 'samples.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in rows))
+                (original / 'plan.json').write_text(json.dumps(plan))
+                with self.assertRaises(ValueError):
+                    self.module().replay(root, original, root / 'derived',
+                        tool_runner=lambda *args: self.fail('不应执行工具'),
+                        code_identity={'commit': 'fixture'})
+                self.assertFalse((root / 'derived').exists())
 
     def test_same_source_and_config_runs_tool_once_and_preserves_raw_model(self):
         replay = self.module().replay

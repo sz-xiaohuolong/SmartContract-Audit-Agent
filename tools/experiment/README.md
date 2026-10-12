@@ -224,6 +224,8 @@ PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py \
 
 输出目录必须不存在。重放仅重新执行工具和 D2，新增模型请求为 0；原模型、usage 与全部原文件摘要保持。派生结果绑定源码、完整工具环境、当前代码与 JAR，并封口保存 manifest、summary、逐单元 JSONL 和报告。历史输入的答案污染限制仍保留，不能把派生核验当作清理后模型发现实验。S10 局部验收与真实工具兼容缺口见 [R2 验收矩阵](../../docs/vibe/releases/R2-20261010/VERIFICATION.md)。
 
+原批次缺源码的输入阻断只有在冻结计划、源码摘要、失败／UNKNOWN、零请求及usage=null身份一致时才可重放。此类单元保持原D2并计入完整分母，跳过编译与工具。加 `--compiled` 使用绑定编译事实与独立Slither双收据；工作台默认读取 `.local/r2/tool-replays/<32位编号>`，输出须使用新目录。
+
 ## R2-S11：真实编译事实与有限路径
 
 `compiler_facts.py` 每次读取显式 manifest，核对完整源码闭包、固定 solc 与版本、settings、输入输出、声明及 UTF-8 跨度，随后实际重新编译并比较完整 JSON。执行前后编译器摘要必须一致。ABI 函数、继承入口、自动 getter、fallback／receive 分别盘点；构造与初始化语义仍单独保留缺口。编译对照成功为 `RECOMPILED_MATCH`，结构事实整体保持 `PARTIAL`。
@@ -267,6 +269,8 @@ PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py --compiled -
 ## 真实 API 的 Vanilla／Dense／D1 对照与离线报告
 
 `benchmark_cli.py` 默认策略为 `VANILLA DENSE D1`。Vanilla 的模型上下文与证据 ID 为空；固定候选池仅用于对照身份和 Dense／D1 共池，模型不消费该池。`FIELD_FILTER` 仍可显式选择，历史计划和结果不改写。
+
+自动知识使用 `mechanism-window-unknown-v1` 消费契约：从冻结全文选择可见机制变化窗口，过滤仅改名、注释／字符串及多义配对，窗口不足时不配对；Java／Python均最多两对且完整上下文≤4096 UTF-8字节。自动入选绑定与评估全部UNKNOWN，“改动后”不表示有效修复。CALL资源关联只用于检索的语法提示，不能作为D2数据流证明。当前修复与零模型复验见[根因报告](../../docs/vibe/releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md)；没有新模型请求时不提供新F1。
 
 真实运行沿用本机已核实供应商配置、Nomic 768 维活动快照及固定工具。启动前检查凭证、本地服务、模型摘要，并先对单一样本执行真实冒烟；未通过路由、usage 与结构化解析时不启动正式批次。以下真实命令仅在已有对应批次授权时执行，自动测试继续使用本地夹具。
 

@@ -117,6 +117,12 @@ def _builtin(node):
         return name
     if name == 'now' and identity == 't_uint256':
         return name
+    if name in {'sha3', 'keccak256'} and identity.startswith('t_function_sha3_'):
+        # 旧 solc 的 sha3 内置别名具有独立类型标识，语义归一为 keccak256。
+        return 'keccak256'
+    if name in {'selfdestruct', 'suicide'} and identity.startswith('t_function_selfdestruct_'):
+        # 旧 suicide 名称可绑定 selfdestruct 类型；同名真实函数仍按声明处理。
+        return 'selfdestruct'
     functions = {'require', 'assert', 'revert', 'keccak256', 'sha256', 'ripemd160', 'ecrecover',
                  'addmod', 'mulmod', 'blockhash', 'gasleft', 'selfdestruct', 'suicide'}
     if name in functions and identity.startswith(f't_function_{name}_'):

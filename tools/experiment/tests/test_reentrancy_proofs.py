@@ -68,7 +68,8 @@ class ReentrancyProofTest(unittest.TestCase):
 
     def low_call(self, *, old=False):
         bare = self.node('MemberAccess', memberName='call', expression=self.sender(),
-            typeDescriptions={'typeIdentifier': 't_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$'})
+            typeDescriptions={'typeIdentifier': ('t_function_barecall_payable$__$returns$_t_bool_$' if old else
+                't_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$')})
         if old:
             expression = self.node('FunctionCall', kind='functionCall', arguments=[self.credit()],
                 expression=self.node('MemberAccess', memberName='value', expression=bare,
@@ -110,6 +111,37 @@ class ReentrancyProofTest(unittest.TestCase):
         self.assertEqual('SATISFIABLE_ABSTRACTION', result['pathEvidence']['transactionFeasibility'])
         self.assertEqual('REFUTED', next(o for o in result['obligations'] if o['name'] == 'state_version')['status'])
 
+    def test_旧Throw分支是回滚而非未知续接(self):
+        self.fixture.function()['body']['statements'].append(self.node('IfStatement',
+            condition=self.boolean(False), trueBody=self.node('Throw'), falseBody=None))
+        self.assertEqual('COUNTEREXAMPLE', self.proof()['status'])
+        self.fixture.function()['body']['statements'][-1]['condition'] = self.boolean(True)
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_顶层风险图与专用重入证明使用相同CALL语义(self):
+        from compiled_d2 import evaluate_compiled
+        self.fixture.seal()
+        result = evaluate_compiled({'contract': 'C', 'function': 'f()', 'riskLine': 1,
+            'riskOperation': 'CALL', 'vulnerabilityType': 'REENTRANCY'},
+            self.fixture.manifest, [], root=self.fixture.root)
+        self.assertIn('riskBinding', result)
+        self.assertNotIn('风险操作、字节跨度与调用上下文无法唯一绑定', result['proofScope']['gaps'])
+        self.assertEqual('UNKNOWN', result['verdict'])
+
+    def test_现代CALL布尔返回解构可核验而返回数据使用保持未知(self):
+        success = self.node('VariableDeclaration', name='success', stateVariable=False,
+            storageLocation='default', typeDescriptions={'typeIdentifier': 't_bool'})
+        capture = self.node('VariableDeclarationStatement', declarations=[success, None], initialValue=self.call)
+        checked = self.check(self.node('Identifier', name='success', referencedDeclaration=success['id']))
+        self.fixture.function()['body']['statements'] = [self.guard, capture, checked, self.write]
+        self.assertEqual('COUNTEREXAMPLE', self.proof()['status'])
+        # 未建模返回字节内容，不能把其断言看作已满足。
+        data = self.node('VariableDeclaration', name='data', stateVariable=False,
+            storageLocation='memory', typeDescriptions={'typeIdentifier': 't_bytes_memory_ptr'})
+        capture['declarations'][1] = data
+        checked['expression']['arguments'] = [self.node('Identifier', name='data', referencedDeclaration=data['id'])]
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
     def test_旧版带数值调用链也必须使用编译类型与参数(self):
         self.call = self.low_call(old=True)
         self.fixture.function()['body']['statements'] = [self.guard, self.statement(self.call), self.write]
@@ -132,6 +164,21 @@ class ReentrancyProofTest(unittest.TestCase):
     def test_前置归零没有余额条件不能补成安全证明(self):
         self.fixture.function()['body']['statements'] = [self.write, self.statement(self.call)]
         self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_无余额检查的先CALL后写入须以实际正数与合法入账验证(self):
+        self.fixture.function()['body']['statements'] = [self.statement(self.call), self.write]
+        result = self.proof()
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        self.assertEqual('REFUTED', next(o for o in result['obligations'] if o['name'] == 'pre_risk_guard')['status'])
+        self.call['expression']['options'] = [self.number(0)]
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_带ether单位的阈值不能按字面数字1证明小额路径(self):
+        limit = self.guard['expression']['arguments'][0]['rightExpression']
+        limit.update(value='1', subdenomination='ether')
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+        limit.update(value='0.000000000000000001', subdenomination='ether')
+        self.assertEqual('COUNTEREXAMPLE', self.proof()['status'])
 
     def test_统一互斥锁可证明后置余额更新的回调窗口受保护(self):
         self.fixture.function()['body']['statements'] = self.lock_prefix() + [self.guard,
@@ -244,6 +291,7 @@ class ReentrancyProofTest(unittest.TestCase):
         self.assertEqual('UNKNOWN', self.proof()['status'])
 
     def test_CALL结果被require检查时须明确选择成功断言(self):
+        self.call = self.low_call(old=True)
         local = self.node('VariableDeclaration', name='ok', stateVariable=False,
             typeName=self.node('ElementaryTypeName', name='bool'), typeDescriptions={'typeIdentifier': 't_bool'})
         declaration = self.node('VariableDeclarationStatement', declarations=[local], initialValue=self.call)
@@ -330,6 +378,29 @@ class ReentrancyProofTest(unittest.TestCase):
         result = self.proof(function='f(uint256)')
         self.assertEqual('PROVED', result['status'])
         self.assertIn('STRICT_CEI', result['proofScope']['rules'])
+
+    def test_入账同时更新标量总账时必须重放全部槽且匹配提款初态(self):
+        total = self.node('VariableDeclaration', name='total', stateVariable=True,
+            typeName=self.node('ElementaryTypeName', name='uint256'),
+            typeDescriptions={'typeIdentifier': 't_uint256'})
+        self.fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0]['nodes'].append(total)
+        def total_ref():
+            return self.node('Identifier', name='total', referencedDeclaration=total['id'],
+                typeDescriptions={'typeIdentifier': 't_uint256'})
+        value = self.syntax.fresh(self.funding['body']['statements'][0]['expression']['rightHandSide'])
+        self.funding['body']['statements'].append(self.statement(self.node('Assignment', operator='+=',
+            leftHandSide=total_ref(), rightHandSide=value)))
+        self.fixture.function()['body']['statements'].insert(1, self.statement(self.node('Assignment',
+            operator='-=', leftHandSide=total_ref(), rightHandSide=self.credit())))
+        result = self.proof()
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        initial = result['pathEvidence']['witness']['initialStorage']
+        self.assertEqual(next(item['value'] for item in initial if item['root'] == self.balance['id']),
+                         next(item['value'] for item in initial if item['root'] == total['id']))
+        # 不一致的辅助总账断言不能靠独立枚举余额冒充可达初态。
+        self.fixture.function()['body']['statements'].insert(1, self.check(self.node('BinaryOperation',
+            operator='>', leftExpression=total_ref(), rightExpression=self.credit())))
+        self.assertEqual('UNKNOWN', self.proof()['status'])
 
     def test_未证明可达建态的条件反例必须保留未知(self):
         contract = self.fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0]

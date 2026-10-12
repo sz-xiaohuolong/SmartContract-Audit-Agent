@@ -17,7 +17,7 @@ _YUL_SHAPES = frozenset(('YulBlock YulExpressionStatement YulFunctionCall YulIde
     'YulAssignment YulTypedName YulVariableDeclaration YulIf YulSwitch YulCase YulForLoop '
     'YulBreak YulContinue YulLeave').split())
 _AST_SHAPES = frozenset(('Block UncheckedBlock ExpressionStatement VariableDeclarationStatement '
-    'IfStatement ForStatement WhileStatement DoWhileStatement Return Break Continue RevertStatement '
+    'IfStatement ForStatement WhileStatement DoWhileStatement Return Break Continue RevertStatement Throw '
     'EmitStatement PlaceholderStatement TryStatement TryCatchClause InlineAssembly Assignment '
     'UnaryOperation BinaryOperation Identifier IdentifierPath Literal FunctionCall FunctionCallOptions '
     'ElementaryTypeNameExpression NewExpression MemberAccess IndexAccess IndexRangeAccess '

@@ -53,8 +53,8 @@ class BenchmarkRuntimeTest(unittest.TestCase):
             'project_group': '知识项目', 'clone_groups': [], 'origin': '夹具/a', 'split': 'knowledge',
             'types': ['REENTRANCY'], 'review_status': 'AUTO_LABELED', 'evidence_tier': 'HEURISTIC',
             'label_rule': '夹具自动标签'}]}
-        documents = [{'id': 'before', 'sample_id': 'a', 'text': '调用后写入余额'},
-                     {'id': 'after', 'sample_id': 'a', 'text': '调用前写入余额'}]
+        documents = [{'id': 'before', 'sample_id': 'a', 'text': 'msg.sender.call("");\ncredit[msg.sender] = 0;'},
+                     {'id': 'after', 'sample_id': 'a', 'text': 'credit[msg.sender] = 0;\nmsg.sender.call("");'}]
         snapshot = build_snapshot(store, manifest, documents,
             {'model': 'fixture', 'revision': 'r', 'dimension': 2}, {'version': 'fixture'},
             {'before': [1.0, 0.0], 'after': [1.0, 0.0]})
@@ -212,11 +212,59 @@ class BenchmarkRuntimeTest(unittest.TestCase):
 
     def test_无唯一风险事实时保留软配对与显式缺口(self):
         before = {'caseId': 'a', 'chunkId': 'a', 'pairId': 'p', 'role': 'VULNERABLE',
-                  'mechanism': 'REENTRANCY', 'text': '旧代码', 'denseScore': .9, 'conditions': []}
-        after = {**before, 'caseId': 'b', 'chunkId': 'b', 'role': 'DEFENSE', 'text': '新代码', 'denseScore': .8}
+                  'mechanism': 'REENTRANCY', 'riskKind': 'CALL',
+                  'text': 'msg.sender.call("");\ncredit[msg.sender] = 0;', 'denseScore': .9, 'conditions': []}
+        after = {**before, 'caseId': 'b', 'chunkId': 'b', 'role': 'DEFENSE',
+                 'text': 'credit[msg.sender] = 0;\nmsg.sender.call("");', 'denseScore': .8}
         result = soft_without_risk({'candidates': [before, after]}, 'REENTRANCY')
         self.assertEqual(['a', 'b'], [row['candidate']['chunkId'] for row in result['selected']])
         self.assertIn('无唯一风险事实', result['gaps'][0])
+
+    def test_软配对拒绝只有接口重命名而保护顺序未变的前后片段(self):
+        before = {'caseId': 'a', 'chunkId': 'a', 'pairId': 'p', 'role': 'VULNERABLE',
+                  'mechanism': 'REENTRANCY', 'riskKind': 'CALL', 'text':
+                  '-ERC20I(token).transfer(msg.sender, amount);\n delete credit[msg.sender];',
+                  'denseScore': .9, 'conditions': []}
+        after = {**before, 'caseId': 'b', 'chunkId': 'b', 'role': 'DEFENSE', 'text':
+                 '+ERC20(token).transfer(msg.sender, amount);\n delete credit[msg.sender];'}
+        result = soft_without_risk({'candidates': [before, after]}, 'REENTRANCY')
+        self.assertEqual([], result['selected'])
+        self.assertTrue(any('机制' in gap for gap in result['gaps']))
+
+    def test_无唯一风险时条件非空不能伪造适用性(self):
+        before = {'caseId': 'a', 'chunkId': 'a', 'pairId': 'p', 'role': 'VULNERABLE',
+                  'mechanism': 'ACCESS_CONTROL', 'riskKind': 'WRITE', 'text': 'value = next;',
+                  'denseScore': .9, 'conditions': [{'predicate': 'ONLY_OWNER'}]}
+        after = {**before, 'caseId': 'b', 'chunkId': 'b', 'role': 'DEFENSE',
+                 'text': 'require(msg.sender == admin);\nvalue = next;'}
+        result = soft_without_risk({'candidates': [before, after]}, 'ACCESS_CONTROL')
+        self.assertEqual({'UNKNOWN'}, {row['applicability'] for row in result['evaluations'].values()})
+        self.assertNotIn('|DEFENSE]', result['context'])
+        self.assertIn('改动后', result['context'])
+
+    def test_软配对风险类型不一致时不能组成完整对照(self):
+        before = {'caseId': 'a', 'chunkId': 'a', 'pairId': 'p', 'role': 'VULNERABLE',
+                  'mechanism': 'ACCESS_CONTROL', 'riskKind': 'WRITE', 'text': 'value = next;',
+                  'denseScore': .9, 'conditions': []}
+        after = {**before, 'caseId': 'b', 'chunkId': 'b', 'role': 'DEFENSE', 'riskKind': 'CALL',
+                 'text': 'require(msg.sender == admin);\nvalue = next;'}
+        self.assertEqual([], soft_without_risk({'candidates': [before, after]}, 'ACCESS_CONTROL')['selected'])
+
+    def test_CALL资源来自同作用域唯一主体映射而不猜owner(self):
+        with TemporaryDirectory() as directory:
+            runtime = self.runtime(Path(directory))
+            source = ('contract C { mapping(address => uint) credit;\n function a() public {\n'
+                      ' msg.sender.call("");\n credit[msg.sender] = 0;\n }\n}')
+            target = _record('c', source, 'REENTRANCY', 'a', None, True, '标签', '目标项目')
+            requests = []
+            def java(source, request):
+                requests.append(request)
+                return {'results': [{'strategy': 'D1', 'sourceHash': target['sourceHash'],
+                    'snapshotId': runtime.pointer['snapshot_id'], 'selected': [], 'context': '', 'evaluations': {}}]}
+            runtime.java_runner = java
+            runtime.preview(target)
+            self.assertEqual('credit[msg.sender]', requests[0]['target']['bindings']['resource'])
+            self.assertNotIn('authority', requests[0]['target']['bindings'])
 
     def test_自动知识字段基线仅按类别字段而非_d1_绑定筛选(self):
         candidate = {'caseId': 'a', 'chunkId': 'a', 'mechanism': 'REENTRANCY',

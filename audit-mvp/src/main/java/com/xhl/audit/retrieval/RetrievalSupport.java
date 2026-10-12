@@ -88,14 +88,24 @@ final class RetrievalSupport {
     }
     static String context(Selection selection) {
         Candidate candidate = selection.candidate();
-        return "[" + candidate.caseId() + "/" + candidate.chunkId() + "|" + candidate.role() + "]\n" + candidate.text() + "\n";
+        String label = candidate.reviewed() ? candidate.role() : switch (candidate.role()) {
+            case "VULNERABLE" -> "改动前·未审核";
+            case "DEFENSE" -> "改动后·未审核";
+            default -> "参考片段·未审核";
+        };
+        return "[" + candidate.caseId() + "/" + candidate.chunkId() + "|" + label + "]\n" + candidate.text() + "\n";
     }
     static int bytes(Selection selection) {return context(selection).getBytes(StandardCharsets.UTF_8).length;}
     static EvidenceBundle bundle(String name, ProgramFacts facts, Target target, CandidatePool pool, Budget budget, List<Selection> rows, List<String> gaps) {
-        String context = rows.stream().map(RetrievalSupport::context).collect(java.util.stream.Collectors.joining());
+        // 自动池中的所有策略均不得将语法绑定输出为补丁适用性证明。
+        List<Selection> outputRows = pool.schemaVersion().equals("auto-1")
+            ? rows.stream().map(row -> new Selection(row.candidate(), row.use(), new Binding("UNKNOWN", List.of()))).toList()
+            : List.copyOf(rows);
+        String context = outputRows.stream().map(RetrievalSupport::context).collect(java.util.stream.Collectors.joining());
         var evaluations = new TreeMap<String, Binding>();
-        for (Candidate candidate : pool.candidates()) evaluations.put(candidate.chunkId(), new ConditionBinder().bind(facts, target, candidate));
+        for (Candidate candidate : pool.candidates()) evaluations.put(candidate.chunkId(), pool.schemaVersion().equals("auto-1")
+            ? new Binding("UNKNOWN", List.of()) : new ConditionBinder().bind(facts, target, candidate));
         return new EvidenceBundle(name, facts.sourceHash(), pool.snapshotId(), hashObject(pool), budget, "utf8-context-bytes-v1",
-            context.getBytes(StandardCharsets.UTF_8).length, context, List.copyOf(rows), List.copyOf(gaps), target, Collections.unmodifiableMap(evaluations));
+            context.getBytes(StandardCharsets.UTF_8).length, context, outputRows, List.copyOf(gaps), target, Collections.unmodifiableMap(evaluations));
     }
 }

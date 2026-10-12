@@ -189,9 +189,9 @@ class RetrievalTest {
     }
 
     @Test void autoLabeledPoolUsesSoftPairWhenNoStrictConditionMatches() {
-        var original = new Candidate("before", "before", "patch-1", "VULNERABLE", "ACCESS_CONTROL", "WRITE", "改动前",
+        var original = new Candidate("before", "before", "patch-1", "VULNERABLE", "ACCESS_CONTROL", "WRITE", "value = next;",
             List.of(), false, "auto", .91, 0);
-        var patched = new Candidate("after", "after", "patch-1", "DEFENSE", "ACCESS_CONTROL", "WRITE", "改动后",
+        var patched = new Candidate("after", "after", "patch-1", "DEFENSE", "ACCESS_CONTROL", "WRITE", "require(msg.sender == admin); value = next;",
             List.of(), false, "auto", .83, 0);
         var auto = new CandidatePool("auto-1", HASH, HASH, List.of(original, patched));
         var output = new D1Retriever().retrieve(facts(List.of(write), true), target(), auto, new Budget(1000, 2));
@@ -201,6 +201,11 @@ class RetrievalTest {
             new Budget(1000, 2)).strategy());
     }
 
+    @Test void 自动软配对拒绝只有文字标签差异的片段() {
+        assertFalse(AutomaticContrast.changed("改动前", "改动后", "ACCESS_CONTROL"));
+        assertFalse(AutomaticContrast.changed("旧代码", "新代码", "REENTRANCY"));
+    }
+
     @Test void explicitOwnerModifierCanBindEvenWhenBodyIsPartial() {
         var modifier = new Candidate("patched", "patched", "p", "DEFENSE", "ACCESS_CONTROL", "WRITE", "onlyOwner",
             List.of(new Condition("ONLY_OWNER", "$actor", "$authority", true)), false, "auto", .9, 0);
@@ -208,5 +213,106 @@ class RetrievalTest {
             List.of(new Scope(scope.id(), "C", "f", List.of("onlyOwner"), false)), List.of(write), List.of());
         assertEquals("SUPPORTED", new ConditionBinder().bind(partial, target(), modifier).applicability());
         assertEquals("UNKNOWN", new ConditionBinder().bind(facts(List.of(write), false), target(), modifier).applicability());
+    }
+
+    @Test void 自动软配对拒绝接口重命名而保留两组实际保护改动() {
+        var rows = new java.util.ArrayList<Candidate>();
+        for (int i = 0; i < 3; i++) {
+            String before = i == 0 ? "-ERC20I(token).transfer(msg.sender, amount);\n delete credit[msg.sender];" : "value" + i + " = next;";
+            String after = i == 0 ? "+ERC20(token).transfer(msg.sender, amount);\n delete credit[msg.sender];"
+                : "require(msg.sender == " + (i == 1 ? "admin" : "manager") + ");\n" + before;
+            String mechanism = i == 0 ? "REENTRANCY" : "ACCESS_CONTROL";
+            String kind = i == 0 ? "CALL" : "WRITE";
+            for (int side = 0; side < 2; side++) rows.add(new Candidate("case-" + i + "-" + side,
+                "chunk-" + i + "-" + side, "pair-" + i, side == 0 ? "VULNERABLE" : "DEFENSE", mechanism,
+                kind, side == 0 ? before : after, List.of(), false, "auto", 1.0 - i * .1, 0));
+        }
+        var auto = new CandidatePool("auto-1", HASH, HASH, rows);
+        var output = new D1Retriever().retrieve(facts(List.of(write), true), target(), auto, new Budget(4096, 4));
+        assertEquals(4, output.selected().size());
+        assertTrue(output.selected().stream().allMatch(row -> row.binding().applicability().equals("UNKNOWN")));
+        assertTrue(output.context().contains("改动后"));
+        assertFalse(output.context().contains("|DEFENSE]"));
+        var call = new Fact("risk-call", scope.id(), "CALL", "msg.sender", "", 1, 4);
+        var query = new Target("REENTRANCY", "risk-call", Map.of("actor", "msg.sender"));
+        assertTrue(new D1Retriever().retrieve(facts(List.of(call), true), query, auto, new Budget(4096, 4)).selected().isEmpty());
+    }
+
+    @Test void 自动条件即使能够匹配也不能冒充已审核补丁适用性() {
+        var before = new Candidate("before", "before", "pair", "VULNERABLE", "ACCESS_CONTROL", "WRITE", "value = next;",
+            List.of(new Condition("CHECK_BEFORE", "$actor", "$authority", false)), false, "auto", .9, 0);
+        var after = new Candidate("after", "after", "pair", "DEFENSE", "ACCESS_CONTROL", "WRITE", "require(msg.sender == admin); value = next;",
+            List.of(new Condition("CHECK_BEFORE", "$actor", "$authority", true)), false, "auto", .8, 0);
+        var output = new D1Retriever().retrieve(facts(List.of(write), true), target(),
+            new CandidatePool("auto-1", HASH, HASH, List.of(before, after)), new Budget(4096, 4));
+        assertEquals(List.of("SOFT_SUPPORT", "SOFT_CONTRAST"), output.selected().stream().map(Selection::use).toList());
+        assertTrue(output.evaluations().values().stream().allMatch(binding -> binding.applicability().equals("UNKNOWN")));
+    }
+
+    @Test void 自动机制规则忽略注释字符串不完整条件和权限主体改名() {
+        assertFalse(AutomaticContrast.changed("value = next;", "value = next; // require(msg.sender == admin);\n"
+            + "string s = \"onlyOwner require(msg.sender == admin);\";", "ACCESS_CONTROL"));
+        assertFalse(AutomaticContrast.changed("value = next;", "require(msg.sender == admin", "ACCESS_CONTROL"));
+        assertFalse(AutomaticContrast.changed("require(msg.sender == owner);", "require(msg.sender == admin);", "ACCESS_CONTROL"));
+        assertTrue(AutomaticContrast.changed("msg.sender.call(\"\"); credit[msg.sender] = 0;",
+            "credit[msg.sender] = 0; msg.sender.call(\"\");", "REENTRANCY"));
+    }
+
+    @Test void 自动完整配对预算包含中文未审核标题() {
+        var before = new Candidate("改动前", "前", "配对", "VULNERABLE", "ACCESS_CONTROL", "WRITE", "value = next;",
+            List.of(), false, "auto", .9, 0);
+        var after = new Candidate("改动后", "后", "配对", "DEFENSE", "ACCESS_CONTROL", "WRITE", "require(msg.sender == admin); value = next;",
+            List.of(), false, "auto", .8, 0);
+        var auto = new CandidatePool("auto-1", HASH, HASH, List.of(before, after));
+        var full = new D1Retriever().retrieve(facts(List.of(write), true), target(), auto, new Budget(4096, 4));
+        assertEquals(full.context().getBytes(java.nio.charset.StandardCharsets.UTF_8).length, full.usedBytes());
+        assertEquals(2, new D1Retriever().retrieve(facts(List.of(write), true), target(), auto,
+            new Budget(full.usedBytes(), 4)).selected().size());
+        assertTrue(new D1Retriever().retrieve(facts(List.of(write), true), target(), auto,
+            new Budget(full.usedBytes() - 1, 4)).selected().isEmpty());
+    }
+
+    @Test void 自动配对不能跨越风险类型或者复用相同文本() {
+        var rows = new java.util.ArrayList<Candidate>();
+        for (int i = 0; i < 2; i++) {
+            rows.add(new Candidate("前" + i, "前" + i, "对" + i, "VULNERABLE", "ACCESS_CONTROL", "WRITE", "value = next;",
+                List.of(), false, "auto", .9 - i * .1, 0));
+            rows.add(new Candidate("后" + i, "后" + i, "对" + i, "DEFENSE", "ACCESS_CONTROL", "WRITE", "require(msg.sender == admin); value = next;",
+                List.of(), false, "auto", .8 - i * .1, 0));
+        }
+        assertEquals(2, new D1Retriever().retrieve(facts(List.of(write), true), target(),
+            new CandidatePool("auto-1", HASH, HASH, rows), new Budget(4096, 4)).selected().size());
+        var mismatched = new Candidate("后", "后", "对0", "DEFENSE", "ACCESS_CONTROL", "CALL", "require(msg.sender == admin); value = next;",
+            List.of(), false, "auto", .8, 0);
+        assertTrue(new D1Retriever().retrieve(facts(List.of(write), true), target(),
+            new CandidatePool("auto-1", HASH, HASH, List.of(rows.getFirst(), mismatched)), new Budget(4096, 4)).selected().isEmpty());
+    }
+
+    @Test void 自动Dense与Hybrid入选绑定和评估均保留未知() {
+        var before = new Candidate("前", "前", "对", "VULNERABLE", "ACCESS_CONTROL", "WRITE", "value = next;",
+            List.of(new Condition("CHECK_BEFORE", "$actor", "$authority", false)), false, "auto", .9, .1);
+        var after = new Candidate("后", "后", "对", "DEFENSE", "ACCESS_CONTROL", "WRITE", "require(msg.sender == owner); value = next;",
+            List.of(new Condition("CHECK_BEFORE", "$actor", "$authority", true)), false, "auto", .8, .1);
+        var guarded = facts(List.of(new Fact("guard", scope.id(), "CHECK", "msg.sender", "owner", 0, 2), write), true);
+        var auto = new CandidatePool("auto-1", HASH, HASH, List.of(before, after));
+        for (RetrievalStrategy strategy : List.of(new DenseRetriever(), new HybridRetriever())) {
+            var output = strategy.retrieve(guarded, target(), auto, new Budget(4096, 4));
+            assertEquals(List.of("前", "后"), output.selected().stream().map(row -> row.candidate().chunkId()).toList());
+            assertTrue(output.selected().stream().allMatch(row -> row.binding().applicability().equals("UNKNOWN")));
+            assertTrue(output.evaluations().values().stream().allMatch(binding -> binding.applicability().equals("UNKNOWN")));
+        }
+    }
+
+    @Test void 自动软配对拒绝多义登记及多义标识() {
+        var before = new Candidate("前", "前", "对", "VULNERABLE", "ACCESS_CONTROL", "WRITE", "value = next;",
+            List.of(), false, "auto", .9, 0);
+        var other = new Candidate("另一前", "另一前", "对", "VULNERABLE", "ACCESS_CONTROL", "WRITE", "otherValue = next;",
+            List.of(), false, "auto", .99, 0);
+        var after = new Candidate("后", "后", "对", "DEFENSE", "ACCESS_CONTROL", "WRITE", "require(msg.sender == owner); value = next;",
+            List.of(), false, "auto", .8, 0);
+        assertTrue(new D1Retriever().retrieve(facts(List.of(write), true), target(),
+            new CandidatePool("auto-1", HASH, HASH, List.of(before, other, after)), new Budget(4096, 4)).selected().isEmpty());
+        assertFalse(AutomaticContrast.changed("【配对关系不唯一，禁止软配对】\nvalue = next;",
+            "【配对关系不唯一，禁止软配对】\nrequire(msg.sender == owner); value = next;", "ACCESS_CONTROL"));
     }
 }

@@ -16,7 +16,7 @@
 | 当前真实架构与运行入口 | [TECH_DESIGN](TECH_DESIGN.md) | 已验工程基线及当前构建边界 |
 | 当前需求与完整行为 | [R2 基线](releases/R2-20261010/PROJECT_BRIEF.md)、[SPEC](releases/R2-20261010/SPEC.md) | 沿用既有 R2 冻结范围 |
 | 当前目标方案与任务依赖 | [R2 设计](releases/R2-20261010/PROPOSED_DESIGN.md)、[计划](releases/R2-20261010/IMPLEMENTATION_PLAN.md) | 构建中；Slice 在统一计划中追踪 |
-| 当前验收与先导资料 | [R2 验收](releases/R2-20261010/VERIFICATION.md)、[真实 API 三策略报告](releases/R2-20261010/experiments/2026-10-11_API_BATCH_REPORT.md)、[S11／S12 工程报告](releases/R2-20261010/S11_S12_ENGINE_REPORT.md)、[真实案例](releases/R2-20261010/attachments/REAL_CASE_PILOT.md) | 整体 UNVERIFIED；有限引擎、页面与单次真实采集已验，方法增益与证明覆盖仍有缺口 |
+| 当前验收与先导资料 | [R2 验收](releases/R2-20261010/VERIFICATION.md)、[D1／D2 根因修复](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md)、[真实 API 三策略报告](releases/R2-20261010/experiments/2026-10-11_API_BATCH_REPORT.md)、[S11／S12 工程报告](releases/R2-20261010/S11_S12_ENGINE_REPORT.md)、[真实案例](releases/R2-20261010/attachments/REAL_CASE_PILOT.md) | 整体 UNVERIFIED；根因修复与零模型工程复验通过，未知率91.85%，新模型F1待授权复验 |
 | 上一工程阶段的完整记录 | [R1 基线](releases/R1/PROJECT_BRIEF.md)、[规格](releases/R1/SPEC.md)、[计划](releases/R1/IMPLEMENTATION_PLAN.md)、[验收](releases/R1/VERIFICATION.md) | 以 `4dfc7e1` 工程及 `9beb7b8` 实验为依据；保留原局部批准 |
 | 历史提案 | [R0 基线](releases/R0-20260918/PROJECT_BRIEF.md)、[旧源码调查](releases/R0-20260918/SOURCE_SURVEY.md) | 当时的 DRAFT 与调查记录 |
 | 重大决定与缺陷调查 | [审计范围决定](decisions/DEC-001_SINGLE_AUDIT_SCOPE.md)、[配置冻结调查](bugs/BUG-001_CONFIGURATION_SNAPSHOT.md) | 原批准和修复依据沿用 |

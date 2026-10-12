@@ -11,6 +11,7 @@ from program_facts import extract_facts
 from recall import _recall_candidates
 from snapshots import active_snapshot, verify_snapshot, vector32
 from storage import decode, encode, fingerprint
+from d1_consumption import candidate_context, risk_bindings
 
 
 SNAPSHOT_ROOT = Path('.local/d1-kb-snapshots')
@@ -44,7 +45,7 @@ def select_strategy(view, strategy):
                 continue
             if evaluations.get(candidate['chunkId'], {}).get('applicability') not in ('SUPPORTED', 'CONTRADICTED'):
                 continue
-        snippet = f"[{candidate['caseId']}/{candidate['chunkId']}|{candidate['role']}]\n{candidate['text']}\n"
+        snippet = candidate_context(candidate)
         length = len(snippet.encode('utf-8'))
         if used + length > CONTEXT_BYTES or len(selected) == 4:
             continue
@@ -137,10 +138,8 @@ def preview(root, target, index, encoder, java_runner=None):
         d1 = {'status': 'NO_RISK_FACT', 'selected': [], 'context': '',
               'gaps': ['目标函数没有与正式知识案例风险类型一致的可绑定操作'], 'evaluations': {}}
     else:
-        resource = risk['resource'] if risk['kind'] == 'WRITE' else (
-            'balances' if current['mechanism'] == 'REENTRANCY' else 'owner')
         request = {'target': {'mechanism': current['mechanism'], 'riskFactId': risk['id'],
-                              'bindings': {'actor': 'msg.sender', 'resource': resource, 'authority': resource}},
+                              'bindings': risk_bindings(facts, risk)},
                    'pool': recalled['pool'], 'budget': {'maxBytes': CONTEXT_BYTES, 'maxCases': 4}}
         result = (java_runner or (lambda source, value: java_retrieval(root, source, value)))(current['fullSource'], request)
         if (not isinstance(result, dict) or not isinstance(result.get('results'), list)
