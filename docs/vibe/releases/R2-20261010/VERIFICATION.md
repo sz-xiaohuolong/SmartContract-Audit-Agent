@@ -172,4 +172,29 @@ PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_report.py \
 
 `.evidence/R2-20261010/D1-D2-real-revalidation-ready/prepare.py` 只允许Milvus读回及Ollama模型元数据读取；没有触发模型、嵌入生成、编译器或静态工具。原53目标与源码摘要一致，47目标可运行，6目标×三策略阻断；冻结集合600向量及Nomic摘要匹配。`formal-plan.json`、`smoke-plan.json`、`readiness.json` 保存现行计划摘要、预留编号、286请求／585728输出token上限及授权后的命令。所有准备输入前后摘要一致，未建立正式或冒烟运行目录；配置凭证的远程有效性仍UNVERIFIED。
 
-当前新D1 F1没有真实调用证据，D2广泛覆盖仍PARTIAL，目标不能标记完成。线程记录与准备状态确认第二批授权缺口连续三个目标回合未解除；`goal-audit.json` 区分前两回合的工程／诊断进展与本回合的零请求准备，并记录同一阻塞条件。当前长目标BLOCKED，项目WAITING_HUMAN／UNVERIFIED；不重复请求授权、不自动发起第二批，也不把等待解释为模型效果已验证。
+此处为授权前准备状态：当时新D1 F1没有真实调用证据，第二批授权缺口连续三个目标回合未解除，长目标标记BLOCKED，项目WAITING_HUMAN／UNVERIFIED。`goal-audit.json` 保留当时的阻塞审计。随后用户明确授权并完成单次复验，当前结果按下节更新；准备记录没有追写成已授权原件。
+
+## 2026-10-12 第二次真实 API 复验
+
+本次仅使用用户明确授权的同一 Ark Agent Plan 端点、`deepseek-v4-flash` 与原 Nomic 768 维快照。正式批次 `119b4862f8a14818b62848ce709c3ee6`、冒烟 `a68d70a324904c8db4635fcaa1d107df`；原始核对见 `.evidence/R2-20261010/API-revalidation-20261012/`，分析见[复验报告](experiments/2026-10-12_API_REVALIDATION_REPORT.md)。
+
+| 检查 | 本轮新鲜结果 |
+|---|---|
+| 授权与预检 | 用户明确回复“授权该单次复验”；89个冻结输入和配置摘要执行前后相等，凭证不打印；Milvus 600向量读回、Nomic修订、正式／冒烟计划与预留编号匹配。`authorization.json`、`preflight.json`、`comparison.json` |
+| 冒烟门禁 | FibonacciBalance 的DENSE／D1模型、JSON解析与usage均通过，各1次请求；输入3702／输出315 token。`smoke-verification.json`、原样本 |
+| 正式封口 | 159／159单元落盘，139有效模型结果、20失败／UNKNOWN，其中18超长输入零请求，2结构化模型输出失败。正式142次请求尝试，其中一次受限重试；冒烟2次，合计144／286；已记录输出20497／585728 token。usage缺失0 |
+| 三策略结果 | 新批次共同有效45目标：Vanilla 0.8219、Dense 0.8684、D1 0.9383；两个批次共同有效43目标：旧D1 0.7576→新D1 0.9487，新Dense 0.8611。自动标签探索性口径，候选池冲突0 |
+| D2与工具 | 新133假设12支持／0反驳／121未知（90.98%），支持来自5唯一目标；工具137 OK／6 PROCESS_ERROR，流水线失败31。5个D2错误单元是候选身份绑定不匹配，其他候选记录仍保留 |
+| 同候选口径 | 原135保存假设的严格派生重放仍为11支持／0反驳／124未知；新批次假设变化，90.98%与原97.04%不能解作同候选因果改善 |
+| 新未知分流 | `unknown-classification.json`逐一覆盖121条未知：42入口／正常退出、33同主体余额数值、28风险操作绑定、6重入WRITE、6权限写入、5建态、1终止调用；75条重入CALL已绑定且双收据MATCH，仍不得无证明升级裁决 |
+| 离线回归 | `python-full.log`：Python3.12全量579项通过；`maven-verify.log`：根 `mvn clean verify` 97项通过；`cli-help.log`：帮助命令退出0。构建在批次封口之后重新打包JAR，执行期JAR哈希以封口记录为准；`comparison-after-build.json`保留重建后只读重算结果 |
+| 研究资格 | `researchEligible=false`；独立标签、充分安全对照、完整保护正反样本、精确token公平与四基线仍未验；整个R2研究效果UNVERIFIED |
+
+只读重算：
+
+```bash
+PATH=/Users/daiyifei/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/bin:$PATH \
+PYTHONPATH=tools/experiment python3 .evidence/R2-20261010/API-revalidation-20261012/analyze.py --allow-rebuilt-jar
+```
+
+原始批次与新批次各自保存在 `.local/auto-benchmark-runs/`；新原始日志、比较明细及下载输出留在被忽略的 `.evidence/`。本次真实采集工程已封口，D2高未知率与论文研究有效性继续追踪，不由本次API授权推导第三批请求。
