@@ -3,7 +3,7 @@
 | 当前事实 | 状态 |
 |---|---|
 | R2-20261010 | 整体验证 UNVERIFIED；S11 有限引擎／双收据与 S12 页面接缝工程 VERIFIED，完整学术正反与方法效果仍未验收 |
-| 研究效果 | UNVERIFIED；2026-10-11旧批次未观察到D1增益；2026-10-12修复后零模型派生未知率97.04%→91.85%，仍无新增REFUTED；新模型F1待授权复验 |
+| 研究效果 | UNVERIFIED；最新思考与全文输入批次共同51目标F1：VANILLA 0.9783、DENSE 1.0000、D1 0.9783，D1仍未超过最强对照；D2 139／151未知、0反驳；旧批次与零模型派生按各节原口径保留 |
 | 证据入口 | `.evidence/R2-20261010/`；历史证据仍按 PROJECT 导航 |
 
 基线：[SPEC](SPEC.md)；任务：[统一计划](IMPLEMENTATION_PLAN.md)。历史 S9 的局部验证保留在原文件，不扩展为本轮完成证据。
@@ -13,7 +13,7 @@
 | 01 输入 | 输入清理、原件摘要及行号回归；真实 Chromium 粘贴、预览、离线运行和下载 | S10 输入局部 VERIFIED；S11 事实与 S12 展示接续 |
 | 02 工具环境与53目标 | 53 环境预检；53 次真实 Slither，51 成功、2 失败；逐目标固定版本/二进制/参数/退出/耗时/诊断 | VERIFIED（工具运行与失败处理）；失败不能当安全 |
 | 03 真值隔离 | 模型与检索消费清理输入；发现与给定候选分开；真值变异、字符串保护及来源回归 | VERIFIED（工程）；历史模型输出仍有污染限制 |
-| 04 D1离线/预算方案 | 同原Nomic保存池47目标重选、冻结600文档对账、94完整配对、Java／Python一致及零模型报告；新复验方案已具体列入报告 | PARTIAL；消费工程VERIFIED，独立标签、完整提示token预算及新F1未验 |
+| 04 D1离线/预算方案 | 同原Nomic保存池47目标重选、冻结600文档对账、94完整配对、Java／Python一致及零模型报告；最新真实批次另见本页末节 | PARTIAL；消费工程VERIFIED，新F1已采集；独立标签与完整提示token公平未验 |
 | 05 假设绑定 | Java schemaVersion=2 回归与 loopback 网关通过；位置、机制、源码和完整函数签名错绑拒绝，usage=null 保留 | VERIFIED（工程绑定）；编译证据完整性由 06／07 单列 |
 | 06 编译事实 | 六环境真实 standard-json 对照及新版单文件／依赖模板编译；声明、UTF-8 跨度、源码闭包和 ABI 入口；官方 Slither 独立双收据 | VERIFIED（有限工程）；超出已支持初始化和入口语义的候选保留缺口 |
 | 07 D2真实正反 | 权限闭包、有限 CEI／统一锁、相关入口、正常退出及资金建态；真实 SimpleDAO／Reentrance 正裁决和严格 CEI 机制对照反驳 | PARTIAL（研究）；有限引擎 VERIFIED，真实维护者修复正反与广泛效果未验收 |
@@ -247,3 +247,20 @@ PYTHONPATH=tools/experiment python3 .evidence/R2-20261010/API-revalidation-20261
 | Git 范围 | 仅迁移、退役和入口说明；既有 Java／EVM 与其他未提交开发内容保留 |
 
 原始[迁移清单](../../../../.evidence/R2-20261010/legacy-retirement-20261012/migration-manifest.json)、[目标身份核对](../../../../.evidence/R2-20261010/legacy-retirement-20261012/target-check.json)、[验证摘要](../../../../.evidence/R2-20261010/legacy-retirement-20261012/verification.json)、[Maven 日志](../../../../.evidence/R2-20261010/legacy-retirement-20261012/maven-verify.log)与[Python 日志](../../../../.evidence/R2-20261010/legacy-retirement-20261012/python-full.log)为本机证据，默认不提交。数据原件与代码通过 Git 留存，本次新增真实模型请求为 0。
+
+## 2026-10-12 思考模式与完整源码输入真实 API 复验
+
+用户明确要求启用思考、取消样本模型输入的旧实验门槛并重跑实验。最新[报告](experiments/2026-10-12_THINKING_FULLSOURCE_API_REPORT.md)以正式 `6cae40677b104152bd92efedc5bbc479` 和五个单单元冒烟的保存原件为准；证据位于 `.evidence/R2-20261010/API-thinking-fullsource-20261012/`，原件位于被忽略的 `.local/auto-benchmark-runs/`。
+
+| 核验项 | 新鲜结果与限制 |
+| --- | --- |
+| 工程回归 | Python 离线测试 663 项、Java `mvn clean verify` 109 项通过，CLI `--help` 退出 0；Loopback 请求体回归确认 `thinking=enabled`、`reasoning_effort=low` 与 16,384 完成 token |
+| 输入与身份 | 53 个目标均以清理后的全文作为模型源码，原53份源码摘要、标签、模型／端点、Nomic 快照与旧正式计划一致；84项执行文件／JAR／配置／快照摘要前后相等；JAR SHA-256 `febef6ae3e8e1d1e5a57b3ffe66ba7e7b079972091bb3f34b505f67dff344bf6` |
+| 冒烟决策 | 默认较长思考时短样本成功、最长样本在8192和16384完成token两次触顶；开启低思考长度后短样本与最长36,386字节源码均返回有效JSON与usage；共5次真实请求、3成功2失败，失败保留UNKNOWN |
+| 正式请求 | 159计划单元全部落盘，各有一次真实请求；156模型有效、3结构校验失败，输入阻断0，零请求0，次数／usage缺失0；正式输入297,128／输出119,672 token。连同冒烟共164次请求、输入330,527／输出153,728 token |
+| 旧阻断目标 | 先前6个超长目标本次各有3次请求，18个模型结果全部有效；最大单次模型输入10,762 token。Nomic查询嵌入另有3目标／9单元截取，检索上下文仍限4096字节，不等于模型源码截取 |
+| 模型比较 | 本批三策略共同有效51目标F1：VANILLA 0.9783、DENSE 1.0000、D1 0.9783；D1低于Dense。与上批共同45目标的差值受思考设置、完成预算、输入资格与生成波动共同影响，不作单参数因果归因 |
+| D2与失败 | 本批151假设：12支持／0反驳／139未知（92.05%）；3模型校验失败，另4模型有效单元因候选编译绑定失败使D2保持UNKNOWN。159项工具状态OK；研究效果仍UNVERIFIED |
+| Git与范围 | 代码小版本 `5d6b50b` 已同步 `origin/main`；执行JAR还含启动前其他未提交工作，报告记录实际JAR与文件摘要。新增报告和本验收只记录已验证实验，不改写历史批次 |
+
+计划摘要、逐样本请求、usage、共同目标指标和D2裁决由 `analyze_low.py` 只读重放；分析不会再次调用模型或工具。整个R2的独立真值、精确token公平与四基线继续为UNVERIFIED。
