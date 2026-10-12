@@ -214,3 +214,20 @@ PYTHONPATH=tools/experiment python3 .evidence/R2-20261010/API-revalidation-20261
 | 范围与复核 | 启动快照、增量审查、凭证扫描及提交内容单独保存；保留未完成的Java、EVM、旧CALL兼容适配与其他无关修改。首轮顶层夹具多义定位失败已补齐factId，并保留失败日志后全量复验 |
 
 本轮未调用真实API、编译真实目标、执行真实Slither或重放121条未知候选，不声称28／36／24／3各组全部解决或未知率实测下降。日志实现、部署地址、回调和正常返回缺少实际证据时继续UNKNOWN；整体R2研究验收仍UNVERIFIED。
+
+## 2026-10-12 AST 升级后单次真实 API 复验
+
+本轮真实采集及保存结果核对完成，详见[报告](experiments/2026-10-12_AST_API_REVALIDATION_REPORT.md)。正式 `9c480f3256884d5a90c1a6bb3e2d8095`，冒烟 `3ceaa993593146289246bb1bb0ff6b71`；证据 `.evidence/R2-20261010/API-ast-revalidation-20261012/`，新增原件仅本机留存。
+
+| 检查 | 新鲜结果与限制 |
+|---|---|
+| 授权与预检 | 用户明确新请求；同模型／端点／Nomic，600向量读回；92项配置、源码、JAR和历史原件执行前后摘要相等，未打印凭证 |
+| 冒烟 | 2单元解析与usage通过，各一次请求；Dense REPORT、D1 NO_REPORT，预测正确性不作为启动筛选条件；输入3716／输出341 token |
+| 正式封口 | 159单元，139模型有效／20失败；18输入阻断零请求；正式141次尝试，含冒烟143／286，输出20898／585728 token，usage缺失0 |
+| 公平分母 | 共同有效46目标F1：VANILLA 0.9000、DENSE 0.9136、D1 0.8718；D2 12支持／0反驳／115未知（90.55%）；两批三策略共同有效45目标的比较见报告；同池冲突0 |
+| 程序证明 | 容差绑定4、别名记录0、辅助条件退出35条假设；可重叠且不等于全部原121条重放 |
+| 工具与失败 | 工具状态 `{"OK": 143}`；模型失败 `{"EVALUATION_INPUT_BLOCKED": 18, "MODEL_OUTPUT_INVALID": 2}`；流水线失败 `{"EVALUATION_INPUT_BLOCKED": 18, "MODEL_OUTPUT_INVALID": 2}`，全部保留真实分类 |
+| 身份与回归边界 | 工程基点 `f84dc218b868ac28e30685c2f668c7e53e5efdb3`；实际JAR `fa09524dd6788d783c8d9b7b7ccf966f205f48b056a1639a80dde2911096a127` 含启动时其他修改，不能仅由该提交复现。本轮不改生产代码，沿用上一节662项Python／109项Java验证；新增检查为只读重算、文档范围与凭证检查 |
+| 研究与范围 | researchEligible=false；UNKNOWN不当安全，两批候选变化不作完整同候选因果归因；本次授权已消费，研究与更大未完成工作包继续UNVERIFIED |
+
+只读重算命令见报告；comparison.json、d2-detail.json、proof-diagnostics.json和candidate-pairs.json分别保存身份／共同分母、逐假设、证明缺口与唯一保存候选子集配对。
