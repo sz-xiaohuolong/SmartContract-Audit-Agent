@@ -167,3 +167,9 @@ PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_report.py \
 ### 剩余未知只读核对
 
 工程提交205cf184后仅补充诊断与文档，未修改生产源码或重新执行工程回归。`.evidence/R2-20261010/D1-D2-residuals-20261012/audit.json` 的124个候选键与派生明细一一对应；互斥分类数为26／4／39／4／29／18／4，合计124。28个候选的每条相关正常退出图路径均包含日志外部调用，不能据此证明实际正常提交；四条权限写入位置正确，但原Slither没有同类佐证。独立读取重算及文档／凭证／Git范围检查见同目录 `verification.json`。原批次、派生全部文件、生产源码／JAR、Nomic／catalog摘要保持，新模型、编译器、工具执行0。此项只验证诊断口径，不改变11支持／0反驳／124未知或新F1=null。
+
+### 真实复验准备与阻塞审计
+
+`.evidence/R2-20261010/D1-D2-real-revalidation-ready/prepare.py` 只允许Milvus读回及Ollama模型元数据读取；没有触发模型、嵌入生成、编译器或静态工具。原53目标与源码摘要一致，47目标可运行，6目标×三策略阻断；冻结集合600向量及Nomic摘要匹配。`formal-plan.json`、`smoke-plan.json`、`readiness.json` 保存现行计划摘要、预留编号、286请求／585728输出token上限及授权后的命令。所有准备输入前后摘要一致，未建立正式或冒烟运行目录；配置凭证的远程有效性仍UNVERIFIED。
+
+当前新D1 F1没有真实调用证据，D2广泛覆盖仍PARTIAL，目标不能标记完成。线程记录与准备状态确认第二批授权缺口连续三个目标回合未解除；`goal-audit.json` 区分前两回合的工程／诊断进展与本回合的零请求准备，并记录同一阻塞条件。当前长目标BLOCKED，项目WAITING_HUMAN／UNVERIFIED；不重复请求授权、不自动发起第二批，也不把等待解释为模型效果已验证。
