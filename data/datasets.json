@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1",
+  "hashAlgorithm": "按相对路径排序的 [{path,sha256}]，以 UTF-8 紧凑 JSON 编码后取 SHA-256",
+  "datasets": [
+    {
+      "dataset": "smartbugs-curated",
+      "localPath": "smartbugs-curated",
+      "upstream": "https://github.com/smartbugs/smartbugs-curated.git",
+      "revision": "230e649123477eff332742a59a1c7cc6dc286cab",
+      "inputDirectory": "dataset",
+      "description": "原始漏洞源码与 vulnerabilities.json 标注",
+      "fileCount": 143,
+      "contentSha256": "aed23710f90bb8c1032d6d10433af12ea89f9a860dba4ac20680f1f56a56ab27",
+      "metadataPath": "vulnerabilities.json",
+      "metadataSha256": "2a7c119406b1c56df6087fbfb041f5d3aacbb07a82ee350e2220b51f429646bc"
+    },
+    {
+      "dataset": "SolidiFI-benchmark",
+      "localPath": "SolidiFI-benchmark",
+      "upstream": "https://github.com/DependableSystemsLab/SolidiFI-benchmark.git",
+      "revision": "4b0573e1b3f7031396de6f48f7f3e7380222ad3a",
+      "inputDirectory": "buggy_contracts",
+      "description": "原始注入漏洞源码与 BugLog CSV；工具运行结果不属于输入",
+      "fileCount": 700,
+      "contentSha256": "4db555d371d022ddd65e37bba532b9fe43af631a5a5119453336cddb5e4efe94"
+    }
+  ],
+  "controls": {
+    "localPath": "data/controls/openzeppelin",
+    "upstream": "https://github.com/OpenZeppelin/openzeppelin-contracts",
+    "generationRevision": null,
+    "labelStatus": "SOURCE_ONLY",
+    "researchEligible": false,
+    "description": "现有展平对照；完整生成版本未登记，不能据此证明安全",
+    "fileCount": 50,
+    "contentSha256": "27b239d82e4e9880a7f26910aa1485d03dda91b6e80b446be9885e01fb5281d8"
+  }
+}

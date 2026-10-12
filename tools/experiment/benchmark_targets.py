@@ -60,19 +60,22 @@ def _record(sample_id, source, mechanism, function, span, truth, label_source, p
 
 def load_benchmark_targets(root, knowledge_rows):
     root = Path(root)
-    positives = load_targets(root / 'data/benchmarks/smartbugs-curated', knowledge_rows)
+    positives = load_targets(root / 'smartbugs-curated', knowledge_rows)
     targets = []
     for row in positives:
         source = row['source']
         scopes = _scopes(source)
         selected = scopes[0] if scopes else None
         item = _record(row['sampleId'], source, row['mechanism'], selected[0] if selected else None,
-                       selected[1:] if selected else None, True, 'SMARTBUGS_CURATED_HEADER',
+                       selected[1:] if selected else None, True, 'SMARTBUGS_CURATED_METADATA',
                        row['projectHint'], row['documentHash'])
+        item.update(sourcePath='smartbugs-curated/' + row['sourcePath'],
+                    metadataPath='smartbugs-curated/' + row['metadataPath'],
+                    metadataHash=row['metadataHash'])
         item['vulnerableLines'] = row['vulnerableLines']
         item['maxCandidateCloneSimilarity'] = row['maxCandidateCloneSimilarity']
         targets.append(item)
-    safe_dir = root / 'data/benchmarks/legacy-testset/safe_contracts'
+    safe_dir = root / 'data/controls/openzeppelin'
     if any('openzeppelin-contracts' in row['project'].lower() for row in knowledge_rows):
         return targets
     for filename, function in SAFE_FUNCTIONS.items():
@@ -86,8 +89,9 @@ def load_benchmark_targets(root, knowledge_rows):
         spans = [item[1:] for item in _scopes(source) if item[0] == function]
         selected = spans[-1] if spans else None
         item = _record(path.stem, source, 'ACCESS_CONTROL', function, selected, False,
-                       'LEGACY_SAFE_CONTRACTS', 'https://github.com/OpenZeppelin/openzeppelin-contracts',
+                       'OPENZEPPELIN_FLATTENED_SOURCE', 'https://github.com/OpenZeppelin/openzeppelin-contracts',
                        hashlib.sha256(path.read_bytes()).hexdigest())
+        item['sourcePath'] = path.relative_to(root).as_posix()
         item['vulnerableLines'] = []
         item['maxCandidateCloneSimilarity'] = round(similarity, 6)
         targets.append(item)

@@ -138,7 +138,8 @@ def workspace_case_targets(root, targets):
             savedHypotheses=[hypothesis], taskKind='CLAIM_VALIDATION',
             claimOrigin='REGISTERED_DEFENSIVE_DEMONSTRATION', researchEligible=False,
             sourceProvenance={'dataset': 'SmartBugs Curated', 'source': row.get('projectGroup'),
-                'registration': str(Path('data/benchmarks/smartbugs-curated') / (row['sampleId'] + '.md'))})
+                'sourcePath': row.get('sourcePath'),
+                'registration': row.get('metadataPath', 'smartbugs-curated/vulnerabilities.json')})
         registered.append(row)
     registered.sort(key=lambda row: list(definitions).index(row['sampleId']))
     pilots = [('rabbit-before', '访问控制 · RabbitHole · 修复前'),

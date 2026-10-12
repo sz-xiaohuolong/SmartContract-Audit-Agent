@@ -10,6 +10,7 @@ from tempfile import TemporaryDirectory
 
 from local_ui import create_server
 import local_ui
+from dataset_fixture import smartbugs_fixture
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -19,11 +20,21 @@ DEMO = json.loads((ROOT / 'tools/experiment/fixtures/research-pilot/pilot.json')
 class WorkspaceCaseTest(unittest.TestCase):
     def test_公开案例的登记候选不读取真值行(self):
         from benchmark_targets import load_benchmark_targets
-        rows = load_benchmark_targets(ROOT, [])
-        registered = local_ui.workspace_case_targets(ROOT, rows)
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            smartbugs_fixture(root / 'smartbugs-curated',
+                'contract Unprotected { address owner; function changeOwner(address next) public { owner = next; } }',
+                name='unprotected0', category='access_control')
+            smartbugs_fixture(root / 'smartbugs-curated',
+                'contract SimpleDAO { function withdraw(uint256 amount) public { msg.sender.call(""); } }',
+                name='simple_dao')
+            rows = load_benchmark_targets(root, [])
+            registered = local_ui.workspace_case_targets(root, rows)
         cases = [row for row in registered if row.get('caseGroup') == 'SMARTBUGS_DEFENSIVE']
         self.assertEqual({'ACCESS_CONTROL', 'REENTRANCY'}, {row['mechanism'] for row in cases})
         self.assertTrue(all(row['savedHypotheses'] and not row['researchEligible'] for row in cases))
+        self.assertEqual({'smartbugs-curated/vulnerabilities.json'},
+                         {row['sourceProvenance']['registration'] for row in cases})
         altered = deepcopy(rows)
         for row in altered:
             row['vulnerableLines'] = [1]

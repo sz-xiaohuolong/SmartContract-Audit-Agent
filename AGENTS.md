@@ -16,7 +16,7 @@
 - 测试不得依赖真实 API、Milvus 或工具环境；使用本地 HTTP 与子进程夹具。
 - 不将调用异常、解析错误、超时或缺失工具结果映射为安全；usage 缺失必须保留 null。
 - 凭证可来自环境变量或被 Git 忽略的 `config/providers.local.properties`；不得提交真实密钥。真实模型调用须显式选择配置，不自动批量实验或更换计费端点。
-- 数据入口：`data/README.md`；公开知识文档位于 `data/benchmarks/smartbugs-curated/`，历史合约基准位于 `data/benchmarks/legacy-testset/`。迁移保留原件字节与标签。
+- 数据入口：`data/README.md`；公开原始数据直接使用根目录 `smartbugs-curated/`、`SolidiFI-benchmark/`，版本与校验摘要登记在 `data/datasets.json`；额外对照位于 `data/controls/openzeppelin/`。不重新复制整套原始数据；保持历史样本编号与标签，原始输入变化不能续写旧实验计划。
 - 旧应用已退役；当前构建仅使用 `audit-mvp`，旧 Java、测试、配置与独立构建不再维护。历史代码通过 Git 恢复，当前架构以 TECH_DESIGN 为准。
 
 ## 证据保留与本地空间管理

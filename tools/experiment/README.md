@@ -8,9 +8,13 @@ R1-S8 的 742 条待审向量可用 `candidate_admission_queue.py` 生成逐项�
 
 ```bash
 PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v
-python3 tools/experiment/offline.py inventory --root data/benchmarks/legacy-testset --output /tmp/manifest-new.json
+python3 tools/experiment/offline.py inventory --root SolidiFI-benchmark/buggy_contracts --output /tmp/manifest-new.json
 python3 tools/experiment/offline.py evaluate --labels /路径/labels.json --predictions /路径/predictions.json --output /路径/metrics-new.json
 ```
+
+公开数据源与版本见 [数据入口](../../data/README.md)和 [datasets.json](../../data/datasets.json)。SmartBugs 目标直接读取根目录原始源码与 `vulnerabilities.json`，额外阴性对照读取 `data/controls/openzeppelin/`；缺少 SmartBugs 原始数据时显式报错。探索命令的 `--target-dir` 指向含 JSON 标注和 `dataset/` 的原始仓库，默认 `smartbugs-curated`。
+
+SmartBugs 沿用原加工文档的样本编号；新记录保留原始空白、源码路径和标注摘要。已保存实验使用其固定输入回放，新输入摘要变化时不能直接续写旧计划。离线测试使用本地夹具，无需原始数据集或真实 API。
 
 输出路径必须尚不存在。清单中的 `types`、`project_group`、`split` 均待审核。稳定 ID 同时绑定相对路径与源码字节；移动路径或修改代码会产生不同 ID。`exact_group` 只证明字节相同，不代表已完成项目级泄漏治理。
 

@@ -152,10 +152,13 @@ def run_probe(store, targets, receipt, runner, batch_id=None, parameters=None):
     plan = {'batchId': batch_id, 'candidateIdentity': receipt['identity'],
             'targetIds': [row['sampleId'] for row in targets],
             'targetHashes': {row['sampleId']: row['sourceHash'] for row in targets},
-            'targetMetadata': {row['sampleId']: {key: row.get(key) for key in
-                ('documentHash', 'projectHint', 'mechanism', 'split', 'taskKind', 'riskLine',
-                 'claimOrigin', 'originalSourceHash', 'inputGovernanceReceipt',
-                 'labelStatus', 'maxCandidateCloneSimilarity')} for row in targets},
+            'targetMetadata': {row['sampleId']: {
+                **{key: row.get(key) for key in
+                   ('documentHash', 'projectHint', 'mechanism', 'split', 'taskKind', 'riskLine',
+                    'claimOrigin', 'originalSourceHash', 'inputGovernanceReceipt',
+                    'labelStatus', 'maxCandidateCloneSimilarity')},
+                **{key: row[key] for key in ('sourcePath', 'metadataPath', 'metadataHash') if key in row}}
+                for row in targets},
             'mode': 'EXPLORATORY_RETRIEVAL_ONLY', 'modelCalls': 0,
             'researchEligible': False, 'parameters': parameters,
             'contextBudget': {'kind': 'UTF8_BYTES', 'limit': CONTEXT_BYTES}}
@@ -226,7 +229,7 @@ def main():
     parser = argparse.ArgumentParser(description='待审 742 条知识候选的离线 D1 探索；无模型付费调用')
     parser.add_argument('--root', default='.')
     parser.add_argument('--corpus-dir', default='.local/dataset-candidates/r1-pending')
-    parser.add_argument('--target-dir', default='data/benchmarks/smartbugs-curated')
+    parser.add_argument('--target-dir', default='smartbugs-curated', help='含 vulnerabilities.json 和 dataset/ 的原始仓库')
     parser.add_argument('--model-dir', default='.local/d1-embedding-model')
     parser.add_argument('--milvus-url', default='http://127.0.0.1:29531')
     parser.add_argument('--report-dir', default='.local/d1-exploratory-runs')

@@ -1,5 +1,6 @@
-"""从本地 SmartBugs 文档提取探索性目标并筛查知识侧重复。"""
+"""从原始 SmartBugs 源码和标注提取探索性目标并筛查知识侧重复。"""
 import hashlib
+import json
 import re
 from pathlib import Path
 
@@ -9,9 +10,13 @@ from s3 import _tokens
 CATEGORIES = {'access_control': 'ACCESS_CONTROL', 'reentrancy': 'REENTRANCY'}
 
 
-def _field(header, name):
-    match = re.search(r'^' + re.escape(name) + r':\s*(.+)$', header, re.MULTILINE)
-    return match.group(1).strip() if match else None
+def _sample_id(category, relative):
+    """沿用原加工文档编号，使历史记录仍能定位同一原始合约。"""
+    def slug(value):
+        value = value.replace('\\', '/').replace('/', '_')
+        return re.sub(r'_+', '_', re.sub(r'[^0-9A-Za-z._-]+', '_', value)).strip('_') or 'unknown'
+    suffix = hashlib.sha1(relative.encode('utf-8')).hexdigest()[:10]
+    return slug(category) + '__' + slug(relative.replace('.sol', '')) + '__' + suffix
 
 
 def load_targets(directory, knowledge_rows, near_threshold=.85):
@@ -23,25 +28,45 @@ def load_targets(directory, knowledge_rows, near_threshold=.85):
             raise ValueError('知识候选元数据无效')
         reference.append((row['project'], hashlib.sha256(row['text'].encode()).hexdigest(),
                           _tokens(row['text'].encode())))
-    result = []
-    for path in sorted(Path(directory).glob('*.md')):
-        text = path.read_text(encoding='utf-8')
-        header = text.split('---', 2)
-        if len(header) != 3:
-            raise ValueError('SmartBugs 文档头缺失：' + path.name)
-        category = _field(header[1], 'Category')
-        if category not in CATEGORIES:
+    directory = Path(directory).resolve()
+    metadata_path = directory / 'vulnerabilities.json'
+    if not metadata_path.is_file():
+        raise ValueError('缺少原始 SmartBugs 数据集标注：' + str(metadata_path))
+    metadata = metadata_path.read_bytes()
+    entries = json.loads(metadata.decode('utf-8'))
+    if not isinstance(entries, list) or not entries:
+        raise ValueError('SmartBugs 标注必须是非空列表')
+    metadata_hash = hashlib.sha256(metadata).hexdigest()
+    result, seen = [], set()
+    for entry in entries:
+        relative = entry.get('path') if isinstance(entry, dict) else None
+        if not isinstance(relative, str) or not relative or relative in seen:
+            raise ValueError('SmartBugs 源码路径缺失或重复')
+        path = directory / relative
+        if (Path(relative).is_absolute() or path.suffix != '.sol'
+                or directory / 'dataset' not in path.resolve().parents):
+            raise ValueError('SmartBugs 源码路径越界：' + relative)
+        seen.add(relative)
+        vulnerabilities = entry.get('vulnerabilities')
+        if (not isinstance(vulnerabilities, list) or not vulnerabilities
+                or any(not isinstance(v, dict) or not isinstance(v.get('category'), str)
+                       for v in vulnerabilities)):
+            raise ValueError('SmartBugs 漏洞类别缺失：' + relative)
+        categories = sorted({v['category'].strip() for v in vulnerabilities})
+        if len(categories) != 1 or categories[0] not in CATEGORIES:
             continue
-        origin = _field(header[1], 'Source')
-        vulnerable = _field(header[1], 'Vulnerable-Lines')
-        code = re.search(r'```solidity\s*\n([\s\S]*?)\n```', text)
-        if (not origin or not vulnerable or not code or
-                not re.fullmatch(r'\d+(?:\s*,\s*\d+)*', vulnerable)):
-            raise ValueError('SmartBugs 漏洞源码或行标签缺失：' + path.name)
-        source = code.group(1)
-        lines = [int(value.strip()) for value in vulnerable.split(',')]
-        if not source.strip() or any(line < 1 or line > len(source.splitlines()) for line in lines):
-            raise ValueError('SmartBugs 漏洞行超出源码：' + path.name)
+        category = categories[0]
+        origin = entry.get('source')
+        if (not isinstance(origin, str) or not origin.strip()
+                or any(not isinstance(v.get('lines'), list)
+                       or any(type(line) is not int or line < 1 for line in v['lines'])
+                       for v in vulnerabilities) or not path.is_file()):
+            raise ValueError('SmartBugs 漏洞源码或行标签缺失：' + relative)
+        source = path.read_bytes().decode('utf-8')
+        lines = sorted({line for v in vulnerabilities for line in v['lines']})
+        origin = origin.strip()
+        if not source.strip() or not lines or any(line > len(source.splitlines()) for line in lines):
+            raise ValueError('SmartBugs 漏洞行超出源码或标签为空：' + relative)
         digest = hashlib.sha256(source.encode()).hexdigest()
         tokens = _tokens(source.encode())
         overlap = max((max(len(tokens & other) / len(tokens | other),
@@ -49,12 +74,13 @@ def load_targets(directory, knowledge_rows, near_threshold=.85):
                        if tokens and other else 0.0 for _, _, other in reference), default=0.0)
         if any(origin == project or digest == other_hash for project, other_hash, _ in reference) or overlap >= near_threshold:
             continue
-        result.append({'sampleId': path.stem, 'source': source, 'sourceHash': digest,
-                       'documentHash': hashlib.sha256(path.read_bytes()).hexdigest(),
+        result.append({'sampleId': _sample_id(category, relative), 'source': source, 'sourceHash': digest,
+                       'documentHash': None, 'sourcePath': relative,
+                       'metadataPath': 'vulnerabilities.json', 'metadataHash': metadata_hash,
                        'projectHint': origin, 'mechanism': CATEGORIES[category],
                        'vulnerableLines': lines, 'split': 'exploratory-test',
-                       'labelStatus': 'SOURCE_HEADER_ONLY', 'researchEligible': False,
+                       'labelStatus': 'SOURCE_METADATA_ONLY', 'researchEligible': False,
                        'maxCandidateCloneSimilarity': round(overlap, 6)})
     if len({item['sampleId'] for item in result}) != len(result):
         raise ValueError('探索目标 ID 重复')
-    return result
+    return sorted(result, key=lambda row: row['sampleId'])

@@ -73,6 +73,32 @@ class ExploratoryProbeTest(unittest.TestCase):
         run_probe(self.root / 'reports', targets, self.corpus['receipt'], runner, batch_id='c' * 32)
         self.assertEqual(['A', 'B'], calls)
 
+    def test_原始标注摘要进入计划且变化不能续写原批次(self):
+        target = {'sampleId': 'A', 'sourceHash': 'a' * 64,
+                  'sourcePath': 'dataset/reentrancy/vault.sol',
+                  'metadataPath': 'vulnerabilities.json', 'metadataHash': 'b' * 64}
+        runner = lambda row: {'sampleId': row['sampleId'], 'status': 'UNKNOWN'}
+        batch = run_probe(self.root / 'reports', [target], self.corpus['receipt'], runner)
+        plan = replay_probe(self.root / 'reports', batch)['plan']
+        self.assertEqual('b' * 64, plan['targetMetadata']['A']['metadataHash'])
+        with self.assertRaises(ValueError):
+            run_probe(self.root / 'reports', [{**target, 'metadataHash': 'c' * 64}],
+                      self.corpus['receipt'], runner, batch_id=batch)
+
+    def test_旧计划没有原始标注字段仍可用保存目标续跑(self):
+        target = {'sampleId': 'A', 'sourceHash': 'a' * 64}
+        calls = []
+        def runner(row):
+            calls.append(row['sampleId'])
+            return {'sampleId': row['sampleId'], 'status': 'UNKNOWN'}
+        batch = run_probe(self.root / 'reports', [target], self.corpus['receipt'], runner)
+        plan = replay_probe(self.root / 'reports', batch)['plan']
+        for key in ('sourcePath', 'metadataPath', 'metadataHash'):
+            plan['targetMetadata']['A'].pop(key, None)
+        atomic_json(self.root / 'reports' / batch / 'plan.json', plan)
+        run_probe(self.root / 'reports', [target], self.corpus['receipt'], runner, batch_id=batch)
+        self.assertEqual(['A'], calls)
+
     def test_字段过滤不把未定性参考当作适用证据(self):
         reference = {'caseId': 'reference', 'chunkId': 'reference', 'role': 'REFERENCE',
                      'conditions': [], 'text': '仅供参考'}

@@ -5,19 +5,17 @@ import hashlib
 from pathlib import Path
 
 from benchmark_targets import load_benchmark_targets, _scopes, _record
+from dataset_fixture import smartbugs_fixture
 
 
 class BenchmarkTargetsTest(unittest.TestCase):
     def test_源码和标签分别保存且不把知识侧近克隆当测试(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            docs = root / 'data/benchmarks/smartbugs-curated'
-            safe = root / 'data/benchmarks/legacy-testset/safe_contracts'
-            docs.mkdir(parents=True); safe.mkdir(parents=True)
+            safe = root / 'data/controls/openzeppelin'
+            safe.mkdir(parents=True)
             vulnerable = 'contract Vault { function take() public { msg.sender.call(""); } }'
-            (docs / 'reentrancy__vault.md').write_text(
-                '---\nCategory: reentrancy\nSource: https://example.test/vault\nVulnerable-Lines: 1\n---\n'
-                + '```solidity\n' + vulnerable + '\n```\n')
+            smartbugs_fixture(root / 'smartbugs-curated', vulnerable)
             (safe / 'safe_23_Ownable.sol').write_text(
                 'contract Ownable { function transferOwnership(address next) public onlyOwner { owner = next; } }')
             targets = load_benchmark_targets(root, [])
@@ -31,16 +29,12 @@ class BenchmarkTargetsTest(unittest.TestCase):
     def test_发现范围和函数不随真值行变化(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            docs = root / 'data/benchmarks/smartbugs-curated'
-            docs.mkdir(parents=True)
-            path = docs / 'reentrancy__vault.md'
             source = ('contract Vault {\n'
                       ' function first() public { msg.sender.call(""); }\n'
                       ' function second() public { msg.sender.call(""); }\n}')
             rows = []
             for line in (2, 3):
-                path.write_text('---\nCategory: reentrancy\nSource: https://example.test/vault\n'
-                                f'Vulnerable-Lines: {line}\n---\n```solidity\n{source}\n```\n')
+                smartbugs_fixture(root / 'smartbugs-curated', source, lines=(line,))
                 rows.append(load_benchmark_targets(root, [])[0])
             self.assertEqual(rows[0]['function'], rows[1]['function'])
             self.assertEqual(rows[0]['modelSource'], rows[1]['modelSource'])

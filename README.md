@@ -55,11 +55,11 @@ java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar \
 
 新增 [离线实验工具](tools/experiment/README.md)：生成源码哈希与完全重复组，并从保存的标签/预测重算多标签类型指标。使用 Python 标准库；测试命令为 `PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`。
 
-已生成旧数据集待审核清单：400 份源码、7 组字节重复（14 个文件）。项目谱系、近似克隆、标签与划分仍待复核。知识快照、断点恢复和结果规范化已在 S1b 实现，见[当前进度](docs/vibe/PROGRESS.md)；其工程实现不能替代科研标签审核。
+历史旧数据集清单记录了 400 份源码、7 组字节重复（14 个文件），属于当时的输入快照。当前使用保留的原始数据集与独立对照，入口见下方数据说明；项目谱系、近似克隆、标签与划分仍待复核。知识快照、断点恢复和结果规范化已在 S1b 实现，见[当前进度](docs/vibe/PROGRESS.md)；其工程实现不能替代科研标签审核。
 
 ## 数据与研究文档
 
-数据集中于 [data/](data/README.md)：SmartBugs 整理文档、历史漏洞／安全标签合约、CSV 标注和示例源码均保留原件字节。新批量实验从此目录读取，已有标签及科研准入状态不因迁移改变。
+数据入口见 [data/](data/README.md)：公开源码与标注直接使用根目录保留的 `smartbugs-curated/`、`SolidiFI-benchmark/`；`data/` 保存版本登记、额外对照、固定实验输入、示例与参考资料。重复加工文档和源码副本已移除，历史标签及科研准入状态保持原记录。
 
 旧 Java 应用、旧测试、配置、PDF 字体和 `legacy` 构建入口已退役；历史代码可从迁移前提交 `4ba5750` 恢复。当前默认构建继续使用 `audit-mvp`。
 

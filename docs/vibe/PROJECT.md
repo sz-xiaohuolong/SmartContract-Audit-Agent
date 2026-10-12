@@ -21,7 +21,7 @@
 | 历史提案 | [R0 基线](releases/R0-20260918/PROJECT_BRIEF.md)、[旧源码调查](releases/R0-20260918/SOURCE_SURVEY.md) | 当时的 DRAFT 与调查记录 |
 | 重大决定与缺陷调查 | [审计范围决定](decisions/DEC-001_SINGLE_AUDIT_SCOPE.md)、[配置冻结调查](bugs/BUG-001_CONFIGURATION_SNAPSHOT.md) | 原批准和修复依据沿用 |
 | 原始证据与正文历史快照 | [.evidence/R1](../../.evidence/R1/)、[文档迁移清单](../../.evidence/document-layout/manifest.json)；当前证据 `.evidence/R2-20261010/` | 已跟踪旧证据继续跟踪；新增暂存默认忽略 |
-| 运行数据、源文件与测试夹具 | [数据总入口](../../data/README.md)、[R1 数据](../../data/audit/r1/)、[R2 编译清单与固定候选](../../data/audit/r2/)、[夹具](../../tools/experiment/fixtures/)、[工具说明](../../tools/experiment/README.md) | 程序读取的输入，继续版本控制；R2 清单的原件及固定二进制须在本机恢复 |
+| 运行数据、源文件与测试夹具 | [数据总入口](../../data/README.md)、[公开来源登记](../../data/datasets.json)、[R1 数据](../../data/audit/r1/)、[R2 编译清单与固定候选](../../data/audit/r2/)、[夹具](../../tools/experiment/fixtures/)、[工具说明](../../tools/experiment/README.md) | 公开原件直接使用根目录保留的数据集；登记、额外对照与固定输入继续版本控制；R2 清单的原件及固定二进制须在本机恢复 |
 
 ## 维护规则
 
