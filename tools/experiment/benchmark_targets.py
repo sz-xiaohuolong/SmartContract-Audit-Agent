@@ -42,7 +42,6 @@ def _similarity(source, rows):
 def _record(sample_id, source, mechanism, function, span, truth, label_source, project, document_hash=None):
     governed = clean_evaluation_source(source)
     full = governed['fullSource']
-    within_budget = len(full.encode('utf-8')) <= 6000
     governed['inputGovernanceReceipt'].update(taskKind='DISCOVERY', modelSourceHash=governed['fullSourceHash'])
     return {**governed, 'sampleId': sample_id, 'split': 'validation',
             'sourceKind': 'BENCHMARK',
@@ -51,11 +50,9 @@ def _record(sample_id, source, mechanism, function, span, truth, label_source, p
             'documentHash': document_hash, 'projectGroup': project,
             'mechanism': mechanism, 'function': function or '',
             'lineStart': 1, 'lineEnd': len(full.splitlines()),
-            'runnable': bool(function and within_budget),
-            'inputStatus': 'READY' if function and within_budget else 'EXPLICIT_SCOPE_REQUIRED' if not within_budget else 'NO_FUNCTION',
-            'inputReason': (None if function and within_budget else
-                '清理后的完整源码超过 6000 字节；请显式选择函数范围，发现路径不使用评分真值自动缩小范围'
-                if not within_budget else '未找到可定位的 Solidity 函数'),
+            'runnable': bool(function),
+            'inputStatus': 'READY' if function else 'NO_FUNCTION',
+            'inputReason': None if function else '未找到可定位的 Solidity 函数',
             'groundTruth': {'hasVulnerability': truth,
                             'vulnerabilityType': mechanism if truth else None,
                             'labelSource': label_source}, 'researchEligible': False}
@@ -63,7 +60,7 @@ def _record(sample_id, source, mechanism, function, span, truth, label_source, p
 
 def load_benchmark_targets(root, knowledge_rows):
     root = Path(root)
-    positives = load_targets(root / 'src/main/resources/document/smartbugs_kb', knowledge_rows)
+    positives = load_targets(root / 'data/benchmarks/smartbugs-curated', knowledge_rows)
     targets = []
     for row in positives:
         source = row['source']
@@ -75,7 +72,7 @@ def load_benchmark_targets(root, knowledge_rows):
         item['vulnerableLines'] = row['vulnerableLines']
         item['maxCandidateCloneSimilarity'] = row['maxCandidateCloneSimilarity']
         targets.append(item)
-    safe_dir = root / 'src/main/resources/testset/safe_contracts'
+    safe_dir = root / 'data/benchmarks/legacy-testset/safe_contracts'
     if any('openzeppelin-contracts' in row['project'].lower() for row in knowledge_rows):
         return targets
     for filename, function in SAFE_FUNCTIONS.items():

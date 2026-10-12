@@ -11,8 +11,8 @@ class BenchmarkTargetsTest(unittest.TestCase):
     def test_源码和标签分别保存且不把知识侧近克隆当测试(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            docs = root / 'src/main/resources/document/smartbugs_kb'
-            safe = root / 'src/main/resources/testset/safe_contracts'
+            docs = root / 'data/benchmarks/smartbugs-curated'
+            safe = root / 'data/benchmarks/legacy-testset/safe_contracts'
             docs.mkdir(parents=True); safe.mkdir(parents=True)
             vulnerable = 'contract Vault { function take() public { msg.sender.call(""); } }'
             (docs / 'reentrancy__vault.md').write_text(
@@ -31,7 +31,7 @@ class BenchmarkTargetsTest(unittest.TestCase):
     def test_发现范围和函数不随真值行变化(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            docs = root / 'src/main/resources/document/smartbugs_kb'
+            docs = root / 'data/benchmarks/smartbugs-curated'
             docs.mkdir(parents=True)
             path = docs / 'reentrancy__vault.md'
             source = ('contract Vault {\n'
@@ -64,13 +64,14 @@ class BenchmarkTargetsTest(unittest.TestCase):
         self.assertEqual(hashlib.sha256(target['fullSource'].encode()).hexdigest(), target['sourceHash'])
         self.assertEqual(hashlib.sha256(target['modelSource'].encode()).hexdigest(), target['modelSourceHash'])
 
-    def test_超长发现不按标签自动缩到漏洞函数(self):
+    def test_超长发现仍以全文作为模型输入(self):
         source = 'contract C {\n' + ' uint value;\n' * 600 + ' function a() public { value = 1; }\n}'
         target = _record('c', source, 'ACCESS_CONTROL', 'a', (602, 602), True, '标签', '项目')
-        self.assertFalse(target['runnable'])
+        self.assertTrue(target['runnable'])
         self.assertEqual(source, target['modelSource'])
         self.assertEqual('FULL', target['scope'])
-        self.assertEqual('EXPLICIT_SCOPE_REQUIRED', target['inputStatus'])
+        self.assertEqual('READY', target['inputStatus'])
+        self.assertIsNone(target['inputReason'])
 
     def test_旧版无名回退函数与现代构造函数名称规范化(self):
         source = 'contract A { function() public {} constructor() {} fallback() external {} receive() external payable {} }'

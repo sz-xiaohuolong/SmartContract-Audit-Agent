@@ -42,6 +42,16 @@ class GatewayTest {
             assertEquals(3, json.path("response_format").path("json_schema").path("schema").path("required").size(), json.path("response_format").toString());
             assertEquals("disabled", json.path("thinking").path("type").asText());
             assertFalse(json.has("reasoning_effort"));
+            props.setProperty("providers.ark.thinking", "enabled");
+            props.setProperty("providers.ark.reasoning-effort", "low");
+            props.setProperty("providers.ark.max-output-tokens", "16384");
+            new SpringAiGateway(new ProviderRegistry(props, Map.of())).complete("ark", "系统", "测试");
+            var thinkingRequest = new com.fasterxml.jackson.databind.ObjectMapper().readTree(request.get());
+            assertEquals("enabled", thinkingRequest.path("thinking").path("type").asText());
+            assertEquals("low", thinkingRequest.path("reasoning_effort").asText());
+            assertEquals(16384, thinkingRequest.path("max_completion_tokens").asInt());
+            props.setProperty("providers.ark.thinking", "disabled");
+            props.remove("providers.ark.reasoning-effort");
             new SpringAiGateway(new ProviderRegistry(props, Map.of())).completeHypotheses("ark", "系统", "测试");
             var hypothesisRequest = new com.fasterxml.jackson.databind.ObjectMapper().readTree(request.get());
             var hypothesisSchema = hypothesisRequest.path("response_format").path("json_schema").path("schema");

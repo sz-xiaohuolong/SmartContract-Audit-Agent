@@ -91,10 +91,12 @@ public final class SpringAiGateway implements ModelGateway {
                     "additionalProperties":false}
                     """).strict(true).build());
         }
-        if (p.thinking().equals("disabled")) {
-            if (!deepseekV4) throw new IllegalArgumentException("当前模型未启用思考开关");
-            // 工程试跑关闭显式思考，避免推理阶段独占总输出预算。
-            options.extraBody(java.util.Map.of("thinking", java.util.Map.of("type", "disabled")));
+        if (!p.thinking().equals("default") || !p.reasoningEffort().equals("default")) {
+            if (!deepseekV4) throw new IllegalArgumentException("当前模型未启用思考配置");
+            var extra = new java.util.HashMap<String, Object>();
+            if (!p.thinking().equals("default")) extra.put("thinking", java.util.Map.of("type", p.thinking()));
+            if (!p.reasoningEffort().equals("default")) extra.put("reasoning_effort", p.reasoningEffort());
+            options.extraBody(extra);
         }
         var model = OpenAiChatModel.builder().openAiClient(client).openAiClientAsync(client.async()).options(options.build()).build();
         long start = System.nanoTime();

@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 
 from batch_compare import _append, _lines, _repair_tail
+from audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS
 from storage import decode, durable_write, exclusive_lock, fingerprint
 
 
@@ -29,7 +30,7 @@ def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None,
             'snapshotId': snapshot_id, 'embeddingProfile': embedding_profile,
             'provider': provider if mode == 'real' else None,
             'requestBounds': {'maxRequests': 2 * runnable_units if mode == 'real' else 0,
-                              'maxOutputTokens': 2 * runnable_units * 2048 if mode == 'real' else 0},
+                              'maxOutputTokens': 2 * runnable_units * EXPERIMENT_MAX_OUTPUT_TOKENS if mode == 'real' else 0},
             'researchEligible': False, 'metricTier': 'DATASET_LABEL_EXPLORATORY'}
     if include_blocked:
         plan['inputEligibility'] = {key: {'runnable': bool(indexed[key].get('runnable')),

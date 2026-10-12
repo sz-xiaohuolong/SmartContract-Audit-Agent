@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from benchmark_batch import make_plan, run_batch, replay_batch, export_csv
+from audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS
 
 
 class BenchmarkBatchTest(unittest.TestCase):
@@ -55,7 +56,7 @@ class BenchmarkBatchTest(unittest.TestCase):
         plan = make_plan(['a'], ['VANILLA', 'DENSE', 'D1'], 'real', self.targets, 'f' * 64)
         self.assertEqual(['VANILLA', 'DENSE', 'D1'], plan['strategies'])
         self.assertEqual(6, plan['requestBounds']['maxRequests'])
-        self.assertEqual(6 * 2048, plan['requestBounds']['maxOutputTokens'])
+        self.assertEqual(6 * EXPERIMENT_MAX_OUTPUT_TOKENS, plan['requestBounds']['maxOutputTokens'])
         legacy = make_plan(['a'], ['FIELD_FILTER'], 'offline', self.targets, 'f' * 64)
         self.assertEqual(['FIELD_FILTER'], legacy['strategies'])
 

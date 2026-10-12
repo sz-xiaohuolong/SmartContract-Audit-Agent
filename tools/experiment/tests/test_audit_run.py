@@ -2,8 +2,9 @@
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
-from audit_run import RunDependencies, run_once, replay, selected_ids, model_runner, tool_runner
+from audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS, RunDependencies, run_once, replay, selected_ids, model_runner, tool_runner
 from storage import decode
 
 
@@ -97,7 +98,7 @@ class AuditRunTest(unittest.TestCase):
                 with self.assertRaises(ValueError): run_once(Path(directory), 'fixture', 'offline', deps)
             self.assertEqual([], calls)
 
-    def test_prompt_over_limit_rejects_without_request(self):
+    def test_长源码不受本地输入上限阻断(self):
         with tempfile.TemporaryDirectory() as directory:
             target = {'sampleId': 'fixture', 'fullSource': 'contract C {}', 'modelSource': 'x'*9900,
                       'fullSourceHash': 'a'*64, 'modelSourceHash': 'b'*64, 'assignmentHash': 'c'*64,
@@ -107,10 +108,39 @@ class AuditRunTest(unittest.TestCase):
                     'modelSourceHash': 'b'*64, 'pool': {}, 'facts': {'facts': []},
                     'd1': {'status': 'NO_RISK_FACT', 'selected': [], 'context': 'y'*2048}}
             calls = []
-            deps = RunDependencies(None, None, None, lambda *args: calls.append(1), lambda *args: [])
+            deps = RunDependencies(None, None, None, lambda *args: calls.append(1) or {
+                'status': 'COMPLETED', 'conclusion': 'NO_CONFIRMED_FINDINGS', 'hypotheses': [],
+                'inputTokens': None, 'outputTokens': None}, lambda *args: [])
             with patch('audit_run.load_target', return_value=target), patch('audit_run.preview', return_value=view):
-                with self.assertRaises(ValueError): run_once(Path(directory), 'fixture', 'offline', deps)
-            self.assertEqual([], calls)
+                result = run_once(Path(directory), 'fixture', 'offline', deps)
+            self.assertEqual([1], calls)
+            self.assertIsNone(result['plan']['maxInputBytes'])
+            self.assertGreater(result['plan']['actualInputBytes'], 10_000)
+
+    def test_真实模型入口保留全文并启用思考(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = root / 'config/providers.local.properties'
+            config.parent.mkdir()
+            config.write_text('providers.ark.base-url=https://ark.cn-beijing.volces.com/api/plan/v3\n'
+                              'providers.ark.model=deepseek-v4-flash\nproviders.ark.api-key=fixture\n')
+            source = 'contract C {\n' + ' uint value;\n' * 3000 + '}'
+            target = {'fullSource': source, 'fullSourceHash': 'a' * 64, 'modelSource': source,
+                      'scope': 'FULL', 'lineStart': 1, 'lineEnd': 3002,
+                      'mechanism': 'ACCESS_CONTROL', 'function': 'f'}
+            view = {'d1': {'selected': [], 'context': ''}}
+            def capture(command, **kwargs):
+                request = decode(Path(command[command.index('--request') + 1]).read_bytes())
+                self.assertEqual(source, request['modelSource'])
+                self.assertEqual(source.encode(), Path(command[command.index('--source') + 1]).read_bytes())
+                properties = Path(command[command.index('--config') + 1]).read_text()
+                self.assertIn('providers.ark.thinking=enabled', properties)
+                self.assertIn('providers.ark.reasoning-effort=low', properties)
+                self.assertIn(f'providers.ark.max-output-tokens={EXPERIMENT_MAX_OUTPUT_TOKENS}', properties)
+                self.assertIn('providers.ark.timeout-seconds=360', properties)
+                return SimpleNamespace(returncode=0, stdout=b'{"status":"COMPLETED","conclusion":"NO_CONFIRMED_FINDINGS"}')
+            with patch('audit_run.subprocess.run', side_effect=capture):
+                self.assertEqual('COMPLETED', model_runner(root, target, view, 'real')['status'])
 
 
 if __name__ == '__main__': unittest.main()

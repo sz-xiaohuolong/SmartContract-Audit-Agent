@@ -138,13 +138,15 @@ class BenchmarkRuntimeTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, '知识'):
                 runtime.preview(target)
 
-    def test_超长未选择范围的发现输入明确阻断(self):
+    def test_超长发现输入仍按全文预览(self):
         with TemporaryDirectory() as directory:
             runtime = self.runtime(Path(directory))
             source = 'contract C {\n' + 'uint value;\n' * 600 + 'function a() public {}\n}'
             target = _record('c', source, 'REENTRANCY', 'a', None, True, '标签', '目标项目')
-            with self.assertRaisesRegex(ValueError, '显式选择'):
-                runtime.preview(target)
+            view = runtime.preview(target)
+            self.assertTrue(target['runnable'])
+            self.assertEqual(source, target['modelSource'])
+            self.assertEqual(target['sourceHash'], view['sourceHash'])
 
     def test_发现风险选择不读取评分真值行(self):
         source = ('contract C {\n function a() public {\n msg.sender.call("");\n'

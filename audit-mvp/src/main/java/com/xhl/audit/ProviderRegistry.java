@@ -31,12 +31,15 @@ public final class ProviderRegistry {
         if (key == null || key.isBlank()) throw new IllegalArgumentException("所选供应商缺少 API Key");
         String responseFormat = properties.getProperty(prefix + "response-format", "text").trim();
         String thinking = properties.getProperty(prefix + "thinking", "default").trim();
+        String reasoningEffort = properties.getProperty(prefix + "reasoning-effort", "default").trim();
         if (!(responseFormat.equals("text") || responseFormat.equals("json_schema"))
-            || !(thinking.equals("default") || thinking.equals("disabled")))
+            || !(thinking.equals("default") || thinking.equals("disabled") || thinking.equals("enabled"))
+            || !(reasoningEffort.equals("default") || reasoningEffort.equals("low")
+                || reasoningEffort.equals("high") || reasoningEffort.equals("max")))
             throw new IllegalArgumentException("供应商输出配置无效");
         return new Provider(selected, base.replaceAll("/+$", ""), required(prefix + "model"), key,
             Duration.ofSeconds(positive(prefix + "timeout-seconds", 60, 600)),
-            positive(prefix + "max-output-tokens", 2048, 32768), responseFormat, thinking);
+            positive(prefix + "max-output-tokens", 2048, 32768), responseFormat, thinking, reasoningEffort);
     }
     private String required(String key) {
         String value = properties.getProperty(key);
@@ -51,7 +54,7 @@ public final class ProviderRegistry {
         return value;
     }
     public record Provider(String name, String baseUrl, String model, String apiKey, Duration timeout,
-                           int maxOutputTokens, String responseFormat, String thinking) {
+                           int maxOutputTokens, String responseFormat, String thinking, String reasoningEffort) {
         @Override public String toString() {return "Provider[name="+name+", model="+model+", apiKey=<redacted>]";}
     }
 }
