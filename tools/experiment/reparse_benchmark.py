@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from benchmark_batch import export_csv, replay_batch, run_batch
+from benchmark_batch import replay_batch, run_batch, save_summary
 from benchmark_runtime import interpret_model
 from benchmark_targets import load_benchmark_targets
 from exploratory_corpus import load_corpus
@@ -23,7 +23,7 @@ def reparse_rows(report, targets, root, parser, parser_hash):
             if row['sourceHash'] != target['sourceHash']:
                 raise ValueError('重放目标源码与原始实验不一致')
             raw = (root / row['diagnosticPath']).resolve()
-            if not raw.is_relative_to(root / '.local/auto-benchmark-diagnostics') or not raw.is_file():
+            if not raw.is_relative_to((root / 'research-artifacts/diagnostics/benchmark').resolve()) or not raw.is_file():
                 raise ValueError('重放原文路径超出本机诊断目录')
             result = parser(target, row, raw)
             if not isinstance(result, dict) or result.get('status') not in ('COMPLETED', 'FAILED'):
@@ -45,14 +45,14 @@ def reparse_rows(report, targets, root, parser, parser_hash):
 def main():
     parser = argparse.ArgumentParser(description='不调用模型地重放结构化输出失败')
     parser.add_argument('--batch-id', required=True)
-    parser.add_argument('--store', default='.local/auto-benchmark-runs')
+    parser.add_argument('--store', default='research-artifacts/runs/benchmarks')
     parser.add_argument('--output-id')
     args = parser.parse_args()
     root = Path.cwd()
     report = replay_batch(args.store, args.batch_id)
     if report['status'] != 'COMPLETED':
         raise ValueError('原批量尚未完成，不能发布派生评估')
-    corpus = load_corpus(root / '.local/dataset-candidates/r1-pending')
+    corpus = load_corpus(root / 'data/external/candidates/r1-pending')
     targets = {row['sampleId']: row for row in load_benchmark_targets(root, list(corpus['rows'].values()))}
     jar = root / 'audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar'
     jar_hash = hashlib.sha256(jar.read_bytes()).hexdigest()
@@ -78,8 +78,7 @@ def main():
     batch_id = run_batch(args.store, plan, lambda sample, strategy, mode: indexed[sample, strategy], args.output_id)
     replayed = replay_batch(args.store, batch_id)
     folder = Path(args.store) / batch_id
-    atomic_json(folder / 'summary.json', replayed)
-    (folder / 'samples.csv').write_text(export_csv(replayed), encoding='utf-8')
+    save_summary(folder, replayed)
     print(json.dumps({'batchId': batch_id, 'originalBatchId': args.batch_id,
         'reparsed': sum('parseReplay' in row for row in rows), 'denominators': replayed['denominators'],
         'additionalModelRequests': 0}, ensure_ascii=False))

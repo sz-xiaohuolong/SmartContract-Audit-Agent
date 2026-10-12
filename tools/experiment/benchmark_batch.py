@@ -7,7 +7,7 @@ from pathlib import Path
 
 from batch_compare import _append, _lines, _repair_tail
 from audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS
-from storage import decode, durable_write, exclusive_lock, fingerprint
+from storage import atomic_json, decode, durable_write, exclusive_lock, fingerprint
 
 
 STRATEGIES = frozenset({'VANILLA', 'DENSE', 'FIELD_FILTER', 'D1'})
@@ -66,6 +66,10 @@ def run_batch(store, plan, runner, batch_id=None):
         else:
             durable_write(plan_path, __import__('storage').encode(plan) + b'\n')
             _append(directory / 'events.jsonl', {'kind': 'PLAN', 'planHash': plan['planHash']})
+        if (directory / 'samples.jsonl.gz').is_file():
+            if replay_batch(store, batch_id)['status'] != 'COMPLETED':
+                raise ValueError('未完成批次不能从压缩原件续写，须先恢复原件')
+            return batch_id
         _repair_tail(directory / 'events.jsonl')
         _repair_tail(directory / 'samples.jsonl')
         events = _lines(directory / 'events.jsonl')
@@ -114,6 +118,20 @@ def run_batch(store, plan, runner, batch_id=None):
                 _append(directory / 'samples.jsonl', row)
                 finished.add(key)
     return batch_id
+
+
+def save_summary(directory, report):
+    """摘要只保存统计与原件指针；完整样本仅存一份 JSONL。"""
+    path = Path(directory) / 'summary.json'
+    if path.with_name(path.name + '.gz').is_file():
+        # 封口后的历史摘要保持原字节；续跑入口不能重新生成与归档冲突的文件。
+        from storage import read_artifact
+        read_artifact(path)
+        return
+    summary = {key: value for key, value in report.items() if key != 'samples'}
+    summary['sampleArtifact'] = 'samples.jsonl'
+    summary['storageSchema'] = 'benchmark-summary-2'
+    atomic_json(path, summary)
 
 
 def _mean(rows, field):

@@ -38,6 +38,16 @@ SmartBugs 沿用原加工文档的样本编号；新记录保留原始空白、�
 
 标签是否经审核无法由程序自动证明：空列表只应用于目标漏洞范围已审核的负例。当前仓库数据清单只生成待审核条目，不直接转换成此标签文件。
 
+## 存储分类与一键整理
+
+真实批次、派生报告、快照和工具收据保存到 `research-artifacts/`，分类与恢复见[原件说明](../../research-artifacts/README.md)。`.local/` 维护本机环境、模型、服务、固定 Solidity 工具及恢复材料；下载仓库位于 `data/external/`。可读报告进入版本实验目录，`.evidence/` 按 AGENTS 预算只留关键验证材料。
+
+```bash
+python3 tools/experiment/organize_storage.py --apply --restart-ui
+```
+
+省略 `--apply` 只预览。已封口原件支持 gzip，逻辑文件名和原始 SHA-256 由 `storage.read_artifact()` 还原；模型、候选与 usage 不删减。新摘要不复制完整样本，CSV 按需导出。旧目录的相对兼容链接保留历史清单与虚拟环境入口，不能作为重复副本删除。体积与验收见[整理报告](../../docs/vibe/releases/R2-20261010/STORAGE_LAYOUT_REPORT.md)。
+
 ## S1b：审核与隔离
 
 `inventory` 仍保持 S1a 的待审核输出，不替用户确定来源、谱系、标签或划分。将其补充为审核清单后，运行：
@@ -176,17 +186,17 @@ S3 的完整契约、来源待审状态和可重放命令见 [R1-S3 验证](../.
 
 本机已登记的四个开发目标中，`AC-ASE-006` 与 `AC-ASE-009` 可作整份源码工程试跑；`RE-SCRUBD-001` 仅允许 `matchOrderWithReserve` 第 574–660 行函数级试跑，必须同时展示完整源码与片段摘要；`RE-SCRUBD-002` 因提示上限暂不可运行。全部目标均非论文测试结果，标签仍按原谱系审核状态处理。
 
-先执行 `mvn clean verify` 构建当前 Java JAR。页面使用本机固定 BGE 权重，需要项目已有的 `.local/d1-embed-venv`，从仓库根目录启动：
+先执行 `mvn clean verify` 构建当前 Java JAR。页面使用本机固定 BGE 权重，需要项目已有的 `.local/envs/embedding`，从仓库根目录启动：
 
 ```bash
-.local/d1-embed-venv/bin/python tools/experiment/local_ui.py --port 8769
+.local/envs/embedding/bin/python tools/experiment/local_ui.py --port 8769
 ```
 
 浏览器打开 `http://127.0.0.1:8769/agent.html`。目标列表、状态、正式检索预览、历史与下载为只读操作。离线演练不调用付费模型，也不运行真实 Slither；它会检查本机正式 `s1b_` Milvus 快照、使用固定 BGE 生成 D1 候选、经过 Java D1，并以明确标记的空假设及跳过工具状态检验编排和报告。离线结果的“未发现已报告问题”不构成安全结论，D2 仍为 UNKNOWN。Milvus 需在 `127.0.0.1:29531` 可用，当前正式指针与六条向量须完整读回，不回退到旧 `mvp_` 集合。
 
 只有在页面显式选择真实运行才使用 `config/providers.local.properties` 中已核实的火山 Agent Plan 端点和模型；单样本最多 1 次请求，批量每种目标与策略组合最多 1 次请求，2048 输出 token，零自动重试。运行器在临时配置中启用严格 JSON Schema 并关闭显式思考，提示同时写明精确 JSON 字段、已核实的所属合约和绝对行号；模型仍可能违约，失败保持未决，原始响应仅存于被 Git 忽略的本机诊断文件。这种模型配置不能直接当作科研对照配置。完整消息只有 UTF-8 字节硬上限，尚无指定模型的精确 token 公平保证。Slither 路径填写在被 Git 忽略的 `config/tools.local.properties`，格式见 `config/tools.example.properties`；Mythril 可选，增加 `tools.mythril.executable` 即可。对依赖原项目导入路径的验证源码，单文件 Slither 无法可靠编译，当前明确记为 `SKIPPED`，D2 保持 `UNKNOWN`；工具未安装、失败、空告警均不证明安全。
 
-每次运行写入 `.local/audit-runs/<运行编号>/plan.json`、`events.jsonl`、`sample.jsonl` 与 `result.json`。模型请求前先将启动事件 fsync；中断后已有记录只读回放，不自动重发。`replay(root, run_id)` 会核对计划摘要、逐样本结果和结束事件摘要。页面下载的 JSONL 与本机逐样本文件相同。若需要人工检查，可对照页面运行编号和该目录中的快照 ID、两个源码摘要、阶段状态、usage 与 UNKNOWN/失败分母。真实付费运行须由操作者自行点击；默认离线测试命令不发网络 API 请求。
+每次运行写入 `research-artifacts/runs/audits/<运行编号>/plan.json`、`events.jsonl`、`sample.jsonl` 与 `result.json`。模型请求前先将启动事件 fsync；中断后已有记录只读回放，不自动重发。`replay(root, run_id)` 会核对计划摘要、逐样本结果和结束事件摘要。页面下载的 JSONL 与本机逐样本文件相同。若需要人工检查，可对照页面运行编号和该目录中的快照 ID、两个源码摘要、阶段状态、usage 与 UNKNOWN/失败分母。真实付费运行须由操作者自行点击；默认离线测试命令不发网络 API 请求。
 
 ```bash
 PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v
@@ -200,7 +210,7 @@ PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tes
 
 ```bash
 mvn clean verify
-.local/d1-embed-venv/bin/python tools/experiment/local_ui.py --port 8771
+.local/envs/embedding/bin/python tools/experiment/local_ui.py --port 8771
 ```
 
 打开 `http://127.0.0.1:8771/workbench.html`，选择已登记样本或粘贴完整 Solidity。默认查询固定 Nomic 768 维快照；BGE 可显式选择。先预览源码范围、受限语法树、调用/写入/CEI、D1 前后配对及条件绑定，再启动离线演练或明确选择当前配置的真实模型。一次预览只能使用一次，输入、策略、模式、配置或快照改变后必须重新预览。粘贴输入最多 128 KiB，模型源码最多 16 KiB；较长源码必须明确定位函数或风险行。D1 上下文最多 4096 UTF-8 字节，此限制不是 token 公平。
@@ -209,7 +219,7 @@ mvn clean verify
 
 真实配置在预览中绑定摘要，启动时捕获不可变内容和环境凭证，再重建为权限 600 的临时配置，结束后清理。本机供应商配置支持单行 `key=value`、空行与注释；为避免 Python/Java 解析分歧，拒绝冒号键、转义键和反斜杠续行，含特殊字符的凭证可通过环境变量提供。函数范围的假设严格匹配所选合约与函数；全文范围允许核验其他实际声明的函数。被拒绝或位置校验失败的假设使反驳汇总保持未决。
 
-报告保存到被 Git 忽略的 `.local/audit-workbench-runs/<运行编号>/`，含绑定源码、预览、计划、阶段事件、完整结果和单行 JSONL；下载与历史回放不调用模型或工具。服务重启后的未封口记录标为 `INTERRUPTED`，不自动续发。单样本与批量共享运行锁。自定义源码不会进入正式知识或研究标签。自动知识仍为自动标注待核验层；没有科研效果结论。
+报告保存到被 Git 忽略的 `research-artifacts/runs/workbench/<运行编号>/`，含绑定源码、预览、计划、阶段事件、完整结果和单行 JSONL；下载与历史回放不调用模型或工具。服务重启后的未封口记录标为 `INTERRUPTED`，不自动续发。单样本与批量共享运行锁。自定义源码不会进入正式知识或研究标签。自动知识仍为自动标注待核验层；没有科研效果结论。
 
 `/agent.html` 保留三策略批量入口，新报告添加工具、D2、最终裁决和流水线失败。模型状态、预测及模型耗时维持原统计口径，D2 未知和流水线失败另列；历史报告没有执行 D2 时显示未核验，不重写旧报告。真实模型单次最多两次请求（瞬时错误仅重试一次），输出上限 2048 token；本次工程验收不发起外部付费调用。真实编译工具按全部有效 pragma 选择预先配置的固定编译器；含 import 的目标须提供明确依赖路径，缺失依赖或工具故障保留未知。
 
@@ -222,13 +232,13 @@ mvn clean verify
 ```bash
 mvn clean verify
 PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py \
-  --original-run .local/auto-benchmark-runs/546fe566368e4b0ea7b6aeb58b235939 \
-  --output-run .evidence/R2-20261010/S10-acceptance/新的派生目录
+  --original-run research-artifacts/runs/benchmarks/546fe566368e4b0ea7b6aeb58b235939 \
+  --output-run research-artifacts/runs/derived/新的派生目录
 ```
 
 输出目录必须不存在。重放仅重新执行工具和 D2，新增模型请求为 0；原模型、usage 与全部原文件摘要保持。派生结果绑定源码、完整工具环境、当前代码与 JAR，并封口保存 manifest、summary、逐单元 JSONL 和报告。历史输入的答案污染限制仍保留，不能把派生核验当作清理后模型发现实验。S10 局部验收与真实工具兼容缺口见 [R2 验收矩阵](../../docs/vibe/releases/R2-20261010/VERIFICATION.md)。
 
-原批次缺源码的输入阻断只有在冻结计划、源码摘要、失败／UNKNOWN、零请求及usage=null身份一致时才可重放。此类单元保持原D2并计入完整分母，跳过编译与工具。加 `--compiled` 使用绑定编译事实与独立Slither双收据；工作台默认读取 `.local/r2/tool-replays/<32位编号>`，输出须使用新目录。
+原批次缺源码的输入阻断只有在冻结计划、源码摘要、失败／UNKNOWN、零请求及usage=null身份一致时才可重放。此类单元保持原D2并计入完整分母，跳过编译与工具。加 `--compiled` 使用绑定编译事实与独立Slither双收据；工作台默认读取 `research-artifacts/runs/derived/<32位编号>`，输出须使用新目录。
 
 ## R2-S11：真实编译事实与有限路径
 
@@ -256,8 +266,8 @@ python3 tools/experiment/d2_verify.py \
 PYTHONPATH=tools/experiment python3 tools/experiment/audit_runner.py \
   --source /本机/已登记源码.sol --hypotheses /本机/保存假设数组.json --root .
 PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py --compiled --root . \
-  --original-run .local/auto-benchmark-runs/546fe566368e4b0ea7b6aeb58b235939 \
-  --output-run .local/r2/tool-replays/新的32位十六进制运行编号
+  --original-run research-artifacts/runs/benchmarks/546fe566368e4b0ea7b6aeb58b235939 \
+  --output-run research-artifacts/runs/derived/新的32位十六进制运行编号
 ```
 
 `audit_runner.py` 的假设文件是 JSON 数组；含导入时增加 `--manifest`。重放不改变原假设或 usage，导出 `assessments.jsonl`、`summary.json` 和 `REPORT.md`；UNKNOWN 对照分母包含全部保存假设，缺失 assessment 仍计为未知。输出目录必须不存在；用于页面展示的运行编号须为 32 位十六进制，不能直接复制示例占位文字。先构建 Java，再重放；期间修改生产实现或 JAR 会拒绝封口。
@@ -266,7 +276,7 @@ PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py --compiled -
 
 ## R1-S6：独立验证样本批量对照
 
-同一 `/agent.html` 页面新增批量区域。勾选已登记的独立验证目标和 `DENSE`、`FIELD_FILTER`、`D1` 策略，先点击“查看运行计划”，再开始批量对照。每项结果同步写入 `.local/audit-batches/<批量编号>/samples.jsonl`，页面显示按策略的完成、失败、未知、入选证据、usage 和待核验指标；下载链接直接返回逐样本 JSONL。重新打开历史不会发起模型请求；异常中断的计划可在历史中续跑，已启动但没有结果的项记为未决，不自动重发。
+同一 `/agent.html` 页面新增批量区域。勾选已登记的独立验证目标和 `DENSE`、`FIELD_FILTER`、`D1` 策略，先点击“查看运行计划”，再开始批量对照。每项结果同步写入 `research-artifacts/runs/batches/<批量编号>/samples.jsonl`，页面显示按策略的完成、失败、未知、入选证据、usage 和待核验指标；下载链接直接返回逐样本 JSONL。重新打开历史不会发起模型请求；异常中断的计划可在历史中续跑，已启动但没有结果的项记为未决，不自动重发。
 
 “真实模型批量运行”可查看当前端点、模型、样本数 × 策略数 × 重复次数 × 模型阶段 × 尝试次数以及请求和输出 token 上界。用户已授权显式启动真实批量；完整输入 token 与费用上界仍为 `null`，输入 UTF-8 字节上限不是 token 公平。页面的检测召回、检索 Recall@K 和 nDCG 只有取得独立审核的目标—案例标签后才能计算，当前显示“待核验”。数据规模依据和后续实验方案见 [R1-S6 研究设计](../../docs/vibe/releases/R1/attachments/RESEARCH_DESIGN.md)。
 
@@ -295,7 +305,7 @@ PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_cli.py \
 
 ```bash
 PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_report.py \
-  --run .local/auto-benchmark-runs/dcf98eef6475433f80f228c9ab5a29fb \
+  --run research-artifacts/runs/benchmarks/dcf98eef6475433f80f228c9ab5a29fb \
   --output .evidence/R2-20261010/API-batch-20261011/重算报告.md \
   --detail-output .evidence/R2-20261010/API-batch-20261011/重算明细.json \
   --metadata .evidence/R2-20261010/API-batch-20261011/report-metadata.json

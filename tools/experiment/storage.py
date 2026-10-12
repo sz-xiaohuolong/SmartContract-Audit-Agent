@@ -1,11 +1,41 @@
 """本地实验产物的规范编码、持久写入与单写者锁。"""
 import fcntl
+import gzip
 import json
 import os
 import tempfile
+import zlib
 from contextlib import contextmanager
 from pathlib import Path
 from offline import digest, _unique_object
+
+
+def artifact_exists(path):
+    """历史原件允许无损压缩；逻辑文件名及原始字节摘要保持不变。"""
+    path = Path(path)
+    return path.is_file() or path.with_name(path.name + '.gz').is_file()
+
+
+def read_artifact(path, max_bytes=512 * 1024 * 1024):
+    """透明读取原件或其 gzip 归档，损坏和超限均报错，不返回空成功。"""
+    path = Path(path)
+    archived = path.with_name(path.name + '.gz')
+    if path.is_file():
+        if archived.is_file():
+            raise ValueError('原件与压缩归档同时存在，须先核对唯一来源')
+        opener = path.open
+    else:
+        if archived.is_symlink():
+            raise ValueError('压缩原件不接受符号链接')
+        opener = lambda mode: gzip.open(archived, mode)
+    try:
+        with opener('rb') as source:
+            data = source.read(max_bytes + 1)
+    except (gzip.BadGzipFile, EOFError, zlib.error) as error:
+        raise ValueError('历史原件压缩归档损坏') from error
+    if len(data) > max_bytes:
+        raise ValueError('历史原件解压后超过读取上限')
+    return data
 
 
 def encode(value):

@@ -20,7 +20,7 @@ from storage import atomic_json, decode, encode, fingerprint, durable_write
 ROOT = Path(__file__).resolve().parents[2]
 INTAKE = ROOT / 'data/audit/r1/first-batch/first-batch-intake.json'
 ASSIGNMENT = ROOT / 'data/audit/r1/first-batch/first-batch-assignment.json'
-SOURCE_DIR = '.local/first-batch/sources'
+SOURCE_DIR = 'research-artifacts/inputs/first-batch/sources'
 DIMENSION = 128
 
 
@@ -70,7 +70,7 @@ def candidate_payload(root=ROOT):
         docs.append({'id': identifier + '-original', 'sampleId': identifier,
                      'groupId': row['patchPairId'], 'role': role, 'sourceHash': row['sourceHash'],
                      'text': excerpt(source, function)})
-    patch = (root / '.local/first-batch/patches/AC-ASE-040.sol').read_text(encoding='utf-8')
+    patch = (root / 'research-artifacts/inputs/first-batch/patches/AC-ASE-040.sol').read_text(encoding='utf-8')
     patch_artifact = next(item for item in samples['AC-ASE-040']['artifacts'] if item['kind'] == 'PATCH')
     docs.append({'id': 'AC-ASE-040-patch', 'sampleId': 'AC-ASE-040',
                  'groupId': samples['AC-ASE-040']['patchPairId'], 'role': 'PATCH_CONTEXT',
@@ -83,7 +83,7 @@ def candidate_payload(root=ROOT):
 
 def build(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', index=None):
     root = Path(root)
-    store = Path(store) if store is not None else root / '.local/mvp-kb'
+    store = Path(store) if store is not None else root / 'research-artifacts/snapshots/mvp'
     payload = candidate_payload(root)
     snapshot_id = fingerprint(payload)
     index = index or MvpIndex(milvus_url)
@@ -106,7 +106,7 @@ def build(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', index=None
 
 def active(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', index=None):
     root = Path(root)
-    store = Path(store) if store is not None else root / '.local/mvp-kb'
+    store = Path(store) if store is not None else root / 'research-artifacts/snapshots/mvp'
     pointer = decode((store / 'active.json').read_bytes())
     if pointer.get('purpose') != 'ENGINEERING_MVP' or pointer.get('milvusUrl') != milvus_url:
         raise ValueError('MVP 集合指针无效')
@@ -177,7 +177,7 @@ def _config_values(path):
 
 def run_once(root=ROOT, store=None, milvus_url='http://127.0.0.1:29531', config=None, jar=None, index=None, executor=None):
     root = Path(root)
-    store = Path(store) if store is not None else root / '.local/mvp-runs'
+    store = Path(store) if store is not None else root / 'research-artifacts/runs/mvp'
     config = Path(config) if config is not None else root / 'config/providers.local.properties'
     jar = Path(jar) if jar is not None else root / 'audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar'
     values = _config_values(config)

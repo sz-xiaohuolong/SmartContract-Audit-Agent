@@ -11,9 +11,9 @@ from storage import decode, fingerprint
 
 INTAKE = Path('data/audit/r1/first-batch/first-batch-intake.json')
 ASSIGNMENT = Path('data/audit/r1/first-batch/first-batch-assignment.json')
-FORMAL_LEDGER = Path('.local/d1-kb-v1/ledger.json')
-FORMAL_V2_LEDGER = Path('.local/r1-s5/formal-v2/ledger.json')
-SOURCE_DIR = '.local/first-batch/sources'
+FORMAL_LEDGER = Path('research-artifacts/inputs/knowledge-v1/ledger.json')
+FORMAL_V2_LEDGER = Path('research-artifacts/inputs/formal-v2/formal-v2/ledger.json')
+SOURCE_DIR = 'research-artifacts/inputs/first-batch/sources'
 DEVELOPMENT_IDS = frozenset({'AC-ASE-006', 'AC-ASE-009', 'RE-SCRUBD-001', 'RE-SCRUBD-002'})
 FUNCTION_SCOPE = {'RE-SCRUBD-001': 'matchOrderWithReserve',
                   'AC-ASE-040': 'mintYieldFee', 'RE-JPEGD-001': 'deposit',

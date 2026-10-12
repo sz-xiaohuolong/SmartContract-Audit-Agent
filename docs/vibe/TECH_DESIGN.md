@@ -28,6 +28,12 @@
 本机登记目标可携带 `compilerManifest`；工作台预览保存 `compiledFacts` 与计划中的 `compilerBinding`，执行前再核验，漂移在模型之前终止。批量运行也在模型之前核验编译绑定，D2 公共入口随后自行重载。消费的清理源码必须与编译目标字节一致；不能把原件 AST 直接套在不同摘要的清理输入上。历史报告只读，不因接入重新发送模型请求。S11 的路径 CLI 与本机原件恢复要求见[工具说明](../../tools/experiment/README.md#r2-s11真实编译事实与有限路径)。
 
 
+## 环境、原件与可读报告
+
+本机环境位于 `.local/envs/`、`.local/models/`、`.local/services/`、`.local/solidity/`，唯一恢复材料位于 `.local/recovery/`；下载仓库位于 `data/external/`。真实模型批次、派生核验、固定输入、快照和编译／工具收据位于 `research-artifacts/`，按运行编号和类别组织；可读报告在版本实验目录，`.evidence/` 保留关键验证材料。分类与整理命令见[原件说明](../../research-artifacts/README.md)。
+
+`storage.read_artifact()` 透明读取原件或 gzip，冲突、损坏和超限时报错；重放与下载核对还原字节摘要。新批次摘要只保存统计与样本指针，CSV 按需生成。迁移保持原计划、候选和登记不变，旧路径通过相对兼容入口定位同一份原件。Milvus 为可重建索引，知识快照仍是事实源。[整理报告](releases/R2-20261010/STORAGE_LAYOUT_REPORT.md)记录本机完整性证据，远程原件归档尚未配置。
+
 ## 构建边界与运行入口
 
 S9 已验工程基线为 `4dfc7e1`；R2 的 S10 局部工程验收已通过，当前状态见[R2 矩阵](releases/R2-20261010/VERIFICATION.md)，目标方案见[R2 设计](releases/R2-20261010/PROPOSED_DESIGN.md)。

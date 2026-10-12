@@ -163,7 +163,7 @@ def render_report(report, detail, metadata=None):
               if not value['runnable']]
     lines += ['', '## 复现与限制', '',
               '本报告只读取 plan.json、events.jsonl、samples.jsonl，通过计划摘要与逐单元身份校验重算。'
-              '原件保存在本机 .local/auto-benchmark-runs/；报告生成不运行模型或静态工具。', '',
+              '原件保存在本机 research-artifacts/runs/benchmarks/；报告生成不运行模型或静态工具。', '',
               '历史批次与本次发现任务的源码治理、策略及有效样本范围不同，不能将两批未知比例之差解释为同候选的因果改善。'
               'D2 仅证明已支持范围内的特定假设；未覆盖、工具失败、无告警和未报告均不能推断整个合约安全。', '']
     if metadata is not None:

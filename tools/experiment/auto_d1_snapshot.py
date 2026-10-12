@@ -64,8 +64,8 @@ def stage_auto_snapshot(corpus, snapshot_root, vectors_override=None, embedding_
 
 def main():
     parser = argparse.ArgumentParser(description='构建并可显式激活 AutoMESC 自动标注 S1b 知识快照')
-    parser.add_argument('--corpus-dir', default='.local/dataset-candidates/r1-pending')
-    parser.add_argument('--snapshot-root', default='.local/d1-kb-snapshots')
+    parser.add_argument('--corpus-dir', default='data/external/candidates/r1-pending')
+    parser.add_argument('--snapshot-root', default='research-artifacts/snapshots/bge')
     parser.add_argument('--milvus-url', default='http://127.0.0.1:29531')
     parser.add_argument('--activate', action='store_true')
     args = parser.parse_args()

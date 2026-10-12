@@ -33,7 +33,7 @@ class FormalRecallTest(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
-        store = self.root / '.local/d1-kb-snapshots'
+        store = self.root / 'research-artifacts/snapshots/bge'
         docs = [{'id': f'd{i}', 'sample_id': 'a', 'text': f'审计代码案例 {i}'} for i in range(4)]
         vector = [1.0] + [0.0] * (DIMENSION - 1)
         self.snapshot = build_snapshot(store, manifest(), docs,
@@ -106,7 +106,7 @@ class FormalRecallTest(unittest.TestCase):
             with self.assertRaises(ValueError): preview(self.root, self.target, self.index, lambda texts: [vector], self.java)
             self.index.hits = None
             with self.assertRaises(ValueError): preview(self.root, self.target, self.index, lambda texts: [[1.0] * 128], self.java)
-            pointer = self.root / '.local/d1-kb-snapshots/active.json'
+            pointer = self.root / 'research-artifacts/snapshots/bge/active.json'
             self.index.after_search = lambda: atomic_json(pointer, dict(
                 snapshot_id=self.snapshot, backend='milvus', collection='mvp_' + '0' * 32))
             with self.assertRaises(ValueError): preview(self.root, self.target, self.index, lambda texts: [vector], self.java)
@@ -215,7 +215,7 @@ class FormalRecallTest(unittest.TestCase):
                 self.assertEqual([], queries)
 
     def test_原件属于知识划分时清理hash变化仍然拒绝(self):
-        store = self.root / '.local/d1-kb-snapshots'
+        store = self.root / 'research-artifacts/snapshots/bge'
         target = dict(self.target)
         source = target['fullSource'].replace('uint checked = 1;', 'uint checked = 1; // <yes>')
         source_hash = hashlib.sha256(source.encode()).hexdigest()

@@ -67,7 +67,7 @@ def prepare_compilation(root, target):
     if cache_key in _CACHE:
         load_bound_compilation(_CACHE[cache_key], root)
         return _CACHE[cache_key]
-    directory = root / '.evidence/R2-20261010/S11-S12-final/compilations' / uuid.uuid4().hex
+    directory = root / 'research-artifacts/receipts/compilations' / uuid.uuid4().hex
     directory.mkdir(parents=True, exist_ok=False)
     # 固定单元名与运行目录一致，Slither 的源码映射不依赖临时文件名猜测。
     unit = original_bundle['targetSourceUnit'] if original_bundle else 'contracts/C.sol'

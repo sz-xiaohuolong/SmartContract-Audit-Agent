@@ -208,7 +208,7 @@ def main():
     parser.add_argument('--automesc-dir', required=True)
     parser.add_argument('--forge-dir', required=True)
     parser.add_argument('--output-dir', required=True)
-    parser.add_argument('--model-dir', default='.local/d1-embedding-model')
+    parser.add_argument('--model-dir', default='.local/models/bge')
     parser.add_argument('--milvus-url', default='http://127.0.0.1:29531')
     args = parser.parse_args()
     checkout = Path(args.forge_dir).resolve().parents[1]

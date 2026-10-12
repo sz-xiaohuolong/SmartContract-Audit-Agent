@@ -29,7 +29,7 @@ data/
 
 OpenZeppelin 展平文件保留原字节与旧样本编号，源码带有来源和许可证说明；完整生成版本尚未登记，不能把文件头的更新时间当作完整依赖版本。其历史“安全”标签只属于来源标签，不构成安全证明，研究准入仍为 `false`。
 
-`audit/r1/`、`audit/r2/` 是机器读取的固定输入与登记包，目录标识属于已保存实验的身份；整理公开数据副本不改变其内容、路径或历史划分。历史运行原件继续保留在 `.local/`，测试日志和核对记录放 `.evidence/`。
+`audit/r1/`、`audit/r2/` 是机器读取的固定输入与登记包，目录标识属于已保存实验的身份；整理公开数据副本不改变其内容、路径或历史划分。历史运行原件按 [研究原件说明](../research-artifacts/README.md) 保存到 `research-artifacts/`，关键日志和核对记录放 `.evidence/`；历史登记的旧路径通过兼容入口读取同一份原件。
 
 剩余示例与参考资料用于历史演示和阅读，不自动进入评测。重复的 `Overflow15.sol` 已移除，原件位于 `../SolidiFI-benchmark/buggy_contracts/Overflow-Underflow/buggy_15.sol`。
 

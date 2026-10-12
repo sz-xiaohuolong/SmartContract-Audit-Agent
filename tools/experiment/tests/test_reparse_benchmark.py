@@ -9,7 +9,7 @@ class ReparseBenchmarkTest(unittest.TestCase):
     def test_只重放有原文的解析失败而不重新计费(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            diagnostic = root / '.local/auto-benchmark-diagnostics/a.txt'
+            diagnostic = root / 'research-artifacts/diagnostics/benchmark/a.txt'
             diagnostic.parent.mkdir(parents=True)
             diagnostic.write_text('{"schemaVersion":"2","hypotheses":[]}')
             original = {'status': 'FAILED', 'prediction': 'UNKNOWN', 'sampleId': 'a', 'strategy': 'D1',

@@ -14,7 +14,7 @@ from formal_recall import preview, java_retrieval, select_strategy
 from formal_targets import load_target
 from storage import atomic_json, decode, durable_write, encode, fingerprint
 
-STORE = Path('.local/audit-runs')
+STORE = Path('research-artifacts/runs/audits')
 RUN_ID = re.compile(r'[0-9a-f]{32}')
 EXPERIMENT_MAX_OUTPUT_TOKENS = 16384
 HYPOTHESIS_SYSTEM = ('你是智能合约审计员。只输出一个 JSON 对象，不要 Markdown、代码围栏、解释文字或顶层数组。'

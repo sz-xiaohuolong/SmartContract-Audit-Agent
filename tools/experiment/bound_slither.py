@@ -15,10 +15,13 @@ import time
 import uuid
 
 from compiler_facts import load_bound_compilation
+from storage import read_artifact
 
 
 _SCHEMA = 'bound-slither-1'
-_EVIDENCE = Path('.evidence/R2-20261010/S11-resolution/tool-bridge')
+_EVIDENCE = Path('research-artifacts/receipts/slither')
+_PREVIOUS_EVIDENCE = Path('.evidence/R2-20261010/D2-deep-upgrade-20261012/tool')
+_LEGACY_EVIDENCE = Path('.evidence/R2-20261010/S11-resolution/tool-bridge')
 _MAX_JSON = 64 * 1024 * 1024
 
 
@@ -31,7 +34,7 @@ def _canonical(value):
 
 
 def _json(path):
-    data = path.read_bytes()
+    data = read_artifact(path, max_bytes=_MAX_JSON)
     if len(data) > _MAX_JSON:
         raise ValueError('工具证据超过 64 MiB')
 
@@ -61,7 +64,7 @@ def _artifact(root, value):
     if not isinstance(value, str) or not value:
         raise ValueError('工具证据路径缺失')
     path = _path(root, value).resolve()
-    if not path.is_relative_to((root / _EVIDENCE).resolve()):
+    if not any(path.is_relative_to((root / base).resolve()) for base in (_EVIDENCE, _PREVIOUS_EVIDENCE, _LEGACY_EVIDENCE)):
         raise ValueError('工具原件必须位于指定证据目录，且不能通过链接越界')
     return path
 
@@ -561,7 +564,7 @@ def _worker(manifest_path, root, directory):
                      'slitherSource': _tree_digest(slither_package), 'cryticSource': _tree_digest(crytic_compile)}
     bundle = load_bound_compilation(manifest_path, root)
     binding = bundle['binding']
-    actual_input = _path(root, bundle['manifest']['inputPath']).read_bytes()
+    actual_input = read_artifact(_path(root, bundle['manifest']['inputPath']))
     binary = _path(root, binding['compiler']).resolve()
     cwd = _path(root, binding['environment']).resolve()
 
@@ -639,7 +642,7 @@ def _worker(manifest_path, root, directory):
     raw_path.write_bytes(_canonical(raw))
     identity = {'schemaVersion': _SCHEMA, 'producerCodeSha256': producer_hash,
                 'manifestDigest': bundle['manifestDigest'], 'compilerReceiptDigest': bundle['receiptDigest'],
-                'manifestUtf8': manifest_path.read_text(encoding='utf-8'),
+                'manifestUtf8': read_artifact(manifest_path).decode('utf-8'),
                 'sourceHash': bundle['sourceHash'], 'sourceFile': bundle['targetSourceUnit'],
                 'pythonExecutable': str(Path(sys.executable).absolute()),
                 'toolIdentity': tool_identity,

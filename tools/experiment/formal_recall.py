@@ -14,7 +14,7 @@ from storage import decode, encode, fingerprint
 from d1_consumption import candidate_context, risk_bindings
 
 
-SNAPSHOT_ROOT = Path('.local/d1-kb-snapshots')
+SNAPSHOT_ROOT = Path('research-artifacts/snapshots/bge')
 CONTEXT_BYTES = 4096
 STRATEGIES = frozenset({'VANILLA', 'DENSE', 'FIELD_FILTER', 'D1'})
 

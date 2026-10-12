@@ -22,7 +22,7 @@ class PendingKnowledgeStatusTest(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             self.assertIsNone(pending_knowledge_status(root, Index()))
-            file = root / '.local/dataset-candidates/r1-pending/receipt.json'
+            file = root / 'data/external/candidates/r1-pending/receipt.json'
             file.parent.mkdir(parents=True)
             receipt = {'collection': 'r1pending_' + 'a' * 32, 'candidateOnly': True,
                        'formalD1Enabled': False, 'vectorCount': 1, 'automescPairs': 1, 'forgeVfp': 0}

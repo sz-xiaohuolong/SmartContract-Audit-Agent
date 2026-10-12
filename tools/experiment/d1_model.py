@@ -60,7 +60,7 @@ def fetch_model(root, manifest, opener=urllib.request.urlopen):
 
 def main():
     parser = argparse.ArgumentParser(description='获取并校验固定版本的本地语义嵌入模型')
-    parser.add_argument('--model-dir', default='.local/d1-embedding-model')
+    parser.add_argument('--model-dir', default='.local/models/bge')
     args = parser.parse_args()
     try:
         result = fetch_model(args.model_dir, decode(MODEL_MANIFEST.read_bytes()))

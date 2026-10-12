@@ -79,7 +79,7 @@ def final_conclusion(model, d2, failed, mode):
 class AuditWorkbench:
     def __init__(self, root, runtime_factory=None, target_loader=None, tool=tool_runner, store=None):
         self.root = Path(root).resolve()
-        self.store = Path(store) if store is not None else self.root / '.local/audit-workbench-runs'
+        self.store = Path(store) if store is not None else self.root / 'research-artifacts/runs/workbench'
         self.runtime_factory = runtime_factory or self._runtime
         self.target_loader = target_loader or self._targets
         self.tool = tool
@@ -94,7 +94,7 @@ class AuditWorkbench:
         from benchmark_targets import load_benchmark_targets
         from exploratory_corpus import load_corpus
         from formal_targets import _records
-        corpus = load_corpus(self.root / '.local/dataset-candidates/r1-pending')
+        corpus = load_corpus(self.root / 'data/external/candidates/r1-pending')
         rows = load_benchmark_targets(self.root, list(corpus['rows'].values()))
         try:
             existing = {row['sampleId'] for row in rows}

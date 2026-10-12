@@ -25,7 +25,7 @@ function renderResult(report) {
     ['理由', show(result.reason)], ['错误类别', errorLabel(result.errorCategory)],
     ['输入 token', show(result.inputTokens)], ['输出 token', show(result.outputTokens)],
     ['入选知识片段', report.selectedEvidence.join('、')], ['运行编号', plan.runId],
-    ['结果目录', `.local/mvp-runs/${plan.runId}/`]
+    ['结果目录', `research-artifacts/runs/mvp/${plan.runId}/`]
   ]) {
     const row = document.createElement('p');
     row.textContent = `${label}：${value}`;

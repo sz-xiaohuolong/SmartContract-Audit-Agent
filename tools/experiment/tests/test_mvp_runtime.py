@@ -94,7 +94,7 @@ class MvpRuntimeTest(unittest.TestCase):
             self.assertEqual(calls, [1])
             self.assertEqual(report['status'], 'FAILED')
             self.assertEqual(report['plan']['responseFormat'], 'json_schema_strict')
-            self.assertEqual((root / '.local/mvp-runs' / report['plan']['runId'] / 'raw-response.txt').read_text(),
+            self.assertEqual((root / 'research-artifacts/runs/mvp' / report['plan']['runId'] / 'raw-response.txt').read_text(),
                              '{"hasVulnerability":false}')
     def test_embedding_is_deterministic_and_normalized(self):
         first = mvp_runtime.embed('function claimRewards address sender')

@@ -91,9 +91,9 @@ def build_nomic_snapshot(corpus, directory, snapshot_root, encoder, index=None, 
 
 def main():
     parser = argparse.ArgumentParser(description='构建并激活独立 Nomic 768 维知识快照')
-    parser.add_argument('--corpus-dir', default='.local/dataset-candidates/r1-pending')
-    parser.add_argument('--embedding-dir', default='.local/d1-nomic-embeddings')
-    parser.add_argument('--snapshot-root', default='.local/d1-nomic-snapshots')
+    parser.add_argument('--corpus-dir', default='data/external/candidates/r1-pending')
+    parser.add_argument('--embedding-dir', default='research-artifacts/snapshots/nomic-vectors')
+    parser.add_argument('--snapshot-root', default='research-artifacts/snapshots/nomic')
     parser.add_argument('--milvus-url', default='http://127.0.0.1:29531')
     parser.add_argument('--ollama-url', default='http://127.0.0.1:11434')
     parser.add_argument('--activate', action='store_true')

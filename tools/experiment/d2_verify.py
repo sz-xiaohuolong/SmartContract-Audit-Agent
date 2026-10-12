@@ -445,10 +445,10 @@ def main():
     parser.add_argument('--source', help='可选绑定源码；字节摘要须与编译目标相同')
     parser.add_argument('--root', default='.', help='清单中的相对路径根目录')
     args = parser.parse_args()
-    from storage import decode
+    from storage import decode, read_artifact
     try:
         hypothesis = decode(Path(args.hypothesis).read_bytes())
-        tools = decode(Path(args.tools).read_bytes()) if args.tools else []
+        tools = decode(read_artifact(Path(args.tools))) if args.tools else []
         source = Path(args.source).read_bytes().decode('utf-8') if args.source else None
         result = evaluate(hypothesis, {}, tools, source=source,
                           compilation_manifest=args.manifest, root=args.root)

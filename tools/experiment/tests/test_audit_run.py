@@ -48,7 +48,7 @@ class AuditRunTest(unittest.TestCase):
             self.assertIsNone(result['model']['inputTokens'])
             self.assertEqual(result, replay(root, result['runId']))
             self.assertEqual(['model'], calls)
-            run_dir = root / '.local/audit-runs' / result['runId']
+            run_dir = root / 'research-artifacts/runs/audits' / result['runId']
             self.assertEqual(1, len((run_dir / 'sample.jsonl').read_text().splitlines()))
             self.assertGreater(len((run_dir / 'events.jsonl').read_text().splitlines()), 2)
             (run_dir / 'plan.json').write_text('{}')
@@ -79,7 +79,7 @@ class AuditRunTest(unittest.TestCase):
                 diagnostic_result = run_once(Path(directory), 'fixture', 'offline', diagnostic_deps)
             self.assertEqual('CONTRACT_MISMATCH', diagnostic_result['model']['validationIssue'])
             self.assertNotIn('private diagnostic', str(diagnostic_result))
-            self.assertEqual('private diagnostic', (Path(directory) / '.local/audit-runs' /
+            self.assertEqual('private diagnostic', (Path(directory) / 'research-artifacts/runs/audits' /
                 diagnostic_result['runId'] / 'raw-response.txt').read_text())
 
     def test_source_change_before_model_rejects_without_request(self):

@@ -48,7 +48,8 @@ def _input_blocked(row, plan):
 
 
 def _load_original(original):
-    raw = (original / 'samples.jsonl').read_bytes()
+    from storage import read_artifact
+    raw = read_artifact(original / 'samples.jsonl')
     rows = [decode(line) for line in raw.splitlines() if line.strip()]
     if not rows:
         raise ValueError('原批次没有保存的单元')
@@ -78,8 +79,14 @@ def _load_original(original):
 
 
 def _original_hashes(original):
-    return {str(path.relative_to(original)): _sha(path.read_bytes())
-            for path in sorted(original.rglob('*')) if path.is_file()}
+    from storage import read_artifact
+    result = {}
+    for path in sorted(original.rglob('*')):
+        if not path.is_file():
+            continue
+        logical = path.with_suffix('') if path.suffix == '.gz' and path.with_suffix('').suffix in ('.jsonl', '.json', '.csv') else path
+        result[str(logical.relative_to(original))] = _sha(read_artifact(logical))
+    return result
 
 
 def _target(row, metadata):

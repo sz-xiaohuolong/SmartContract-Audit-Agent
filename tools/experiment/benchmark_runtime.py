@@ -92,7 +92,7 @@ class BenchmarkRuntime:
         self.model_runner = model_runner
         self.tool_runner = tool_runner
         self.java_runner = java_runner or (lambda source, request: java_retrieval(self.root, source, request))
-        self.store = Path(snapshot_root) if snapshot_root is not None else self.root / '.local/d1-kb-snapshots'
+        self.store = Path(snapshot_root) if snapshot_root is not None else self.root / 'research-artifacts/snapshots/bge'
         self.pointer = active_snapshot(self.store, index)
         self.snapshot = verify_snapshot(self.store, self.pointer['snapshot_id'])
         embedding = self.snapshot['embedding']
@@ -179,7 +179,7 @@ class BenchmarkRuntime:
             raise ValueError('结构化模型结果无效')
         diagnostic_path = None
         if (model.get('status') == 'FAILED' or model.get('validationIssue')) and isinstance(model.get('_rawResponse'), str):
-            diagnostic = self.root / '.local/auto-benchmark-diagnostics' / (uuid.uuid4().hex + '.txt')
+            diagnostic = self.root / 'research-artifacts/diagnostics/benchmark' / (uuid.uuid4().hex + '.txt')
             diagnostic.parent.mkdir(parents=True, exist_ok=True)
             durable_write(diagnostic, model['_rawResponse'].encode('utf-8'))
             diagnostic.chmod(0o600)

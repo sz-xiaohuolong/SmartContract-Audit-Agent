@@ -102,7 +102,7 @@ def main():
     parser = argparse.ArgumentParser(description='使用本地固定模型计算待审 D1 候选向量')
     for name in ('ledger', 'pairs', 'root', 'output-dir'):
         parser.add_argument('--' + name, required=True)
-    parser.add_argument('--model-dir', default='.local/d1-embedding-model')
+    parser.add_argument('--model-dir', default='.local/models/bge')
     args = parser.parse_args()
     try:
         ledger = decode(Path(args.ledger).read_bytes())

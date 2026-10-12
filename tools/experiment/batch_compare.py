@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from storage import atomic_json, decode, durable_write, encode, exclusive_lock, fingerprint, sync_directory
+from storage import atomic_json, artifact_exists, decode, durable_write, encode, exclusive_lock, fingerprint, read_artifact, sync_directory
 
 STRATEGIES = frozenset({'DENSE', 'FIELD_FILTER', 'D1'})
 ID = re.compile(r'[0-9a-f]{32}')
@@ -49,9 +49,9 @@ def _append(path, value):
 
 
 def _lines(path):
-    if not path.is_file():
+    if not artifact_exists(path):
         return []
-    data = path.read_bytes()
+    data = read_artifact(path)
     return [decode(line) for line in data.split(b'\n')[:-1]]
 
 

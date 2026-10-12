@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from time import monotonic
 
-from storage import atomic_json, durable_write, encode, sync_directory
+from storage import atomic_json, artifact_exists, durable_write, encode, read_artifact, sync_directory
 import mvp_runtime
 from urllib.parse import urlsplit, parse_qs
 from storage import decode
@@ -231,7 +231,7 @@ def workspace_derived_report(root, store, identifier, artifact=None):
         path = (directory / name).resolve()
         if not path.is_relative_to(directory):
             raise ValueError('派生产物路径超出当前运行')
-        contents[name] = path.read_bytes()
+        contents[name] = read_artifact(path)
         if hashlib.sha256(contents[name]).hexdigest() != manifest['outputHashes'][name]:
             raise ValueError('派生产物与封口摘要不一致')
     summary = decode(contents['summary.json'])
@@ -254,8 +254,8 @@ def workspace_derived_report(root, store, identifier, artifact=None):
             raise ValueError('原批次不在本项目或摘要登记缺失')
         for name, expected in original_hashes.items():
             path = (original / name).resolve()
-            if (not path.is_relative_to(original) or not path.is_file()
-                    or hashlib.sha256(path.read_bytes()).hexdigest() != expected):
+            if (not path.is_relative_to(original) or not artifact_exists(path)
+                    or hashlib.sha256(read_artifact(path)).hexdigest() != expected):
                 raise ValueError('原批次文件与派生来源摘要不一致')
         if original_hashes.get('samples.jsonl') != provenance.get('originalSamplesSha256'):
             raise ValueError('原批次逐样本摘要不一致')
@@ -322,7 +322,7 @@ def _agent_dependencies(root):
     @lru_cache(maxsize=1)
     def encoder():
         from sentence_transformers import SentenceTransformer
-        return load_local_encoder(SentenceTransformer, root / '.local/d1-embedding-model',
+        return load_local_encoder(SentenceTransformer, root / '.local/models/bge',
                                   decode(MODEL_MANIFEST.read_bytes()))
     return RunDependencies(index, lambda texts: encoder()(texts),
                            lambda source, request: java_retrieval(root, source, request),
@@ -330,7 +330,7 @@ def _agent_dependencies(root):
 
 
 def pending_knowledge_status(root, index):
-    receipt_path = Path(root) / '.local/dataset-candidates/r1-pending/receipt.json'
+    receipt_path = Path(root) / 'data/external/candidates/r1-pending/receipt.json'
     if not receipt_path.is_file():
         return None
     receipt = decode(receipt_path.read_bytes())
@@ -369,15 +369,15 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                   auto_store=None, auto_targets=None, auto_runtime=None, workbench=None, workspace_analyzer=None,
                   derived_store=None):
     root = Path(root).resolve()
-    store = Path(store) if store is not None else root / '.local/experiment-ui'
+    store = Path(store) if store is not None else root / '.local/services/ui'
     runner = runner or (lambda: run_demo(root))
     mvp_runner = mvp_runner or (lambda: mvp_runtime.run_once(root))
     mvp_status = mvp_status or (lambda: mvp_runtime.active(root)[0])
-    agent_store = Path(agent_store) if agent_store is not None else root / '.local/audit-runs'
-    batch_store = Path(batch_store) if batch_store is not None else root / '.local/audit-batches'
-    exploratory_store = Path(exploratory_store) if exploratory_store is not None else root / '.local/d1-exploratory-runs'
-    auto_store = Path(auto_store) if auto_store is not None else root / '.local/auto-benchmark-runs'
-    derived_store = Path(derived_store) if derived_store is not None else root / '.local/r2/tool-replays'
+    agent_store = Path(agent_store) if agent_store is not None else root / 'research-artifacts/runs/audits'
+    batch_store = Path(batch_store) if batch_store is not None else root / 'research-artifacts/runs/batches'
+    exploratory_store = Path(exploratory_store) if exploratory_store is not None else root / 'research-artifacts/runs/exploratory'
+    auto_store = Path(auto_store) if auto_store is not None else root / 'research-artifacts/runs/benchmarks'
+    derived_store = Path(derived_store) if derived_store is not None else root / 'research-artifacts/runs/derived'
     if agent_targets is None or agent_status is None or agent_preview is None or agent_runner is None:
         from audit_run import run_once
         from formal_targets import list_targets, load_target
@@ -386,8 +386,8 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
         dependencies = _agent_dependencies(root)
         agent_targets = agent_targets or (lambda: list_targets(root))
         def default_status():
-            pointer = active_snapshot(root / '.local/d1-kb-snapshots', dependencies.index)
-            snapshot = verify_snapshot(root / '.local/d1-kb-snapshots', pointer['snapshot_id'])
+            pointer = active_snapshot(root / 'research-artifacts/snapshots/bge', dependencies.index)
+            snapshot = verify_snapshot(root / 'research-artifacts/snapshots/bge', pointer['snapshot_id'])
             values = {'ready': True, 'snapshotId': pointer['snapshot_id'],
                       'collection': pointer['collection'], 'maxRequestsPerClick': 2,
                       'maxOutputTokens': 2048, 'researchEligible': False,
@@ -416,7 +416,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
         from exploratory_corpus import load_corpus
         @lru_cache(maxsize=1)
         def default_auto_targets():
-            corpus = load_corpus(root / '.local/dataset-candidates/r1-pending')
+            corpus = load_corpus(root / 'data/external/candidates/r1-pending')
             return load_benchmark_targets(root, list(corpus['rows'].values()))
         auto_targets = default_auto_targets
     if auto_runtime is None:
@@ -469,6 +469,10 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 self._send(403, {'error': '仅允许本机访问'})
                 return
             parsed = urlsplit(self.path)
+            if parsed.path == '/api/storage/status':
+                self._send(200, {'running': run_lock.locked() or exploratory_lock.locked()
+                                or bool(workbench is not None and workbench.running)})
+                return
             if parsed.path.startswith('/api/agent/workspace'):
                 try:
                     query = parse_qs(parsed.query, strict_parsing=True)
@@ -621,7 +625,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                             self._send(200, export_csv(report).encode(), 'text/csv; charset=utf-8', 'samples.csv')
                         else:
                             path = auto_store / identifier / 'samples.jsonl'
-                            self._send(200, path.read_bytes() if path.is_file() else b'',
+                            self._send(200, read_artifact(path) if artifact_exists(path) else b'',
                                        'application/x-ndjson; charset=utf-8', 'samples.jsonl')
                     except (OSError, ValueError, KeyError, TypeError):
                         self._send(500, {'error': '自动知识批量报告损坏'})
@@ -664,7 +668,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                         result = replay_batch(batch_store, identifier)
                         if report_file:
                             path = batch_store / identifier / 'samples.jsonl'
-                            self._send(200, path.read_bytes() if path.is_file() else b'',
+                            self._send(200, read_artifact(path) if artifact_exists(path) else b'',
                                        'application/x-ndjson; charset=utf-8', 'samples.jsonl')
                         else:
                             self._send(200, result)
@@ -739,7 +743,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 except (OSError, ValueError, KeyError, RuntimeError):
                     self._send(200, {'ready': False, 'researchEligible': False})
             elif self.path == '/api/mvp/runs':
-                directory = root / '.local/mvp-runs'
+                directory = root / 'research-artifacts/runs/mvp'
                 rows = []
                 for path in directory.glob('*/result.json'):
                     if RUN_ID.fullmatch(path.parent.name):
@@ -753,7 +757,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                 self._send(200, {'runs': rows[:20]})
             elif self.path.startswith('/api/mvp/runs/'):
                 identifier = self.path.removeprefix('/api/mvp/runs/')
-                path = root / '.local/mvp-runs' / identifier / 'result.json'
+                path = root / 'research-artifacts/runs/mvp' / identifier / 'result.json'
                 if not RUN_ID.fullmatch(identifier) or not path.is_file():
                     self._not_found()
                 else:
@@ -914,7 +918,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                     if profile == 'nomic':
                         from snapshots import active_snapshot
                         from milvus_rest import MilvusRestIndex
-                        pointer = active_snapshot(root / '.local/d1-nomic-snapshots',
+                        pointer = active_snapshot(root / 'research-artifacts/snapshots/nomic',
                                                   MilvusRestIndex('http://127.0.0.1:29531'))
                         state.update(snapshotId=pointer['snapshot_id'], ready=True, knowledgeTier='AUTO_LABELED')
                     if (not state.get('ready') or state.get('knowledgeTier') not in (None, 'AUTO_LABELED')
@@ -963,7 +967,7 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                         if exploratory_runner is not None:
                             exploratory_runner()
                         else:
-                            python = root / '.local/d1-embed-venv/bin/python'
+                            python = root / '.local/envs/embedding/bin/python'
                             script = root / 'tools/experiment/exploratory_probe.py'
                             environment = dict(os.environ, HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1',
                                                PYTHONPATH=str(root / 'tools/experiment'))

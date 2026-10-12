@@ -172,7 +172,7 @@ async function pollAuto(batchId) {
     const report = await request('/api/agent/auto-benchmark/runs/' + batchId);
     renderAutoReport(report);
     if (report.status === 'COMPLETED' || report.error) {
-      show('auto-notice', `报告目录：.local/auto-benchmark-runs/${batchId}/`);
+      show('auto-notice', `报告目录：research-artifacts/runs/benchmarks/${batchId}/`);
       await loadAutoHistory(); return;
     }
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -318,7 +318,7 @@ async function startBatch() {
       catch (error) { if (attempt < 3) continue; throw error; }
       renderBatchReport(report);
       if (report.status === 'COMPLETED') {
-        show('batch-notice', `已保存：.local/audit-batches/${identifier}/`);
+        show('batch-notice', `已保存：research-artifacts/runs/batches/${identifier}/`);
         await loadBatchHistory(); return;
       }
     }
@@ -392,7 +392,7 @@ async function run(mode) {
     const data = await request('/api/agent/runs', {method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({sampleId: target.sampleId, mode, strategy: byId('strategy').value})});
     showResult(data);
-    show('notice', `运行记录：.local/audit-runs/${data.runId}/`);
+    show('notice', `运行记录：research-artifacts/runs/audits/${data.runId}/`);
     await loadHistory();
   } catch (error) { show('notice', error.message); }
   finally { byId('offline').disabled = !status.ready; byId('real').disabled = !status.realReady; }

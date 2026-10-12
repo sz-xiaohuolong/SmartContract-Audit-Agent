@@ -9,7 +9,7 @@ import uuid
 from pathlib import Path
 
 from isolation import nonempty, sha256_value, validate_documents
-from storage import atomic_json, decode, durable_write, encode, exclusive_lock, fingerprint, sync_directory
+from storage import atomic_json, decode, durable_write, encode, exclusive_lock, fingerprint, read_artifact, sync_directory
 
 
 def vector32(vector, dimension):
@@ -84,7 +84,7 @@ def verify_snapshot(root, identifier):
     directory = Path(root) / identifier
     if directory.is_symlink() or (directory / "snapshot.json").is_symlink():
         raise ValueError("快照不接受符号链接")
-    payload = _validate(decode((directory / "snapshot.json").read_bytes()))
+    payload = _validate(decode(read_artifact(directory / "snapshot.json")))
     if fingerprint(payload) != identifier: raise ValueError("快照完整性摘要不匹配")
     return payload
 

@@ -23,7 +23,7 @@
 | 最近实验报告 | [思考与全文输入真实复验](releases/R2-20261010/experiments/2026-10-12_THINKING_FULLSOURCE_API_REPORT.md)；AST、第二次、原批次与根因派生按各自历史报告复核 |
 | 执行目录与分支 | 当前主目录，分支 `main`；无关未提交修改保留 |
 
-最新预检、冒烟、执行与只读分析位于 `.evidence/R2-20261010/API-thinking-fullsource-20261012/`；AST升级后的原证据位于 `.evidence/R2-20261010/API-ast-revalidation-20261012/`，再前两轮的预检与执行分别保留在 `.evidence/R2-20261010/D1-D2-real-revalidation-ready/`、`.evidence/R2-20261010/API-revalidation-20261012/`。凭证远程路由由冒烟验证，配置只读且未写入报告。原始模型、工具和D2结果留在被忽略的 `.local/auto-benchmark-runs/`；不将新候选比例与旧保存候选的变化混为因果效果。
+最新预检、冒烟、执行与只读分析位于 `.evidence/R2-20261010/API-thinking-fullsource-20261012/`；AST升级后的原证据位于 `.evidence/R2-20261010/API-ast-revalidation-20261012/`，再前两轮的预检与执行分别保留在 `.evidence/R2-20261010/D1-D2-real-revalidation-ready/`、`.evidence/R2-20261010/API-revalidation-20261012/`。凭证远程路由由冒烟验证，配置只读且未写入报告。原始模型、工具和D2结果留在被忽略的 `research-artifacts/runs/benchmarks/`，旧 `.local/auto-benchmark-runs/` 为兼容入口；不将新候选比例与旧保存候选的变化混为因果效果。
 
 本轮初始提交为 `00fecf5`。基线证据 `.evidence/R2-20261010/baseline.json`，无关改动恢复材料 `.local/r2/preexisting.patch`。环境与输入任务文件所有权独立，公共编排串行整合；小版本验证后依 AGENTS 提交同步。尚未完成的真实路径、先导、页面与毕设交付不得以S10局部结果替代。
 
@@ -50,3 +50,7 @@ R1 已验工程提交 `4dfc7e1`，历史证据见[R1 验证](releases/R1/VERIFIC
 ## 原始数据源去重与目录整理
 
 2026-10-12 用户明确要求去掉重复副本并整理 `data/`。本任务沿用 53 个目标编号、漏洞类型、标签值与漏洞行；公开源码和标注直接读取根目录两个原始仓库，额外对照单独登记；历史实验与固定输入保持原记录。已删除 844 份重复或可重建文件，50 份对照原样移至 `data/controls/openzeppelin/`；来源版本与校验登记在 [datasets.json](../../data/datasets.json)。局部状态 `VERIFIED`：独立提交内容的 Maven 97 项、Python 641 项、CLI、来源摘要和逐份身份核对通过，新增真实模型请求 0；29 个目标仅因原始空白恢复改变摘要，新输入不能续写旧计划，旧保存目标仍可续跑。见[本次验收](releases/R2-20261010/VERIFICATION.md#原始数据源去重与目录整理)；整体研究验证仍为 `UNVERIFIED`。
+
+## 本机存储拆分与无损归档
+
+2026-10-12 按用户要求将 33 个现存目录原地分类，研究原件归 `research-artifacts/`，外部仓库归 `data/external/`，`.local/` 保留本机环境及恢复材料。6,248 份文件无损归档，净释放约 672 MiB；15,040 份原件 SHA、30 批次指标／候选／D2、3 个派生报告保持一致，6 份快照与6份编译绑定通过。只读 HTTP 下载维持原字节，新增模型请求0；独立提交内容650项Python全量、网关1项补验及97项Java／CLI通过，最终整理幂等。规则、一键入口和限制见[整理报告](releases/R2-20261010/STORAGE_LAYOUT_REPORT.md)，验收见[R2记录](releases/R2-20261010/VERIFICATION.md#本机存储拆分与无损归档)。原件远程备份未配置，R2研究验证保持UNVERIFIED。

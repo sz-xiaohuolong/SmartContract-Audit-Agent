@@ -47,7 +47,7 @@ class BenchmarkRuntimeTest(unittest.TestCase):
             self.assertEqual('UNKNOWN', result['d2']['verdict'])
 
     def runtime(self, root, knowledge_hash='a' * 64):
-        store = root / '.local/d1-kb-snapshots'
+        store = root / 'research-artifacts/snapshots/bge'
         manifest = {'schema_version': '1', 'categories': ['REENTRANCY'], 'samples': [{
             'id': 'a', 'path': 'a.sol', 'source_hash': knowledge_hash, 'exact_group': knowledge_hash,
             'project_group': '知识项目', 'clone_groups': [], 'origin': '夹具/a', 'split': 'knowledge',

@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+from storage import read_artifact
 
 
 class CompilationBindingError(ValueError):
@@ -44,7 +45,7 @@ def _parse_json(data, label):
 
 def _read_json(path):
     try:
-        data = path.read_bytes()
+        data = read_artifact(path, max_bytes=64 * 1024 * 1024)
         return _parse_json(data, path), data
     except OSError as error:
         _fail(f'不能读取 JSON：{path}：{error}')

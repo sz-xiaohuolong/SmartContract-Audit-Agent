@@ -1,21 +1,10 @@
 /config/providers.local.properties
 /config/tools.local.properties
-/.local/r2/
+/.local/
+/data/external/
+/research-artifacts/*
+!/research-artifacts/README.md
 /.evidence/R2-20261010/
-/.local/experiment-ui/
-/.local/first-batch/
-/.local/d1-kb-candidates/
-/.local/d1-kb-v1/
-/.local/d1-kb-snapshots/
-/.local/atomicloans-upstream/
-/.local/d1-embed-venv/
-/.local/d1-embedding-model/
-/.local/mvp-milvus/
-/.local/mvp-kb/
-/.local/mvp-runs/
-/.local/audit-runs/
-/.local/audit-workbench-runs/
-/.local/dataset-candidates/
 tmp/
 
 HELP.md
@@ -80,10 +69,3 @@ thesis/
 
 # 新增原始运行证据默认只在本机暂存；已跟踪证据继续保留。
 /.evidence/
-
-# 旧应用退役的本机恢复材料与私有配置不提交。
-/.local/legacy-retirement-20261012/
-
-# 历史证据的无损归档与文档迁移恢复材料只在本机保留。
-/.local/evidence-archives/
-/.local/doc-layout-20261010/
