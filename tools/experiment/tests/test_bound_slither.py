@@ -268,5 +268,109 @@ class SlithIREffectTest(unittest.TestCase):
         self.assertIn('存在汇编语义', result['gaps'])
 
 
+class SlithIRReferenceTest(unittest.TestCase):
+    """引用定义与实际操作分别绑定，歧义或内存副本不能转成状态写入。"""
+
+    def setUp(self):
+        SlithIREffectTest.setUp(self)
+        self.variable.name = 'Acc'
+        self.field = _Record(name='balance', source_mapping=self.location(15, 4), type='uint256')
+        self.bundle['declarations'].update({
+            12: {'nodeType': 'VariableDeclaration', 'stateVariable': False, 'src': '15:4:0'},
+            13: {'nodeType': 'VariableDeclaration', 'stateVariable': False, 'src': '20:4:0',
+                 'storageLocation': 'default', 'typeDescriptions': {'typeIdentifier': 't_struct$_Holder_$1_storage_ptr'}}})
+        self.bundle['nodes'] = dict(self.bundle['declarations'])
+        self.bundle['nodes'].update({
+            21: {'id': 21, 'nodeType': 'IndexAccess', 'src': '30:15:0'},
+            22: {'id': 22, 'nodeType': 'MemberAccess', 'src': '34:10:0', 'memberName': 'sender',
+                 'expression': {'nodeType': 'Identifier', 'name': 'msg'}},
+            23: {'id': 23, 'nodeType': 'MemberAccess', 'src': '50:11:0', 'referencedDeclaration': 12},
+            24: {'id': 24, 'nodeType': 'Assignment', 'src': '50:16:0'}})
+        struct_type = _Record(type=_Record(elems={'balance': self.field}))
+        self.reference = _Record(name='REF_0', type=struct_type, points_to_origin=self.variable)
+        self.alias = type('LocalVariable', (), {})()
+        self.alias.name = 'acc'; self.alias.is_storage = True
+        self.alias.source_mapping = self.location(20, 4)
+        self.alias.type = struct_type
+        self.member = _Record(name='REF_1', type='uint256', points_to_origin=self.alias)
+        key = type('SolidityVariableComposed', (), {})(); key.name = 'msg.sender'
+        index = type('Index', (), {})()
+        index.variable_left = self.variable; index.variable_right = key; index.lvalue = self.reference
+        index.expression = _Record(source_mapping=self.location(30, 15),
+                                   expression_right=_Record(source_mapping=self.location(34, 10)))
+        index.node = _Record(source_mapping=self.location(25, 21)); index.read = [self.variable, key]
+        alias = type('Assignment', (), {})()
+        alias.lvalue = self.alias; alias.rvalue = self.reference; alias.read = [self.reference]
+        alias.expression = _Record(source_mapping=self.location(30, 15)); alias.node = index.node
+        member = type('Member', (), {})()
+        member.variable_left = self.alias; member.variable_right = _Record(value='balance'); member.lvalue = self.member
+        member.expression = _Record(source_mapping=self.location(50, 11))
+        member.node = _Record(source_mapping=self.location(50, 16)); member.read = [self.alias]
+        write = type('Binary', (), {})()
+        write.lvalue = self.member; write.read = [self.member]
+        write.expression = _Record(source_mapping=self.location(50, 16)); write.node = member.node
+        self.operations[:] = [index, alias, member, write]
+        self.function.slithir_operations = self.operations
+
+    location = SlithIREffectTest.location
+    result = SlithIREffectTest.result
+
+    def test_状态引用绑定真实key字段与写入跨度且不把别名初始化当作写入(self):
+        result = self.result()
+        alias = next(item for item in result['referenceBindings'] if item['irVariable'] == 'acc')
+        self.assertEqual('BOUND', alias['bindingStatus'])
+        self.assertEqual(11, alias['rootDeclarationId'])
+        self.assertEqual({'kind': 'BUILTIN', 'name': 'msg.sender'}, alias['path'][0]['key']['value'])
+        writes = [item for item in result['stateAccesses'] if item['mode'] == 'WRITE']
+        self.assertEqual(1, len(writes))
+        self.assertEqual(12, writes[0]['path'][1]['memberDeclarationId'])
+        self.assertEqual(24, writes[0]['astNodeId'])
+        self.assertEqual({'sourceUnit': 'contracts/C.sol', 'start': 50, 'length': 16}, writes[0]['expressionSpan'])
+
+    def test_一个storage别名出现多个定义时保留未知(self):
+        self.operations.insert(2, copy.copy(self.operations[1]))
+        result = self.result()
+        alias = next(item for item in result['referenceBindings'] if item['irVariable'] == 'acc')
+        self.assertEqual('UNRESOLVED', alias['bindingStatus'])
+        writes = [item for item in result['stateAccesses'] if item['mode'] == 'WRITE']
+        self.assertEqual('UNRESOLVED', writes[0]['bindingStatus'])
+        self.assertIsNone(writes[0]['rootDeclarationId'])
+
+    def test_旧版Slither局部变量跨度覆盖整个声明语句时绑定唯一子声明(self):
+        child = dict(self.bundle['declarations'][13], id=13)
+        self.bundle['nodes'][26] = {'id': 26, 'nodeType': 'VariableDeclarationStatement', 'src': '20:26:0',
+                                    'declarations': [child], 'assignments': [13]}
+        self.alias.source_mapping = self.location(20, 26)
+        alias = next(item for item in self.result()['referenceBindings'] if item['irVariable'] == 'acc')
+        self.assertEqual((13, 11, 'BOUND'), (alias['declarationId'], alias['rootDeclarationId'], alias['bindingStatus']))
+
+    def test_声明语句含多个局部变量时不按名字选择别名(self):
+        child = dict(self.bundle['declarations'][13], id=13)
+        self.bundle['nodes'][26] = {'id': 26, 'nodeType': 'VariableDeclarationStatement', 'src': '20:26:0',
+                                    'declarations': [child, dict(child, id=14)], 'assignments': [13, 14]}
+        self.alias.source_mapping = self.location(20, 26)
+        self.assertFalse(any(item['irVariable'] == 'acc' and item['bindingStatus'] == 'BOUND'
+                             for item in self.result()['referenceBindings']))
+
+    def test_内存结构副本不绑定到原状态字段(self):
+        self.alias.is_storage = False
+        self.bundle['declarations'][13]['typeDescriptions']['typeIdentifier'] = 't_struct$_Holder_$1_memory_ptr'
+        result = self.result()
+        writes = [item for item in result['stateAccesses'] if item['mode'] == 'WRITE']
+        self.assertFalse(any(item['bindingStatus'] == 'BOUND' and item['rootDeclarationId'] == 11 for item in writes))
+
+    def test_字段AST与SlithIR声明冲突必须拒绝绑定(self):
+        self.bundle['nodes'][23]['referencedDeclaration'] = 99
+        write = next(item for item in self.result()['stateAccesses'] if item['mode'] == 'WRITE')
+        self.assertEqual('UNRESOLVED', write['bindingStatus'])
+        self.assertIsNone(write['path'][1]['memberDeclarationId'])
+
+    def test_索引key的AST与实际IR主体冲突必须拒绝绑定(self):
+        self.bundle['nodes'][22]['expression']['name'] = 'tx'
+        write = next(item for item in self.result()['stateAccesses'] if item['mode'] == 'WRITE')
+        self.assertEqual('UNRESOLVED', write['bindingStatus'])
+        self.assertEqual('UNRESOLVED', write['path'][0]['key']['bindingStatus'])
+
+
 if __name__ == '__main__':
     unittest.main()

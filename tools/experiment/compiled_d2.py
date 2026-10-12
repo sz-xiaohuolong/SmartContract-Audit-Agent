@@ -2,22 +2,12 @@
 import copy
 from fractions import Fraction
 
-from compiler_facts import CompilationBindingError, extract_compiler_facts, load_bound_compilation, source_span
+from compiler_facts import CompilationBindingError, extract_compiler_facts, load_bound_compilation, source_span, _walk
+from risk_binding import bind_risks, binding_record, operation_matches
 
 OBLIGATIONS = ('actor', 'resource', 'pre_risk_guard', 'entry_coverage', 'state_version', 'bypass')
 _MAX_NODES = 1800
 _MAX_DEPTH = 24
-
-
-def _walk(value):
-    if isinstance(value, dict):
-        if 'nodeType' in value:
-            yield value
-        for child in value.values():
-            yield from _walk(child)
-    elif isinstance(value, list):
-        for child in value:
-            yield from _walk(child)
 
 
 def _unknown(identity):
@@ -656,7 +646,7 @@ def _corroboration(hypothesis, tools, bundle, risk_span, root, matched_tool_inde
                     continue
                 parent = element.get('type_specific_fields', {}).get('parent', {})
                 mapping = element.get('source_mapping', {})
-                if parent.get('name') != hypothesis['contract'] or hypothesis['riskLine'] not in mapping.get('lines', []):
+                if parent.get('name') != hypothesis['contract'] or risk_span['line'] not in mapping.get('lines', []):
                     continue
                 unit = next((unit for unit in bundle['units'].values()
                              if unit['sourceUnit'] == risk_span['sourceUnit']), None)
@@ -678,7 +668,8 @@ def _corroboration(hypothesis, tools, bundle, risk_span, root, matched_tool_inde
 
 def _apply_proof(result, proof, hypothesis, tools, bundle, root):
     result['candidateProof'] = proof
-    if proof.get('status') not in {'PROVED', 'COUNTEREXAMPLE'}:
+    if (proof.get('status') not in {'PROVED', 'COUNTEREXAMPLE'}
+            and not (proof.get('candidateBound') and proof.get('pathEvidence', {}).get('status') == 'CONDITIONAL')):
         return
     result['status'] = 'PARTIAL'
     result.pop('errorCategory', None)
@@ -689,6 +680,8 @@ def _apply_proof(result, proof, hypothesis, tools, bundle, root):
     result['references'] = copy.deepcopy(proof.get('references', []))
     if 'cfg' in proof:
         result['cfg'] = copy.deepcopy(proof['cfg'])
+    if proof.get('status') not in {'PROVED', 'COUNTEREXAMPLE'}:
+        return
     if result['toolBinding']['status'] != 'MATCH':
         return
     if (proof['status'] == 'PROVED' and proof['proofScope']['complete']
@@ -716,20 +709,9 @@ def _apply_proof(result, proof, hypothesis, tools, bundle, root):
 
 
 def _risk_matches(node, hypothesis, bundle, facts):
-    if node['kind'] != hypothesis['riskOperation'] or 'span' not in node:
-        return False
-    if node['kind'] == 'CALL' and node.get('callKind') not in {'CALL', 'STATICCALL'}:
-        return False
-    if node['line'] != hypothesis['riskLine']:
-        return False
-    requested = hypothesis.get('riskSpan')
-    if requested is not None and (not isinstance(requested, dict) or any(
-            requested.get(key) != node['span'][key] for key in ('start', 'length', 'sourceUnit'))):
-        return False
-    fact_id = hypothesis.get('riskFactId')
-    if fact_id is not None and not any(f['id'] == fact_id and f['nodeId'] == node['nodeId'] for f in facts['facts']):
-        return False
-    return True
+    # 兼容旧调用接缝；整图唯一性由 bind_risks 核验。
+    return (operation_matches(node, hypothesis, bundle, facts)
+            and node['span']['line'] <= hypothesis['riskLine'] <= node['span'].get('endLine', node['line']))
 
 
 def evaluate_compiled(hypothesis, manifest, tools, *, root):
@@ -784,6 +766,7 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
             result.update(status='FAILED', errorCategory='HYPOTHESIS_BINDING_MISMATCH', note='函数名与完整签名不一致')
             return result
     result['toolBinding'] = _tool_binding(tools, bundle, root)
+    graph_options = {}
     if mechanism == 'ACCESS_CONTROL':
         if hypothesis['riskOperation'] == 'CALL':
             from access_call_proofs import _AccessCallGraph, prove_access_call
@@ -795,7 +778,10 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
             graph_type = _PermissionGraph
     else:
         from reentrancy_proofs import _ReentrancyGraph, prove_reentrancy
-        proof = prove_reentrancy(bundle, hypothesis)
+        effects = [summary for receipt in result['toolBinding'].get('receipts', [])
+                   for summary in receipt.get('effectSummaries', [])] if result['toolBinding']['status'] == 'MATCH' else []
+        graph_options = {'effect_summaries': effects or None}
+        proof = prove_reentrancy(bundle, hypothesis, **graph_options)
         graph_type = _ReentrancyGraph
     function_name = hypothesis.get('functionSignature', hypothesis.get('function'))
     candidates = [e for e in bundle['entries'] if e['matched'] and e['kind'] != 'getter' and
@@ -805,9 +791,9 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
         result['note'] = '运行期函数签名不唯一；重载必须显式绑定完整签名'
         return result
     # 展示、绑定与专用证明共享同一编译语义，避免低级 CALL 再次退化为 UNKNOWN。
-    graph = graph_type(bundle, candidates[0])
+    graph = graph_type(bundle, candidates[0], **graph_options)
     facts = extract_compiler_facts(bundle)
-    risks = [n for n in graph.nodes if _risk_matches(n, hypothesis, bundle, facts)]
+    risks = bind_risks(graph, hypothesis, bundle, facts)
     if len(risks) != 1:
         result['note'] = '风险操作、字节跨度与调用上下文无法唯一绑定'
         if hypothesis.get('riskFactId') or hypothesis.get('riskSpan'):
@@ -819,7 +805,7 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
             result['note'] = '结论仅针对绑定候选与有限静态防御属性，不代表整合约安全或可利用性'
         return result
     risk = risks[0]
-    result['riskBinding'] = _reference(risk, bundle)
+    result['riskBinding'] = {**_reference(risk, bundle), **binding_record(risk, hypothesis)}
     result['cfg'] = graph.public()
     if proof.get('proofKind') == 'ACCESS_CONTROL_TERMINATION':
         # 终止调用仅支持有限反例，不能由通用局部检查升级为全入口保护证明。

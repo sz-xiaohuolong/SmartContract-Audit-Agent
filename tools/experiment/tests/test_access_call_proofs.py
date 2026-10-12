@@ -173,7 +173,7 @@ class AccessCallProofTest(unittest.TestCase):
         self.assertEqual('FAILED', self.prove(function='g', functionSignature='f()')['status'])
 
     def test_风险行跨度与事实摘要漂移均失败(self):
-        self.assertEqual('FAILED', self.prove(riskLine=2)['status'])
+        self.assertEqual('FAILED', self.prove(riskLine=4)['status'])
         self.assertEqual('FAILED', self.prove(riskSpan={'start': 9, 'length': 1, 'sourceUnit': 'contracts/C.sol'})['status'])
         self.assertEqual('FAILED', self.prove(riskFactId='错误事实')['status'])
         self.fixture.seal()

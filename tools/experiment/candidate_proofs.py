@@ -2,7 +2,8 @@
 import copy
 
 from compiler_facts import extract_compiler_facts, source_span
-from compiled_d2 import _Graph, _authority, _current_authority, _reference, _risk_matches, _walk
+from risk_binding import bind_risks, binding_record
+from compiled_d2 import _Graph, _authority, _current_authority, _reference, _walk
 
 
 _OBLIGATIONS = ('actor', 'resource', 'pre_risk_guard', 'state_version', 'entry_coverage', 'bypass')
@@ -278,13 +279,15 @@ def prove_candidate(bundle, hypothesis):
     graph = _PermissionGraph(bundle, entry)
     gaps.extend(f'{entry["signature"]}：{gap}' for gap in graph.gaps)
     facts = extract_compiler_facts(bundle)
-    risks = [node for node in graph.nodes if _risk_matches(node, hypothesis, bundle, facts)]
+    risks = bind_risks(graph, hypothesis, bundle, facts)
     if len(risks) != 1 or risks[0].get('resource') is None:
         result['status'] = 'FAILED'
         gaps.append('候选风险写入未唯一绑定')
         return result
     risk = risks[0]
     result['candidateBound'] = True
+    result['riskBinding'] = binding_record(risk, hypothesis)
+    result['proofScope']['riskSpan'] = copy.deepcopy(risk['span'])
     primary_guards = [(guard, authority) for guard, condition in graph.guards(risk)
                       if (authority := _authority(condition)) is not None and _current_authority(guard, condition)
                       and not graph.intervening(guard, risk, authority)]

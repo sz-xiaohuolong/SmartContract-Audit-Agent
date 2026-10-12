@@ -81,12 +81,14 @@ class ReentrancyProofTest(unittest.TestCase):
         return self.node('FunctionCall', kind='functionCall', expression=expression,
             arguments=[self.node('Literal', kind='string', value='')])
 
-    def proof(self, **fields):
+    def proof(self, *, effect_summaries=None, **fields):
         self.fixture.seal()
         bundle = self.fixture.load()
         fact = next(f for f in extract_compiler_facts(bundle)['facts'] if f['nodeId'] == self.call['id'])
         hypothesis = {'contract': 'C', 'function': 'f()', 'riskLine': 1, 'riskOperation': 'CALL',
             'vulnerabilityType': 'REENTRANCY', 'riskFactId': fact['id'], **fields}
+        if effect_summaries is not None:
+            return prove_reentrancy(bundle, hypothesis, effect_summaries=effect_summaries)
         return prove_reentrancy(bundle, hypothesis)
 
     def add_entry(self, statements, *, name='other', kind='function'):
@@ -110,6 +112,13 @@ class ReentrancyProofTest(unittest.TestCase):
         self.assertTrue(result['pathEvidence']['witness']['normalExit'])
         self.assertEqual('SATISFIABLE_ABSTRACTION', result['pathEvidence']['transactionFeasibility'])
         self.assertEqual('REFUTED', next(o for o in result['obligations'] if o['name'] == 'state_version')['status'])
+
+    def test_重入调用两行漂移绑定保留原候选而窗口外拒绝(self):
+        result = self.proof(riskLine=3)
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        self.assertEqual(3, result['riskBinding']['originalLine'])
+        self.assertEqual(1, result['riskBinding']['boundLine'])
+        self.assertEqual('FAILED', self.proof(riskLine=4)['status'])
 
     def test_旧Throw分支是回滚而非未知续接(self):
         self.fixture.function()['body']['statements'].append(self.node('IfStatement',
@@ -176,7 +185,9 @@ class ReentrancyProofTest(unittest.TestCase):
     def test_带ether单位的阈值不能按字面数字1证明小额路径(self):
         limit = self.guard['expression']['arguments'][0]['rightExpression']
         limit.update(value='1', subdenomination='ether')
-        self.assertEqual('UNKNOWN', self.proof()['status'])
+        result = self.proof()
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        self.assertGreater(result['pathEvidence']['witness']['calls'][0]['value'], 10 ** 18)
         limit.update(value='0.000000000000000001', subdenomination='ether')
         self.assertEqual('COUNTEREXAMPLE', self.proof()['status'])
 
@@ -470,6 +481,429 @@ class ReentrancyProofTest(unittest.TestCase):
         self.amount_case(before=True)
         self.add_entry([self.assign(self.credit(), self.number(100))])
         self.assertEqual('UNKNOWN', self.proof(function='f(uint256)')['status'])
+
+    def struct_case(self, *, storage_location='default', alias=True):
+        """模拟旧编译器 var 推导的 storage ptr；字段与结构类型都带声明身份。"""
+        contract = self.fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0]
+        field = self.node('VariableDeclaration', name='balance', stateVariable=False,
+            typeName=self.node('ElementaryTypeName', name='uint256'),
+            typeDescriptions={'typeIdentifier': 't_uint256'})
+        other = self.syntax.fresh(field)
+        other['name'] = 'otherBalance'
+        holder = self.node('StructDefinition', name='Holder', members=[field, other])
+        contract['nodes'].append(holder)
+        identity = f't_struct$_Holder_${holder["id"]}_storage'
+        self.balance['typeName']['valueType'] = self.node('UserDefinedTypeName',
+            namePath='Holder', referencedDeclaration=holder['id'])
+        self.balance['typeDescriptions'] = {'typeIdentifier': f't_mapping$_t_address_$_{identity}_$'}
+
+        def account():
+            return self.node('IndexAccess', typeDescriptions={'typeIdentifier': identity},
+                baseExpression=self.node('Identifier', name='credit', referencedDeclaration=self.balance['id']),
+                indexExpression=self.sender())
+
+        def declaration():
+            return self.node('VariableDeclaration', name='acc', stateVariable=False,
+                storageLocation=storage_location, typeName=None,
+                typeDescriptions={'typeIdentifier': identity + '_ptr'})
+
+        withdrawal, deposit = declaration(), declaration()
+
+        def member(local=None, selected=field):
+            base = (account() if local is None else self.node('Identifier', name='acc',
+                referencedDeclaration=local['id'], typeDescriptions=local['typeDescriptions']))
+            return self.node('MemberAccess', expression=base, memberName=selected['name'],
+                referencedDeclaration=selected['id'], typeDescriptions={'typeIdentifier': 't_uint256'})
+
+        self.credit = lambda: member(withdrawal if alias else None)
+        self.guard = self.check(self.node('BinaryOperation', operator='>',
+            leftExpression=self.credit(), rightExpression=self.number(0)))
+        self.call = self.low_call()
+        self.write = self.assign(self.credit(), self.number(0))
+        capture = self.node('VariableDeclarationStatement', declarations=[withdrawal], initialValue=account())
+        self.fixture.function()['body']['statements'] = ([capture] if alias else []) + [
+            self.guard, self.statement(self.call), self.write]
+        value = self.funding['body']['statements'][0]['expression']['rightHandSide']
+        deposit_capture = self.node('VariableDeclarationStatement', declarations=[deposit], initialValue=account())
+        self.funding['body']['statements'] = ([deposit_capture] if alias else []) + [self.statement(self.node(
+            'Assignment', operator='+=', leftHandSide=member(deposit if alias else None), rightHandSide=value))]
+        return {'field': field, 'other': other, 'holder': holder, 'withdrawal': withdrawal,
+                'deposit': deposit, 'capture': capture, 'member': member, 'account': account}
+
+    def test_旧default_storage_ptr别名与结构uint余额有合法建态反例(self):
+        case = self.struct_case()
+        result = self.proof()
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        witness = result['pathEvidence']['witness']
+        self.assertTrue(witness['initialization']['funded'])
+        self.assertIn(('member', case['field']['id']), result['proofScope']['balanceResource'][2])
+        item = next(item for item in witness['initialStorage'] if item['root'] == self.balance['id'])
+        self.assertEqual(['调用主体 A'], item['keys'])
+        self.assertEqual({'kind': 'member', 'declarationId': case['field']['id']}, item['storagePath'][-1])
+
+    def test_显式storage别名与直接结构字段均按声明资源核验(self):
+        self.struct_case(storage_location='storage')
+        self.assertEqual('COUNTEREXAMPLE', self.proof()['status'])
+
+    def test_直接结构余额字段不需要局部别名(self):
+        self.struct_case(alias=False)
+        self.assertEqual('COUNTEREXAMPLE', self.proof()['status'])
+
+    def test_结构余额扣减按同字段同caller和合法入账核验(self):
+        case = self.struct_case()
+        self.amount_case()
+        self.fixture.function()['body']['statements'].insert(0, case['capture'])
+        result = self.proof(function='f(uint256)')
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        self.assertTrue(result['pathEvidence']['witness']['initialization']['funded'])
+
+    def test_结构字段先归零且全入口闭包完整才可反驳(self):
+        case = self.struct_case()
+        captured = self.node('VariableDeclaration', name='amount', stateVariable=False,
+            typeDescriptions={'typeIdentifier': 't_uint256'})
+        declaration = self.node('VariableDeclarationStatement', declarations=[captured], initialValue=self.credit())
+        self.call['expression']['options'] = [self.node('Identifier', name='amount', referencedDeclaration=captured['id'])]
+        self.fixture.function()['body']['statements'] = [case['capture'], self.guard, declaration,
+            self.write, self.statement(self.call)]
+        self.assertEqual('PROVED', self.proof()['status'])
+
+    def test_结构别名错key不能当作同主体余额(self):
+        case = self.struct_case()
+        case['capture']['initialValue']['indexExpression'] = self.number(0)
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构扣账错字段不能声称已绑定余额反例(self):
+        case = self.struct_case()
+        self.write['expression']['leftHandSide'] = case['member'](case['withdrawal'], case['other'])
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构入账错字段不能把默认余额补成正数(self):
+        case = self.struct_case()
+        self.funding['body']['statements'][-1]['expression']['leftHandSide'] = case['member'](case['deposit'], case['other'])
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构转账错caller不能套用主体余额(self):
+        self.struct_case()
+        self.call['expression']['expression']['expression'] = self.number(0)
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构memory类型不能冒充storage别名(self):
+        case = self.struct_case(storage_location='memory')
+        case['withdrawal']['typeDescriptions']['typeIdentifier'] = case['withdrawal']['typeDescriptions']['typeIdentifier'].replace('_storage_ptr', '_memory_ptr')
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构别名编译类型不一致与整结构重写均保留未知(self):
+        case = self.struct_case()
+        case['capture']['initialValue']['typeDescriptions']['typeIdentifier'] = 't_struct$_Wrong_$999_storage'
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构别名重赋值不能继续复用旧资源绑定(self):
+        case = self.struct_case()
+        left = self.node('Identifier', name='acc', referencedDeclaration=case['withdrawal']['id'],
+            typeDescriptions=case['withdrawal']['typeDescriptions'])
+        self.fixture.function()['body']['statements'].insert(1, self.assign(left, case['account']()))
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构字段声明须确实属于编译结构(self):
+        case = self.struct_case()
+        case['holder']['members'].remove(case['field'])
+        self.fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0]['nodes'].append(case['field'])
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构其他字段写入使已观察余额版本失效不能复用保护(self):
+        case = self.struct_case()
+        captured = self.node('VariableDeclaration', name='amount', stateVariable=False,
+            typeDescriptions={'typeIdentifier': 't_uint256'})
+        saved = self.node('VariableDeclarationStatement', declarations=[captured], initialValue=self.credit())
+        self.call['expression']['options'] = [self.node('Identifier', name='amount', referencedDeclaration=captured['id'])]
+        other_write = self.assign(case['member'](case['withdrawal'], case['other']), self.number(1))
+        self.fixture.function()['body']['statements'] = [case['capture'], self.guard, saved, self.write,
+            other_write, self.statement(self.call)]
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构别名链须保持同一编译结构与字段身份(self):
+        case = self.struct_case()
+        original = self.syntax.fresh(case['withdrawal'])
+        original['name'] = 'original'
+        source = self.node('Identifier', name='original', referencedDeclaration=original['id'],
+            typeDescriptions=original['typeDescriptions'])
+        first = self.node('VariableDeclarationStatement', declarations=[original], initialValue=case['account']())
+        case['capture']['initialValue'] = source
+        self.fixture.function()['body']['statements'].insert(0, first)
+        self.assertEqual('COUNTEREXAMPLE', self.proof()['status'])
+
+    def test_结构非payable入账仍不能证明资金可达(self):
+        self.struct_case()
+        self.funding['stateMutability'] = 'nonpayable'
+        self.fixture.output['contracts']['contracts/C.sol']['C']['abi'][-1]['stateMutability'] = 'nonpayable'
+        result = self.proof()
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertFalse(result['pathEvidence']['witness']['initialization']['funded'])
+
+    def timestamp(self, *, old=False):
+        if old:
+            return self.node('Identifier', name='now', referencedDeclaration=-22,
+                typeDescriptions={'typeIdentifier': 't_uint256'})
+        return self.node('MemberAccess', memberName='timestamp', typeDescriptions={'typeIdentifier': 't_uint256'},
+            expression=self.node('Identifier', name='block', referencedDeclaration=-21,
+                typeDescriptions={'typeIdentifier': 't_magic_block'}))
+
+    def time_case(self, *, old=False):
+        last = self.node('VariableDeclaration', name='lastWithdrawTime', stateVariable=True,
+            typeName=self.node('Mapping', keyType=self.node('ElementaryTypeName', name='address'),
+                valueType=self.node('ElementaryTypeName', name='uint256')))
+        self.fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0]['nodes'].append(last)
+        def last_time():
+            return self.node('IndexAccess', typeDescriptions={'typeIdentifier': 't_uint256'},
+                baseExpression=self.node('Identifier', name='lastWithdrawTime', referencedDeclaration=last['id']),
+                indexExpression=self.sender())
+        period = self.number(1)
+        period['subdenomination'] = 'weeks'
+        condition = self.node('BinaryOperation', operator='>=', leftExpression=self.timestamp(old=old),
+            rightExpression=self.node('BinaryOperation', operator='+', leftExpression=last_time(),
+                rightExpression=period, typeDescriptions={'typeIdentifier': 't_uint256'}))
+        self.fixture.function()['body']['statements'].insert(1, self.check(condition))
+        self.fixture.function()['body']['statements'].append(self.assign(last_time(), self.timestamp(old=old)))
+        return last
+
+    def test_now加weeks保护可有限求值且默认时间槽可合法建态(self):
+        self.time_case(old=True)
+        result = self.proof()
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        self.assertGreaterEqual(result['pathEvidence']['witness']['environment']['blockTimestamp'], 604800)
+
+    def test_block_timestamp与now在同一调用共享时间值(self):
+        self.time_case()
+        self.fixture.function()['body']['statements'].insert(1, self.check(self.node('BinaryOperation',
+            operator='==', leftExpression=self.timestamp(), rightExpression=self.timestamp(old=True))))
+        self.assertEqual('COUNTEREXAMPLE', self.proof()['status'])
+
+    def test_时间条件矛盾与无法求值仍保持未知(self):
+        self.time_case()
+        period = self.number(1)
+        period['subdenomination'] = 'weeks'
+        self.fixture.function()['body']['statements'].insert(1, self.check(self.node('BinaryOperation',
+            operator='<', leftExpression=self.timestamp(), rightExpression=period)))
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_同名用户时间变量不冒充编译内置时间(self):
+        now = self.node('VariableDeclaration', name='now', stateVariable=False,
+            typeDescriptions={'typeIdentifier': 't_uint256'})
+        self.fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0]['nodes'].append(now)
+        self.fixture.function()['body']['statements'].insert(1, self.check(self.node('BinaryOperation',
+            operator='>', leftExpression=self.node('Identifier', name='now', referencedDeclaration=now['id'],
+                typeDescriptions={'typeIdentifier': 't_uint256'}), rightExpression=self.number(0))))
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_源码常量超过uint范围不能产生正常整数见证(self):
+        self.guard['expression']['arguments'][0]['rightExpression'] = self.number(2 ** 256 - 1)
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_未验证非默认金额初值即使常量域覆盖也不能确认(self):
+        limit = self.node('VariableDeclaration', name='limit', stateVariable=True,
+            typeName=self.node('ElementaryTypeName', name='uint256'),
+            typeDescriptions={'typeIdentifier': 't_uint256'}, value=self.number(1))
+        limit['value']['subdenomination'] = 'ether'
+        self.fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0]['nodes'].append(limit)
+        self.fixture.function()['body']['statements'].insert(1, self.check(self.node('BinaryOperation',
+            operator='<=', leftExpression=self.credit(), rightExpression=self.node('Identifier',
+                name='limit', referencedDeclaration=limit['id'], typeDescriptions=limit['typeDescriptions']))))
+        result = self.proof()
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertIn(10 ** 18, result['proofScope']['finiteSearch']['numericCandidates'])
+        self.assertTrue(any('非默认初值' in gap for gap in result['proofScope']['gaps']))
+
+    def test_有限枚举预算耗尽不能变为安全证明(self):
+        from unittest.mock import patch
+        with patch('reentrancy_proofs._MAX_ASSIGNMENTS', 1):
+            result = self.proof()
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertTrue(any('预算耗尽' in gap for gap in result['proofScope']['gaps']))
+
+    def test_CALL前后同初始槽不重复枚举独立值(self):
+        from unittest.mock import patch
+        self.amount_case()
+        self.time_case()
+        with patch('reentrancy_proofs._MAX_ASSIGNMENTS', 500):
+            result = self.proof(function='f(uint256)')
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        self.assertTrue(result['pathEvidence']['witness']['initialization']['funded'])
+
+    def test_block_number支持非负数值比较(self):
+        timestamp = self.timestamp()
+        timestamp['memberName'] = 'number'
+        self.fixture.function()['body']['statements'].insert(1, self.check(self.node('BinaryOperation',
+            operator='>', leftExpression=timestamp, rightExpression=self.number(0))))
+        result = self.proof()
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        self.assertGreater(result['pathEvidence']['witness']['environment']['blockNumber'], 0)
+
+    def test_区块环境负数布尔及越界值不能求值(self):
+        from reentrancy_proofs import _value, _Unevaluated
+        for name in ('block.timestamp', 'block.number'):
+            term = ('builtin', name)
+            for value in (-1, True, 2 ** 256):
+                with self.subTest(name=name, value=value), self.assertRaises(_Unevaluated):
+                    _value(term, {term: value}, {}, {}, {})
+
+    def test_block_number与timestamp分别求值且矛盾分支保持未知(self):
+        timestamp, number = self.timestamp(), self.timestamp()
+        number['memberName'] = 'number'
+        self.fixture.function()['body']['statements'].insert(1, self.check(self.node('BinaryOperation',
+            operator='>', leftExpression=timestamp, rightExpression=number)))
+        result = self.proof()
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        environment = result['pathEvidence']['witness']['environment']
+        self.assertGreater(environment['blockTimestamp'], environment['blockNumber'])
+        self.fixture.function()['body']['statements'].insert(1, self.check(self.node('BinaryOperation',
+            operator='<', leftExpression=self.syntax.fresh(timestamp), rightExpression=self.number(0))))
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def ir_aliases(self, case):
+        """模拟独立工具收据中的引用事实，使用编译声明和真实字节跨度。"""
+        from compiler_facts import source_span
+        self.fixture.seal()
+        bundle = self.fixture.load()
+        result = []
+        for function, local, capture in ((self.fixture.function(), case['withdrawal'], case['capture']),
+                (self.funding, case['deposit'], self.funding['body']['statements'][0])):
+            result.append({'declarationId': function['id'],
+                'stateAccessCoverage': 'DIRECT_FUNCTION_OPERATIONS',
+                'referenceBindings': [{'irKind': 'Assignment', 'definitionCount': 1,
+                    'declarationId': local['id'], 'astNodeId': capture['initialValue']['id'],
+                    'expressionSpan': source_span(capture['initialValue'], bundle['units']),
+                    'bindingStatus': 'BOUND', 'rootDeclarationId': self.balance['id'],
+                    'path': [{'kind': 'INDEX', 'key': {'bindingStatus': 'BOUND',
+                        'value': {'kind': 'BUILTIN', 'name': 'msg.sender'}}}]}]})
+        return result
+
+    def test_IR引用与AST别名交叉核验且输出根key和字段(self):
+        case = self.struct_case()
+        result = self.proof(effect_summaries=self.ir_aliases(case))
+        self.assertEqual('COUNTEREXAMPLE', result['status'])
+        bindings = result['proofScope']['storageAliasBindings']
+        binding = next(item for item in bindings if item['declarationId'] == case['withdrawal']['id'])
+        self.assertEqual('AST_AND_SLITHIR', binding['basis'])
+        self.assertEqual(self.balance['id'], binding['resource'][1])
+
+    def test_IR别名错根错key多定义和未绑定状态阻止反例(self):
+        case = self.struct_case()
+        effects = self.ir_aliases(case)
+        for field, value in (('rootDeclarationId', self.lock['id']), ('definitionCount', 2),
+                ('bindingStatus', 'UNRESOLVED'), ('expressionSpan', {'sourceUnit': 'Wrong.sol', 'start': 0, 'length': 1}),
+                ('path', [{'kind': 'INDEX', 'key': {'bindingStatus': 'BOUND',
+                    'value': {'kind': 'BUILTIN', 'name': 'tx.origin'}}}])):
+            changed = copy.deepcopy(effects)
+            changed[0]['referenceBindings'][0][field] = value
+            with self.subTest(field=field):
+                result = self.proof(effect_summaries=changed)
+                self.assertEqual('UNKNOWN', result['status'])
+                self.assertTrue(any('SlithIR' in gap for gap in result['proofScope']['gaps']))
+
+    def test_IR缺失别名证据不能由AST成功绑定掩盖(self):
+        case = self.struct_case()
+        effects = self.ir_aliases(case)
+        effects[0]['referenceBindings'] = []
+        self.assertEqual('UNKNOWN', self.proof(effect_summaries=effects)['status'])
+
+    def helper(self, *, view=True):
+        function = self.add_entry([], name='query')
+        function['stateMutability'] = 'view' if view else 'nonpayable'
+        self.fixture.output['contracts']['contracts/C.sol']['C']['abi'][-1]['stateMutability'] = function['stateMutability']
+        return self.node('FunctionCall', kind='functionCall', arguments=[],
+            expression=self.node('MemberAccess', memberName='query', referencedDeclaration=function['id'],
+                expression=self.busy(), typeDescriptions={'typeIdentifier':
+                    't_function_external_view$__$returns$__$' if view else 't_function_external_nonpayable$__$returns$__$'}))
+
+    def test_只读查询正常返回路径有条件见证而非直接丢弃(self):
+        self.fixture.function()['body']['statements'].append(self.statement(self.helper()))
+        result = self.proof()
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertEqual('CONDITIONAL', result['pathEvidence']['status'])
+        witness = result['pathEvidence']['witness']
+        self.assertTrue(witness['normalExit'])
+        self.assertEqual('READ_ONLY', witness['calls'][-1]['helperKind'])
+        self.assertTrue(witness['externalCallConditions'])
+
+    def test_已绑定非转账日志也保留实现正常返回与无回调前提(self):
+        helper = self.helper(view=False)
+        helper['arguments'] = [self.node('Literal', kind='string', value='Withdraw'), self.sender(), self.timestamp()]
+        self.fixture.function()['body']['statements'].append(self.statement(helper))
+        result = self.proof()
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertEqual('CONDITIONAL', result['pathEvidence']['status'])
+        self.assertEqual('AUXILIARY', result['pathEvidence']['witness']['calls'][-1]['helperKind'])
+
+    def test_IR工具收据仅匹配后传入证明和展示图(self):
+        from unittest.mock import patch
+        from compiled_d2 import evaluate_compiled
+        case = self.struct_case()
+        effects = self.ir_aliases(case)
+        self.fixture.seal()
+        hypothesis = {'contract': 'C', 'function': 'f()', 'riskLine': 1,
+            'riskOperation': 'CALL', 'vulnerabilityType': 'REENTRANCY'}
+        for status in ('MATCH', 'UNKNOWN'):
+            with self.subTest(status=status), patch('compiled_d2._tool_binding', return_value={
+                    'status': status, 'receipts': [{'effectSummaries': effects}]}):
+                result = evaluate_compiled(hypothesis, self.fixture.manifest, [], root=self.fixture.root)
+            bindings = result['proofScope']['storageAliasBindings']
+            self.assertEqual({'AST_AND_SLITHIR' if status == 'MATCH' else 'COMPILED_AST'},
+                             {item['basis'] for item in bindings})
+
+    def test_只读辅助调用后确定回滚不能生成正常退出见证(self):
+        self.fixture.function()['body']['statements'].extend([
+            self.statement(self.helper()), self.check(self.boolean(False))])
+        result = self.proof()
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertNotIn('witness', result['pathEvidence'])
+
+    def test_旧view实际IR为CALL时保留无回调前提(self):
+        from compiler_facts import source_span
+        helper = self.helper()
+        self.fixture.function()['body']['statements'].append(self.statement(helper))
+        self.fixture.seal()
+        effects = [{'declarationId': self.fixture.function()['id'], 'calls': [{
+            'targetDeclarationId': helper['expression']['referencedDeclaration'],
+            'expressionSpan': source_span(helper, self.fixture.load()['units']), 'semantics': 'CALL'}]}]
+        result = self.proof(effect_summaries=effects)
+        self.assertEqual('CONDITIONAL', result['pathEvidence']['status'])
+        self.assertEqual('AUXILIARY', result['pathEvidence']['witness']['calls'][-1]['helperKind'])
+
+    def test_顶层保留辅助调用条件见证且裁决未知(self):
+        from compiled_d2 import evaluate_compiled
+        self.fixture.function()['body']['statements'].append(self.statement(self.helper()))
+        self.fixture.seal()
+        fact = next(fact for fact in extract_compiler_facts(self.fixture.load())['facts']
+                    if fact['nodeId'] == self.call['id'])
+        result = evaluate_compiled({'contract': 'C', 'function': 'f()', 'riskLine': 1,
+            'riskOperation': 'CALL', 'vulnerabilityType': 'REENTRANCY', 'riskFactId': fact['id']},
+            self.fixture.manifest, [], root=self.fixture.root)
+        self.assertEqual('UNKNOWN', result['verdict'])
+        self.assertEqual('CONDITIONAL', result['pathEvidence']['status'])
+        self.assertTrue(result['proofScope']['conditionedOnExternalCalls'])
+
+    def test_辅助调用返回值没有求值语义时仍未知(self):
+        self.fixture.function()['body']['statements'].append(self.check(self.helper()))
+        result = self.proof()
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertNotIn('witness', result['pathEvidence'])
+
+    def test_日志调用名称不能替代真实正常返回绑定(self):
+        external = self.node('FunctionCall', kind='functionCall', arguments=[],
+            expression=self.node('MemberAccess', memberName='AddMessage',
+                expression=self.busy(), typeDescriptions={'typeIdentifier': 't_function_external_nonpayable$__$returns$__$'}))
+        self.fixture.function()['body']['statements'].append(self.statement(external))
+        self.assertEqual('UNKNOWN', self.proof()['status'])
+
+    def test_结构入账日志未绑定仍不能证明资金建态(self):
+        self.struct_case()
+        external = self.node('FunctionCall', kind='functionCall', arguments=[],
+            expression=self.node('MemberAccess', memberName='AddMessage',
+                expression=self.busy(), typeDescriptions={'typeIdentifier': 't_function_external_nonpayable$__$returns$__$'}))
+        self.funding['body']['statements'].append(self.statement(external))
+        result = self.proof()
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertFalse(result['pathEvidence']['witness']['initialization']['funded'])
 
 
 if __name__ == '__main__':

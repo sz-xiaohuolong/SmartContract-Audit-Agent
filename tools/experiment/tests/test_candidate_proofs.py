@@ -43,6 +43,13 @@ class CandidateProofTest(unittest.TestCase):
         self.assertTrue(result['authorityClosure'])
         self.assertTrue(result['references'])
 
+    def test_权限写入两行漂移绑定保留原候选而窗口外拒绝(self):
+        result = self.proof(riskLine=3)
+        self.assertEqual('PROVED', result['status'])
+        self.assertEqual(3, result['riskBinding']['originalLine'])
+        self.assertEqual(1, result['riskBinding']['boundLine'])
+        self.assertEqual('FAILED', self.proof(riskLine=4)['status'])
+
     def test_裸比较不能产生反驳证明(self):
         guard = self.fixture.function()['body']['statements'][0]
         guard['expression'] = guard['expression']['arguments'][0]

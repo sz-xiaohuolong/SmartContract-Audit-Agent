@@ -3,8 +3,9 @@ import copy
 import itertools
 import re
 
-from compiler_facts import extract_compiler_facts
+from compiler_facts import extract_compiler_facts, source_span
 from compiled_d2 import _Graph, _false_resource, _reference, _risk_matches, _walk
+from risk_binding import bind_risks, binding_record
 
 
 _OBLIGATIONS = ('actor', 'resource', 'pre_risk_guard', 'entry_coverage', 'state_version', 'bypass')
@@ -14,6 +15,11 @@ _FALSE = ('literal', 'bool', 'false')
 _ZERO = ('literal', 'number', '0')
 _MAX_PATHS = 128
 _MAX_SYMBOLS = 6
+_TIMESTAMP = ('builtin', 'block.timestamp')
+_BLOCK_NUMBER = ('builtin', 'block.number')
+_BLOCK_VALUES = frozenset((_TIMESTAMP, _BLOCK_NUMBER))
+_MAX_NUMERIC_CANDIDATES = 16
+_MAX_ASSIGNMENTS = 8192
 
 
 def _empty():
@@ -51,16 +57,177 @@ def _low_spec(ast):
     return None
 
 
+def _struct_id(ast, *, pointer=False):
+    identity = ast.get('typeDescriptions', {}).get('typeIdentifier', '') if isinstance(ast, dict) else ''
+    suffix = '_storage_ptr' if pointer else r'_storage(?:_ptr|_ref)?'
+    match = re.fullmatch(r't_struct\$_.*_\$(\d+)' + suffix, identity)
+    return int(match.group(1)) if match else None
+
+
+def _storage_pointer(declaration):
+    return (declaration.get('nodeType') == 'VariableDeclaration' and not declaration.get('stateVariable')
+            and _struct_id(declaration, pointer=True) is not None)
+
+
 class _ReentrancyGraph(_Graph):
-    """只补充编译类型确定的 CALL(value) 与成功返回值；不提升其他未知语法。"""
+    """补充编译类型确定的数值调用、结构存储引用与时间；其他语义仍显式保留缺口。"""
+
+    def __init__(self, bundle, entry, *, effect_summaries=None):
+        self.effect_summaries = effect_summaries
+        self.alias_bindings = []
+        super().__init__(bundle, entry)
+
+    def ir_resource(self, fact, env):
+        """消费 bound_slither 的引用链，保留声明根、索引 key 和字段身份。"""
+        root = fact.get('rootDeclarationId')
+        if fact.get('bindingStatus') != 'BOUND' or not self.bundle['declarations'].get(root, {}).get('stateVariable'):
+            return None
+        path = []
+        for segment in fact.get('path', []):
+            if segment.get('kind') == 'INDEX':
+                key = segment.get('key', {})
+                if key.get('bindingStatus') != 'BOUND':
+                    return None
+                value = key.get('value', {})
+                if value.get('kind') == 'BUILTIN':
+                    name = value.get('name')
+                    if name not in {'msg.sender', 'msg.value', 'now', 'block.timestamp', 'block.number'}:
+                        return None
+                    term = ('builtin', 'block.timestamp' if name == 'now' else name)
+                elif value.get('kind') == 'DECLARATION':
+                    identity = value.get('declarationId')
+                    if identity not in self.bundle['declarations']:
+                        return None
+                    term = self.pure({'nodeType': 'Identifier', 'referencedDeclaration': identity}, env)
+                elif value.get('kind') == 'LITERAL' and type(value.get('value')) in {int, bool, str}:
+                    literal = value['value']
+                    if type(literal) is bool:
+                        term = ('literal', 'bool', str(literal).lower())
+                    elif re.fullmatch(r'\d+', str(literal)):
+                        term = ('literal', 'number', str(literal))
+                    else:
+                        return None
+                else:
+                    return None
+                path.append(('index', term))
+            elif segment.get('kind') == 'MEMBER':
+                field = segment.get('memberDeclarationId')
+                if field not in self.bundle['declarations']:
+                    return None
+                path.append(('member', field))
+            else:
+                return None
+        return ('resource', root, tuple(path))
+
+    def ir_binding(self, ast, env, *, alias_id=None):
+        facts = []
+        for summary in self.effect_summaries or ():
+            if summary.get('stateAccessCoverage') != 'DIRECT_FUNCTION_OPERATIONS':
+                continue
+            for fact in summary.get('referenceBindings', []):
+                matches = (fact.get('irKind') == 'Assignment' and fact.get('declarationId') == alias_id
+                           if alias_id is not None else fact.get('astNodeId') == ast.get('id'))
+                if matches and fact not in facts:
+                    facts.append(fact)
+        if len(facts) != 1:
+            return None
+        fact = facts[0]
+        span = source_span(ast, self.bundle['units'])
+        location = fact.get('expressionSpan', {})
+        if (fact.get('definitionCount') != 1 or fact.get('astNodeId') != ast.get('id')
+                or any(location.get(key) != span[key] for key in ('sourceUnit', 'start', 'length'))):
+            return None
+        return self.ir_resource(fact, env)
+
+    def declared_type(self, ast):
+        if not isinstance(ast, dict):
+            return {}
+        kind = ast.get('nodeType')
+        if kind in {'Identifier', 'MemberAccess'}:
+            return self.bundle['declarations'].get(ast.get('referencedDeclaration'), {}).get('typeName') or {}
+        if kind == 'IndexAccess':
+            base = self.declared_type(ast.get('baseExpression'))
+            return base.get('valueType', base.get('baseType', {}))
+        return {}
+
+    def resource(self, ast, env):
+        resource = super().resource(ast, env)
+        if resource is not None and ast.get('nodeType') == 'MemberAccess':
+            base = ast.get('expression')
+            structure_id = _struct_id(base)
+            if structure_id is None:
+                # 基表达式未重复给出结构类型时，沿编译声明的映射或数组值类型恢复身份。
+                declared = self.declared_type(base)
+                structure_id = declared.get('referencedDeclaration', declared.get('pathNode', {}).get('referencedDeclaration'))
+            structure = self.bundle['declarations'].get(structure_id, {})
+            fields = {item['id'] for item in structure.get('members', [])}
+            if structure.get('nodeType') != 'StructDefinition' or ast.get('referencedDeclaration') not in fields:
+                self.gap('结构字段没有绑定到实际编译结构的成员声明')
+                return None
+        if resource is not None and self.effect_summaries is not None:
+            relevant = any(fact.get('astNodeId') == ast.get('id') for summary in self.effect_summaries
+                           for fact in summary.get('referenceBindings', [])
+                           if fact.get('irKind') in {'Index', 'Member'})
+            if relevant and self.ir_binding(ast, env) != resource:
+                self.gap('SlithIR 引用根、key 或字段与编译 AST 不一致')
+                return None
+        return resource
+
+    def statement(self, ast, tails, env, stack, context, continuation=None):
+        if isinstance(ast, dict) and ast.get('nodeType') == 'VariableDeclarationStatement' and tails and not self.exhausted:
+            declarations = ast.get('declarations', [])
+            if len(declarations) == 1 and isinstance(declarations[0], dict) and _storage_pointer(declarations[0]):
+                declaration, source = declarations[0], ast.get('initialValue')
+                structure_id = _struct_id(declaration, pointer=True)
+                structure = self.bundle['declarations'].get(structure_id, {})
+                named_type = declaration.get('typeName') or {}
+                typed_id = named_type.get('referencedDeclaration', structure_id)
+                resource = self.resource(source, env)
+                source_type = self.declared_type(source)
+                source_id = (_struct_id(source) or source_type.get('referencedDeclaration')
+                             or source_type.get('pathNode', {}).get('referencedDeclaration'))
+                if (declaration.get('storageLocation') in {'default', 'storage'}
+                        and structure.get('nodeType') == 'StructDefinition' and typed_id == structure_id
+                        and source_id == structure_id and resource is not None and not self.effects(source)):
+                    if self.effect_summaries is not None and self.ir_binding(source, env, alias_id=declaration['id']) != resource:
+                        self.gap('SlithIR storage 别名缺少唯一引用或与编译 AST 的根、key、跨度不一致')
+                        env['values'][declaration['id']] = ('unknown', 'storage-pointer-ir', declaration['id'])
+                        return [self.add('UNKNOWN', ast, tails, context, env)], env
+                    # 旧 solc 的 var 采用 default，但 storage_ptr 与实际结构声明确定其引用身份。
+                    env['values'][declaration['id']] = resource
+                    self.alias_bindings.append({'declarationId': declaration['id'], 'resource': resource,
+                        'span': source_span(source, self.bundle['units']),
+                        'basis': 'AST_AND_SLITHIR' if self.effect_summaries is not None else 'COMPILED_AST'})
+                    return tails, env
+                self.gap('局部结构 storage 指针的编译类型与来源未唯一绑定')
+                env['values'][declaration['id']] = ('unknown', 'storage-pointer', declaration['id'])
+                return [self.add('UNKNOWN', ast, tails, context, env)], env
+        return super().statement(ast, tails, env, stack, context, continuation)
 
     def pure(self, ast, env):
         if (isinstance(ast, dict) and ast.get('nodeType') == 'MemberAccess' and ast.get('memberName') == 'value'
                 and super().pure(ast.get('expression'), env) == ('builtin', 'msg')):
             return ('builtin', 'msg.value')
+        if (isinstance(ast, dict) and ast.get('nodeType') == 'MemberAccess' and ast.get('memberName') in {'timestamp', 'number'}
+                and ast.get('typeDescriptions', {}).get('typeIdentifier') == 't_uint256'
+                and super().pure(ast.get('expression'), env) == ('builtin', 'block')):
+            return _TIMESTAMP if ast['memberName'] == 'timestamp' else _BLOCK_NUMBER
+        if (isinstance(ast, dict) and ast.get('nodeType') == 'Identifier'
+                and self.bundle['builtinReferences'].get(ast.get('referencedDeclaration')) == 'now'):
+            return _TIMESTAMP
         return super().pure(ast, env)
 
     def expr(self, ast, tails, env, stack, context):
+        if isinstance(ast, dict) and ast.get('nodeType') == 'Assignment':
+            left = ast.get('leftHandSide', {})
+            declaration = self.bundle['declarations'].get(left.get('referencedDeclaration'), {})
+            if left.get('nodeType') == 'Identifier' and _storage_pointer(declaration):
+                # 整结构赋值与引用重绑定均未建模，不能继续沿用先前别名。
+                self.gap('局部 storage 引用重赋值或整结构写入尚未证明')
+                env['values'][declaration['id']] = ('unknown', 'storage-pointer-assignment', ast['id'])
+                env['epoch'] += 1
+                env['stateValues'].clear()
+                return [self.add('UNKNOWN', ast, tails, context, env)], env['values'][declaration['id']], env
         if isinstance(ast, dict) and ast.get('nodeType') == 'Assignment' and ast.get('operator') in {'+=', '-='}:
             left = ast.get('leftHandSide')
             resource = self.resource(left, env)
@@ -111,7 +278,46 @@ class _ReentrancyGraph(_Graph):
             result_type = ast.get('typeDescriptions', {}).get('typeIdentifier', '')
             if result_type in {'t_address', 't_address_payable'}:
                 return self.expr(ast['arguments'][0], tails, env, stack, context)
-        return super().call(ast, tails, env, stack, context)
+        tails, value, env = super().call(ast, tails, env, stack, context)
+        expression = ast.get('expression', {})
+        target = self.bundle['functions'].get(expression.get('referencedDeclaration'), {})
+        if (expression.get('nodeType') == 'MemberAccess'
+                and expression.get('typeDescriptions', {}).get('typeIdentifier', '').startswith('t_function_external')
+                and target.get('stateMutability') in {'view', 'pure', 'nonpayable'}):
+            for identity in tails:
+                node = self.nodes[identity]
+                if node['kind'] == 'CALL' and node.get('nodeId') == ast['id'] and node.get('callKind') in {'CALL', 'STATICCALL'}:
+                    span = node['span']
+                    ir_calls = []
+                    for summary in self.effect_summaries or ():
+                        for call in summary.get('calls', []):
+                            location = call.get('expressionSpan', {})
+                            if (all(location.get(key) == span[key] for key in ('sourceUnit', 'start', 'length'))
+                                    and call.get('targetDeclarationId') == node['targetDeclarationId'] and call not in ir_calls):
+                                ir_calls.append(call)
+                    if ir_calls:
+                        if len(ir_calls) != 1 or ir_calls[0].get('semantics') not in {'CALL', 'STATICCALL'}:
+                            self.gap('辅助调用 SlithIR 语义未唯一绑定')
+                            continue
+                        semantics = ir_calls[0]['semantics']
+                        if node['callKind'] == 'STATICCALL' and semantics == 'CALL':
+                            # 旧编译器的 view 外部调用仍可能使用 CALL，不能凭 mutability 排除回调。
+                            env['epoch'] += 1
+                            env['stateValues'].clear()
+                            node['callKind'] = 'CALL'
+                        elif node['callKind'] != semantics:
+                            self.gap('辅助调用 AST 类型与 SlithIR 语义不一致')
+                            continue
+                    # 无转账只描述本次调用；实现绑定、成功返回及回调效果仍为显式前提。
+                    node['helperKind'] = 'READ_ONLY' if node['callKind'] == 'STATICCALL' else 'AUXILIARY'
+                    node['transferValue'] = _ZERO
+        return tails, value, env
+
+
+def _caller_resource(resource):
+    segments = resource[2]
+    return (bool(segments) and segments[0] == ('index', _SENDER)
+            and all(kind == 'member' for kind, _ in segments[1:]))
 
 
 def _caller_balance(call, graph=None):
@@ -124,7 +330,7 @@ def _caller_balance(call, graph=None):
         candidates.extend(read for guard, condition in graph.guards(call)
             for read in _guard_balance_reads(condition, amount) if _current_read(guard, read))
     resources = {read[1] for read in candidates if _uint_width(read) is not None
-                 and read[1][2] == (('index', _SENDER),)}
+                 and _caller_resource(read[1])}
     return next(iter(resources)) if len(resources) == 1 else None
 
 
@@ -194,7 +400,8 @@ def _funded_deposit(graph, balance):
                 return False
     for write in writes:
         value, resource = write['value'], write['resource']
-        account = resource[1] == balance[1] and len(resource[2]) == 1 and resource[2][0][0] == 'index'
+        account = (resource[1] == balance[1] and bool(resource[2]) and resource[2][0][0] == 'index'
+                   and resource[2][1:] == balance[2][1:])
         if (not account and resource[2] or value[:2] != ('binary', '+')
                 or value[3] != ('builtin', 'msg.value') or value[2][:1] != ('read',)
                 or _uint_width(value[2]) is None or value[2][1] != resource or not _current_read(write, value[2])):
@@ -426,7 +633,7 @@ def _cei_complete(graphs, entries, balance):
                 gaps.append(f'{entry["signature"]}：数值调用未保持同主体、同资源的严格 CEI')
             else:
                 evidence.extend(local)
-        if any(write['resource'][2] != (('index', _SENDER),)
+        if any(write['resource'] != balance
                or not any(_debit(write['value'], write['resource'], call.get('transferValue')) for call in calls)
                for write in writes):
             gaps.append(f'{entry["signature"]}：余额写入 key 或新值不属于已证明的归零规则')
@@ -460,7 +667,7 @@ class _Unevaluated(ValueError):
 
 def _symbols(value):
     if isinstance(value, tuple):
-        if value[:1] in {('read',), ('parameter',)}:
+        if value[:1] in {('read',), ('parameter',)} or value in _BLOCK_VALUES:
             yield value
         for child in value:
             yield from _symbols(child)
@@ -485,10 +692,30 @@ def _literal(value):
 def _slot(resource, assignments):
     segments = []
     for kind, value in resource[2]:
-        if kind != 'index':
-            raise _Unevaluated('结构字段资源不进入有限数值反例')
-        segments.append(_value(value, assignments, {}, {}, {}))
+        if kind == 'index':
+            segments.append(_value(value, assignments, {}, {}, {}))
+        elif kind == 'member' and type(value) is int:
+            # 字段声明不属于运行期 key，保留类型标记避免字段编号与数值 key 混同。
+            segments.append(('member', value))
+        else:
+            raise _Unevaluated('资源路径未绑定到索引或实际成员声明')
     return resource[1], tuple(segments)
+
+
+def _storage_item(slot, value):
+    fields = [segment for segment in slot[1] if isinstance(segment, tuple) and segment[:1] == ('member',)]
+    item = {'root': slot[0], 'keys': [segment for segment in slot[1] if segment not in fields], 'value': value}
+    if fields:
+        item['storagePath'] = [{'kind': 'member', 'declarationId': segment[1]} if segment in fields
+                               else {'kind': 'index', 'value': segment} for segment in slot[1]]
+    return item
+
+
+def _item_slot(item):
+    if 'storagePath' not in item:
+        return item['root'], tuple(item['keys'])
+    return item['root'], tuple(('member', part['declarationId']) if part['kind'] == 'member'
+                              else part['value'] for part in item['storagePath'])
 
 
 def _value(term, assignments, initial, versions, calls):
@@ -496,11 +723,18 @@ def _value(term, assignments, initial, versions, calls):
         raise _Unevaluated('表达式不属于有限 AST 抽象')
     kind = term[0]
     if kind == 'literal':
+        if term[1] == 'string' and isinstance(term[2], str):
+            return term[2]
         return _literal(term)
     if term == _SENDER:
         return '调用主体 A'
     if term == ('builtin', 'msg.value') and term in assignments:
         return assignments[term]
+    if term in _BLOCK_VALUES and term in assignments:
+        value = assignments[term]
+        if type(value) is not int or not 0 <= value < 2 ** 256:
+            raise _Unevaluated('区块时间或高度未绑定为合法 uint256')
+        return value
     if kind == 'parameter':
         if term not in assignments:
             raise _Unevaluated('形参类型或数值未绑定')
@@ -579,43 +813,102 @@ def _funding_state(graph, amount):
 
 def _funding_matches(witness, graph, balance):
     credited = next((item['value'] for item in witness['initialStorage']
-                     if item['root'] == balance[1] and item['keys'] == ['调用主体 A']), None)
+                     if _item_slot(item) == _slot(balance, {})), None)
     if type(credited) is not int or credited < witness['environment']['contractBalanceAtLeast']:
         return False
     state = _funding_state(graph, credited)
     return state is not None and all(
-        type(item['value']) is type(state.get((item['root'], tuple(item['keys'])),
+        type(item['value']) is type(state.get(_item_slot(item),
             False if type(item['value']) is bool else 0))
-        and item['value'] == state.get((item['root'], tuple(item['keys'])),
+        and item['value'] == state.get(_item_slot(item),
             False if type(item['value']) is bool else 0)
         for item in witness['initialStorage'])
 
 
+def _graph_terms(graph):
+    return [node.get(field) for node in graph.nodes
+            for field in ('condition', 'value', 'transferValue', 'targetValue', 'arguments')]
+
+
+def _numeric_candidates(terms, graph=None):
+    """按源码中的已换算整数常量及邻界生成有限候选；搜索无结果不等于不可达。"""
+    values = [0, 1, 2]
+    terms = list(terms)
+    if graph is not None:
+        roots = {symbol[1][1] for term in terms for symbol in _symbols(term) if symbol[:1] == ('read',)}
+        env = {'values': {}, 'versions': {}, 'stateValues': {}, 'epoch': 0}
+        for root in sorted(roots):
+            initial = graph.bundle['declarations'].get(root, {}).get('value')
+            if isinstance(initial, dict) and initial.get('nodeType') == 'Literal':
+                # 初值只提供搜索候选，合法初始化仍由独立建态规则核验。
+                terms.append(graph.pure(initial, env))
+    def constants(term):
+        if not isinstance(term, tuple):
+            return
+        try:
+            number = _value(term, {}, {}, {}, {})
+            if type(number) is int:
+                yield number
+        except (KeyError, TypeError, _Unevaluated):
+            pass
+        for child in term:
+            yield from constants(child)
+    for term in terms:
+        for number in constants(term):
+            for candidate in (number, number + 1, number - 1):
+                if 0 <= candidate < 2 ** 256 and candidate not in values and len(values) < _MAX_NUMERIC_CANDIDATES:
+                    values.append(candidate)
+    return tuple(values)
+
+
 def _witness(graph, path, edges, bundle, risk, funding_graphs=(), balance=None):
     nodes = [graph.nodes[identity] for identity in path]
-    terms = [node.get(field) for node in nodes for field in ('condition', 'value', 'transferValue', 'targetValue')]
-    symbols = list(dict.fromkeys(symbol for term in terms for symbol in _symbols(term)))
+    terms = [node.get(field) for node in nodes for field in ('condition', 'value', 'transferValue', 'targetValue', 'arguments')]
+    groups = {}
+    for symbol in dict.fromkeys(symbol for term in terms for symbol in _symbols(term)):
+        key = symbol
+        if symbol[:1] == ('read',):
+            version = symbol[2][0]
+            if version == 'initial':
+                # 同一槽的初始版本只取一个值；CALL epoch 不能制造新的独立存储初态。
+                key = ('initial-read', symbol[1], symbol[3])
+            elif type(version) is int:
+                # 已写版本由沿路径执行所得，不再独立枚举。
+                continue
+            else:
+                return None
+        groups.setdefault(key, []).append(symbol)
+    symbols = [members[0] for members in groups.values()]
     if len(symbols) > _MAX_SYMBOLS:
+        graph.gap('有限数值证明的符号预算超限')
         return None
+    numeric = _numeric_candidates(_graph_terms(graph), graph)
     domains = []
     for symbol in symbols:
         if symbol[:1] == ('read',):
-            if _uint_width(symbol) is not None:
-                domains.append((0, 1, 2))
+            width = _uint_width(symbol)
+            if width is not None:
+                domains.append(tuple(value for value in numeric if value < 2 ** width))
             elif symbol[3] == 't_bool':
                 domains.append((False, True))
             else:
                 return None
+        elif symbol in _BLOCK_VALUES:
+            domains.append(numeric)
         else:
             declaration = bundle['declarations'].get(symbol[1], {})
-            if not re.fullmatch(r't_uint\d+', declaration.get('typeDescriptions', {}).get('typeIdentifier', '')):
+            width = re.fullmatch(r't_uint(\d+)', declaration.get('typeDescriptions', {}).get('typeIdentifier', ''))
+            if not width:
                 return None
-            domains.append((0, 1, 2))
+            domains.append(tuple(value for value in numeric if value < 2 ** int(width.group(1))))
     selected = {edge['from']: edge['kind'] for edge in edges if edge['kind'] in {'true', 'false'}}
     conditional = None
-    for values in itertools.product(*domains):
-        assignments = dict(zip(symbols, values))
-        initial, versions, calls, call_data, checked = {}, {}, {}, [], []
+    for attempt, values in enumerate(itertools.product(*domains)):
+        if attempt >= _MAX_ASSIGNMENTS:
+            graph.gap('有限数值证明搜索预算耗尽；不能解释为路径不可达')
+            break
+        assignments = {symbol: value for members, value in zip(groups.values(), values) for symbol in members}
+        initial, versions, calls, call_data, checked, external_conditions = {}, {}, {}, [], [], []
         try:
             for node in nodes:
                 kind = node['kind']
@@ -629,7 +922,21 @@ def _witness(graph, path, edges, bundle, risk, funding_graphs=(), balance=None):
                     checked.append({'nodeId': node['nodeId'], 'conditionValue': value, 'requiredValue': expected})
                 if kind == 'CALL':
                     if not node.get('lowLevelValueCall'):
-                        raise _Unevaluated('未知外部合约的正常返回条件未证明')
+                        helper = node.get('helperKind')
+                        if helper not in {'READ_ONLY', 'AUXILIARY'}:
+                            raise _Unevaluated('未知外部合约的正常返回条件未证明')
+                        arguments = [_value(argument, assignments, initial, versions, calls)
+                                     for argument in node.get('arguments', ())]
+                        condition = {'nodeId': node['nodeId'], 'targetDeclarationId': node['targetDeclarationId'],
+                            'helperKind': helper, 'span': copy.deepcopy(node['span']),
+                            'reason': ('外部实现与实际地址须绑定，并证明本次正常返回'
+                                if helper == 'READ_ONLY' else
+                                '外部实现与实际地址须绑定，并证明正常返回且不回调修改本合约存储')}
+                        external_conditions.append(condition)
+                        call_data.append({'nodeId': node['nodeId'], 'success': True, 'value': 0,
+                            'helperKind': helper, 'arguments': arguments, 'normalReturn': True,
+                            'conditional': True, 'assumption': condition['reason']})
+                        continue
                     target = _value(node['targetValue'], assignments, initial, versions, calls)
                     amount = _value(node['transferValue'], assignments, initial, versions, calls)
                     if target != '调用主体 A' or type(amount) is not int or amount <= 0:
@@ -653,10 +960,17 @@ def _witness(graph, path, edges, bundle, risk, funding_graphs=(), balance=None):
             if not any(call['nodeId'] == risk['nodeId'] and call['success'] for call in call_data):
                 continue
             witness = {'normalExit': True, 'cfgNodeIds': path, 'conditions': checked, 'calls': call_data,
-                'initialStorage': [{'root': slot[0], 'keys': list(slot[1]), 'value': value} for slot, value in initial.items()],
+                'initialStorage': [_storage_item(slot, value) for slot, value in initial.items()],
                 'parameters': [{'declarationId': symbol[1], 'value': assignments[symbol]} for symbol in symbols if symbol[:1] == ('parameter',)],
                 'environment': {'caller': '调用主体 A', 'contractBalanceAtLeast': sum(call['value'] for call in call_data)},
                 'scope': '有限 AST 数值与布尔约束；正常 EXIT 的 CEI 顺序反例，不表示攻击交易或漏洞利用证明'}
+            if _TIMESTAMP in assignments:
+                witness['environment']['blockTimestamp'] = assignments[_TIMESTAMP]
+                witness['environment']['timeConditionScope'] = '本次调用中 now 与 block.timestamp 取同一非负整数；资金入账先于本次调用'
+            if _BLOCK_NUMBER in assignments:
+                witness['environment']['blockNumber'] = assignments[_BLOCK_NUMBER]
+            if external_conditions:
+                witness['externalCallConditions'] = external_conditions
             if not funding_graphs or any(_funding_matches(witness, funding, balance) for funding in funding_graphs):
                 return witness
             if conditional is None:
@@ -683,7 +997,7 @@ def _counterexample(graph, risk, balance, bundle, funding_graphs=()):
     return None
 
 
-def prove_reentrancy(bundle, hypothesis):
+def prove_reentrancy(bundle, hypothesis, *, effect_summaries=None):
     """输入真实重新编译匹配的 bundle；Slither 双收据和最终裁决由调用方核验。"""
     result = _empty()
     scope, gaps = result['proofScope'], result['proofScope']['gaps']
@@ -726,9 +1040,9 @@ def prove_reentrancy(bundle, hypothesis):
         gaps.append('候选运行入口未唯一绑定')
         return result
     entry = candidates[0]
-    graph = _ReentrancyGraph(bundle, entry)
+    graph = _ReentrancyGraph(bundle, entry, effect_summaries=effect_summaries)
     facts = extract_compiler_facts(bundle)
-    risks = [node for node in graph.nodes if _risk_matches(node, hypothesis, bundle, facts)]
+    risks = bind_risks(graph, hypothesis, bundle, facts)
     if len(risks) != 1:
         unsupported = [node for node in graph.nodes if node['kind'] == 'CALL' and node.get('callKind') == 'UNKNOWN'
             and _risk_matches(dict(node, callKind='CALL'), hypothesis, bundle, facts)]
@@ -739,12 +1053,18 @@ def prove_reentrancy(bundle, hypothesis):
     scope['riskSpan'] = copy.deepcopy(risk['span'])
     scope['functionSignature'] = entry['signature']
     result['candidateBound'] = True
+    result['riskBinding'] = binding_record(risk, hypothesis)
+    scope['storageAliasBindings'] = copy.deepcopy(graph.alias_bindings)
     refs = _references(result, bundle, [risk])
     balance = _caller_balance(risk, graph)
     if balance is None:
         gaps.extend(graph.gaps)
         gaps.append('未绑定同主体 msg.sender 映射余额与编译 uint 转账数值')
         return result
+    scope['balanceResource'] = balance
+    scope['finiteSearch'] = {'numericCandidates': list(_numeric_candidates(_graph_terms(graph), graph)),
+                            'maxSymbols': _MAX_SYMBOLS, 'maxAssignmentsPerPath': _MAX_ASSIGNMENTS,
+                            'maxPaths': _MAX_PATHS, 'noWitnessVerdict': 'UNKNOWN'}
     graphs = {entry['declarationId']: graph}
     gaps.extend(bundle['entryGaps'])
     closure = set()
@@ -756,13 +1076,16 @@ def prove_reentrancy(bundle, hypothesis):
             scope['entries'].append({'signature': other['signature'], 'kind': other['kind'],
                 'declarationId': other['declarationId'], 'matched': True, 'related': False, 'complete': True})
             continue
-        other_graph = graphs.setdefault(other['declarationId'], _ReentrancyGraph(bundle, other))
+        if other['declarationId'] not in graphs:
+            graphs[other['declarationId']] = _ReentrancyGraph(bundle, other, effect_summaries=effect_summaries)
+        other_graph = graphs[other['declarationId']]
         closure.update(other_graph.closure)
         gaps.extend(f'{other["signature"]}：{gap}' for gap in other_graph.gaps)
         related = _related(other_graph, balance[1])
         scope['entries'].append({'signature': other['signature'], 'kind': other['kind'],
             'declarationId': other['declarationId'], 'matched': True, 'related': related, 'complete': not other_graph.gaps})
     scope['callClosure'] = sorted(closure)
+    scope['storageAliasBindings'] = [copy.deepcopy(binding) for item in graphs.values() for binding in item.alias_bindings]
     scope['protectedRoots'] = [balance[1]]
     scope['rules'] = ['编译声明与字节跨度绑定', '同主体映射 key', '正常 EXIT 路径', '有限布尔与整数约束']
     protection_evidence, protection_rule, protection_gaps = None, None, []
@@ -800,28 +1123,34 @@ def prove_reentrancy(bundle, hypothesis):
         deposits.sort(key=lambda item: not _funding_matches(witness, item[1], balance))
         if deposits:
             deposit, deposit_graph = deposits[0]
-            amount = next(item['value'] for item in witness['initialStorage'] if item['root'] == balance[1])
+            amount = next(item['value'] for item in witness['initialStorage'] if _item_slot(item) == _slot(balance, {}))
             function = bundle['functions'][deposit['declarationId']]
             funded = not initialization_gaps and _funding_matches(witness, deposit_graph, balance)
             witness['initialization'] = {'funded': funded, 'entry': deposit['signature'], 'msgValue': amount,
                 'parameters': [{'declarationId': parameter['id'], 'value': _parameter_initial_value(parameter)}
                                for parameter in function['parameters']],
                 'creditedValue': amount, 'normalExit': True,
-                'storageAfter': [{'root': slot[0], 'keys': list(slot[1]), 'value': value}
+                'storageAfter': [_storage_item(slot, value)
                     for slot, value in (_funding_state(deposit_graph, amount) or {}).items()],
                 'cfgNodeIds': [node['id'] for node in deposit_graph.nodes],
-                'reason': '编译 AST 证明 payable 入账以同一 msg.value 增加余额与合约资金；小额数值不溢出',
+                'reason': '编译 AST 证明 payable 入账以同一 msg.value 增加同字段余额与合约资金；有限数值见证不溢出',
                 'references': _references(result, bundle, [node for node in deposit_graph.nodes if node['kind'] == 'WRITE'])}
         else:
             witness['initialization'] = {'funded': False, 'status': 'ADMISSIBLE_INITIAL_STATE',
                 'reason': '有限顺序断言以给定余额与资金为前提；当前 AST 未证明该初始状态的建态历史'}
-        if not witness['initialization']['funded']:
-            scope['conditionedOnInitialState'] = True
+        external_conditions = witness.get('externalCallConditions', [])
+        if not witness['initialization']['funded'] or external_conditions:
+            scope['conditionedOnInitialState'] = not witness['initialization']['funded']
+            scope['conditionedOnExternalCalls'] = bool(external_conditions)
             scope['counterexampleComplete'] = False
-            gaps.append('只有条件初始状态见证，未证明余额与资金的可调用建态历史')
+            if not witness['initialization']['funded']:
+                gaps.append('只有条件初始状态见证，未证明余额与资金的可调用建态历史')
+            if external_conditions:
+                gaps.append('辅助外部调用的正常返回或无回调条件尚未核验，不能视为完整反例')
             result['pathEvidence'].update(status='CONDITIONAL', references=_references(result, bundle, nodes),
-                witness=witness, normalExit=True, transactionFeasibility='CONDITIONAL_INITIAL_STATE',
-                reason='给定初始状态下存在正常 EXIT 的 CEI 顺序反例；初始状态可达性尚未证明，最终保持未知')
+                witness=witness, normalExit=True,
+                transactionFeasibility='CONDITIONAL_EXTERNAL_CALLS' if external_conditions else 'CONDITIONAL_INITIAL_STATE',
+                reason='给定初态及辅助调用前提下存在正常 EXIT 的 CEI 顺序反例；未验证前提保持未知')
             return result
         refs = _references(result, bundle, nodes)
         result['status'] = 'COUNTEREXAMPLE'
@@ -839,6 +1168,7 @@ def prove_reentrancy(bundle, hypothesis):
             transactionFeasibility='SATISFIABLE_ABSTRACTION')
         return result
     gaps.extend(protection_gaps)
+    gaps.extend(graph.gaps)
     gaps.append('未建立完整入口保护或正常 EXIT 的可满足 CEI 顺序反例')
     gaps[:] = sorted(set(gaps))
     return result

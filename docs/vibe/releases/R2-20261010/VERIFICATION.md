@@ -198,3 +198,19 @@ PYTHONPATH=tools/experiment python3 .evidence/R2-20261010/API-revalidation-20261
 ```
 
 原始批次与新批次各自保存在 `.local/auto-benchmark-runs/`；新原始日志、比较明细及下载输出留在被忽略的 `.evidence/`。本次真实采集工程已封口，D2高未知率与论文研究有效性继续追踪，不由本次API授权推导第三批请求。
+
+## 2026-10-12 AST 容差与别名解析升级
+
+用户本轮四项请求的局部工程验收为 VERIFIED。原始证据位于 `.evidence/R2-20261010/ast-tolerance-alias-20261012/`，不改写真实批次133条假设／121条未知的历史统计。
+
+| 接缝 | 验证结果与限制 |
+|---|---|
+| 风险行与语句跨度 | 精确行、真实 UTF-8 语句跨度、±2 行窗口依次选择唯一操作；保留原候选与绑定位置，跨文件、错事实／跨度及多义拒绝；权限 WRITE 与重入 CALL 回归通过 |
+| Storage 引用 | 编译 storage 指针、映射 key、实际结构字段与 SlithIR referenceBindings 交叉核验；仅 MATCH 收据传入证明及展示图；错根／key／字段、错跨度、多定义、memory 与重赋值保留未知 |
+| 辅助退出路径 | 已绑定且无转账的只读查询／辅助日志生成带明确前提的正常 EXIT 见证；旧 view 的实际 IR CALL 保留无回调前提；未知返回值、未绑定日志及后置回滚不产生完整反例；顶层 CONDITIONAL 保持 UNKNOWN |
+| 区块环境 | now／block.timestamp 同值，block.number 独立非负 uint256 求值；weeks 常量、矛盾条件、非法值与预算耗尽回归通过 |
+| 当前工作区 | `python-static.log`：compileall 退出0；`python-full.log`：全部662项通过，无失败／跳过；`maven-verify.log`：109项通过；`cli-help.log`：退出0。包含启动时保留的其他工作 |
+| 独立提交内容 | 导出拟提交源码并独立构建，未使用 Git 工作树；`python-commit-content-final.log`：635项全通过，无失败／跳过；`maven-commit-content.log`：97项通过；静态语法及CLI均退出0 |
+| 范围与复核 | 启动快照、增量审查、凭证扫描及提交内容单独保存；保留未完成的Java、EVM、旧CALL兼容适配与其他无关修改。首轮顶层夹具多义定位失败已补齐factId，并保留失败日志后全量复验 |
+
+本轮未调用真实API、编译真实目标、执行真实Slither或重放121条未知候选，不声称28／36／24／3各组全部解决或未知率实测下降。日志实现、部署地址、回调和正常返回缺少实际证据时继续UNKNOWN；整体R2研究验收仍UNVERIFIED。

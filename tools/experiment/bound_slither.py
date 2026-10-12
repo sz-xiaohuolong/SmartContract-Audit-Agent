@@ -206,14 +206,20 @@ def _tree_digest(module):
     return {'path': str(directory), 'pythonSourceTreeSha256': _digest(_canonical(files)), 'fileCount': len(files)}
 
 
-def _effects(slither, bundle):
-    """从真实 SlithIR 提取传递读写；未绑定声明或动态语义显式保留缺口。"""
+def _source_bindings(bundle):
+    """仅用完整路径和准确跨度连接 Slither 对象、声明与编译 AST。"""
     unit_names = {str(Path(unit['path']).resolve()): unit['sourceUnit'] for unit in bundle['units'].values()}
-    declarations = {}
+    declarations, nodes = {}, {}
     for identity, node in bundle['declarations'].items():
-        if node.get('nodeType') == 'VariableDeclaration' and node.get('stateVariable'):
-            start, length, source_id = map(int, node['src'].split(':'))
-            declarations[(bundle['units'][source_id]['sourceUnit'], start, length)] = identity
+        start, length, source_id = map(int, node['src'].split(':'))
+        location = (bundle['units'][source_id]['sourceUnit'], start, length)
+        declarations.setdefault(location, []).append(identity)
+    for identity, node in bundle.get('nodes', {}).items():
+        if not isinstance(node.get('src'), str):
+            continue
+        start, length, source_id = map(int, node['src'].split(':'))
+        if source_id in bundle['units']:
+            nodes.setdefault((bundle['units'][source_id]['sourceUnit'], start, length), []).append(identity)
 
     def span(value):
         source = getattr(value, 'source_mapping', None)
@@ -222,16 +228,194 @@ def _effects(slither, bundle):
         filename = str(Path(source.filename.absolute).resolve())
         name = unit_names.get(filename)
         if name is None:
-            # 绑定输入仅使用已核验源码单元名；不得按 basename 猜测。
             name = next((unit['sourceUnit'] for unit in bundle['units'].values()
                          if (Path(bundle['binding']['environment']) / unit['sourceUnit']).resolve() == Path(filename)), None)
         return {'sourceUnit': name, 'start': source.start, 'length': source.length}
 
+    def declaration(value):
+        location = span(value)
+        identities = declarations.get((location['sourceUnit'], location['start'], location['length']), [])
+        if len(identities) == 1:
+            return identities[0]
+        if identities or not type(value).__name__.startswith('LocalVariable'):
+            return None
+        # 0.4.x 的 Slither 局部变量映射常覆盖声明语句；只连接唯一真实子声明。
+        statement = ast_node(value, 'VariableDeclarationStatement')
+        children = statement.get('declarations', []) if statement else []
+        if len(children) != 1 or not isinstance(children[0], dict):
+            return None
+        identity = children[0].get('id')
+        child = bundle['declarations'].get(identity)
+        if not child or child.get('stateVariable') or statement.get('assignments') != [identity]:
+            return None
+        start, length, source_id = map(int, child['src'].split(':'))
+        if (bundle['units'][source_id]['sourceUnit'] != location['sourceUnit']
+                or start < location['start'] or start + length > location['start'] + location['length']):
+            return None
+        return identity
+
+    def ast_node(value, kind=None):
+        location = span(value)
+        identities = nodes.get((location['sourceUnit'], location['start'], location['length']), [])
+        if kind:
+            identities = [identity for identity in identities if bundle['nodes'][identity]['nodeType'] == kind]
+        return bundle['nodes'][identities[0]] if len(identities) == 1 else None
+
+    return span, declaration, ast_node
+
+
+def _type_text(value):
+    """没有稳定类型文本时留空，禁止把进程内存地址写进收据身份。"""
+    if value is None or type(value).__str__ is object.__str__:
+        return None
+    return str(value)
+
+
+def _ir_state_facts(operations, bundle):
+    """独立记录直接 IR 引用与读写；序号只表示静态 IR 排列，不证明执行顺序。"""
+    span, declaration, ast_node = _source_bindings(bundle)
+    definitions = {}
+    expression_kinds = {'AssignmentOperation': 'Assignment', 'IndexAccess': 'IndexAccess',
+        'MemberAccess': 'MemberAccess', 'BinaryOperation': 'BinaryOperation', 'Identifier': 'Identifier',
+        'CallExpression': 'FunctionCall', 'UnaryOperation': 'UnaryOperation', 'Literal': 'Literal'}
+
+    def storage_alias(value):
+        if not type(value).__name__.startswith('LocalVariable') or not getattr(value, 'is_storage', False):
+            return False
+        node = bundle['declarations'].get(declaration(value), {})
+        return (node.get('storageLocation') == 'storage'
+                or '_storage' in node.get('typeDescriptions', {}).get('typeIdentifier', ''))
+
+    for index, operation in enumerate(operations):
+        kind = type(operation).__name__
+        value = getattr(operation, 'lvalue', None)
+        if kind in {'Index', 'Member'} or (kind == 'Assignment' and storage_alias(value)):
+            definitions.setdefault(id(value), []).append((index, operation))
+
+    def key_fact(value, expression):
+        node = ast_node(expression)
+        kind = type(value).__name__
+        actual = {'kind': 'UNKNOWN'}
+        matches = False
+        if kind in {'SolidityVariableComposed', 'SolidityVariable'}:
+            actual = {'kind': 'BUILTIN', 'name': value.name}
+            if node:
+                ast_name = node.get('name') if node['nodeType'] == 'Identifier' else (
+                    node.get('expression', {}).get('name', '') + '.' + node.get('memberName', ''))
+                matches = ast_name == value.name
+        elif kind == 'Constant' and isinstance(getattr(value, 'value', None), (str, int, bool)):
+            actual = {'kind': 'LITERAL', 'value': value.value}
+            matches = bool(node and node['nodeType'] == 'Literal' and str(node.get('value')).lower() == str(value.value).lower()
+                           and not node.get('subdenomination'))
+        elif (identity := declaration(value)) is not None:
+            actual = {'kind': 'DECLARATION', 'declarationId': identity}
+            matches = bool(node and node['nodeType'] == 'Identifier' and node.get('referencedDeclaration') == identity)
+        return {'value': actual, 'astNodeId': node.get('id') if node else None,
+                'span': span(expression), 'type': _type_text(getattr(value, 'type', None)),
+                'bindingStatus': 'BOUND' if matches else 'UNRESOLVED'}
+
+    def unresolved(reason, path=None):
+        return {'rootDeclarationId': None, 'path': path or [], 'bindingStatus': 'UNRESOLVED', 'reason': reason}
+
+    def resolve(value, pending=None):
+        pending = set() if pending is None else set(pending)
+        if id(value) in pending:
+            return unresolved('引用定义存在循环')
+        pending.add(id(value))
+        identity = declaration(value)
+        if bundle['declarations'].get(identity, {}).get('stateVariable'):
+            return {'rootDeclarationId': identity, 'path': [], 'bindingStatus': 'BOUND'}
+        choices = definitions.get(id(value), [])
+        if len(choices) != 1:
+            return unresolved('引用没有唯一直接定义')
+        _, operation = choices[0]
+        kind = type(operation).__name__
+        if kind == 'Assignment':
+            return resolve(operation.rvalue, pending)
+        base = resolve(operation.variable_left, pending)
+        path = copy.deepcopy(base['path'])
+        if kind == 'Index':
+            key = key_fact(operation.variable_right, getattr(operation.expression, 'expression_right', None))
+            path.append({'kind': 'INDEX', 'key': key})
+            valid = key['bindingStatus'] == 'BOUND'
+        else:
+            field_name = getattr(operation.variable_right, 'value', None)
+            struct = getattr(getattr(operation.variable_left, 'type', None), 'type', None)
+            field = getattr(struct, 'elems', {}).get(field_name)
+            field_id = declaration(field)
+            node = ast_node(getattr(operation, 'expression', None), 'MemberAccess')
+            valid = field_id is not None and node is not None and node.get('referencedDeclaration') == field_id
+            path.append({'kind': 'MEMBER', 'memberDeclarationId': field_id if valid else None,
+                         'memberName': field_name, 'span': span(getattr(operation, 'expression', None))})
+        bound = base['bindingStatus'] == 'BOUND' and valid
+        return {'rootDeclarationId': base['rootDeclarationId'], 'path': path,
+                'bindingStatus': 'BOUND' if bound else 'UNRESOLVED',
+                **({} if bound else {'reason': '引用根、索引 key 或结构字段未唯一绑定'})}
+
+    def related(value, pending=None):
+        pending = set() if pending is None else set(pending)
+        if id(value) in pending:
+            return False
+        pending.add(id(value))
+        if bundle['declarations'].get(declaration(value), {}).get('stateVariable') or storage_alias(value):
+            return True
+        return any(related(operation.variable_left, pending) for _, operation in definitions.get(id(value), [])
+                   if type(operation).__name__ in {'Index', 'Member'})
+
+    bindings, accesses, gaps = [], [], []
+    for choices in definitions.values():
+        index, operation = choices[0]
+        value = operation.lvalue
+        if not related(value):
+            continue
+        expression = getattr(operation, 'expression', None)
+        node = ast_node(expression, expression_kinds.get(type(expression).__name__))
+        binding = {'irVariable': getattr(value, 'name', None), 'irIndex': index,
+                   'irKind': type(operation).__name__, 'definitionCount': len(choices),
+                   'declarationId': declaration(value), 'astNodeId': node.get('id') if node else None,
+                   'expressionSpan': span(expression), 'statementSpan': span(getattr(operation, 'node', None)),
+                   **resolve(value)}
+        bindings.append(binding)
+        if binding['bindingStatus'] != 'BOUND':
+            gaps.append('SlithIR storage 引用没有完整绑定')
+    for index, operation in enumerate(operations):
+        kind = type(operation).__name__
+        if kind in {'Index', 'Member'} or (kind == 'Assignment' and storage_alias(getattr(operation, 'lvalue', None))):
+            continue  # 定义指针或 storage 别名没有写入原存储值。
+        expression = getattr(operation, 'expression', None)
+        node = ast_node(expression, expression_kinds.get(type(expression).__name__))
+        values = [('READ', value) for value in getattr(operation, 'read', [])]
+        values.append(('WRITE', getattr(operation, 'lvalue', None)))
+        seen = set()
+        for mode, value in values:
+            if (mode, id(value)) in seen or not related(value):
+                continue
+            seen.add((mode, id(value)))
+            fact = resolve(value)
+            if node is None or span(expression)['sourceUnit'] is None:
+                fact['bindingStatus'] = 'UNRESOLVED'
+                fact['reason'] = '实际 IR 操作没有唯一 AST 表达式跨度'
+            accesses.append({'mode': mode, 'irKind': kind, 'irIndex': index,
+                'irVariable': getattr(value, 'name', None), 'astNodeId': node.get('id') if node else None,
+                'expressionSpan': span(expression), 'statementSpan': span(getattr(operation, 'node', None)), **fact})
+            if fact['bindingStatus'] != 'BOUND':
+                gaps.append('SlithIR 状态访问没有完整绑定')
+    return {'referenceBindings': bindings, 'stateAccesses': accesses,
+            'stateAccessCoverage': 'DIRECT_FUNCTION_OPERATIONS', 'gaps': sorted(set(gaps))}
+
+
+def _effects(slither, bundle):
+    """从真实 SlithIR 提取传递读写；未绑定声明或动态语义显式保留缺口。"""
+    span, declaration, _ = _source_bindings(bundle)
+
+    def state_id(value):
+        identity = declaration(value)
+        return identity if bundle['declarations'].get(identity, {}).get('stateVariable') else None
+
     def state_ids(values, gaps):
         result = []
         for value in values:
-            location = span(value)
-            identity = declarations.get((location['sourceUnit'], location['start'], location['length']))
+            identity = state_id(value)
             if identity is None:
                 gaps.append('SlithIR 状态变量未绑定 AST 声明')
             else:
@@ -242,8 +426,7 @@ def _effects(slither, bundle):
         origin = getattr(value, 'points_to_origin', value)
         if origin is None or not hasattr(origin, 'source_mapping'):
             return None
-        location = span(origin)
-        return declarations.get((location['sourceUnit'], location['start'], location['length']))
+        return state_id(origin)
 
     def call_evidence(operation, gaps):
         kind = type(operation).__name__
@@ -291,7 +474,8 @@ def _effects(slither, bundle):
             gaps.append('调用 IR 没有绑定源码跨度')
         return {'irKind': kind, 'semantics': semantics, 'targetDeclarationId': target_id,
                 'destinationStateRootDeclarationId': root_id(getattr(operation, 'destination', None)),
-                'storageArguments': storage, 'span': location}
+                'storageArguments': storage, 'span': location,
+                'expressionSpan': span(getattr(operation, 'expression', None))}
 
     result, seen = [], set()
     for contract in slither.contracts:
@@ -335,6 +519,8 @@ def _effects(slither, bundle):
             low = function.all_low_level_calls()
             call_details = [detail for operation in operations if (detail := call_evidence(operation, gaps)) is not None]
             call_details.sort(key=_canonical)
+            direct_facts = _ir_state_facts(getattr(function, 'slithir_operations', operations), bundle)
+            gaps.extend(direct_facts.pop('gaps'))
             item = {'declarationId': identity, 'canonicalName': bound['canonicalName'], **location,
                     'directStateReads': state_ids(function.state_variables_read, gaps),
                     'directStateWrites': state_ids(function.state_variables_written, gaps),
@@ -345,6 +531,7 @@ def _effects(slither, bundle):
                     'containsAssembly': function.contains_assembly,
                     'irOperations': sorted({type(operation).__name__ for operation in operations}),
                     'calls': call_details, 'coverage': 'INTERNAL_LIBRARY_MODIFIER_CLOSURE',
+                    **direct_facts,
                     'closureDeclarationIds': sorted({int(current.id) for current in closure if current.id is not None}),
                     'gaps': sorted(set(gaps)), 'complete': not gaps}
             result.append(item)

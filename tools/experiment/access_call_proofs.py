@@ -5,6 +5,7 @@ import re
 
 from candidate_proofs import _PermissionGraph
 from compiler_facts import extract_compiler_facts, source_span
+from risk_binding import bind_risks
 from compiled_d2 import _reference, _risk_matches
 
 
@@ -359,7 +360,7 @@ def prove_access_call(bundle, hypothesis):
     graph = _AccessCallGraph(bundle, entry)
     result['cfg'] = graph.public()
     facts = extract_compiler_facts(bundle)
-    risks = [node for node in graph.nodes if _risk_matches(node, hypothesis, bundle, facts)]
+    risks = bind_risks(graph, hypothesis, bundle, facts)
     if len(risks) != 1:
         unsupported = [node for node in graph.nodes if node['kind'] == 'CALL'
                        and _risk_matches(dict(node, callKind='CALL'), hypothesis, bundle, facts)]
