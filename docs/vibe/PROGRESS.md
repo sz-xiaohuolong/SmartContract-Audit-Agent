@@ -37,6 +37,8 @@ R1 已验工程提交 `4dfc7e1`，历史证据见[R1 验证](releases/R1/VERIFIC
 
 根目录只维护 PROJECT、PROGRESS、TECH_DESIGN；R1、R2 各自维护版本正文，Slice 进入计划表。旧日志和正文快照归入 `.evidence/`，运行登记与源码放 `data/audit/r1/`，合成夹具放 `tools/experiment/fixtures/`。本次本地引用、章节锚点、证据身份与相关离线回归检查通过；业务功能与研究状态保持原记录。
 
+2026-10-12 按用户要求补充 AGENTS 的证据预算与保留规则，清理 1,895 份重复／构建文件并无损压缩历史输出，净减少文件内容约 276 MiB；保护正在运行的真实实验、工具与编译收据、已有工作区改动及唯一恢复快照。原件摘要、归档还原和本地引用核对通过；清理与超限保留例外见 `.evidence/R2-20261010/evidence-retention-20261012/README.md`。
+
 历史每日记录见[原 PROGRESS 快照](../../.evidence/R1/document-archive/PROGRESS.md)；目录与事实源只在[唯一地图](PROJECT.md)导航。
 
 ## 数据迁移与旧应用退役

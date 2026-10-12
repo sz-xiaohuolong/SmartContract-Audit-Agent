@@ -83,3 +83,7 @@ thesis/
 
 # 旧应用退役的本机恢复材料与私有配置不提交。
 /.local/legacy-retirement-20261012/
+
+# 历史证据的无损归档与文档迁移恢复材料只在本机保留。
+/.local/evidence-archives/
+/.local/doc-layout-20261010/
