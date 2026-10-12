@@ -4,14 +4,14 @@
 | --- | --- |
 | 当前工作 | R2-20261010 长目标已由用户冻结；[统一规格](releases/R2-20261010/SPEC.md)、[统一计划](releases/R2-20261010/IMPLEMENTATION_PLAN.md)、[验收矩阵](releases/R2-20261010/VERIFICATION.md)已建立 |
 | 当前缺口 | 旧共同45目标的D1 F1为0.7536，低于Vanilla 0.8056。[根因修复](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md)与零模型复验通过；135条保存假设的UNKNOWN由131降至124（91.85%），仍无新增REFUTED。新模型F1、独立标签与四基线仍未验证；前次单次API授权已消费 |
-| 下一步 | 已完成可审查的[根因修复与复验方案](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md#待授权的真实模型复验方案)；新增模型请求默认预算0，第二批须另行授权。整个R2保持ACTIVE／UNVERIFIED，不以消费质量和局部证明覆盖代替方法效果 |
+| 下一步 | 已完成可审查的[根因修复与复验方案](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md#待授权的真实模型复验方案)，并只读分流全部124条剩余未知；28条动态日志路径缺正常返回证明，4条正确权限写入缺同类工具佐证。新增模型请求默认预算0，已提出的第二批授权仍待回复。整个R2保持ACTIVE／UNVERIFIED，不以消费质量和局部证明覆盖代替方法效果 |
 
 ## 当前恢复位置
 
 | 字段 | 核验事实 |
 |---|---|
 | 当前任务 | 原批次 `dcf98eef6475433f80f228c9ab5a29fb` 保留；新派生 `78c078d884e64cf69a65c54565824386` 已封口，159单元／53目标／135假设，11支持／0反驳／124未知；18输入阻断保留，新增模型请求0。原S11派生运行亦保留 |
-| 本次检查 | Python 3.12全量579项、Java97项与CLI通过；独立审查发现的六处接口问题均已修复并复审；47目标同池D1为94对、全部UNKNOWN，Java／Python一致。真实静态重放双收据、原模型／usage、原件与代码／JAR身份、工作台派生读取与原字节下载通过；[本轮验收](releases/R2-20261010/VERIFICATION.md#d1d2根因修复与零模型复验2026-10-12) |
+| 本次检查 | 205cf184工程的Python 3.12全量579项、Java97项与CLI通过；独立审查及47目标同池D1一致性通过。后续仅做124条未知分流与文档补充，原批次／派生、生产源码／JAR、Nomic／catalog摘要不变；新模型、编译器、工具执行均0，不冒充新工程回归或新效果；[本轮验收](releases/R2-20261010/VERIFICATION.md#d1d2根因修复与零模型复验2026-10-12) |
 | 当前整体 Release / Workflow State | R2-20261010 / BUILDING / ACTIVE；本轮需求 FROZEN，验证 UNVERIFIED，正式部署未授权 |
 | 最近工程工作包 | S9 单合约深度审计与 D2 闭环，存量标识 `R1-S9`；原局部批准及验收依据继续沿用 |
 | 最近已验工程提交 | 根因修复起点 `ab6ddaf`；本轮代码、回归、派生完整性与同步身份见 `.evidence/R2-20261010/D1-D2-root-cause-20261012/verification-final.json`、`integrity-final.json` 与 `git-sync.json`；原采集与S10／Apple／S9身份继续保留 |
