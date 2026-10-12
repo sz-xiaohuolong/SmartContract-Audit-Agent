@@ -231,3 +231,19 @@ PYTHONPATH=tools/experiment python3 .evidence/R2-20261010/API-revalidation-20261
 | 研究与范围 | researchEligible=false；UNKNOWN不当安全，两批候选变化不作完整同候选因果归因；本次授权已消费，研究与更大未完成工作包继续UNVERIFIED |
 
 只读重算命令见报告；comparison.json、d2-detail.json、proof-diagnostics.json和candidate-pairs.json分别保存身份／共同分母、逐假设、证明缺口与唯一保存候选子集配对。
+
+## 数据迁移与旧应用退役
+
+2026-10-12 用户明确授权迁移数据与清理旧应用。本次维护验收为 VERIFIED，不改变研究标签、既有实验或整个 R2 的验证状态。
+
+| 核验项 | 结果 |
+|---|---|
+| 数据原件 | 898 份文件从旧资源迁至 `data/`；SHA-256 与 Git 对象逐份一致，CSV 标注与示例一并保留 |
+| 实际批量目标 | 新入口仍加载原 53 目标，编号、保存源码摘要与标签与批次 `9c480f3256884d5a90c1a6bb3e2d8095` 一致 |
+| 旧应用 | 当前目录移除旧 `src/`、`legacy/`，退役 48 份应用文件；历史可从迁移前 `4ba5750` 恢复 |
+| 私有配置 | 两份被忽略的旧本机配置移至被忽略的私有恢复目录，目录权限 700、文件权限 600，不进入提交 |
+| 工作区相关回归 | 目标、页面读取、探索提取和凭证扫描共 23 项通过 |
+| 独立提交内容 | 在 `5d6b50b` 基础上核验本次变更：`mvn clean verify` 97 项 Java、Python 全量 636 项通过，CLI `--help` 退出 0；核验临时导出已清理 |
+| Git 范围 | 仅迁移、退役和入口说明；既有 Java／EVM 与其他未提交开发内容保留 |
+
+原始[迁移清单](../../../../.evidence/R2-20261010/legacy-retirement-20261012/migration-manifest.json)、[目标身份核对](../../../../.evidence/R2-20261010/legacy-retirement-20261012/target-check.json)、[验证摘要](../../../../.evidence/R2-20261010/legacy-retirement-20261012/verification.json)、[Maven 日志](../../../../.evidence/R2-20261010/legacy-retirement-20261012/maven-verify.log)与[Python 日志](../../../../.evidence/R2-20261010/legacy-retirement-20261012/python-full.log)为本机证据，默认不提交。数据原件与代码通过 Git 留存，本次新增真实模型请求为 0。

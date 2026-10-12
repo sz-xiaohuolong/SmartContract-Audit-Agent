@@ -57,15 +57,17 @@ java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar \
 
 已生成旧数据集待审核清单：400 份源码、7 组字节重复（14 个文件）。项目谱系、近似克隆、标签与划分仍待复核。知识快照、断点恢复和结果规范化已在 S1b 实现，见[当前进度](docs/vibe/PROGRESS.md)；其工程实现不能替代科研标签审核。
 
-## 旧系统与研究文档
+## 数据与研究文档
 
-原 `src/` 保留为历史系统，未纳入新模块默认构建。原依赖迁移到 `legacy/pom.xml`，需要旧构建时显式运行 `mvn -f legacy/pom.xml test`，这可能触发真实外部服务，不能当成离线测试。旧实验路径仍需复核，已有实验缺陷并未因为保留代码而解决。
+数据集中于 [data/](data/README.md)：SmartBugs 整理文档、历史漏洞／安全标签合约、CSV 标注和示例源码均保留原件字节。新批量实验从此目录读取，已有标签及科研准入状态不因迁移改变。
+
+旧 Java 应用、旧测试、配置、PDF 字体和 `legacy` 构建入口已退役；历史代码可从迁移前提交 `4ba5750` 恢复。当前默认构建继续使用 `audit-mvp`。
 
 旧示例曾把供应商密钥写入源码，现改为从 `DASHSCOPE_API_KEY` 环境变量读取；旧值已进入历史提交，需在供应商侧撤销或轮换。不要把真实凭证写入受 Git 跟踪的配置或提交记录。
 
 - [项目入口与唯一文档地图](docs/vibe/PROJECT.md)、[当前进度](docs/vibe/PROGRESS.md)、[当前工程架构](docs/vibe/TECH_DESIGN.md)。
 - R2：[需求基线](docs/vibe/releases/R2-20261010/PROJECT_BRIEF.md)、[完整规格](docs/vibe/releases/R2-20261010/SPEC.md)、[方案](docs/vibe/releases/R2-20261010/PROPOSED_DESIGN.md)、[计划](docs/vibe/releases/R2-20261010/IMPLEMENTATION_PLAN.md)、[验收](docs/vibe/releases/R2-20261010/VERIFICATION.md)。
 - R1：[需求基线](docs/vibe/releases/R1/PROJECT_BRIEF.md)、[完整规格](docs/vibe/releases/R1/SPEC.md)、[计划](docs/vibe/releases/R1/IMPLEMENTATION_PLAN.md)、[验收](docs/vibe/releases/R1/VERIFICATION.md)。
-- [历史 README](legacy/README-historical.md)：保留旧系统当时的说明。
+- [旧源码调查](docs/vibe/releases/R0-20260918/SOURCE_SURVEY.md)：仅为历史调查记录。
 
 依赖依据：[Spring AI 官方入门](https://docs.spring.io/spring-ai/reference/getting-started.html)、[OpenAI 适配文档](https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html)。Agent Plan 端点依据：[火山引擎 OpenViking 配置示例](https://github.com/volcengine/OpenViking/blob/main/examples/ov.conf.example)。

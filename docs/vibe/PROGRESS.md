@@ -38,3 +38,7 @@ R1 已验工程提交 `4dfc7e1`，历史证据见[R1 验证](releases/R1/VERIFIC
 根目录只维护 PROJECT、PROGRESS、TECH_DESIGN；R1、R2 各自维护版本正文，Slice 进入计划表。旧日志和正文快照归入 `.evidence/`，运行登记与源码放 `data/audit/r1/`，合成夹具放 `tools/experiment/fixtures/`。本次本地引用、章节锚点、证据身份与相关离线回归检查通过；业务功能与研究状态保持原记录。
 
 历史每日记录见[原 PROGRESS 快照](../../.evidence/R1/document-archive/PROGRESS.md)；目录与事实源只在[唯一地图](PROJECT.md)导航。
+
+## 数据迁移与旧应用退役
+
+2026-10-12 按用户要求，将旧资源中的 898 份数据迁至 `data/`，保留原件字节、标签与划分；旧 Java 应用、测试、配置、字体和独立构建退役。当前入口见[数据说明](../../data/README.md)。独立提交内容的 Maven 97 项、Python 636 项及 CLI 帮助通过，原 53 目标身份与标签保持一致；[本次验收](releases/R2-20261010/VERIFICATION.md#数据迁移与旧应用退役)。本次新增模型请求 0，R2 研究状态沿原记录。

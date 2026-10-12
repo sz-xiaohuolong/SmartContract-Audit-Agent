@@ -226,7 +226,7 @@ def main():
     parser = argparse.ArgumentParser(description='待审 742 条知识候选的离线 D1 探索；无模型付费调用')
     parser.add_argument('--root', default='.')
     parser.add_argument('--corpus-dir', default='.local/dataset-candidates/r1-pending')
-    parser.add_argument('--target-dir', default='src/main/resources/document/smartbugs_kb')
+    parser.add_argument('--target-dir', default='data/benchmarks/smartbugs-curated')
     parser.add_argument('--model-dir', default='.local/d1-embedding-model')
     parser.add_argument('--milvus-url', default='http://127.0.0.1:29531')
     parser.add_argument('--report-dir', default='.local/d1-exploratory-runs')

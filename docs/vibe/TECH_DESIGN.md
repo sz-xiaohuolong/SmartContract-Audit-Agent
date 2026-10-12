@@ -44,4 +44,4 @@ S11／S12 接缝已接通独立编译／工具双收据和有限证明分派。�
 
 默认构建为 `mvn clean verify`；Python 离线验证为 `PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`。CLI 为 `java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help`。本机页面由 `tools/experiment/local_ui.py` 提供，启动与配置见[工具说明](../../tools/experiment/README.md)。
 
-旧 `src/` 通过 `legacy/pom.xml` 单独构建；其 2026-09-18 的源码调查归入[R0 调查](releases/R0-20260918/SOURCE_SURVEY.md)。
+旧应用已从当前目录退役。新管线读取 `data/benchmarks/smartbugs-curated/` 的源码文档和 `data/benchmarks/legacy-testset/safe_contracts/` 的历史对照；全部原件保留字节，入口见[数据说明](../../data/README.md)。其 2026-09-18 的源码调查继续保存在[R0 调查](releases/R0-20260918/SOURCE_SURVEY.md)，历史实现通过 Git 恢复。

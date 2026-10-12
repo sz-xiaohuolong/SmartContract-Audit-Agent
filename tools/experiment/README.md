@@ -8,7 +8,7 @@ R1-S8 的 742 条待审向量可用 `candidate_admission_queue.py` 生成逐项�
 
 ```bash
 PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v
-python3 tools/experiment/offline.py inventory --root src/main/resources/testset --output /tmp/manifest-new.json
+python3 tools/experiment/offline.py inventory --root data/benchmarks/legacy-testset --output /tmp/manifest-new.json
 python3 tools/experiment/offline.py evaluate --labels /路径/labels.json --predictions /路径/predictions.json --output /路径/metrics-new.json
 ```
 

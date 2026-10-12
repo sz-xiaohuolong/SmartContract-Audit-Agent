@@ -1,5 +1,3 @@
-application-local.yml
-application-coding-plan.yml
 /config/providers.local.properties
 /config/tools.local.properties
 /.local/r2/
@@ -82,3 +80,6 @@ thesis/
 
 # 新增原始运行证据默认只在本机暂存；已跟踪证据继续保留。
 /.evidence/
+
+# 旧应用退役的本机恢复材料与私有配置不提交。
+/.local/legacy-retirement-20261012/
