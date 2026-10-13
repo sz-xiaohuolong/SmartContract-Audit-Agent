@@ -317,3 +317,11 @@ PYTHONPATH=tools/experiment python3 .evidence/R2-20261010/API-revalidation-20261
 最终派生为`5ee375133c084d6586ff8b8f43b4e009`及`5ee375151c084d6586ff8b8f43b4e010`，均在`research-artifacts/runs/derived/`，COMPLETED且159/159单元。原件通过`storage.read_artifact()`读取，归档不更改原始hash。
 
 最小证据位于`.evidence/R2-20261010/stage1-5-final-20261013/`：`test-summary.json`与最终日志、`identity-verification.json`／`final-verification.json`、`timestamp-drift-comparison.json`、红绿回归、两张工作台截图、浏览器导出／下载摘要、凭证与体积检查、`git-sync.json`。执行trace仅保留于`research-artifacts/receipts/evm/`，无损压缩不截断。无关R1提案、原有脚本删除和`.aris/`未纳入本轮提交。
+
+## 2026-10-13 无用实验结果退役清理
+
+本次只清理本机产物并同步保留说明，生产代码与研究统计不变。7个零模型中间重放由最终版本替代，21个相同计划离线演练保留最新记录；传递依赖核对后删除2,092个只被退役运行引用的编译／Slither／EVM收据目录，合计22,823文件。文件内容减少420,878,254字节（401 MiB），按文件分配块计算磁盘占用减少461,250,560字节（440 MiB）。扣除新增清单与核对材料后，文件分配块净减少约438 MiB；清理后新增批次与收据保留，目录总占用仍会随运行增加。
+
+26,222份保留文件SHA-256前后相等；30个原始模型批次及6个保留派生读取通过，9个HTTP JSONL／四臂下载与原字节一致。最终133／151候选的原件、源码／JAR、分母与裁决再次核对通过，仍为75支持／0反驳／58未知及80／0／71。时间漂移修复前旧133对照、关键失败原件、所有真实模型批次与正式报告保留。新增模型／嵌入请求均0，R2研究状态沿用PARTIAL／UNVERIFIED。
+
+逐文件删除原因及摘要位于 `research-artifacts/migrations/obsolete-runs-cleanup-20261013.json.gz`，本机证据 `.evidence/R2-20261010/obsolete-runs-cleanup-20261013/` 保存清理、保留摘要、最终候选身份与下载核对。未修改生产代码，验证限定为受影响的实际读取／下载，不重复运行Java构建或全量测试。旧存储迁移基线记录当时身份，已退役中间结果不能再按该基线完整回读。
