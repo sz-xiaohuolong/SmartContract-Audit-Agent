@@ -39,7 +39,8 @@ public final class ProviderRegistry {
             throw new IllegalArgumentException("供应商输出配置无效");
         return new Provider(selected, base.replaceAll("/+$", ""), required(prefix + "model"), key,
             Duration.ofSeconds(positive(prefix + "timeout-seconds", 60, 600)),
-            positive(prefix + "max-output-tokens", 2048, 32768), responseFormat, thinking, reasoningEffort);
+            positive(prefix + "max-output-tokens", 2048, 32768), responseFormat, thinking, reasoningEffort,
+            bounded(prefix + "max-retries", 1, 0, 1));
     }
     private String required(String key) {
         String value = properties.getProperty(key);
@@ -47,14 +48,18 @@ public final class ProviderRegistry {
         return value.trim();
     }
     private int positive(String key, int fallback, int max) {
+        return bounded(key, fallback, 1, max);
+    }
+    private int bounded(String key, int fallback, int min, int max) {
         int value;
         try {value = Integer.parseInt(properties.getProperty(key, Integer.toString(fallback)));}
         catch (NumberFormatException e) {throw new IllegalArgumentException("数值配置无效：" + key);}
-        if (value < 1 || value > max) throw new IllegalArgumentException("数值配置超出范围：" + key);
+        if (value < min || value > max) throw new IllegalArgumentException("数值配置超出范围：" + key);
         return value;
     }
     public record Provider(String name, String baseUrl, String model, String apiKey, Duration timeout,
-                           int maxOutputTokens, String responseFormat, String thinking, String reasoningEffort) {
+                           int maxOutputTokens, String responseFormat, String thinking, String reasoningEffort,
+                           int maxRetries) {
         @Override public String toString() {return "Provider[name="+name+", model="+model+", apiKey=<redacted>]";}
     }
 }

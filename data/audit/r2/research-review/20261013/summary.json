@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "research-review-package-1",
+  "researchEligible": false,
+  "modelRequests": 0,
+  "batches": [
+    {
+      "batchId": "119b4862f8a14818b62848ce709c3ee6",
+      "path": "119b4862f8a14818b62848ce709c3ee6.json",
+      "counts": {
+        "plannedUnits": 159,
+        "savedUnits": 159,
+        "missingUnits": 0,
+        "modelCompleted": 139,
+        "pipelineCompleted": 128,
+        "missingAssessments": 0,
+        "modelFailed": 20,
+        "pipelineFailed": 31,
+        "candidates": 133
+      },
+      "savedCandidateVerdicts": {
+        "SUPPORTED": 12,
+        "REFUTED": 0,
+        "UNKNOWN": 121
+      },
+      "reviewCandidateVerdicts": {
+        "SUPPORTED": 11,
+        "REFUTED": 0,
+        "UNKNOWN": 122
+      }
+    },
+    {
+      "batchId": "6cae40677b104152bd92efedc5bbc479",
+      "path": "6cae40677b104152bd92efedc5bbc479.json",
+      "counts": {
+        "plannedUnits": 159,
+        "savedUnits": 159,
+        "missingUnits": 0,
+        "modelCompleted": 156,
+        "pipelineCompleted": 152,
+        "missingAssessments": 9,
+        "pipelineFailed": 7,
+        "modelFailed": 3,
+        "candidates": 151
+      },
+      "savedCandidateVerdicts": {
+        "SUPPORTED": 12,
+        "REFUTED": 0,
+        "UNKNOWN": 139
+      },
+      "reviewCandidateVerdicts": {
+        "SUPPORTED": 12,
+        "REFUTED": 0,
+        "UNKNOWN": 139
+      }
+    }
+  ],
+  "sources": "source-inventory.json",
+  "csvRequested": false
+}

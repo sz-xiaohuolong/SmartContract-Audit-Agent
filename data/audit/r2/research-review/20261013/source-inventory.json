@@ -1,0 +1,990 @@
+{
+  "schemaVersion": "research-source-review-1",
+  "events": [
+    {
+      "id": "AC-ASE-030",
+      "projectId": "maia-2023",
+      "eventId": "maia-H01",
+      "vulnerabilityType": "ACCESS_CONTROL",
+      "sourceRevision": "f5ba4de628836b2a29f9b5fff59499690008c463",
+      "sourceUrl": "https://github.com/code-423n4/2023-09-maia/blob/f5ba4de628836b2a29f9b5fff59499690008c463/src/VirtualAccount.sol",
+      "sourceFileLicense": "MIT",
+      "patchRevision": "2209d6e96af986fa0960aacc356ba2be070fdc85",
+      "patchUrl": "https://github.com/Maia-DAO/2023-09-maia-remediations/commit/2209d6e96af986fa0960aacc356ba2be070fdc85",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "1. Maia：AC-ASE-030／H-01／VirtualAccount.payableCall",
+      "openGaps": [
+        "权限包含外部 `IRootPort.isRouterApproved` 与 owner 两条分支；现有轻量事实提取不等于完整权限覆盖。需要 Solady、Solmate、OpenZeppelin、两个项目接口及相关外部权限语义。不能凭修饰器名称声称 D2 已证实。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/first-batch/sources/AC-ASE-030.sol",
+          "url": null,
+          "expectedSha256": "adca74b8b692dd708c5259602a857e38f87ca044d000f853b343784417d3d2e0",
+          "status": "AVAILABLE",
+          "sha256": "adca74b8b692dd708c5259602a857e38f87ca044d000f853b343784417d3d2e0",
+          "byteCount": 6000,
+          "hashMatches": true
+        },
+        {
+          "kind": "REPORT",
+          "path": ".local/first-batch/reports/AC-ASE-030.md",
+          "url": null,
+          "expectedSha256": "aab646d2904c9967ba751af9d3187ae49c4381f65f6922b01ed0946970af5643",
+          "status": "AVAILABLE",
+          "sha256": "aab646d2904c9967ba751af9d3187ae49c4381f65f6922b01ed0946970af5643",
+          "byteCount": 5144,
+          "hashMatches": true
+        },
+        {
+          "kind": "PATCH",
+          "path": ".local/first-batch/patches/AC-ASE-030.sol",
+          "url": null,
+          "expectedSha256": "b37ba587c5e19830f2071febad4c184b203cfc8ed3206e9c82c6f2ca3e3b1255",
+          "status": "AVAILABLE",
+          "sha256": "b37ba587c5e19830f2071febad4c184b203cfc8ed3206e9c82c6f2ca3e3b1255",
+          "byteCount": 6076,
+          "hashMatches": true
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": "knowledge",
+      "cloneGroups": [],
+      "sourceHash": "adca74b8b692dd708c5259602a857e38f87ca044d000f853b343784417d3d2e0",
+      "labelStatus": "REVIEWED",
+      "originType": "REAL_PATCH",
+      "inheritedTruthReview": {
+        "truthReviewer": "Code4rena H-01 原始裁决与项目方确认，finding #885",
+        "truthReviewerType": "INDEPENDENT",
+        "truthReviewVersion": "aab646d2904c9967ba751af9d3187ae49c4381f65f6922b01ed0946970af5643"
+      },
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": true
+    },
+    {
+      "id": "RE-ATOMIC-001",
+      "projectId": "atomicloans-2019",
+      "eventId": "atomicloans-loans-pull-6.6",
+      "vulnerabilityType": "REENTRANCY",
+      "sourceRevision": "697f12d3eb0772a059a165ec50f02c265bd3dd43",
+      "sourceUrl": "https://github.com/AtomicLoans/atomicloans-eth-contracts/blob/697f12d3eb0772a059a165ec50f02c265bd3dd43/contracts/Loans.sol",
+      "sourceFileLicense": "MIT",
+      "auditedRevision": "3632e622e0b3fedf468866db0b878b7b74dd757e",
+      "patchRevision": "17adcc19c977c77273f07be3bd73123bf46e18a0",
+      "patchUrl": "https://github.com/AtomicLoans/atomicloans-eth-contracts/pull/23",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "2. Atomic Loans：RE-ATOMIC-001／审计第 6.6 节／Loans.pull",
+      "openGaps": [
+        "三版本项目七文件及对应 OpenZeppelin Solidity 2.2.0／2.3.0 已固定导出，包摘要与原锁匹配；本机 solc 0.5.8 可执行。依赖取得不等于真实编译或路径核验已完成。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/first-batch/sources/RE-ATOMIC-001.sol",
+          "url": null,
+          "expectedSha256": "0cd122c4ed263d72ea98c2ae2a91790cf6b2a4d7ce8d00cd833aa4b62315f2c3",
+          "status": "AVAILABLE",
+          "sha256": "0cd122c4ed263d72ea98c2ae2a91790cf6b2a4d7ce8d00cd833aa4b62315f2c3",
+          "byteCount": 13209,
+          "hashMatches": true
+        },
+        {
+          "kind": "REPORT",
+          "path": ".local/first-batch/reports/RE-ATOMIC-001.md",
+          "url": null,
+          "expectedSha256": "4ef859d6677f6758fc7f9138dbc192ecf8fa9af52a7e15f85a81fd8254164d8a",
+          "status": "AVAILABLE",
+          "sha256": "4ef859d6677f6758fc7f9138dbc192ecf8fa9af52a7e15f85a81fd8254164d8a",
+          "byteCount": 104468,
+          "hashMatches": true
+        },
+        {
+          "kind": "PATCH",
+          "path": ".local/first-batch/patches/RE-ATOMIC-001.sol",
+          "url": null,
+          "expectedSha256": "6f3a1d1934b41d498d56631a43db8dfbf368b76141316946c5f321478c180167",
+          "status": "AVAILABLE",
+          "sha256": "6f3a1d1934b41d498d56631a43db8dfbf368b76141316946c5f321478c180167",
+          "byteCount": 13209,
+          "hashMatches": true
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": "knowledge",
+      "cloneGroups": [],
+      "sourceHash": "0cd122c4ed263d72ea98c2ae2a91790cf6b2a4d7ce8d00cd833aa4b62315f2c3",
+      "labelStatus": "REVIEWED",
+      "originType": "REAL_PATCH",
+      "inheritedTruthReview": {
+        "truthReviewer": "ConsenSys Diligence 2019 审计报告第 6.6 节",
+        "truthReviewerType": "INDEPENDENT",
+        "truthReviewVersion": "4ef859d6677f6758fc7f9138dbc192ecf8fa9af52a7e15f85a81fd8254164d8a"
+      },
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": true
+    },
+    {
+      "id": "AC-ASE-040",
+      "projectId": "pooltogether-v5-2023",
+      "eventId": "pooltogether-H04",
+      "vulnerabilityType": "ACCESS_CONTROL",
+      "sourceRevision": "b1deb5d494c25f885c34c83f014c8a855c5e2749",
+      "sourceUrl": "https://github.com/GenerationSoftware/pt-v5-vault/blob/b1deb5d494c25f885c34c83f014c8a855c5e2749/src/Vault.sol",
+      "sourceFileLicense": "MIT",
+      "patchRevision": "50bd158089d890eb759da67282bf5b5238a3a22a",
+      "patchUrl": "https://github.com/GenerationSoftware/pt-v5-vault/pull/7",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "4. PoolTogether：AC-ASE-040／H-04／Vault.mintYieldFee",
+      "openGaps": [
+        "这是固定收益接收方机理，不能描述为增加调用者权限。源码依赖 ERC4626、TwabController、PrizePool、LiquidationPair 等多个项目；补丁还有编译版本和依赖别名变化。验证侧保留，不用作先导调参。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/first-batch/sources/AC-ASE-040.sol",
+          "url": null,
+          "expectedSha256": "88a1ece0cf91937751d6aff6ee0a289987ff77e4d394fed7caf1a93c27475151",
+          "status": "AVAILABLE",
+          "sha256": "88a1ece0cf91937751d6aff6ee0a289987ff77e4d394fed7caf1a93c27475151",
+          "byteCount": 44347,
+          "hashMatches": true
+        },
+        {
+          "kind": "REPORT",
+          "path": ".local/first-batch/reports/AC-ASE-040.md",
+          "url": null,
+          "expectedSha256": "c8765072eb107dc21408f9998406d83dbda470cccad3b076a1b4847a2d9cb48d",
+          "status": "AVAILABLE",
+          "sha256": "c8765072eb107dc21408f9998406d83dbda470cccad3b076a1b4847a2d9cb48d",
+          "byteCount": 2364,
+          "hashMatches": true
+        },
+        {
+          "kind": "PATCH",
+          "path": ".local/first-batch/patches/AC-ASE-040.sol",
+          "url": null,
+          "expectedSha256": "1ee2f664dda115d58367eee8e5da632d0a3584f6c99b7472f14667ec9c4c3a76",
+          "status": "AVAILABLE",
+          "sha256": "1ee2f664dda115d58367eee8e5da632d0a3584f6c99b7472f14667ec9c4c3a76",
+          "byteCount": 44339,
+          "hashMatches": true
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": "validation",
+      "cloneGroups": [],
+      "sourceHash": "88a1ece0cf91937751d6aff6ee0a289987ff77e4d394fed7caf1a93c27475151",
+      "labelStatus": "REVIEWED",
+      "originType": "REAL_PATCH",
+      "inheritedTruthReview": {
+        "truthReviewer": "Code4rena H-04 原始裁决与项目方确认，finding #396",
+        "truthReviewerType": "INDEPENDENT",
+        "truthReviewVersion": "c8765072eb107dc21408f9998406d83dbda470cccad3b076a1b4847a2d9cb48d"
+      },
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": true
+    },
+    {
+      "id": "AC-RABBIT-001",
+      "projectId": "rabbithole-quest-2023",
+      "eventId": "rabbithole-H01-onlyMinter",
+      "vulnerabilityType": "ACCESS_CONTROL",
+      "sourceRevision": "8c4c1f71221570b14a0479c216583342bd652d8d",
+      "sourceUrl": "https://github.com/rabbitholegg/quest-protocol/blob/8c4c1f71221570b14a0479c216583342bd652d8d/contracts/RabbitHoleReceipt.sol",
+      "sourceFileLicense": "MIT",
+      "patchParent": "93fd452ecf0bf0725d73d5ed0d7640e3ee6f4299",
+      "patchRevision": "8e1bc90f619dfafba1fbfbac39c9249b8885e64a",
+      "repositoryLicenseNote": "GPL-3.0；仓库与文件声明不一致，使用时同时保留来源归属。",
+      "versionLink": "审计版 RabbitHoleReceipt.sol 与补丁父提交同文件 SHA-256 相同；修复将 onlyMinter 中的无效相等表达式改为 require。",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "3. RabbitHole：AC-RABBIT-001／H-01／RabbitHoleReceipt.mint",
+      "openGaps": [
+        "三个固定版本的四份项目源码、原锁和构建配置已取得；真实闭包分别含24／28／28源码单元，缺失导入为0。原报告复现需要代理初始化，不能直接实例化被 `_disableInitializers` 锁定的实现合约后假定路径有效。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/r1-s5/sources/AC-RABBIT-001.sol",
+          "url": null,
+          "expectedSha256": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+          "status": "AVAILABLE",
+          "sha256": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+          "byteCount": 7586,
+          "hashMatches": true
+        },
+        {
+          "kind": "REPORT",
+          "path": ".local/r1-s5/reports/AC-RABBIT-001.md",
+          "url": null,
+          "expectedSha256": "757c8538ef918def151086b2df17e8c0284edbb5c647b81dc465774e6b8cf068",
+          "status": "AVAILABLE",
+          "sha256": "757c8538ef918def151086b2df17e8c0284edbb5c647b81dc465774e6b8cf068",
+          "byteCount": 4623,
+          "hashMatches": true
+        },
+        {
+          "kind": "PATCH",
+          "path": ".local/r1-s5/patches/AC-RABBIT-001.sol",
+          "url": null,
+          "expectedSha256": "8075bdae170c3b63b5a156f19f2b63072b6d82e25c5d6f2a7078b583dac52fdd",
+          "status": "AVAILABLE",
+          "sha256": "8075bdae170c3b63b5a156f19f2b63072b6d82e25c5d6f2a7078b583dac52fdd",
+          "byteCount": 7610,
+          "hashMatches": true
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": "knowledge",
+      "cloneGroups": [],
+      "sourceHash": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+      "labelStatus": "REVIEWED",
+      "originType": "REAL_PATCH",
+      "inheritedTruthReview": {
+        "truthReviewer": "Code4rena H-01 选入报告且项目方确认，finding #608；维护者合并 PR #86",
+        "truthReviewerType": "INDEPENDENT",
+        "truthReviewVersion": "757c8538ef918def151086b2df17e8c0284edbb5c647b81dc465774e6b8cf068"
+      },
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": true
+    },
+    {
+      "id": "RE-INFINITY-001",
+      "projectId": "infinity-exchange-2022",
+      "eventId": "infinity-matchOneToManyOrders",
+      "vulnerabilityType": "REENTRANCY",
+      "sourceRevision": "bb8d35a07051204cb0d4b77fd30e60ec186c9e24",
+      "sourceUrl": "https://github.com/code-423n4/2022-06-infinity/blob/bb8d35a07051204cb0d4b77fd30e60ec186c9e24/contracts/core/InfinityExchange.sol",
+      "sourceFileLicense": "MIT",
+      "patchParent": "5a3f81b82a9bee2de7517b3a5f18953cb5ec3684",
+      "patchRevision": "b90e746fa7af13037e7300b58df46457a026c1ac",
+      "repositoryLicenseNote": "未核实独立仓库许可证；仅按源码文件 SPDX 保留归属。",
+      "versionLink": "审计版与补丁父提交的相关函数签名均无 nonReentrant；修复在函数签名增加 nonReentrant。整文件并非字节相同。",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "6. Infinity：RE-INFINITY-001／InfinityExchange.matchOneToManyOrders",
+      "openGaps": [
+        "攻击从订单匹配内部转账路径回调至 `takeOrders`，需要相关内部调用、订单 nonce 资源、两个入口共享锁和回调能力证据。不能把函数中的内部 helper 当作已证明的直接外部调用。验证侧保留，不用作先导调参。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/r1-s5/sources/RE-INFINITY-001.sol",
+          "url": null,
+          "expectedSha256": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+          "status": "AVAILABLE",
+          "sha256": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+          "byteCount": 50218,
+          "hashMatches": true
+        },
+        {
+          "kind": "REPORT",
+          "path": ".local/r1-s5/reports/RE-INFINITY-001.md",
+          "url": null,
+          "expectedSha256": "9f75faa97b83492d5aa7283a53a18bec7271acec9de540d5d8c714b6531db3d0",
+          "status": "AVAILABLE",
+          "sha256": "9f75faa97b83492d5aa7283a53a18bec7271acec9de540d5d8c714b6531db3d0",
+          "byteCount": 2777,
+          "hashMatches": true
+        },
+        {
+          "kind": "PATCH",
+          "path": ".local/r1-s5/patches/RE-INFINITY-001.sol",
+          "url": null,
+          "expectedSha256": "5aba829fac8a1c0e11da5f8e9acd9ad082f0b1e8e895ea939e3fe67b7d4469a1",
+          "status": "AVAILABLE",
+          "sha256": "5aba829fac8a1c0e11da5f8e9acd9ad082f0b1e8e895ea939e3fe67b7d4469a1",
+          "byteCount": 50137,
+          "hashMatches": true
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": "validation",
+      "cloneGroups": [],
+      "sourceHash": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+      "labelStatus": "REVIEWED",
+      "originType": "REAL_PATCH",
+      "inheritedTruthReview": {
+        "truthReviewer": "Code4rena 3 高危且项目方确认，finding #184；项目方评论指定修复提交 b90e746f",
+        "truthReviewerType": "INDEPENDENT",
+        "truthReviewVersion": "9f75faa97b83492d5aa7283a53a18bec7271acec9de540d5d8c714b6531db3d0"
+      },
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": true
+    },
+    {
+      "id": "RE-JPEGD-001",
+      "projectId": "jpegd-core-2022",
+      "eventId": "jpegd-H-yVault-deposit",
+      "vulnerabilityType": "REENTRANCY",
+      "sourceRevision": "e72861a9ccb707ced9015166fbded5c97c6991b6",
+      "sourceUrl": "https://github.com/code-423n4/2022-04-jpegd/blob/e72861a9ccb707ced9015166fbded5c97c6991b6/contracts/vaults/yVault/yVault.sol",
+      "sourceFileLicense": "GPL-3.0",
+      "patchParent": "641ecd6247636fb5d1402b115a074bf71ac8c0f4",
+      "patchRevision": "5eb2e19e71c949503664017183d65f19c72ed2f9",
+      "repositoryLicenseNote": "未核实独立仓库许可证；仅按源码文件 SPDX 保留归属。",
+      "versionLink": "审计版与补丁父提交的整文件不同，但 deposit 函数正文逐行一致；修复把 safeTransferFrom 移到份额计算之后。",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "5. JPEG’d：RE-JPEGD-001／YVault.deposit",
+      "openGaps": [
+        "修复将 `safeTransferFrom` 移到总供应量读取与份额计算之后，`_mint` 仍在转账之后；不能使用泛化“所有状态写必须早于调用”规则判断该修复。攻击还依赖代币回调、非零初始池状态、`noContract` 白名单或构造期路径。验证侧保留，不用作先导调参。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/r1-s5/sources/RE-JPEGD-001.sol",
+          "url": null,
+          "expectedSha256": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+          "status": "AVAILABLE",
+          "sha256": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+          "byteCount": 7396,
+          "hashMatches": true
+        },
+        {
+          "kind": "REPORT",
+          "path": ".local/r1-s5/reports/RE-JPEGD-001.md",
+          "url": null,
+          "expectedSha256": "8cc4adf8e04eb74afeddd9b8735b81ab37a36efa6e024317109040b0daafc905",
+          "status": "AVAILABLE",
+          "sha256": "8cc4adf8e04eb74afeddd9b8735b81ab37a36efa6e024317109040b0daafc905",
+          "byteCount": 1320,
+          "hashMatches": true
+        },
+        {
+          "kind": "PATCH",
+          "path": ".local/r1-s5/patches/RE-JPEGD-001.sol",
+          "url": null,
+          "expectedSha256": "2b305fbd3256de8f1d9523d813de544fa4d6cb7583fbeae8bf2150cb70d71791",
+          "status": "AVAILABLE",
+          "sha256": "2b305fbd3256de8f1d9523d813de544fa4d6cb7583fbeae8bf2150cb70d71791",
+          "byteCount": 7396,
+          "hashMatches": true
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": "validation",
+      "cloneGroups": [],
+      "sourceHash": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+      "labelStatus": "REVIEWED",
+      "originType": "REAL_PATCH",
+      "inheritedTruthReview": {
+        "truthReviewer": "Code4rena 3 高危且项目方确认，finding #81；维护者合并 PR #19",
+        "truthReviewerType": "INDEPENDENT",
+        "truthReviewVersion": "8cc4adf8e04eb74afeddd9b8735b81ab37a36efa6e024317109040b0daafc905"
+      },
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": true
+    },
+    {
+      "id": "AC-ASE-006",
+      "projectId": "basin-2024",
+      "eventId": "basin-H01",
+      "sourceRevision": "7d5aacbb144d0ba0bc358dfde6e0cc913d25310e",
+      "sourceFileLicense": "MIT",
+      "patchRevision": "7e08ff591df0a2ade7d5618113dda2621cd899bc",
+      "historicalSplit": "development",
+      "patchNote": "真实修复审查版已取得，精确引入提交与完整覆盖待审",
+      "vulnerabilityType": "ACCESS_CONTROL",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "7. Basin：AC-ASE-006／H-01／WellUpgradeable._authorizeUpgrade",
+      "openGaps": [
+        "精确引入修复提交、完整版本链及独立标签未完成。升级路径依赖 Well、Aquifer、UUPS 和 Ownable；修复审查状态证据不自动证明任意升级入口均受保护。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/first-batch/sources/AC-ASE-006.sol",
+          "url": "https://github.com/code-423n4/2024-07-basin/blob/7d5aacbb144d0ba0bc358dfde6e0cc913d25310e/src/WellUpgradeable.sol",
+          "expectedSha256": "fb264eadf05348fdbf4ab8a8c340236d55c2cf165a8d24a26e9c327d5bdc5bd5",
+          "status": "AVAILABLE",
+          "sha256": "fb264eadf05348fdbf4ab8a8c340236d55c2cf165a8d24a26e9c327d5bdc5bd5",
+          "byteCount": 5807,
+          "hashMatches": true
+        },
+        {
+          "kind": "REPORT",
+          "path": ".local/first-batch/reports/AC-ASE-006.md",
+          "url": "https://github.com/code-423n4/2024-07-basin-findings/issues/52",
+          "expectedSha256": "c6d73aa41b56c6a5b3fc64227bbcedd44649b36d81b58d4f8fefa3ddd5a813fb",
+          "status": "AVAILABLE",
+          "sha256": "c6d73aa41b56c6a5b3fc64227bbcedd44649b36d81b58d4f8fefa3ddd5a813fb",
+          "byteCount": 4116,
+          "hashMatches": true
+        },
+        {
+          "kind": "PATCH",
+          "path": ".local/first-batch/patches/AC-ASE-006.sol",
+          "url": "https://github.com/code-423n4/2024-08-basin/blob/7e08ff591df0a2ade7d5618113dda2621cd899bc/src/WellUpgradeable.sol",
+          "expectedSha256": "283bda224984decf8df58c8593353b05ef9c8bdc84707d511d468685afca2258",
+          "status": "AVAILABLE",
+          "sha256": "283bda224984decf8df58c8593353b05ef9c8bdc84707d511d468685afca2258",
+          "byteCount": 6157,
+          "hashMatches": true
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": null,
+      "cloneGroups": null,
+      "labelStatus": "PENDING",
+      "originType": null,
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": false
+    },
+    {
+      "id": "AC-ASE-009",
+      "projectId": "gondi-2024",
+      "eventId": "gondi-H03",
+      "sourceRevision": "b9863d73c08fcdd2337dc80a8b5e0917e18b036c",
+      "sourceFileLicense": "AGPL-3.0",
+      "patchRevision": null,
+      "historicalSplit": "development",
+      "patchNote": "维护者修复源码缺失；修复审查范围 README 引用 fix/64 不能代替源码",
+      "vulnerabilityType": "ACCESS_CONTROL",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "8. Gondi：AC-ASE-009／H-03／LiquidationDistributor.distribute",
+      "openGaps": [
+        "维护者真实修复原件、精确版本、修复覆盖和独立标签均缺；漏洞涉及伪造 ERC20、LoanManager 回调与 Pool 记账，不能只看 distribute 的签名。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/first-batch/sources/AC-ASE-009.sol",
+          "url": "https://github.com/code-423n4/2024-04-gondi/blob/b9863d73c08fcdd2337dc80a8b5e0917e18b036c/src/lib/LiquidationDistributor.sol",
+          "expectedSha256": "c41d5598d66712493a2e81b55dfc50913fe1f42cad4d9b2d2e694548585f584b",
+          "status": "AVAILABLE",
+          "sha256": "c41d5598d66712493a2e81b55dfc50913fe1f42cad4d9b2d2e694548585f584b",
+          "byteCount": 5075,
+          "hashMatches": true
+        },
+        {
+          "kind": "REPORT",
+          "path": ".local/first-batch/reports/AC-ASE-009.md",
+          "url": "https://github.com/code-423n4/2024-04-gondi-findings/issues/64",
+          "expectedSha256": "817c3186a4d556f082e4f465a9ac9cf1eddb170d7457531910b36034f970bcc6",
+          "status": "AVAILABLE",
+          "sha256": "817c3186a4d556f082e4f465a9ac9cf1eddb170d7457531910b36034f970bcc6",
+          "byteCount": 2522,
+          "hashMatches": true
+        },
+        {
+          "kind": "PATCH",
+          "path": null,
+          "url": null,
+          "expectedSha256": null,
+          "status": "MISSING",
+          "sha256": null,
+          "byteCount": null
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": null,
+      "cloneGroups": null,
+      "labelStatus": "PENDING",
+      "originType": null,
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": false
+    },
+    {
+      "id": "RE-POP-077",
+      "projectId": "ai-arena-2024",
+      "eventId": "ai-arena-H08",
+      "sourceRevision": "b05b54a9eb5b0964bde9825f75305caa2d943155",
+      "sourceFileLicense": "MIT",
+      "patchRevision": null,
+      "historicalSplit": "excluded",
+      "patchNote": "数据集重入锁补丁线索已取得，维护者原样修复版本未固定；历史正式槽由 Atomic 替换",
+      "vulnerabilityType": "REENTRANCY",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "9. AI Arena：RE-POP-077／Proof-of-Patch 077／H-08／MergingPool.claimRewards",
+      "openGaps": [
+        "尚未固定维护者补丁原样版本及版本链。Foundry 配置 solc 0.8.13，forge-std 本地有源码，OpenZeppelin 子模块没有 Solidity 源码；目标还通过 FighterFarm 的 NFT 铸造产生回调。不能把历史被替换的正式槽自动恢复。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/first-batch/sources/RE-POP-077.sol",
+          "url": "https://github.com/code-423n4/2024-02-ai-arena/blob/b05b54a9eb5b0964bde9825f75305caa2d943155/src/MergingPool.sol",
+          "expectedSha256": "b0c5b90a1f1ec659047238063433f52cc69fa95091df9af76d155f69a75ab5dd",
+          "status": "AVAILABLE",
+          "sha256": "b0c5b90a1f1ec659047238063433f52cc69fa95091df9af76d155f69a75ab5dd",
+          "byteCount": 9255,
+          "hashMatches": true
+        },
+        {
+          "kind": "REPORT",
+          "path": ".local/first-batch/reports/RE-POP-077.md",
+          "url": "https://github.com/code-423n4/2024-02-ai-arena-findings/issues/37",
+          "expectedSha256": "d42775cd10a858ed8e7b913d0b79985453aa6e2b070cbb88da22ea6b8af7cba6",
+          "status": "AVAILABLE",
+          "sha256": "d42775cd10a858ed8e7b913d0b79985453aa6e2b070cbb88da22ea6b8af7cba6",
+          "byteCount": 12235,
+          "hashMatches": true
+        },
+        {
+          "kind": "DATASET_PATCH",
+          "path": ".local/dataset-candidates/proof-of-patch/patches/077/2024-02-ai-arena/src/MergingPool.sol",
+          "url": "https://github.com/ArenaX-Labs/2024-02-ai-arena-mitigation/pull/6",
+          "expectedSha256": null,
+          "status": "AVAILABLE",
+          "sha256": "3469e4a579bb2435b33a65bb592c34f4402d4720e05bb089944f11fc86faa7c8",
+          "byteCount": 9348,
+          "hashMatches": null
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": null,
+      "cloneGroups": null,
+      "labelStatus": "PENDING",
+      "originType": null,
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": false
+    },
+    {
+      "id": "POP-049",
+      "projectId": "cooler-2023",
+      "eventId": "cooler-rollLoan",
+      "sourceRevision": "6d34cd12a2a15d2c92307d44782d6eae1474ab25",
+      "sourceFileLicense": "MIT",
+      "patchRevision": null,
+      "patchNote": "数据集单行调用者检查不是维护者 PR54 的原样修复；主报告、真实修复全文和版本缺失",
+      "vulnerabilityType": "ACCESS_CONTROL",
+      "sourceDocument": "docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md",
+      "sourceSection": "10. Cooler：Proof-of-Patch 049／rollLoan",
+      "openGaps": [
+        "主原报告正文、真实维护者修复源码及版本、完整攻击与修复覆盖和独立标签均缺。源码涉及 immutable-args clone、贷款条款与所有者；本地 lib 子模块目录存在但依赖源码未取得。"
+      ],
+      "artifacts": [
+        {
+          "kind": "SOURCE",
+          "path": ".local/dataset-candidates/proof-of-patch/findings/049/2023-08-cooler/Cooler/src/Cooler.sol",
+          "url": null,
+          "expectedSha256": null,
+          "status": "AVAILABLE",
+          "sha256": "658a4a0a94b27636a8d94150ef421e248b78b304334e1be405d7467076f698ba",
+          "byteCount": 16710,
+          "hashMatches": null
+        },
+        {
+          "kind": "REPORT",
+          "path": null,
+          "url": "https://github.com/sherlock-audit/2023-08-cooler-judging/issues/243",
+          "expectedSha256": null,
+          "status": "MISSING",
+          "sha256": null,
+          "byteCount": null
+        },
+        {
+          "kind": "REPORT_EXCERPT",
+          "path": ".local/dataset-candidates/proof-of-patch/annotations/049.txt",
+          "url": null,
+          "expectedSha256": null,
+          "status": "AVAILABLE",
+          "sha256": "83359fdb99fcca41ffd841e1a907dff9df5b1c1ef54d4bf0d9cc8546c943b66e",
+          "byteCount": 2805,
+          "hashMatches": null
+        },
+        {
+          "kind": "DATASET_PATCH",
+          "path": ".local/dataset-candidates/proof-of-patch/patches/049/2023-08-cooler/Cooler/src/Cooler.sol",
+          "url": "https://github.com/ohmzeus/Cooler/pull/54",
+          "expectedSha256": null,
+          "status": "AVAILABLE",
+          "sha256": "17910c14025c9771a85ee40b0ae30226c101d426f9fa93984190bdea52746d52",
+          "byteCount": 16767,
+          "hashMatches": null
+        }
+      ],
+      "reviewScope": "既有来源登记供回读；不表示本项目候选、修复覆盖或整体安全已经独立审核。",
+      "split": null,
+      "cloneGroups": null,
+      "labelStatus": "PENDING",
+      "originType": null,
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false,
+      "formalAdmissionPresent": false
+    }
+  ],
+  "controls": [
+    {
+      "id": "safe_23_Ownable",
+      "projectId": "https://github.com/OpenZeppelin/openzeppelin-contracts",
+      "sourceLabel": "LEGACY_SAFE_CONTRACTS",
+      "split": "历史探索性对照；独立研究划分待审",
+      "licenseNote": "源码含MIT声明；展平完整生成版本尚未登记。",
+      "sourceRevision": null,
+      "artifact": {
+        "kind": "SOURCE",
+        "path": "data/controls/openzeppelin/safe_23_Ownable.sol",
+        "expectedSha256": null,
+        "status": "AVAILABLE",
+        "sha256": "5c09d8187f108928625539dafa18e3df2ac0fd8bac43cb13d2d1d071926132c8",
+        "byteCount": 4106,
+        "hashMatches": null
+      },
+      "openGaps": [
+        "四文件同上游，不计四独立项目；来源阴性标签不是安全证明。",
+        "完整依赖版本与人工安全性质审核未完成。"
+      ],
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false
+    },
+    {
+      "id": "safe_24_Ownable2Step",
+      "projectId": "https://github.com/OpenZeppelin/openzeppelin-contracts",
+      "sourceLabel": "LEGACY_SAFE_CONTRACTS",
+      "split": "历史探索性对照；独立研究划分待审",
+      "licenseNote": "源码含MIT声明；展平完整生成版本尚未登记。",
+      "sourceRevision": null,
+      "artifact": {
+        "kind": "SOURCE",
+        "path": "data/controls/openzeppelin/safe_24_Ownable2Step.sol",
+        "expectedSha256": null,
+        "status": "AVAILABLE",
+        "sha256": "c77b1376d27ffdb641b175cd115eb651ed5fa8bf573dda46e3eb08b0ba1bf5ea",
+        "byteCount": 6530,
+        "hashMatches": null
+      },
+      "openGaps": [
+        "四文件同上游，不计四独立项目；来源阴性标签不是安全证明。",
+        "完整依赖版本与人工安全性质审核未完成。"
+      ],
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false
+    },
+    {
+      "id": "safe_25_AccessControl",
+      "projectId": "https://github.com/OpenZeppelin/openzeppelin-contracts",
+      "sourceLabel": "LEGACY_SAFE_CONTRACTS",
+      "split": "历史探索性对照；独立研究划分待审",
+      "licenseNote": "源码含MIT声明；展平完整生成版本尚未登记。",
+      "sourceRevision": null,
+      "artifact": {
+        "kind": "SOURCE",
+        "path": "data/controls/openzeppelin/safe_25_AccessControl.sol",
+        "expectedSha256": null,
+        "status": "AVAILABLE",
+        "sha256": "91eed0f4ff216148846c3f0b51ff3058218abe726c3087adc893c5065b4872a0",
+        "byteCount": 12922,
+        "hashMatches": null
+      },
+      "openGaps": [
+        "四文件同上游，不计四独立项目；来源阴性标签不是安全证明。",
+        "完整依赖版本与人工安全性质审核未完成。"
+      ],
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false
+    },
+    {
+      "id": "safe_30_Pausable",
+      "projectId": "https://github.com/OpenZeppelin/openzeppelin-contracts",
+      "sourceLabel": "LEGACY_SAFE_CONTRACTS",
+      "split": "历史探索性对照；独立研究划分待审",
+      "licenseNote": "源码含MIT声明；展平完整生成版本尚未登记。",
+      "sourceRevision": null,
+      "artifact": {
+        "kind": "SOURCE",
+        "path": "data/controls/openzeppelin/safe_30_Pausable.sol",
+        "expectedSha256": null,
+        "status": "AVAILABLE",
+        "sha256": "7aa3d82bea8dc5ba1121ddb4bb3a2930c9e313f63a128574ffbe093f0e0c94a0",
+        "byteCount": 3711,
+        "hashMatches": null
+      },
+      "openGaps": [
+        "四文件同上游，不计四独立项目；来源阴性标签不是安全证明。",
+        "完整依赖版本与人工安全性质审核未完成。"
+      ],
+      "independentReview": {
+        "reviewer1": null,
+        "reviewer2": null,
+        "sampleTruth": null,
+        "candidateLocationCorrect": null,
+        "candidateOperationCorrect": null,
+        "candidateTruth": null,
+        "repairSemanticsCorrect": null,
+        "evidenceRefs": null,
+        "disagreement": null,
+        "arbitrator": null,
+        "arbitration": null,
+        "reviewedAt": null
+      },
+      "researchEligible": false
+    }
+  ],
+  "counts": {
+    "eventProjects": 10,
+    "events": 10,
+    "formalEvents": 6,
+    "pendingEvents": 4,
+    "controls": 4,
+    "controlUpstreams": 1
+  },
+  "splitAudit": {
+    "conflicts": [],
+    "exactDuplicates": [],
+    "unresolvedIds": [
+      "AC-ASE-006",
+      "AC-ASE-009",
+      "POP-049",
+      "RE-POP-077"
+    ],
+    "scope": "仅登记的项目、字节与克隆组；不代表未知克隆或模型预训练污染已排除",
+    "researchEligible": false
+  },
+  "originalHashesBefore": {
+    ".local/first-batch/sources/AC-ASE-030.sol": "adca74b8b692dd708c5259602a857e38f87ca044d000f853b343784417d3d2e0",
+    ".local/first-batch/reports/AC-ASE-030.md": "aab646d2904c9967ba751af9d3187ae49c4381f65f6922b01ed0946970af5643",
+    ".local/first-batch/patches/AC-ASE-030.sol": "b37ba587c5e19830f2071febad4c184b203cfc8ed3206e9c82c6f2ca3e3b1255",
+    ".local/first-batch/sources/RE-ATOMIC-001.sol": "0cd122c4ed263d72ea98c2ae2a91790cf6b2a4d7ce8d00cd833aa4b62315f2c3",
+    ".local/first-batch/reports/RE-ATOMIC-001.md": "4ef859d6677f6758fc7f9138dbc192ecf8fa9af52a7e15f85a81fd8254164d8a",
+    ".local/first-batch/patches/RE-ATOMIC-001.sol": "6f3a1d1934b41d498d56631a43db8dfbf368b76141316946c5f321478c180167",
+    ".local/first-batch/sources/AC-ASE-040.sol": "88a1ece0cf91937751d6aff6ee0a289987ff77e4d394fed7caf1a93c27475151",
+    ".local/first-batch/reports/AC-ASE-040.md": "c8765072eb107dc21408f9998406d83dbda470cccad3b076a1b4847a2d9cb48d",
+    ".local/first-batch/patches/AC-ASE-040.sol": "1ee2f664dda115d58367eee8e5da632d0a3584f6c99b7472f14667ec9c4c3a76",
+    ".local/r1-s5/sources/AC-RABBIT-001.sol": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+    ".local/r1-s5/reports/AC-RABBIT-001.md": "757c8538ef918def151086b2df17e8c0284edbb5c647b81dc465774e6b8cf068",
+    ".local/r1-s5/patches/AC-RABBIT-001.sol": "8075bdae170c3b63b5a156f19f2b63072b6d82e25c5d6f2a7078b583dac52fdd",
+    ".local/r1-s5/sources/RE-INFINITY-001.sol": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+    ".local/r1-s5/reports/RE-INFINITY-001.md": "9f75faa97b83492d5aa7283a53a18bec7271acec9de540d5d8c714b6531db3d0",
+    ".local/r1-s5/patches/RE-INFINITY-001.sol": "5aba829fac8a1c0e11da5f8e9acd9ad082f0b1e8e895ea939e3fe67b7d4469a1",
+    ".local/r1-s5/sources/RE-JPEGD-001.sol": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+    ".local/r1-s5/reports/RE-JPEGD-001.md": "8cc4adf8e04eb74afeddd9b8735b81ab37a36efa6e024317109040b0daafc905",
+    ".local/r1-s5/patches/RE-JPEGD-001.sol": "2b305fbd3256de8f1d9523d813de544fa4d6cb7583fbeae8bf2150cb70d71791",
+    ".local/first-batch/sources/AC-ASE-006.sol": "fb264eadf05348fdbf4ab8a8c340236d55c2cf165a8d24a26e9c327d5bdc5bd5",
+    ".local/first-batch/reports/AC-ASE-006.md": "c6d73aa41b56c6a5b3fc64227bbcedd44649b36d81b58d4f8fefa3ddd5a813fb",
+    ".local/first-batch/patches/AC-ASE-006.sol": "283bda224984decf8df58c8593353b05ef9c8bdc84707d511d468685afca2258",
+    ".local/first-batch/sources/AC-ASE-009.sol": "c41d5598d66712493a2e81b55dfc50913fe1f42cad4d9b2d2e694548585f584b",
+    ".local/first-batch/reports/AC-ASE-009.md": "817c3186a4d556f082e4f465a9ac9cf1eddb170d7457531910b36034f970bcc6",
+    ".local/first-batch/sources/RE-POP-077.sol": "b0c5b90a1f1ec659047238063433f52cc69fa95091df9af76d155f69a75ab5dd",
+    ".local/first-batch/reports/RE-POP-077.md": "d42775cd10a858ed8e7b913d0b79985453aa6e2b070cbb88da22ea6b8af7cba6",
+    ".local/dataset-candidates/proof-of-patch/patches/077/2024-02-ai-arena/src/MergingPool.sol": "3469e4a579bb2435b33a65bb592c34f4402d4720e05bb089944f11fc86faa7c8",
+    ".local/dataset-candidates/proof-of-patch/findings/049/2023-08-cooler/Cooler/src/Cooler.sol": "658a4a0a94b27636a8d94150ef421e248b78b304334e1be405d7467076f698ba",
+    ".local/dataset-candidates/proof-of-patch/annotations/049.txt": "83359fdb99fcca41ffd841e1a907dff9df5b1c1ef54d4bf0d9cc8546c943b66e",
+    ".local/dataset-candidates/proof-of-patch/patches/049/2023-08-cooler/Cooler/src/Cooler.sol": "17910c14025c9771a85ee40b0ae30226c101d426f9fa93984190bdea52746d52",
+    "data/controls/openzeppelin/safe_23_Ownable.sol": "5c09d8187f108928625539dafa18e3df2ac0fd8bac43cb13d2d1d071926132c8",
+    "data/controls/openzeppelin/safe_24_Ownable2Step.sol": "c77b1376d27ffdb641b175cd115eb651ed5fa8bf573dda46e3eb08b0ba1bf5ea",
+    "data/controls/openzeppelin/safe_25_AccessControl.sol": "91eed0f4ff216148846c3f0b51ff3058218abe726c3087adc893c5065b4872a0",
+    "data/controls/openzeppelin/safe_30_Pausable.sol": "7aa3d82bea8dc5ba1121ddb4bb3a2930c9e313f63a128574ffbe093f0e0c94a0"
+  },
+  "originalHashesAfter": {
+    ".local/first-batch/sources/AC-ASE-030.sol": "adca74b8b692dd708c5259602a857e38f87ca044d000f853b343784417d3d2e0",
+    ".local/first-batch/reports/AC-ASE-030.md": "aab646d2904c9967ba751af9d3187ae49c4381f65f6922b01ed0946970af5643",
+    ".local/first-batch/patches/AC-ASE-030.sol": "b37ba587c5e19830f2071febad4c184b203cfc8ed3206e9c82c6f2ca3e3b1255",
+    ".local/first-batch/sources/RE-ATOMIC-001.sol": "0cd122c4ed263d72ea98c2ae2a91790cf6b2a4d7ce8d00cd833aa4b62315f2c3",
+    ".local/first-batch/reports/RE-ATOMIC-001.md": "4ef859d6677f6758fc7f9138dbc192ecf8fa9af52a7e15f85a81fd8254164d8a",
+    ".local/first-batch/patches/RE-ATOMIC-001.sol": "6f3a1d1934b41d498d56631a43db8dfbf368b76141316946c5f321478c180167",
+    ".local/first-batch/sources/AC-ASE-040.sol": "88a1ece0cf91937751d6aff6ee0a289987ff77e4d394fed7caf1a93c27475151",
+    ".local/first-batch/reports/AC-ASE-040.md": "c8765072eb107dc21408f9998406d83dbda470cccad3b076a1b4847a2d9cb48d",
+    ".local/first-batch/patches/AC-ASE-040.sol": "1ee2f664dda115d58367eee8e5da632d0a3584f6c99b7472f14667ec9c4c3a76",
+    ".local/r1-s5/sources/AC-RABBIT-001.sol": "768552e03ef86a9b8b8ef2178b066ed423bc03ea75a97497d4d53405448f391c",
+    ".local/r1-s5/reports/AC-RABBIT-001.md": "757c8538ef918def151086b2df17e8c0284edbb5c647b81dc465774e6b8cf068",
+    ".local/r1-s5/patches/AC-RABBIT-001.sol": "8075bdae170c3b63b5a156f19f2b63072b6d82e25c5d6f2a7078b583dac52fdd",
+    ".local/r1-s5/sources/RE-INFINITY-001.sol": "e9c43ce4bed6ecfbe27445b9715ba5ca8897c8fb48389b6ffb3933f764f921df",
+    ".local/r1-s5/reports/RE-INFINITY-001.md": "9f75faa97b83492d5aa7283a53a18bec7271acec9de540d5d8c714b6531db3d0",
+    ".local/r1-s5/patches/RE-INFINITY-001.sol": "5aba829fac8a1c0e11da5f8e9acd9ad082f0b1e8e895ea939e3fe67b7d4469a1",
+    ".local/r1-s5/sources/RE-JPEGD-001.sol": "afce0ab800e363be630bb5c8e1a3071c731cacad00a31dcca9d5e13197cea6d9",
+    ".local/r1-s5/reports/RE-JPEGD-001.md": "8cc4adf8e04eb74afeddd9b8735b81ab37a36efa6e024317109040b0daafc905",
+    ".local/r1-s5/patches/RE-JPEGD-001.sol": "2b305fbd3256de8f1d9523d813de544fa4d6cb7583fbeae8bf2150cb70d71791",
+    ".local/first-batch/sources/AC-ASE-006.sol": "fb264eadf05348fdbf4ab8a8c340236d55c2cf165a8d24a26e9c327d5bdc5bd5",
+    ".local/first-batch/reports/AC-ASE-006.md": "c6d73aa41b56c6a5b3fc64227bbcedd44649b36d81b58d4f8fefa3ddd5a813fb",
+    ".local/first-batch/patches/AC-ASE-006.sol": "283bda224984decf8df58c8593353b05ef9c8bdc84707d511d468685afca2258",
+    ".local/first-batch/sources/AC-ASE-009.sol": "c41d5598d66712493a2e81b55dfc50913fe1f42cad4d9b2d2e694548585f584b",
+    ".local/first-batch/reports/AC-ASE-009.md": "817c3186a4d556f082e4f465a9ac9cf1eddb170d7457531910b36034f970bcc6",
+    ".local/first-batch/sources/RE-POP-077.sol": "b0c5b90a1f1ec659047238063433f52cc69fa95091df9af76d155f69a75ab5dd",
+    ".local/first-batch/reports/RE-POP-077.md": "d42775cd10a858ed8e7b913d0b79985453aa6e2b070cbb88da22ea6b8af7cba6",
+    ".local/dataset-candidates/proof-of-patch/patches/077/2024-02-ai-arena/src/MergingPool.sol": "3469e4a579bb2435b33a65bb592c34f4402d4720e05bb089944f11fc86faa7c8",
+    ".local/dataset-candidates/proof-of-patch/findings/049/2023-08-cooler/Cooler/src/Cooler.sol": "658a4a0a94b27636a8d94150ef421e248b78b304334e1be405d7467076f698ba",
+    ".local/dataset-candidates/proof-of-patch/annotations/049.txt": "83359fdb99fcca41ffd841e1a907dff9df5b1c1ef54d4bf0d9cc8546c943b66e",
+    ".local/dataset-candidates/proof-of-patch/patches/049/2023-08-cooler/Cooler/src/Cooler.sol": "17910c14025c9771a85ee40b0ae30226c101d426f9fa93984190bdea52746d52",
+    "data/controls/openzeppelin/safe_23_Ownable.sol": "5c09d8187f108928625539dafa18e3df2ac0fd8bac43cb13d2d1d071926132c8",
+    "data/controls/openzeppelin/safe_24_Ownable2Step.sol": "c77b1376d27ffdb641b175cd115eb651ed5fa8bf573dda46e3eb08b0ba1bf5ea",
+    "data/controls/openzeppelin/safe_25_AccessControl.sol": "91eed0f4ff216148846c3f0b51ff3058218abe726c3087adc893c5065b4872a0",
+    "data/controls/openzeppelin/safe_30_Pausable.sol": "7aa3d82bea8dc5ba1121ddb4bb3a2930c9e313f63a128574ffbe093f0e0c94a0"
+  },
+  "researchEligible": false,
+  "limitations": [
+    "已有漏洞裁决不自动构成本项目候选及修复覆盖的独立审核。",
+    "四个 OpenZeppelin 文件共享同一上游，来源阴性标签不是安全证明。"
+  ],
+  "metadataHashes": {
+    "data/audit/r2/research-review/source-registry.json": "4f591ca6d115c08cdaeee11e098acfc82810ba2d48ae5a097861f0b4e2a788fe",
+    "data/audit/r1/formal-expansion/formal-v2-ledger.json": "1f064e7675f0d5146a49785dcf1e693678ac20ad84c9bb3c9b5f7ed623acad81"
+  }
+}

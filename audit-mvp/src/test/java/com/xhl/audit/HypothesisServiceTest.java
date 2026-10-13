@@ -397,4 +397,140 @@ class HypothesisServiceTest {
         }
         assertEquals(3, calls.get());
     }
+
+    @Test void 未来重入写入候选必须明确拒绝并保留原件() throws Exception {
+        String body = """
+            {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"REENTRANCY",
+            "contract":"Vault","function":"withdraw","riskLine":1,"riskOperation":"WRITE",
+            "reason":"后置写入只可作为顺序证据","evidenceIds":[]}]}
+            """;
+        var result = service(body, null, null, "stop").analyze(request(), "fixture");
+        assertEquals("FAILED", result.status());
+        assertEquals("UNRESOLVED", result.conclusion());
+        assertEquals("REQUIRES_CALL", result.validationIssue());
+        var rejected = new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(result).path("rejectedHypotheses").get(0);
+        assertEquals("WRITE", rejected.path("candidate").path("riskOperation").asText());
+        assertEquals(1, rejected.path("candidate").path("riskLine").asInt());
+    }
+
+    @Test void 非枚举风险操作全部拒绝时不能返回未确认发现() {
+        for (String operation : List.of("TRANSFER", "DELETE", "call")) {
+            String body = "{\"schemaVersion\":\"2\",\"hypotheses\":[{\"vulnerabilityType\":\"REENTRANCY\","
+                + "\"contract\":\"Vault\",\"function\":\"withdraw\",\"riskLine\":1,\"riskOperation\":\"" + operation
+                + "\",\"reason\":\"待核查\",\"evidenceIds\":[]}]}";
+            var result = service(body, 12, 9, "stop").analyze(request(), "fixture");
+            assertEquals("UNRESOLVED", result.conclusion(), operation);
+            assertEquals("RISK_OPERATION_INVALID", result.validationIssue());
+            assertEquals(12, result.inputTokens());
+        }
+    }
+
+    @Test void 合法重入调用不因额外写入候选被丢弃() throws Exception {
+        String call = "{\"vulnerabilityType\":\"REENTRANCY\",\"contract\":\"Vault\",\"function\":\"withdraw\","
+            + "\"riskLine\":1,\"riskOperation\":\"CALL\",\"reason\":\"顺序证据\",\"evidenceIds\":[]}";
+        String body = "{\"schemaVersion\":\"2\",\"hypotheses\":[" + call + "," + call.replace("CALL", "WRITE") + "]}";
+        var result = service(body, null, null, "stop").analyze(request(), "fixture");
+        assertEquals(1, result.hypotheses().size());
+        assertEquals("VULNERABILITY_REPORTED", result.conclusion());
+        assertEquals("PARTIAL_HYPOTHESES_REJECTED", result.validationIssue());
+        assertEquals(1, result.rejectedHypotheses().getFirst().index());
+        assertEquals("REQUIRES_CALL", result.rejectedHypotheses().getFirst().issue());
+    }
+
+    private static final String CATALOG_SOURCE = """
+        contract First { function f() public {} }
+        contract Vault {
+          function withdraw() public {
+            msg.sender.call("");
+          }
+          function helper() internal { msg.sender.call("内部"); }
+        }
+        """;
+    private static final String CATALOG_BODY = """
+        {"schemaVersion":"2","hypotheses":[{"vulnerabilityType":"REENTRANCY",
+        "contract":"Vault","function":"withdraw","riskLine":4,"riskOperation":"CALL",
+        "reason":"需验证外部调用的保护条件","evidenceIds":[]}]}
+        """;
+    private HypothesisService.Request catalogRequest(com.fasterxml.jackson.databind.JsonNode catalog) {
+        return new HypothesisService.Request(CATALOG_SOURCE, CATALOG_SOURCE, null, "FULL", 1, 7,
+            "REENTRANCY", "f", "", List.of(), catalog);
+    }
+    private com.fasterxml.jackson.databind.node.ObjectNode catalog() {
+        var catalog = RiskCatalogFixture.catalog(CATALOG_SOURCE);
+        RiskCatalogFixture.operation(catalog, CATALOG_SOURCE, "Vault", "withdraw", "msg.sender.call(\"\")", "CALL", "a".repeat(64));
+        return catalog;
+    }
+    @Test void 全文第二合约的唯一风险绑定补跨度并保留未覆盖机制() {
+        var catalog = catalog();
+        var captured = new java.util.ArrayList<String>();
+        var service = new HypothesisService((p, system, user) -> {
+            captured.add(user);
+            return new GatewayReply(CATALOG_BODY, "fixture", "fixture", null, null, 1);
+        });
+        var result = service.analyze(catalogRequest(catalog), "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertEquals("a".repeat(64), result.hypotheses().getFirst().riskFactId());
+        assertEquals(catalog.path("operations").get(0).path("span"), result.hypotheses().getFirst().riskSpan());
+        assertTrue(captured.getFirst().contains("MECHANISM_UNSUPPORTED"));
+        assertTrue(captured.getFirst().contains("withdraw()"));
+    }
+    @Test void 目录错摘要错跨度或错行必须在模型请求前阻断() {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        var service = new HypothesisService((p, s, u) -> {
+            calls.incrementAndGet();
+            return new GatewayReply(CATALOG_BODY, "fixture", "fixture", null, null, 1);
+        });
+        for (String field : List.of("sourceHash", "contentSha256", "line", "start")) {
+            var catalog = catalog();
+            var span = (com.fasterxml.jackson.databind.node.ObjectNode) catalog.path("operations").get(0).path("span");
+            if (field.equals("sourceHash")) catalog.put(field, "0".repeat(64));
+            else if (field.equals("contentSha256")) span.put(field, "0".repeat(64));
+            else span.put(field, 99999);
+            var result = service.analyze(catalogRequest(catalog), "fixture");
+            assertEquals("INPUT_INVALID", result.errorCategory(), field);
+            assertEquals("UNRESOLVED", result.conclusion());
+        }
+        assertEquals(0, calls.get());
+    }
+    @Test void 声明行和内部调用行不能移到目录操作() {
+        for (int line : List.of(3, 6)) {
+            String body = CATALOG_BODY.replace("\"riskLine\":4", "\"riskLine\":" + line);
+            var result = service(body, null, null, "stop").analyze(catalogRequest(catalog()), "fixture");
+            assertEquals("RISK_CATALOG_POSITION_MISMATCH", result.validationIssue());
+            assertEquals(line, result.rejectedHypotheses().getFirst().candidate().path("riskLine").asInt());
+            assertEquals("UNRESOLVED", result.conclusion());
+        }
+    }
+    @Test void 同行两个真实风险操作必须拒绝歧义() {
+        var catalog = catalog();
+        var second = catalog.withArray("operations").get(0).deepCopy();
+        ((com.fasterxml.jackson.databind.node.ObjectNode) second).put("factId", "b".repeat(64));
+        catalog.withArray("operations").add(second);
+        var result = service(CATALOG_BODY, null, null, "stop").analyze(catalogRequest(catalog), "fixture");
+        assertEquals("RISK_CATALOG_AMBIGUOUS", result.validationIssue());
+        assertEquals("UNRESOLVED", result.conclusion());
+    }
+    @Test void 模型伪造后端字段不得覆盖目录绑定() {
+        String body = CATALOG_BODY.replace("\"reason\":", "\"riskFactId\":\"伪造\",\"riskSpan\":{\"line\":99},\"reason\":");
+        var result = service(body, null, null, "stop").analyze(catalogRequest(catalog()), "fixture");
+        assertEquals("a".repeat(64), result.hypotheses().getFirst().riskFactId());
+        assertEquals(4, result.hypotheses().getFirst().riskSpan().path("line").asInt());
+    }
+    @Test void 相同行号的依赖源码操作不能误绑定主源码() {
+        var catalog = catalog();
+        var row = (com.fasterxml.jackson.databind.node.ObjectNode) catalog.path("operations").get(0);
+        row.put("sourceUnit", "Dependency.sol").put("sourceUnitHash", "e".repeat(64));
+        ((com.fasterxml.jackson.databind.node.ObjectNode) row.path("span")).put("sourceUnit", "Dependency.sol").put("sourceUnitId", 1);
+        catalog.withArray("sourceUnits").addObject().put("sourceUnit", "Dependency.sol").put("sourceUnitId", 1).put("sha256", "e".repeat(64));
+        var result = service(CATALOG_BODY, null, null, "stop").analyze(catalogRequest(catalog), "fixture");
+        assertEquals("RISK_CATALOG_POSITION_MISMATCH", result.validationIssue());
+        assertEquals("UNRESOLVED", result.conclusion());
+    }
+    @Test void 无目录的旧调用不产生虚构后端绑定字段() {
+        var result = service(CATALOG_BODY.replace("\"riskLine\":4", "\"riskLine\":1"), null, null, "stop")
+            .analyze(request(), "fixture");
+        assertEquals("COMPLETED", result.status());
+        assertNull(result.hypotheses().getFirst().riskFactId());
+        assertNull(result.hypotheses().getFirst().riskSpan());
+    }
 }

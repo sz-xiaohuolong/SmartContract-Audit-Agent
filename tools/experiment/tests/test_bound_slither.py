@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -188,6 +189,120 @@ class BoundSlitherTest(unittest.TestCase):
         self.assertEqual(entry, bound_slither._resolve_python(self.root, str(entry)))
         self.assertNotEqual(entry.resolve(), bound_slither._resolve_python(self.root, str(entry)))
 
+    def test_失败worker绑定本次目录标准错误与编译警告原件摘要(self):
+        directory = self.root / bound_slither._EVIDENCE / 'failed-fixture'
+
+        def failed(command, **kwargs):
+            kwargs['stderr'].write(b'AssertionError: TupleVariable\n')
+            (directory / 'slither-compiler-stdout.json').write_bytes(canonical(
+                {'errors': [{'severity': 'warning', 'message': 'tuple mismatch'}]}))
+            return subprocess.CompletedProcess(command, 1)
+
+        with patch.object(bound_slither.subprocess, 'run', side_effect=failed):
+            result = bound_slither._invoke_worker(self.root / 'manifest.json', root=self.root,
+                python_executable=Path(sys.executable), directory=directory)
+        self.assertEqual('PROCESS_ERROR', result['status'])
+        diagnostics = result['diagnostics']
+        self.assertEqual(str(directory.relative_to(self.root)), diagnostics['workerDirectory'])
+        self.assertEqual(1, diagnostics['exitCode'])
+        stderr = next(item for item in diagnostics['files'] if item['role'] == 'WORKER_STDERR')
+        self.assertEqual(digest((self.root / stderr['path']).read_bytes()), stderr['sha256'])
+        self.assertTrue(any(item['role'] == 'COMPILER_WARNINGS' for item in diagnostics['files']))
+
+    def test_超时保留实际worker日志且不伪造退出码(self):
+        directory = self.root / bound_slither._EVIDENCE / 'timeout-fixture'
+
+        def timeout(command, **kwargs):
+            kwargs['stderr'].write(b'timeout log\n')
+            raise subprocess.TimeoutExpired(command, kwargs['timeout'])
+
+        with patch.object(bound_slither.subprocess, 'run', side_effect=timeout):
+            result = bound_slither._invoke_worker(self.root / 'manifest.json', root=self.root,
+                python_executable=Path(sys.executable), directory=directory)
+        self.assertEqual('TIMEOUT', result['status'])
+        self.assertIsNone(result['diagnostics']['exitCode'])
+        self.assertTrue(any(item['role'] == 'WORKER_STDERR' for item in result['diagnostics']['files']))
+
+    def test_适配工具版本不能伪装成官方原版本(self):
+        tool = self.analyze()
+        path = self.root / tool['compilationReceipt']['path']
+        receipt = json.loads(path.read_text())
+        receipt['identity']['toolIdentity'] = {'version': '0.11.3+codex-test', 'upstreamVersion': '0.11.3',
+            'adapter': {'active': True, 'version': 'codex-test', 'codeSha256': 'f' * 64}}
+        path.write_bytes(canonical(receipt))
+        tool['compilationReceipt']['sha256'] = digest(path.read_bytes())
+        tool['version'] = '0.11.3'
+        with self.assertRaisesRegex(ValueError, '适配工具实际版本'):
+            bound_slither._read_tool(tool, self.root)
+        self.assertEqual('UNKNOWN', self.verify(tool)['status'])
+
+    def test_顶层实际版本漂移也不能通过原件核验(self):
+        tool = self.analyze(); tool['version'] = 'caller-modified-version'
+        with self.assertRaisesRegex(ValueError, '工具实际版本'):
+            bound_slither._read_tool(tool, self.root)
+        self.assertEqual('UNKNOWN', self.verify(tool)['status'])
+
+    def test_重封存储布局不能覆盖实际工具重放(self):
+        tool = self.analyze()
+        path = self.root / tool['compilationReceipt']['path']
+        receipt = json.loads(path.read_text())
+        receipt['identity']['storageLayout'] = [{'declarationId': 11, 'slot': 99, 'offset': 0,
+                                                 'type': 'uint256', 'bindingStatus': 'BOUND'}]
+        path.write_bytes(canonical(receipt)); tool['compilationReceipt']['sha256'] = digest(path.read_bytes())
+        result = self.verify(tool)
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertEqual([], result['storageLayout'])
+        self.assertEqual(2, self.worker_runs)
+
+    def test_重放失败的实际日志引用返回给调用方(self):
+        tool = self.analyze()
+        with patch.object(bound_slither, '_resolve_python', return_value=Path(sys.executable).resolve()), patch.object(
+                bound_slither, '_invoke_worker', return_value={'engine': 'SLITHER', 'status': 'PROCESS_ERROR',
+                    'issues': [], 'diagnostics': {'workerDirectory': 'bound-failed-worker', 'files': []}}):
+            result = bound_slither.verify_bound_tool(tool, self.bundle, root=self.root)
+        self.assertEqual('UNKNOWN', result['status'])
+        self.assertEqual('bound-failed-worker', result['diagnostics']['workerDirectory'])
+
+
+class LegacyBoolAdapterTest(unittest.TestCase):
+    def output(self):
+        call = {'nodeType': 'FunctionCall', 'kind': 'functionCall', 'id': 8, 'src': '10:12:0',
+            'typeDescriptions': {'typeIdentifier': 't_bool'}, 'arguments': [],
+            'expression': {'nodeType': 'MemberAccess', 'memberName': 'call',
+                'typeDescriptions': {'typeIdentifier': 't_function_barecall_payable$__$returns$_t_bool_$'}}}
+        declaration = {'nodeType': 'VariableDeclaration', 'id': 7,
+                       'typeDescriptions': {'typeIdentifier': 't_bool'}}
+        statement = {'nodeType': 'VariableDeclarationStatement', 'id': 9, 'src': '1:23:0',
+                     'declarations': [declaration, None], 'assignments': [7], 'initialValue': call}
+        return {'sources': {'contracts/C.sol': {'id': 0, 'ast': {'nodeType': 'SourceUnit', 'nodes': [statement]}}}}
+
+    def test_只归一独立复制AST中的单boolCALL唯一尾部空分量(self):
+        original = self.output()
+        before = canonical(original)
+        adapted, receipt = bound_slither._adapt_compiler_output(original, '0.4.26')
+        self.assertEqual(before, canonical(original))
+        self.assertEqual(1, len(adapted['sources']['contracts/C.sol']['ast']['nodes'][0]['declarations']))
+        self.assertTrue(receipt['active'])
+        self.assertEqual(9, receipt['changes'][0]['statementNodeId'])
+        self.assertNotEqual(receipt['changes'][0]['originalNodeSha256'], receipt['changes'][0]['adaptedNodeSha256'])
+
+    def test_其他旧bool解构形状明确拒绝(self):
+        for declarations in [[None, self.output()['sources']['contracts/C.sol']['ast']['nodes'][0]['declarations'][0]],
+                             [self.output()['sources']['contracts/C.sol']['ast']['nodes'][0]['declarations'][0], None, None]]:
+            with self.subTest(length=len(declarations)):
+                output = self.output()
+                output['sources']['contracts/C.sol']['ast']['nodes'][0]['declarations'] = declarations
+                with self.assertRaises(ValueError):
+                    bound_slither._adapt_compiler_output(output, '0.4.26')
+
+    def test_现代CALL与其他solc版本不使用旧版适配(self):
+        for version in ['0.5.0', '0.8.15', '0.4.25']:
+            with self.subTest(version=version):
+                output = self.output()
+                adapted, receipt = bound_slither._adapt_compiler_output(output, version)
+                self.assertEqual(canonical(output), canonical(adapted))
+                self.assertFalse(receipt['active'])
+
 
 class _Record:
     def __init__(self, **values):
@@ -336,6 +451,19 @@ class SlithIRReferenceTest(unittest.TestCase):
         self.assertEqual('UNRESOLVED', writes[0]['bindingStatus'])
         self.assertIsNone(writes[0]['rootDeclarationId'])
 
+    def test_真实Slither赋值类型使用右侧跨度时绑定声明初始化表达式(self):
+        child = dict(self.bundle['declarations'][13], id=13)
+        self.bundle['nodes'][26] = {'id': 26, 'nodeType': 'VariableDeclarationStatement', 'src': '20:26:0',
+            'declarations': [child], 'assignments': [13], 'initialValue': self.bundle['nodes'][21]}
+        expression = type('AssignmentOperation', (), {})()
+        expression.source_mapping = self.location(30, 15)
+        self.operations[1].expression = expression
+        alias = next(item for item in self.result()['referenceBindings'] if item['irVariable'] == 'acc')
+        self.assertEqual(21, alias['astNodeId'])
+        self.bundle['nodes'][26]['initialValue'] = self.bundle['nodes'][23]
+        alias = next(item for item in self.result()['referenceBindings'] if item['irVariable'] == 'acc')
+        self.assertIsNone(alias['astNodeId'])
+
     def test_旧版Slither局部变量跨度覆盖整个声明语句时绑定唯一子声明(self):
         child = dict(self.bundle['declarations'][13], id=13)
         self.bundle['nodes'][26] = {'id': 26, 'nodeType': 'VariableDeclarationStatement', 'src': '20:26:0',
@@ -370,6 +498,55 @@ class SlithIRReferenceTest(unittest.TestCase):
         write = next(item for item in self.result()['stateAccesses'] if item['mode'] == 'WRITE')
         self.assertEqual('UNRESOLVED', write['bindingStatus'])
         self.assertEqual('UNRESOLVED', write['path'][0]['key']['bindingStatus'])
+
+
+class SlitherStorageLayoutTest(unittest.TestCase):
+    def setUp(self):
+        SlithIREffectTest.setUp(self)
+        self.bundle['targetContractId'] = 1
+        self.variable.name = 'Acc'; self.variable.type = 'uint256'
+        self.contract = self.slither.contracts[0]
+        self.contract.id = 1; self.contract.name = 'C'
+        self.contract.storage_variables_ordered = [self.variable]
+        self.contract.compilation_unit = _Record(storage_layout_of=lambda contract, variable: (2, 0))
+
+    location = SlithIREffectTest.location
+
+    def test_布局必须来自工具方法并绑定同一声明(self):
+        layout = bound_slither._storage_layout(self.slither, self.bundle)
+        self.assertEqual('BOUND', layout[0]['bindingStatus'])
+        self.assertEqual((11, 2, 0, 'uint256'), tuple(layout[0][key] for key in ('declarationId', 'slot', 'offset', 'type')))
+
+    def test_缺少实际布局不按声明顺序猜测slot(self):
+        def unavailable(*args): raise KeyError('layout unavailable')
+        self.contract.compilation_unit.storage_layout_of = unavailable
+        layout = bound_slither._storage_layout(self.slither, self.bundle)
+        self.assertEqual('UNRESOLVED', layout[0]['bindingStatus'])
+        self.assertIsNone(layout[0]['slot'])
+        self.assertIsNone(layout[0]['offset'])
+
+    def test_布局非法数值不能成为可核验的真实槽(self):
+        for values in [(True, 0), (2.0, 0), (-1, 0), (2, 32), (2, 0.0)]:
+            with self.subTest(values=values):
+                self.contract.compilation_unit.storage_layout_of = lambda *args: values
+                row = bound_slither._storage_layout(self.slither, self.bundle)[0]
+                self.assertEqual('UNRESOLVED', row['bindingStatus'])
+                self.assertIsNone(row['slot'])
+
+    def test_映射结构成员按实际类型大小绑定相对槽与偏移(self):
+        self.bundle['declarations'].update({
+            12: {'nodeType': 'VariableDeclaration', 'stateVariable': False, 'src': '20:3:0'},
+            13: {'nodeType': 'VariableDeclaration', 'stateVariable': False, 'src': '24:3:0'},
+            14: {'nodeType': 'VariableDeclaration', 'stateVariable': False, 'src': '28:3:0'}})
+        small = type('ElementaryType', (), {'storage_size': (16, False), '__str__': lambda self: 'uint128'})()
+        wide = type('ElementaryType', (), {'storage_size': (32, False), '__str__': lambda self: 'uint256'})()
+        fields = [_Record(name='a', source_mapping=self.location(20, 3), type=small),
+                  _Record(name='b', source_mapping=self.location(24, 3), type=small),
+                  _Record(name='balance', source_mapping=self.location(28, 3), type=wide)]
+        self.variable.type = _Record(type_to=_Record(type=_Record(elems_ordered=fields)))
+        members = bound_slither._storage_layout(self.slither, self.bundle)[0]['members']
+        self.assertEqual([(12, 0, 0), (13, 0, 16), (14, 1, 0)],
+                         [(m['memberDeclarationId'], m['relativeSlot'], m['offset']) for m in members])
 
 
 if __name__ == '__main__':

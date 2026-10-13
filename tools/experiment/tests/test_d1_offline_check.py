@@ -2,6 +2,7 @@
 import hashlib
 import json
 import copy
+import gzip
 import subprocess
 import sys
 import tempfile
@@ -241,6 +242,48 @@ class D1OfflineCheckTest(unittest.TestCase):
         atomic_json(self.batch_dir / 'events.jsonl', {'kind': 'PLAN', 'planHash': self.plan['planHash']})
         with self.assertRaisesRegex(ValueError, '启动事件'):
             run_check(self.batch_dir, self.store, self.root / 'output')
+
+    def test_无损归档保持逻辑路径与原始字节身份(self):
+        paths = [self.batch_dir / name for name in ('plan.json', 'samples.jsonl', 'events.jsonl')]
+        paths.append(self.store / self.snapshot / 'snapshot.json')
+        for path in paths:
+            path.with_name(path.name + '.gz').write_bytes(gzip.compress(path.read_bytes()))
+            path.unlink()
+        check = run_check(self.batch_dir, self.store, self.root / 'output')
+        self.assertTrue(check['samePool']['passed'])
+        self.assertTrue(check['provenance']['originalsUnchanged'])
+
+    def test_比较组从冻结计划读取不把Vanilla换成字段过滤(self):
+        rows, catalog = self.saved_inputs()
+        plan = copy.deepcopy(self.plan)
+        plan['strategies'] = ['VANILLA' if s == 'FIELD_FILTER' else s for s in plan['strategies']]
+        plan['planHash'] = fingerprint({k: v for k, v in plan.items() if k != 'planHash'})
+        for row in rows:
+            if row['strategy'] == 'FIELD_FILTER':
+                row['strategy'] = 'VANILLA'
+        check = inspect_batch(plan, rows, catalog)
+        self.assertTrue(check['samePool']['passed'])
+        self.assertEqual(set(plan['strategies']), set(check['metrics']))
+
+    def test_现行机制窗口必须按冻结全文重算而非历史前700字符(self):
+        from d1_consumption import CONSUMPTION_VERSION, pair_snippets
+        rows, catalog = self.saved_inputs()
+        payload = json.loads((self.store / self.snapshot / 'snapshot.json').read_text())
+        texts = {row['id']: row['text'] for row in payload['documents']}
+        for pair in ('explicit', 'soft'):
+            before, after = pair_snippets(texts[pair + '_before'], texts[pair + '_after'], 'REENTRANCY')
+            texts.update({pair + '_before': before, pair + '_after': after})
+        for row in rows:
+            row['retrieval']['recall'] = {'consumptionVersion': CONSUMPTION_VERSION}
+            for candidate in row['retrieval']['pool']['candidates']:
+                candidate['text'] = texts[candidate['chunkId']]
+            for selected in row['retrieval']['d1']['selected']:
+                selected['candidate']['text'] = texts[selected['candidate']['chunkId']]
+            row['poolHash'] = fingerprint(row['retrieval']['pool'])
+        (self.batch_dir / 'samples.jsonl').write_text('\n'.join(json.dumps(row) for row in rows) + '\n')
+        check = run_check(self.batch_dir, self.store, self.root / 'output')
+        self.assertTrue(check['snapshotBinding']['candidateTextsMatch'])
+        self.assertTrue(check['samePool']['passed'])
 
 
 if __name__ == '__main__':

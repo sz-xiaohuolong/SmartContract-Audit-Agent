@@ -8,6 +8,46 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HypothesisCliTest {
+    @Test void 旧请求与可选源码摘要风险目录均可离线重放且拒绝未知字段() throws Exception {
+        var directory = Files.createTempDirectory("hypothesis-catalog-test-");
+        try {
+            String content = "contract C { uint x; function f() public { x = 1; } }";
+            var source = directory.resolve("Contract.sol");
+            Files.writeString(source, content);
+            var catalog = RiskCatalogFixture.catalog(content);
+            RiskCatalogFixture.operation(catalog, content, "C", "f", "x = 1", "WRITE", "a".repeat(64));
+            var node = RiskCatalogFixture.MAPPER.createObjectNode();
+            node.put("schemaVersion", "1").put("modelSource", content).put("scope", "FULL")
+                .put("lineStart", 1).put("lineEnd", 1).put("mechanism", "ACCESS_CONTROL")
+                .put("function", "f").put("context", "").putArray("evidenceIds");
+            var raw = directory.resolve("raw.json");
+            Files.writeString(raw, "{\"schemaVersion\":\"2\",\"hypotheses\":[{\"vulnerabilityType\":\"ACCESS_CONTROL\","
+                + "\"contract\":\"C\",\"function\":\"f\",\"riskLine\":1,\"riskOperation\":\"WRITE\",\"reason\":\"待核查\",\"evidenceIds\":[]}]}");
+            var request = directory.resolve("request.json");
+            for (int variant = 0; variant < 4; variant++) {
+                var input = node.deepCopy();
+                if (variant == 1 || variant == 3) input.put("sourceHash", catalog.path("sourceHash").asText());
+                if (variant >= 2) input.set("riskCatalog", catalog);
+                Files.writeString(request, input.toString());
+                var output = new ByteArrayOutputStream();
+                int status = HypothesisCli.run(new String[]{"--source", source.toString(), "--request", request.toString(),
+                    "--replay-response", raw.toString()}, Map.of(), new PrintStream(output), System.err);
+                assertEquals(0, status, "请求变体 " + variant);
+                var result = RiskCatalogFixture.MAPPER.readTree(output.toString());
+                assertEquals(0, result.path("requestAttempts").asInt());
+                assertEquals(variant >= 2, result.path("hypotheses").get(0).has("riskFactId"));
+            }
+            node.put("不支持的字段", "不能忽略");
+            Files.writeString(request, node.toString());
+            assertEquals(2, HypothesisCli.run(new String[]{"--source", source.toString(), "--request", request.toString(),
+                "--replay-response", raw.toString()}, Map.of(), new PrintStream(new ByteArrayOutputStream()),
+                new PrintStream(new ByteArrayOutputStream())));
+        } finally {
+            try (var files = Files.walk(directory)) {
+                for (var path : files.sorted(java.util.Comparator.reverseOrder()).toList()) Files.deleteIfExists(path);
+            }
+        }
+    }
     @Test void separateCliValidatesScopeWithoutChangingLegacyEntry() throws Exception {
         var directory = Files.createTempDirectory("hypothesis-cli-test-");
         try {

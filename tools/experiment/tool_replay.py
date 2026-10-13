@@ -5,6 +5,7 @@ import subprocess
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
+from time import perf_counter
 
 from audit_workbench import assess, final_conclusion
 from compiler_facts import CompilationBindingError, extract_compiler_facts, load_bound_compilation
@@ -147,6 +148,7 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
     try:
         with (output / 'samples.jsonl').open('xb') as saved:
             for row in rows:
+                unit_started = perf_counter()
                 if _input_blocked(row, plan):
                     # 没有消费源码时不能编译或追加证据；原阻断、模型和用量原样保留。
                     derived = {**row, 'facts': {'status': 'SKIPPED', 'sourceHash': row['sourceHash'],
@@ -154,7 +156,7 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
                         'compiledFacts': None, 'compilerBinding': None, 'environment': None,
                         'pipelineVersion': 'r2-derived-v2', 'toolCacheHit': False, 'newModelRequests': 0,
                         'provenance': {**provenance, 'originalUnitHash': fingerprint(row), 'toolCacheKey': None},
-                        'researchEligible': False}
+                        'researchEligible': False, 'replayTiming': {'durationMs': (perf_counter() - unit_started) * 1000}}
                     saved.write(encode(derived) + b'\n'); saved.flush()
                     collected.append(derived)
                     manifest['completedUnits'] = len(collected)
@@ -169,6 +171,7 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
                 if configuration is not None:
                     target['_toolConfiguration'] = configuration
                 compilation_manifest, compiled_facts, binding, binding_error = None, None, None, None
+                binding_diagnostic = None
                 if compilation_resolver is not None:
                     try:
                         compilation_manifest = compilation_resolver(target)
@@ -186,8 +189,9 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
                                            ('sourceHash', 'environmentHash', 'manifestDigest', 'receiptDigest')}
                             compiled_facts = fact_sets.get('target', fact_sets)
                             binding = bindings.get('target', bindings)
-                    except (ValueError, OSError, subprocess.TimeoutExpired):
+                    except (ValueError, OSError, subprocess.TimeoutExpired) as error:
                         binding_error = 'COMPILATION_BINDING_FAILED'
+                        binding_diagnostic = str(error)
                 key = fingerprint({'sourceHash': target['sourceHash'], 'environmentHash': environment['configHash'],
                                    'codeIdentityHash': identity_hash, 'compilerBinding': binding,
                                    'compilationError': binding_error})
@@ -222,11 +226,14 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
                           or any(t.get('status') != 'OK' for t in tools))
                 derived = {**row, 'tools': tools, 'd2': d2, 'facts': facts,
                            'compiledFacts': compiled_facts, 'compilerBinding': binding,
+                           'compilationManifest': compilation_manifest, 'compilationError': binding_error,
+                           'compilationDiagnostic': binding_diagnostic,
                            'pipelineVersion': 'r2-derived-v2', 'pipelineStatus': 'FAILED' if failed else 'COMPLETED',
                            'conclusion': final_conclusion(row['model'], d2, failed, 'real'),
                            'environment': environment, 'toolCacheHit': cached, 'newModelRequests': 0,
-                           'provenance': {**provenance, 'originalUnitHash': fingerprint(row), 'toolCacheKey': key},
-                           'researchEligible': False}
+                           'provenance': {**provenance, 'originalUnitHash': fingerprint(row), 'toolCacheKey': key,
+                                          'originalCompilationError': row.get('compilationError')},
+                           'researchEligible': False, 'replayTiming': {'durationMs': (perf_counter() - unit_started) * 1000}}
                 saved.write(encode(derived) + b'\n'); saved.flush()
                 collected.append(derived)
                 manifest['completedUnits'] = len(collected)
@@ -272,6 +279,13 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
             'reductionPercentagePoints': (before_unknown - after_unknown) * 100 / denominator if denominator else None}
         summary['transitions'] = dict(Counter(row['before'] + '→' + row['after'] for row in comparisons))
         summary['unknownReasons'] = dict(Counter(row['reason'] for row in comparisons if row['after'] == 'UNKNOWN'))
+        from four_arm_report import compare_arms
+        four_arm, arm_rows = compare_arms(rows, collected, {**plan, 'batchId': provenance['originalBatchId']})
+        atomic_json(output / 'four-arm-summary.json', four_arm)
+        with (output / 'four-arm-results.jsonl').open('xb') as arm_file:
+            for arm_row in arm_rows:
+                arm_file.write(encode(arm_row) + b'\n')
+        summary['fourArmReport'] = 'four-arm-summary.json'
         with (output / 'assessments.jsonl').open('xb') as assessment_file:
             for comparison in comparisons:
                 assessment_file.write(encode(comparison) + b'\n')
@@ -284,12 +298,15 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
                   f"保存假设分母 {denominator}；UNKNOWN 从 {before_unknown} 降至 {after_unknown}。"
                   f"下降百分点：{summary['unknownComparison']['reductionPercentagePoints']}。\n\n"
                   f"逐假设迁移：{summary['transitions']}。完整对照与剩余未知原因见 `assessments.jsonl`。\n\n"
+                  '四臂完整决策见 `four-arm-results.jsonl`，统计、逐候选稳定ID／变化与计时见 `four-arm-summary.json`。'
+                  '候选独立真值尚未审核，混淆矩阵保持null；弱基线的接受／拒绝不代表形式证明。\n\n'
                   '原模型输出与usage保留，原批次samples摘要封口前再次核对。'
                   '本报告仅评价保存候选的核验，不是清理输入后的模型发现实验；研究资格未验证。\n')
         (output / 'REPORT.md').write_text(report, encoding='utf-8')
         manifest.update(status='COMPLETED', finishedAt=datetime.now(timezone.utc).isoformat(),
                         outputHashes={name: _sha((output / name).read_bytes()) for name in
-                                      ('samples.jsonl', 'assessments.jsonl', 'summary.json', 'REPORT.md')})
+                                      ('samples.jsonl', 'assessments.jsonl', 'summary.json', 'REPORT.md',
+                                       'four-arm-summary.json', 'four-arm-results.jsonl')})
         atomic_json(output / 'manifest.json', manifest)
         return summary
     except BaseException:

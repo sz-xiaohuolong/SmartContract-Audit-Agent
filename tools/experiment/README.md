@@ -1,5 +1,25 @@
 # 数据与实验工具（S1a / S1b）
 
+## 阶段1～5零模型复现入口
+
+当前工程进度、最终数字与未达事项见 [2026-10-13离线报告](../../docs/vibe/releases/R2-20261010/experiments/2026-10-13_STAGE1_5_OFFLINE_REPORT.md)。历史原件须按 [原件说明](../../research-artifacts/README.md) 恢复；Git 不包含全部原始响应、固定编译器和收据，单独克隆仓库不足以复现历史实验。
+
+```bash
+mvn clean verify
+PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v
+java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help
+PYTHONPATH=tools/experiment python3 tools/experiment/tool_replay.py --compiled \
+  --original-run research-artifacts/runs/benchmarks/119b4862f8a14818b62848ce709c3ee6 \
+  --output-run research-artifacts/runs/derived/$(python3 -c 'import uuid; print(uuid.uuid4().hex)')
+python3 tools/experiment/local_ui.py --port 8773
+```
+
+重放目标目录必须不存在，批次编号采用32位小写十六进制。重放读取保存候选及usage，重新执行本机编译与Slither；`four-arm-summary.json` 和 `four-arm-results.jsonl` 保存四臂统计与逐候选结果。没有独立候选真值时混淆矩阵为null，失败与缺失保持UNKNOWN。两历史批次的候选账本在 `data/audit/r2/research-review/20261013/`。
+
+有限EVM见证只在 `config/tools.local.properties` 显式启用，配置格式见 `config/tools.example.properties`。Anvil必须支持 `--steps-tracing`；以二进制SHA-256绑定anvil与cast，固定Istanbul、独立31337链和时间初态。只使用原编译字节码、正常业务调用与合法时间推进；不直接改写存储、余额或代码。双次独立执行、正常返回、实际资金建态和同资源源映射都匹配后才接纳有限反例；不能用有限执行反驳候选或证明整合约安全。
+
+打开 `http://127.0.0.1:8773/agent.html`，选择SimpleDAO并点击“离线演练”，查看六项义务及原行号；运行历史中可展开派生报告并下载四臂JSON。该路径新增模型请求为0，缺失usage继续显示null。
+
 R1-S8 的 742 条待审向量可用 `candidate_admission_queue.py` 生成逐项证据缺口清单。它只写审核队列，不建立或激活正式知识快照；本机命令与准入状态见 [R1-S8 阶段验证](../../docs/vibe/releases/R1/VERIFICATION.md#r1-model-comparison)。
 
 本地可视化验收：先运行 `mvn clean verify` 生成 Java 检索 JAR，再运行 `python3 tools/experiment/local_ui.py --port 8765`，打开 `http://127.0.0.1:8765/`。前后端由同一服务提供，仅运行固定合成样例，不读取模型密钥。界面、历史结果与研究限制见 [本地页面说明](../../docs/vibe/releases/R1/attachments/LOCAL_UI.md)。

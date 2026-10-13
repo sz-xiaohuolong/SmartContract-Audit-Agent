@@ -23,7 +23,17 @@ def _canonical(value):
 
 
 def prepare_compilation(root, target):
-    """不下载编译器，不按真值选合约，不改变原件或知识快照。"""
+    """按保存候选绑定合约；不下载编译器，不改变原件或知识快照。"""
+    return _prepare_compilation(root, target, discovery=False)
+
+
+def prepare_discovery_compilation(root, target):
+    """仅从真实编译 AST 选择目录入口；不消费候选、标签、漏洞行或目标合约猜测。"""
+    return _prepare_compilation(root, target, discovery=True)
+
+
+def _prepare_compilation(root, target, *, discovery):
+    """候选核验与发现共用原字节编译、收据和重新编译检查。"""
     root = Path(root).resolve()
     source = target.get('fullSource', target.get('source'))
     if not isinstance(source, str) or not source.strip():
@@ -40,11 +50,11 @@ def prepare_compilation(root, target):
     template = target.get('compilerTemplate')
     if template is None and any(token[0] == 'import' for token in tokens):
         raise ValueError('输入依赖闭包缺失；请使用登记的完整编译清单')
-    contracts = target.get('candidateContracts', [])
-    contract = target.get('contract')
+    contracts = [] if discovery else target.get('candidateContracts', [])
+    contract = None if discovery else target.get('contract')
     if contract is None and len(contracts) == 1:
         contract = contracts[0]
-    if not isinstance(contract, str) or not contract:
+    if not discovery and (not isinstance(contract, str) or not contract):
         raise ValueError('候选未唯一绑定目标合约')
     if len(set(contracts)) > 1:
         raise ValueError('多个候选合约须分别绑定编译清单')
@@ -99,10 +109,31 @@ def prepare_compilation(root, target):
     (directory / 'output.json').write_bytes(run.stdout)
     if _sha(binary.read_bytes()) != binary_hash:
         raise ValueError('编译期间固定二进制变化')
-    output = json.loads(run.stdout)
-    if run.returncode != 0 or not isinstance(output, dict) or any(
-            error.get('severity') == 'error' for error in output.get('errors', [])):
+    if run.returncode != 0:
+        diagnostic = run.stderr.decode('utf-8', errors='replace').lower()
+        if '--standard-json' in diagnostic and any(word in diagnostic for word in
+                ('unrecognised', 'unrecognized', 'unknown option', 'invalid option')):
+            raise ValueError('固定编译器不支持 standard-json 协议；原始输出已保留，不能更换版本或改写原输入')
+        raise ValueError('固定编译器执行失败，原始输出已保留')
+    try:
+        output = json.loads(run.stdout)
+    except (ValueError, UnicodeError) as error:
+        raise ValueError('固定编译器输出不是有效 JSON，原始输出已保留') from error
+    if not isinstance(output, dict) or any(
+            not isinstance(error, dict) or error.get('severity') == 'error' for error in output.get('errors', [])):
         raise ValueError('固定编译器执行或源码编译失败，原始输出已保留')
+    if discovery:
+        # 只选择可由真实 AST 与 ABI 共同绑定的主源码合约作为入口。
+        # 风险目录随后枚举完整闭包；此排序不表示风险高低或标签选择。
+        ast = output.get('sources', {}).get(unit, {}).get('ast', {})
+        artifacts = output.get('contracts', {}).get(unit, {})
+        available = sorted(node['name'] for node in ast.get('nodes', [])
+            if node.get('nodeType') == 'ContractDefinition' and isinstance(node.get('name'), str)
+            and isinstance(artifacts.get(node['name']), dict)
+            and isinstance(artifacts[node['name']].get('abi'), list))
+        if not available:
+            raise ValueError('主源码没有可由编译 AST 与 ABI 绑定的合约，原始输出已保留')
+        contract = available[0]
     relative = str(directory.relative_to(root))
     receipt = {'status': 'COMPILED', 'mainSource': unit, 'environment': relative,
                'sourceUnits': source_receipts,

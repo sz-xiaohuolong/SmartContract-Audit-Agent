@@ -1,5 +1,7 @@
 """运行时编译接缝只用本地子进程夹具，缺闭包不得回落为安全。"""
 import hashlib
+import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -18,6 +20,53 @@ class CompilationRuntimeTest(unittest.TestCase):
         source = self.fixture.source
         return {'fullSource': source, 'sourceHash': hashlib.sha256(source.encode()).hexdigest(),
                 'candidateContracts': ['C']}
+
+    def compiler_environment(self, output=None, error=None):
+        if output is not None:
+            (self.fixture.root / 'output.json').write_text(json.dumps(output))
+        body = ('sys.stderr.write(' + repr(error) + '); sys.exit(1)' if error else
+                'sys.stdout.buffer.write((Path(__file__).parent/"output.json").read_bytes())')
+        self.fixture.binary.write_text('#!/usr/bin/env python3\nimport sys\nfrom pathlib import Path\n'
+            'if sys.argv[1:] == ["--version"]: print("solc fixture\\nVersion: 0.8.15+fixture")\n'
+            'else:\n    sys.stdin.buffer.read()\n    ' + body + '\n')
+        return {'status': 'OK', 'compiler': {'path': str(self.fixture.binary),
+            'sha256': hashlib.sha256(self.fixture.binary.read_bytes()).hexdigest()}}
+
+    def test_发现预编译不消费候选合约或真值(self):
+        from compilation_runtime import prepare_discovery_compilation
+        target = {**self.target(), 'candidateContracts': ['不存在'], 'contract': '不存在',
+                  'groundTruth': {'contract': '不存在'}, 'vulnerableLines': [999]}
+        before = copy.deepcopy(target)
+        with patch('compilation_runtime.resolve_environment', return_value=self.compiler_environment()):
+            manifest = prepare_discovery_compilation(self.fixture.root, target)
+        self.assertEqual('C', manifest['targetContract'])
+        self.assertEqual(before, target)
+        from compiler_facts import load_bound_compilation
+        self.assertEqual('RECOMPILED_MATCH', load_bound_compilation(manifest, self.fixture.root)['verificationStatus'])
+
+    def test_发现预编译缺可绑定主源码合约不能返回空成功(self):
+        from compilation_runtime import prepare_discovery_compilation
+        output = copy.deepcopy(self.fixture.output)
+        output['contracts']['contracts/C.sol'] = {}
+        with patch('compilation_runtime.resolve_environment', return_value=self.compiler_environment(output)):
+            with self.assertRaisesRegex(ValueError, '主源码.*合约'):
+                prepare_discovery_compilation(self.fixture.root, self.target())
+
+    def test_旧编译器不支持协议须明确诊断并保留原输出(self):
+        from compilation_runtime import prepare_compilation
+        message = 'unrecognised option --standard-json\n'
+        with patch('compilation_runtime.resolve_environment', return_value=self.compiler_environment(error=message)):
+            with self.assertRaisesRegex(ValueError, '不支持.*standard-json'):
+                prepare_compilation(self.fixture.root, self.target())
+        logs = list((self.fixture.root / 'research-artifacts/receipts/compilations').glob('*/compiler-stderr.log'))
+        self.assertEqual(1, len(logs))
+        self.assertEqual(message, logs[0].read_text())
+
+    def test_错误编译输出须保留明确失败而非JSON解析异常(self):
+        from compilation_runtime import prepare_compilation
+        with patch('compilation_runtime.resolve_environment', return_value=self.compiler_environment(error='compiler crashed')):
+            with self.assertRaisesRegex(ValueError, '固定编译器执行失败'):
+                prepare_compilation(self.fixture.root, self.target())
 
     def test_实际标准输入输出生成可重新核验收据(self):
         from compilation_runtime import prepare_compilation

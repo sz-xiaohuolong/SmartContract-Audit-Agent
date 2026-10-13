@@ -14,8 +14,11 @@
 | `compiled_d2.py` | 从类型化 AST 展开内部调用和修饰器，按实际 CFG 支配、声明／key／字段和状态版本计算六义务；局部路径、条件前提与整候选缺口分别保存 |
 | `bound_slither.py` / `compilation_runtime.py` | 生成固定编译与官方 Slither 独立收据，重新核验源码闭包、设置、AST 和产物；单文件自动编译，含导入须有完整模板 |
 | `candidate_proofs.py` / `reentrancy_proofs.py` / `access_call_proofs.py` | 有限权限委派与全入口保护闭包；CEI／统一锁覆盖、同次入账状态对账与正常退出反例；终止调用只给真实初态的有限访问义务反例，缺口保持未知 |
+| `evm_witness.py` | 在固定原字节码与双工具收据上，执行两次独立本机正常业务序列；核对合法资金建态、实际源映射／存储槽／权限消费者和持久提交，仅提供有限属性反例 |
+| `research_review.py` / `d1_research_check.py` | 原候选稳定ID、双批次账本与来源缺口；D1消费／差分窗口及完整提示预算组件回读，未核实token数与独立真值保持空缺 |
+| `four_arm_report.py` | 固定候选的无验证／guard名称／行号／完整D2四臂结果、迁移、耗时与门槛检查；缺独立候选真值时混淆矩阵为null |
 | `audit_runner.py` / `tool_replay.py` | 保存候选的零模型核验与只读派生；逐假设未知前后率、原件和实现身份封口 |
-| `audit_workbench.py` / `local_ui.py` | 预览摘要、一次性运行票据、单写者锁、六阶段事件、报告与只读历史；`workbench.html` 展示过程，`agent.html` 保留批量比较 |
+| `audit_workbench.py` / `local_ui.py` | 预览摘要、一次性运行票据、单写者锁、六阶段事件、报告与只读历史；`agent.html` 提供浅色三栏工作台、批量比较和四臂派生下载 |
 
 工作台先绑定源码、范围、池、检索上下文和配置摘要，再执行模型及工具。真实配置与环境凭证捕获后只在内存及权限 600 的临时文件消费，执行结束清理；报告保存摘要，不保存凭证。历史摘要校验失败拒绝回放，服务重启后未封口运行显示 INTERRUPTED，不自动重发模型。新报告 schemaVersion=2，旧历史只读。
 
@@ -24,6 +27,10 @@
 2026-10-12 AST 语义升级采用共享 `risk_binding.py`：精确行、同语句真实 UTF-8 跨度、±2 行窗口按顺序选择唯一风险操作，保留原候选行、实际绑定行与事实／跨度约束。重入结构体 storage 指针按编译声明解析根、key、字段；只有独立工具收据重放 MATCH 后，顶层才向证明器及展示图传递 SlithIR 引用链交叉核验。多定义、内存副本、重赋值及身份冲突保留缺口。`now` 与 `block.timestamp` 共享同次调用的非负 uint256 时间，`block.number` 单独求值；源码常量及邻界进入有预算的有限搜索。
 
 已绑定、无转账的只读查询或辅助日志可以进入带正常返回前提的 EXIT 见证；查询结果尚未求值或后续必然回滚时不生成见证。非静态辅助调用另需无回调修改本合约存储的前提，旧编译器 view 调用以已绑定 IR 的实际 CALL 语义为准。这些前提没有实现／地址与实际正常返回证据时，顶层保留 CONDITIONAL 路径及 UNKNOWN 裁决；不按 `Log`／`AddMessage` 名称认定良性。
+
+2026-10-13 接入显式启用的本机有限EVM提供器：原编译／独立SlithIR收据MATCH、候选及资源唯一绑定后，才对仍未知的支持范围执行正常业务见证。使用独立回环Anvil、固定Istanbul与二进制摘要，不fork外部链、不直接设置storage／balance／code；业务交易直接消费指定的区块时间，两次部署、指令轨迹、存储与正常提交必须相同。辅助调用须绑定实际部署实现；权限写入须实际改变紧前权限，并由同权限槽保护的敏感入口读取和消费。有限执行不能将`complete=false`改为true或产生完整REFUTED，超范围和失败继续UNKNOWN。详见[本轮工程报告](releases/R2-20261010/experiments/2026-10-13_STAGE1_5_OFFLINE_REPORT.md)。
+
+Java提示模板`hypotheses-v4-diff-guidance`把修复差分作为条件、资源和顺序对比的引导，待审源码保持独立。最终消费回执分列system、源码、上下文、其他指令、消息封装和输出的预算；字节摘要可验证，tokenizer未核实的精确token数保持null，不能以字节公平替代token公平。
 
 本机登记目标可携带 `compilerManifest`；工作台预览保存 `compiledFacts` 与计划中的 `compilerBinding`，执行前再核验，漂移在模型之前终止。批量运行也在模型之前核验编译绑定，D2 公共入口随后自行重载。消费的清理源码必须与编译目标字节一致；不能把原件 AST 直接套在不同摘要的清理输入上。历史报告只读，不因接入重新发送模型请求。S11 的路径 CLI 与本机原件恢复要求见[工具说明](../../tools/experiment/README.md#r2-s11真实编译事实与有限路径)。
 

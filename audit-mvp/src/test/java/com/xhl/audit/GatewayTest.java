@@ -146,6 +146,13 @@ class GatewayTest {
             permanent.set(false); calls.set(-1);
             assertThrows(RuntimeException.class, () -> gateway.complete("ark", "系统", "测试"));
             assertEquals(1, calls.get(), "连续两次 429 后必须结束，不能无限重试");
+            props.setProperty("providers.ark.max-retries", "0");
+            calls.set(0);
+            var once = new SpringAiGateway(new ProviderRegistry(props, Map.of()));
+            var failure = assertThrows(SpringAiGateway.CallFailure.class,
+                () -> once.complete("ark", "系统", "单次批量预算"));
+            assertEquals(1, calls.get(), "显式零重试预算只允许一次HTTP尝试");
+            assertEquals(1, failure.attempts);
         } finally { server.stop(0); }
     }
 

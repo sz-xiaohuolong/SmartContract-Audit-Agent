@@ -20,7 +20,22 @@ public final class SpringAiGateway implements ModelGateway {
     public GatewayReply completeHypotheses(String provider, String system, String user) {
         return completeWithSchema(provider, system, user, true);
     }
+    static String hypothesisSchema() {
+        return """
+            {"type":"object","properties":{
+            "schemaVersion":{"type":"string","enum":["2"]},
+            "hypotheses":{"type":"array","maxItems":3,"items":{"type":"object","properties":{
+            "vulnerabilityType":{"type":"string","enum":["REENTRANCY","ACCESS_CONTROL"]},
+            "contract":{"type":"string"},"function":{"type":"string"},
+            "riskLine":{"type":"integer"},"riskOperation":{"type":"string","enum":["CALL","WRITE"]},
+            "reason":{"type":"string"},"evidenceIds":{"type":"array","items":{"type":"string"}}},
+            "required":["vulnerabilityType","contract","function","riskLine","riskOperation","reason","evidenceIds"],
+            "additionalProperties":false}}},
+            "required":["schemaVersion","hypotheses"],"additionalProperties":false}
+            """;
+    }
     private GatewayReply completeWithSchema(String provider, String system, String user, boolean hypotheses) {
+        int maxRetries = registry.resolve(provider).maxRetries();
         long started = System.nanoTime();
         for (int attempt = 0; ; attempt++) {
             try {
@@ -28,7 +43,7 @@ public final class SpringAiGateway implements ModelGateway {
                 return new GatewayReply(reply.content(), reply.provider(), reply.model(), reply.inputTokens(),
                     reply.outputTokens(), (System.nanoTime() - started) / 1_000_000, reply.finishReason(), attempt + 1);
             } catch (RuntimeException error) {
-                if (attempt >= 1) throw new CallFailure(error, attempt + 1);
+                if (attempt >= maxRetries) throw new CallFailure(error, attempt + 1);
                 if (!transientFailure(error)) throw error;
                 // 仅允许一次退避重试；SDK 自带重试关闭，避免请求次数叠加。
                 try { Thread.sleep(1000L << attempt); }
@@ -71,18 +86,7 @@ public final class SpringAiGateway implements ModelGateway {
             if (!deepseekV4) throw new IllegalArgumentException("当前模型未启用严格结构化输出");
             options.responseFormat(OpenAiChatModel.ResponseFormat.builder()
                 .type(OpenAiChatModel.ResponseFormat.Type.JSON_SCHEMA)
-                .jsonSchema(hypotheses ? """
-                    {"type":"object","properties":{
-                    "schemaVersion":{"type":"string","enum":["2"]},
-                    "hypotheses":{"type":"array","maxItems":3,"items":{"type":"object","properties":{
-                    "vulnerabilityType":{"type":"string","enum":["REENTRANCY","ACCESS_CONTROL"]},
-                    "contract":{"type":"string"},"function":{"type":"string"},
-                    "riskLine":{"type":"integer"},"riskOperation":{"type":"string"},
-                    "reason":{"type":"string"},"evidenceIds":{"type":"array","items":{"type":"string"}}},
-                    "required":["vulnerabilityType","contract","function","riskLine","riskOperation","reason","evidenceIds"],
-                    "additionalProperties":false}}},
-                    "required":["schemaVersion","hypotheses"],"additionalProperties":false}
-                    """ : """
+                .jsonSchema(hypotheses ? hypothesisSchema() : """
                     {"type":"object","properties":{
                     "hasVulnerability":{"type":"boolean"},
                     "vulnerabilityType":{"type":"string"},

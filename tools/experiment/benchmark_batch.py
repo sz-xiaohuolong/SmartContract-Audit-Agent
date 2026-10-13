@@ -29,8 +29,9 @@ def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None,
             'labels': labels, 'strategies': strategies, 'mode': mode,
             'snapshotId': snapshot_id, 'embeddingProfile': embedding_profile,
             'provider': provider if mode == 'real' else None,
-            'requestBounds': {'maxRequests': 2 * runnable_units if mode == 'real' else 0,
-                              'maxOutputTokens': 2 * runnable_units * EXPERIMENT_MAX_OUTPUT_TOKENS if mode == 'real' else 0},
+            'requestBounds': {'maxRequests': runnable_units if mode == 'real' else 0,
+                              'retries': 0,
+                              'maxOutputTokens': runnable_units * EXPERIMENT_MAX_OUTPUT_TOKENS if mode == 'real' else 0},
             'researchEligible': False, 'metricTier': 'DATASET_LABEL_EXPLORATORY'}
     if include_blocked:
         plan['inputEligibility'] = {key: {'runnable': bool(indexed[key].get('runnable')),

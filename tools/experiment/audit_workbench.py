@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from time import monotonic
 
-from audit_run import _event, _model_error, tool_runner
+from audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS, _event, _model_error, tool_runner
 from audit_target import MAX_MODEL_BYTES, hypothesis_matches_target, normalize_target, pasted_target
 from compiler_facts import extract_compiler_facts, load_bound_compilation
 from d2_verify import evaluate
@@ -113,8 +113,8 @@ class AuditWorkbench:
             return None
         from mvp_runtime import _config_values
         values = _config_values(self.root / 'config/providers.local.properties')
-        if int(values.get('providers.ark.max-output-tokens', '2048')) > 2048:
-            raise ValueError('真实模型输出上限超过 2048')
+        if int(values.get('providers.ark.max-output-tokens', '2048')) > EXPERIMENT_MAX_OUTPUT_TOKENS:
+            raise ValueError('真实模型输出上限超过实验预算')
         return {'model': values['providers.ark.model'], 'endpoint': values['providers.ark.base-url']}
 
     def _capture_configuration(self, mode):
@@ -129,8 +129,8 @@ class AuditWorkbench:
         from mvp_runtime import _configuration_values, _properties_text
         environment = dict(os.environ)
         provider = _configuration_values(captured['providers.local.properties'], environment)
-        if int(provider.get('providers.ark.max-output-tokens', '2048')) > 2048:
-            raise ValueError('真实模型输出上限超过 2048')
+        if int(provider.get('providers.ark.max-output-tokens', '2048')) > EXPERIMENT_MAX_OUTPUT_TOKENS:
+            raise ValueError('真实模型输出上限超过实验预算')
         credential = provider.get('providers.ark.api-key') or environment.get(provider.get('providers.ark.api-key-env', ''), '')
         digests['credentialHash'] = hashlib.sha256(credential.encode('utf-8')).hexdigest()
         # 只消费校验后的属性，原文本中的分隔与续行不能影响 Java 的读取。
@@ -145,7 +145,7 @@ class AuditWorkbench:
         if profile not in ('nomic', 'bge'):
             raise ValueError('嵌入模型未登记')
         state = {'ready': False, 'embeddingProfile': profile, 'researchEligible': False,
-                 'maxRequests': 2, 'maxOutputTokens': 2048, 'contextBytes': CONTEXT_BYTES}
+                 'maxRequests': 1, 'maxOutputTokens': EXPERIMENT_MAX_OUTPUT_TOKENS, 'contextBytes': CONTEXT_BYTES}
         try:
             provider = self._provider('real')
             state.update(realReady=True, model=provider['model'])
@@ -190,6 +190,8 @@ class AuditWorkbench:
         started = monotonic()
         runtime = self.runtime_factory(profile)
         view = select_strategy(runtime.preview(target), strategy)
+        from risk_catalog import prepare_model_context
+        prepare_model_context(self.root, target, view, mode)
         view['modelSourceHash'] = target['modelSourceHash']
         if view.get('sourceHash') != target['fullSourceHash']:
             raise ValueError('检索源码摘要与目标不一致')
@@ -218,8 +220,8 @@ class AuditWorkbench:
                 'poolHash': fingerprint(view['pool']), 'snapshotId': view['snapshotId'],
                 'embedding': runtime.snapshot['embedding'], 'maxContextBytes': CONTEXT_BYTES,
                 'configurationHash': configuration['hash'],
-                'contextBytes': len(context.encode('utf-8')), 'maxOutputTokens': 2048,
-                'maxRequests': 2 if mode == 'real' else 0, 'provider': configuration['provider'], 'researchEligible': False}
+                'contextBytes': len(context.encode('utf-8')), 'maxOutputTokens': EXPERIMENT_MAX_OUTPUT_TOKENS,
+                'maxRequests': 1 if mode == 'real' else 0, 'provider': configuration['provider'], 'researchEligible': False}
         if compiler_binding is not None:
             plan.update(factsProvider='solc-standard-json', compilerBinding=compiler_binding)
         return {'target': target, 'retrieval': view, 'plan': plan, 'planHash': fingerprint(plan),

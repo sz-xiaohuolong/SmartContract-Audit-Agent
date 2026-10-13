@@ -55,8 +55,9 @@ class BenchmarkBatchTest(unittest.TestCase):
     def test_无检索和两种检索策略计划明确区分且共享请求边界(self):
         plan = make_plan(['a'], ['VANILLA', 'DENSE', 'D1'], 'real', self.targets, 'f' * 64)
         self.assertEqual(['VANILLA', 'DENSE', 'D1'], plan['strategies'])
-        self.assertEqual(6, plan['requestBounds']['maxRequests'])
-        self.assertEqual(6 * EXPERIMENT_MAX_OUTPUT_TOKENS, plan['requestBounds']['maxOutputTokens'])
+        self.assertEqual(3, plan['requestBounds']['maxRequests'])
+        self.assertEqual(0, plan['requestBounds']['retries'])
+        self.assertEqual(3 * EXPERIMENT_MAX_OUTPUT_TOKENS, plan['requestBounds']['maxOutputTokens'])
         legacy = make_plan(['a'], ['FIELD_FILTER'], 'offline', self.targets, 'f' * 64)
         self.assertEqual(['FIELD_FILTER'], legacy['strategies'])
 
@@ -66,7 +67,7 @@ class BenchmarkBatchTest(unittest.TestCase):
             make_plan(['a', 'b'], ['VANILLA', 'D1'], 'real', self.targets, 'f' * 64)
         plan = make_plan(['a', 'b'], ['VANILLA', 'D1'], 'real', self.targets, 'f' * 64,
                          include_blocked=True)
-        self.assertEqual(4, plan['requestBounds']['maxRequests'])
+        self.assertEqual(2, plan['requestBounds']['maxRequests'])
         calls = []
         def runner(sample, strategy, mode):
             calls.append(sample)
@@ -86,7 +87,7 @@ class BenchmarkBatchTest(unittest.TestCase):
     def test_纯阻断计划没有真实请求预算(self):
         self.targets[0].update(runnable=False, inputReason='全文超出预算')
         plan = make_plan(['a'], ['VANILLA'], 'real', self.targets, 'f' * 64, include_blocked=True)
-        self.assertEqual({'maxRequests': 0, 'maxOutputTokens': 0}, plan['requestBounds'])
+        self.assertEqual({'maxRequests': 0, 'maxOutputTokens': 0, 'retries': 0}, plan['requestBounds'])
 
     def test_零精确率和零召回率对应零_f1(self):
         plan = make_plan(['a', 'c'], ['D1'], 'real', self.targets, 'f' * 64)

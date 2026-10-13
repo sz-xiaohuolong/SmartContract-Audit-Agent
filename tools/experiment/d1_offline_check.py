@@ -9,10 +9,38 @@ from pathlib import Path
 
 from evaluation_input import clean_evaluation_source
 from snapshots import verify_snapshot
-from storage import decode, encode, fingerprint
+from storage import decode, encode, fingerprint, read_artifact
+from d1_consumption import CONSUMPTION_VERSION, UNPAIRABLE, pair_snippets
 
 
-STRATEGIES = ('DENSE', 'FIELD_FILTER', 'D1')
+def expected_candidate_texts(snapshot, catalog, consumption_version=None):
+    """按保存的消费版本回读冻结全文；未知版本拒绝猜测旧规则。"""
+    documents = {row['id']: row['text'] for row in snapshot['documents']}
+    if set(catalog['cases']) != set(documents):
+        raise ValueError('候选登记必须精确覆盖冻结知识文档')
+    auto = any(row['review_status'] == 'AUTO_LABELED' for row in snapshot['manifest']['samples'])
+    if not auto:
+        return documents
+    if consumption_version is None:
+        return {key: value[:700] for key, value in documents.items()}
+    if consumption_version != CONSUMPTION_VERSION:
+        raise ValueError('无法核验未知的机制窗口消费版本')
+    pairs, result = defaultdict(list), {}
+    for key, metadata in catalog['cases'].items():
+        pairs[metadata['pairId']].append((key, metadata))
+    for members in pairs.values():
+        before = [key for key, row in members if row['role'] == 'VULNERABLE']
+        after = [key for key, row in members if row['role'] == 'DEFENSE']
+        if len(members) == 2 and len(before) == len(after) == 1:
+            left, right = before[0], after[0]
+            if catalog['cases'][left]['mechanism'] == catalog['cases'][right]['mechanism']:
+                result[left], result[right] = pair_snippets(documents[left], documents[right],
+                                                          catalog['cases'][left]['mechanism'])
+            else:
+                result.update({key: documents[key][:700] for key, _ in members})
+        else:
+            result.update({key: UNPAIRABLE + '\n' + documents[key][:700] for key, _ in members})
+    return result
 
 
 def pair_summary(cases):
@@ -147,6 +175,10 @@ def inspect_batch(plan, rows, catalog):
         raise ValueError('保存计划摘要不一致')
     if catalog.get('snapshotId') != plan['snapshotId']:
         raise ValueError('候选登记与批次快照不一致')
+    strategies = plan.get('strategies')
+    if (not isinstance(strategies, list) or not strategies or len(set(strategies)) != len(strategies)
+            or any(not isinstance(value, str) for value in strategies)):
+        raise ValueError('冻结策略列表为空或重复')
     catalog_pairs = pair_summary(catalog['cases'])
     by_sample, issues = defaultdict(list), []
     seen = set()
@@ -188,11 +220,11 @@ def inspect_batch(plan, rows, catalog):
     comparisons = []
     for sample in plan['sampleIds']:
         saved = by_sample[sample]
-        passed = len(saved) == len(STRATEGIES) and {strategy for strategy, _ in saved} == set(STRATEGIES) and len({digest for _, digest in saved}) == 1
+        passed = len(saved) == len(strategies) and {strategy for strategy, _ in saved} == set(strategies) and len({digest for _, digest in saved}) == 1
         comparisons.append({'sampleId': sample, 'passed': passed, 'savedStrategies': [strategy for strategy, _ in saved],
                             'poolHashes': sorted({digest for _, digest in saved})})
     metrics = {}
-    for strategy in STRATEGIES:
+    for strategy in strategies:
         selected_rows = [row for row in rows if row['strategy'] == strategy]
         metrics[strategy] = {'model': _model_metrics(plan, selected_rows),
             'retrieval': _retrieval_metrics(selected_rows, catalog_pairs), 'usage': _usage(selected_rows),
@@ -210,7 +242,7 @@ def _report(check):
     pairs = check['catalogPairs']['counts']
     lines = ['# D1 保存候选池离线检查', '',
         f"来源批次：`{check['batchId']}`；冻结快照：`{check['snapshotId']}`。",
-        f"检查 {check['samePool']['targetsChecked']} 个目标；三策略同池及池内选择检查：{'通过' if check['samePool']['passed'] else '失败'}。新增模型与嵌入请求均为 0。", '',
+        f"检查 {check['samePool']['targetsChecked']} 个目标；冻结策略同池及池内选择检查：{'通过' if check['samePool']['passed'] else '失败'}。新增模型与嵌入请求均为 0。", '',
         f"知识登记 {pairs['total']} 对，明确自动条件差异 {pairs['explicitConditionPairs']} 对、软对 {pairs['softPairs']} 对、不完整 {pairs['incompletePairs']} 对。明确差异不是独立审核的真实修复真值。", '',
         '## 从保存结果重算的工程指标', '',
         '| 策略 | TP | FP | FN | TN | 历史标签 F1 | 完整明确差异对 | 完整软对 | 有缺口单元 |',
@@ -237,17 +269,17 @@ def run_check(batch_dir, snapshot_root, output):
     if output == batch_dir or output.is_relative_to(batch_dir) or output == snapshot_root or output.is_relative_to(snapshot_root):
         raise ValueError('派生输出必须位于历史批次与正式快照目录之外')
     plan_path, samples_path, events_path = batch_dir / 'plan.json', batch_dir / 'samples.jsonl', batch_dir / 'events.jsonl'
-    plan = decode(plan_path.read_bytes())
+    plan = decode(read_artifact(plan_path))
     snapshot = verify_snapshot(snapshot_root, plan['snapshotId'])
     catalog_path = snapshot_root / 'catalogs' / (plan['snapshotId'] + '.json')
     paths = [plan_path, samples_path, events_path, catalog_path, snapshot_root / plan['snapshotId'] / 'snapshot.json']
-    before = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths}
-    rows = [decode(line) for line in samples_path.read_bytes().splitlines() if line.strip()]
-    catalog = decode(catalog_path.read_bytes())
+    before = {str(path): hashlib.sha256(read_artifact(path)).hexdigest() for path in paths}
+    rows = [decode(line) for line in read_artifact(samples_path).splitlines() if line.strip()]
+    catalog = decode(read_artifact(catalog_path))
     documents = {row['id']: row for row in snapshot['documents']}
     if set(catalog['cases']) != set(documents):
         raise ValueError('候选登记必须精确覆盖冻结知识文档')
-    events = [decode(line) for line in events_path.read_bytes().splitlines() if line.strip()]
+    events = [decode(line) for line in read_artifact(events_path).splitlines() if line.strip()]
     expected_plan = {'kind': 'PLAN', 'planHash': plan.get('planHash')}
     started = [(row.get('sampleId'), row.get('strategy')) for row in events[1:] if row.get('kind') == 'STARTED']
     if (not events or events[0] != expected_plan or len(started) != len(set(started))
@@ -255,18 +287,22 @@ def run_check(batch_dir, snapshot_root, output):
         raise ValueError('保存结果缺少唯一对应的启动事件或计划事件')
     check = inspect_batch(plan, rows, catalog)
     auto = any(row['review_status'] == 'AUTO_LABELED' for row in snapshot['manifest']['samples'])
-    text_issues = []
+    text_issues, rules = [], {}
     for row in rows:
+        version = row['retrieval'].get('recall', {}).get('consumptionVersion')
+        if version not in rules:
+            rules[version] = expected_candidate_texts(snapshot, catalog, version)
         for candidate in row['retrieval']['pool']['candidates']:
-            document = documents.get(candidate['chunkId'])
-            expected = document['text'][:700] if document and auto else document['text'] if document else None
+            expected = rules[version].get(candidate['chunkId'])
             if candidate.get('text') != expected:
                 text_issues.append({'sampleId': row['sampleId'], 'strategy': row['strategy'],
                     'kind': 'SNAPSHOT_TEXT_MISMATCH', 'chunkId': candidate['chunkId']})
     check['samePool']['issues'].extend(text_issues)
     check['samePool']['passed'] = check['samePool']['passed'] and not text_issues
     check['snapshotBinding'] = {'catalogExactlyCoversDocuments': True, 'documentCount': len(documents),
-        'candidateTextsMatch': not text_issues, 'historicalExcerptCharacters': 700 if auto else None}
+        'candidateTextsMatch': not text_issues,
+        'consumptionVersions': sorted(version or 'historical-prefix-700' for version in rules),
+        'historicalExcerptCharacters': 700 if auto and None in rules else None}
     check.update(batchId=batch_dir.name, snapshotEmbedding=snapshot['embedding'])
     knowledge_samples = [row for row in snapshot['manifest']['samples'] if row['split'] == 'knowledge']
     knowledge_hashes = {row['source_hash'] for row in knowledge_samples}
@@ -289,7 +325,7 @@ def run_check(batch_dir, snapshot_root, output):
             'cleanedDocuments': cleaned_documents, 'failures': cleaning_failures},
         'projectAndCloneIsolation': 'UNVERIFIED',
         'reason': '保存批次缺少完整目标来源/项目/近克隆登记，不能仅从向量池证明全部谱系隔离'}
-    after = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths}
+    after = {str(path): hashlib.sha256(read_artifact(path)).hexdigest() for path in paths}
     if before != after:
         raise ValueError('检查期间历史原件或冻结知识发生变化')
     check['provenance'] = {'inputs': [{'path': path, 'sha256Before': digest, 'sha256After': after[path]} for path, digest in before.items()],

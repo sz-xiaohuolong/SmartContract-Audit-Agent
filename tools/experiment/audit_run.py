@@ -61,6 +61,8 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
     target = load_target(root, sample_id)
     view = select_strategy(preview(root, target, dependencies.index, dependencies.encoder,
                                    dependencies.java_retriever), strategy)
+    from risk_catalog import prepare_model_context
+    prepare_model_context(root, target, view, mode)
     if view['sourceHash'] != target['fullSourceHash'] or view['modelSourceHash'] != target['modelSourceHash']:
         raise ValueError('检索结果与待审源码不一致')
     context = view['d1'].get('context', '')
@@ -106,8 +108,8 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
             'assignmentHash': target['assignmentHash'], 'formalLedgerHash': target['formalLedgerHash'],
             'groupId': target['groupId'], 'snapshotId': view['snapshotId'], 'collection': view['collection'],
             'strategy': strategy, 'poolHash': view['poolHash'],
-            'maxRequests': 0 if mode == 'offline' else 2, 'maxOutputTokens': EXPERIMENT_MAX_OUTPUT_TOKENS,
-            'maxInputBytes': None, 'actualInputBytes': message_bytes, 'retries': 1 if mode == 'real' else 0,
+            'maxRequests': 0 if mode == 'offline' else 1, 'maxOutputTokens': EXPERIMENT_MAX_OUTPUT_TOKENS,
+            'maxInputBytes': None, 'actualInputBytes': message_bytes, 'retries': 0,
             'provider': provider, 'researchEligible': False, 'createdAt': datetime.now(timezone.utc).isoformat()}
     atomic_json(directory / 'plan.json', plan)
     events = directory / 'events.jsonl'
@@ -210,12 +212,19 @@ def model_runner(root, target, view, mode):
                    'lineStart': target['lineStart'], 'lineEnd': target['lineEnd'],
                    'mechanism': target['mechanism'], 'function': target['function'],
                    'context': view['d1'].get('context', ''), 'evidenceIds': ids}
+        if view.get('riskCatalog') is not None:
+            from risk_catalog import load_risk_catalog
+            catalog = load_risk_catalog(view['discoveryCompilation'], root)
+            if catalog != view['riskCatalog'] or catalog['sourceHash'] != target['fullSourceHash']:
+                raise ValueError('模型请求前编译目录或源码身份发生变化')
+            request['riskCatalog'] = catalog
         (temp / 'request.json').write_bytes(encode(request))
         provider_config = temp / 'providers.properties'
         provider_config.write_text(provider_text +
             f'\nproviders.ark.max-output-tokens={EXPERIMENT_MAX_OUTPUT_TOKENS}\n'
             'providers.ark.timeout-seconds=360\nproviders.ark.response-format=json_schema\n'
-            'providers.ark.thinking=enabled\nproviders.ark.reasoning-effort=low\n', encoding='utf-8')
+            'providers.ark.thinking=enabled\nproviders.ark.reasoning-effort=low\n'
+            'providers.ark.max-retries=0\n', encoding='utf-8')
         provider_config.chmod(0o600)
         command = ['java', '-jar', str(jar), '--hypotheses', '--source', str(temp / 'source.sol'),
                    '--request', str(temp / 'request.json'), '--config', str(provider_config), '--provider', 'ark',

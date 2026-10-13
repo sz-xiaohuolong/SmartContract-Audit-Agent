@@ -895,7 +895,9 @@ byId('exploratory-refresh').onclick = loadExploratory;
         card.append(title, node('p', 'ws-caption', `保存假设 ${textValue(comparison.denominator)} 项；UNKNOWN ${rate(comparison.beforeRate)} → ${rate(comparison.afterRate)}；新增模型请求 ${textValue(summary.newModelRequests)} 次。`));
         card.append(node('p', 'ws-caption', item.originalAvailable ? '派生封口与原批次摘要核对通过。' : '派生封口摘要核对通过；原批次目前不在本机，来源摘要保留。'));
         const links = node('div', 'ws-export-actions');
-        for (const [filename, label] of [['samples.jsonl', '下载逐样本 JSONL'], ['assessments.jsonl', '下载逐假设对照'], ['REPORT.md', '下载派生报告']]) {
+        const exports = [['samples.jsonl', '下载逐样本 JSONL'], ['assessments.jsonl', '下载逐假设对照'], ['REPORT.md', '下载派生报告']];
+        if (item.fourArmAvailable) exports.push(['four-arm-summary.json', '下载四基线统计'], ['four-arm-results.jsonl', '下载四基线逐候选结果']);
+        for (const [filename, label] of exports) {
           const link = node('a', 'ws-line-link', label);
           link.href = '/api/agent/workspace/derived/' + item.runId + '/' + filename;
           links.append(link);
@@ -911,6 +913,12 @@ byId('exploratory-refresh').onclick = loadExploratory;
           try {
             const report = await request('/api/agent/workspace/derived/' + item.runId);
             samples.replaceChildren(node('p', 'ws-caption', '剩余未知原因：' + json(report.summary.unknownReasons || {})));
+            if (report.fourArm) {
+              samples.append(node('p', 'ws-caption', `四基线共享 ${report.fourArm.candidateCount} 条原候选；独立候选真值待审核，混淆矩阵未生成。`));
+              for (const [arm, values] of Object.entries(report.fourArm.arms || {})) {
+                samples.append(node('p', 'ws-caption', `${arm}：接受 ${values.counts.ACCEPTED}／拒绝 ${values.counts.REJECTED}／未知 ${values.counts.UNKNOWN}`));
+              }
+            }
             for (const sample of list(report.samples)) {
               const button = node('button', 'ws-history-row', `${textValue(sample.sampleId)} · ${textValue(sample.strategy)} · ${statusLabels[sample.d2?.verdict] || '未知'}`);
               button.type = 'button';

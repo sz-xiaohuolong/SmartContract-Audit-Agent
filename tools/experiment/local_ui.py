@@ -222,6 +222,9 @@ def workspace_derived_report(root, store, identifier, artifact=None):
         raise ValueError('派生目录超出已登记报告目录')
     manifest = decode((directory / 'manifest.json').read_bytes())
     names = {'samples.jsonl', 'assessments.jsonl', 'summary.json', 'REPORT.md'}
+    four_arm_names = {'four-arm-summary.json', 'four-arm-results.jsonl'}
+    if set(manifest.get('outputHashes') or {}) == names | four_arm_names:
+        names |= four_arm_names
     if artifact is not None and artifact not in names:
         raise ValueError('派生下载文件未登记')
     if manifest.get('status') != 'COMPLETED' or set(manifest.get('outputHashes') or {}) != names:
@@ -262,7 +265,8 @@ def workspace_derived_report(root, store, identifier, artifact=None):
     if artifact is not None:
         return contents[artifact]
     return {'runId': identifier, 'kind': 'DERIVED_REPLAY', 'manifest': manifest,
-            'summary': summary, 'samples': samples, 'originalAvailable': original_available}
+            'summary': summary, 'samples': samples, 'originalAvailable': original_available,
+            'fourArm': decode(contents['four-arm-summary.json']) if four_arm_names <= names else None}
 
 
 def run_demo(root):
@@ -527,19 +531,20 @@ def create_server(root, port=8765, store=None, runner=None, mvp_runner=None, mvp
                                 report = workspace_derived_report(root, derived_store, path.parent.name)
                                 rows.append({'runId': report['runId'], 'kind': report['kind'],
                                     'finishedAt': report['manifest'].get('finishedAt'),
-                                    'summary': report['summary'], 'originalAvailable': report['originalAvailable']})
+                                    'summary': report['summary'], 'originalAvailable': report['originalAvailable'],
+                                    'fourArmAvailable': report.get('fourArm') is not None})
                             except (OSError, ValueError, KeyError, TypeError):
                                 continue
                         self._send(200, {'runs': sorted(rows, key=lambda row: row['finishedAt'] or '', reverse=True)[:20]})
                     elif parsed.path.startswith('/api/agent/workspace/derived/') and not query:
-                        match = re.fullmatch(r'/api/agent/workspace/derived/([0-9a-f]{32})(?:/(samples\.jsonl|assessments\.jsonl|summary\.json|REPORT\.md))?', parsed.path)
+                        match = re.fullmatch(r'/api/agent/workspace/derived/([0-9a-f]{32})(?:/(samples\.jsonl|assessments\.jsonl|summary\.json|REPORT\.md|four-arm-summary\.json|four-arm-results\.jsonl))?', parsed.path)
                         if not match:
                             self._not_found()
                         else:
                             if match.group(2):
                                 name = match.group(2)
                                 content_type = ('text/markdown; charset=utf-8' if name == 'REPORT.md'
-                                                else 'application/json; charset=utf-8' if name == 'summary.json'
+                                                else 'application/json; charset=utf-8' if name.endswith('.json')
                                                 else 'application/x-ndjson; charset=utf-8')
                                 content = workspace_derived_report(root, derived_store, match.group(1), name)
                                 self._send(200, content, content_type, name)

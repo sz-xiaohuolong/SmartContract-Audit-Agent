@@ -156,6 +156,14 @@ class WorkspaceCaseTest(unittest.TestCase):
             self.assertEqual(0, result['summary']['newModelRequests'])
             self.assertTrue(result['originalAvailable'])
             self.assertEqual('public-sample', result['samples'][0]['sampleId'])
+            # 旧四文件报告继续可读，新四臂扩展只能按已封口摘要下载。
+            values.update({'four-arm-summary.json': '{"candidateCount":1}',
+                           'four-arm-results.jsonl': '{"arm":"FULL_D2"}\n'})
+            for name in ('four-arm-summary.json', 'four-arm-results.jsonl'):
+                (output / name).write_text(values[name])
+                manifest['outputHashes'][name] = hashlib.sha256((output / name).read_bytes()).hexdigest()
+            (output / 'manifest.json').write_text(json.dumps(manifest))
+            self.assertEqual(1, local_ui.workspace_derived_report(root, store, identifier)['fourArm']['candidateCount'])
             server = create_server(root, 0, derived_store=store, workbench=object(),
                 agent_targets=lambda: [], agent_status=lambda: {}, agent_preview=lambda _: {},
                 agent_runner=lambda *args: self.fail('派生读回不得执行模型'))

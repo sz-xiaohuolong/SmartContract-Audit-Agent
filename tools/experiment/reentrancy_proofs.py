@@ -126,7 +126,8 @@ class _ReentrancyGraph(_Graph):
                 continue
             for fact in summary.get('referenceBindings', []):
                 matches = (fact.get('irKind') == 'Assignment' and fact.get('declarationId') == alias_id
-                           if alias_id is not None else fact.get('astNodeId') == ast.get('id'))
+                           if alias_id is not None else fact.get('irKind') in {'Index', 'Member'}
+                           and fact.get('astNodeId') == ast.get('id'))
                 if matches and fact not in facts:
                     facts.append(fact)
         if len(facts) != 1:

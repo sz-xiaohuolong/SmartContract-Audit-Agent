@@ -14,6 +14,31 @@ SOURCE = 'pragma solidity ^0.8.20; contract C { uint x; function f() public { x 
 
 
 class ToolReplayTest(unittest.TestCase):
+    def test_新编译状态不能继承历史失败且须保存当前清单(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); original = self.original(root)
+            source_path = original / 'samples.jsonl'
+            rows = [json.loads(line) for line in source_path.read_text().splitlines()]
+            for row in rows:
+                row.update(compilationError='COMPILATION_BINDING_FAILED', compilationManifest={'old': True},
+                           compilationDiagnostic='旧失败')
+            source_path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+            bundle = {'sourceHash': rows[0]['sourceHash'], 'environmentHash': 'e', 'manifestDigest': 'm', 'receiptDigest': 'r'}
+            manifest = {'bindingPath': 'new/binding.json'}
+            with patch('tool_replay.load_bound_compilation', return_value=bundle), \
+                 patch('tool_replay.extract_compiler_facts', return_value={'status': 'PARTIAL'}), \
+                 patch('tool_replay.assess', return_value={'status': 'COMPLETED', 'verdict': 'UNKNOWN', 'assessments': []}):
+                self.module().replay(root, original, root / 'derived',
+                    tool_runner=lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}],
+                    environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
+                    compilation_resolver=lambda target: manifest, code_identity={'commit': 'fixture'})
+            for line in (root / 'derived/samples.jsonl').read_text().splitlines():
+                current = json.loads(line)
+                self.assertIsNone(current['compilationError'])
+                self.assertIsNone(current['compilationDiagnostic'])
+                self.assertEqual(manifest, current['compilationManifest'])
+                self.assertEqual('COMPILATION_BINDING_FAILED', current['provenance']['originalCompilationError'])
+
     def test_未知比例以全部保存假设为分母且逐条保留迁移(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); original = self.original(root)
@@ -40,6 +65,11 @@ class ToolReplayTest(unittest.TestCase):
             self.assertEqual(1 / 3, comparison['afterRate'])
             self.assertEqual(before, source_path.read_bytes())
             self.assertEqual(3, len((root / 'derived/assessments.jsonl').read_text().splitlines()))
+            four = json.loads((root / 'derived/four-arm-summary.json').read_text())
+            self.assertEqual(3, four['candidateCount'])
+            self.assertEqual(1, four['arms']['FULL_D2']['counts']['UNKNOWN'])
+            self.assertEqual(12, len((root / 'derived/four-arm-results.jsonl').read_text().splitlines()))
+            self.assertGreaterEqual(four['fullD2DurationMs'], 0)
 
     def module(self):
         self.assertIsNotNone(importlib.util.find_spec('tool_replay'), '尚未提供保护原件的工具派生重放')

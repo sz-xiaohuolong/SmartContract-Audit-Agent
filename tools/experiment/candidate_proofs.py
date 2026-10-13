@@ -231,6 +231,42 @@ def _append_references(result, nodes, bundle):
     return references
 
 
+def authority_consumers(bundle, resource):
+    """权限地址须由真实敏感入口的主体检查消费，公开 setter 名称不构成证据。"""
+    if resource[2] or bundle['declarations'].get(resource[1], {}).get('typeDescriptions', {}).get('typeIdentifier') != 't_address':
+        return []
+    result = []
+    for entry in bundle['entries']:
+        if not entry['matched'] or entry['kind'] == 'getter':
+            continue
+        graph = _PermissionGraph(bundle, entry)
+        for operation in graph.nodes:
+            if operation.get('callKind') == 'STATICCALL':
+                continue
+            if (operation['kind'] != 'CALL' and not (operation['kind'] == 'WRITE'
+                    and operation.get('resource', (None, None))[1] != resource[1])):
+                continue
+            for guard, condition in graph.guards(operation):
+                if _authority(condition) == resource and _current_authority(guard, condition):
+                    result.append({'entry': entry['signature'], 'declarationId': entry['declarationId'],
+                        'guard': _reference(guard, bundle), 'operation': _reference(operation, bundle)})
+    return result
+
+
+def _authority_write_candidate(result, bundle, graph, risk):
+    resource = risk['resource']
+    consumers = authority_consumers(bundle, resource)
+    result['proofScope'].update(riskSpan=copy.deepcopy(risk['span']),
+        authorityResource=copy.deepcopy(resource), authorityConsumers=consumers)
+    if consumers and not any(node['kind'] == 'UNKNOWN' for node in graph.nodes):
+        result['proofKind'] = 'ACCESS_CONTROL_AUTHORITY_WRITE_CANDIDATE'
+        _append_references(result, [risk], bundle)
+        result['proofScope']['gaps'].append('公开权限写入已绑定敏感入口；仍须独立正常提交与持久状态见证')
+    else:
+        result['proofScope']['gaps'].append('写入资源未证明由实际敏感入口消费，不能仅凭公开 setter 认定权限缺陷')
+    return result
+
+
 def prove_candidate(bundle, hypothesis):
     """输入为 load_bound_compilation 的 bundle；输出不包含最终工具裁决。"""
     result = _empty()
@@ -295,7 +331,7 @@ def prove_candidate(bundle, hypothesis):
     authorities = {authority for _, authority in primary_guards}
     if len(authorities) != 1:
         gaps.append('未证明同主体、同版本的唯一实际权限槽支配风险写入')
-        return result
+        return _authority_write_candidate(result, bundle, graph, risk)
     authority = next(iter(authorities))
     risk_root = risk['resource'][1]
     protected = {risk_root, authority[1]}

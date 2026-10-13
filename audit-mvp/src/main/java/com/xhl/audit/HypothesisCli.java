@@ -27,18 +27,27 @@ public final class HypothesisCli {
             Map<String,String> options = options(args, Set.of("--source", "--request", "--config", "--provider", "--diagnostic-output", "--replay-response"));
             if (!options.containsKey("--source") || !options.containsKey("--request")) throw new IllegalArgumentException();
             String source = read(options.get("--source"), 1_048_576);
-            String requestText = read(options.get("--request"), 32_768);
+            String requestText = read(options.get("--request"), 1_048_576);
             ObjectMapper mapper = new ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
                 .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
             JsonNode node = mapper.readTree(requestText);
-            if (node == null || !node.isObject() || (node.size() != 9 && node.size() != 10)
+            Set<String> required = Set.of("schemaVersion", "modelSource", "scope", "lineStart", "lineEnd",
+                "mechanism", "function", "context", "evidenceIds");
+            Set<String> allowed = new java.util.HashSet<>(required);
+            allowed.addAll(Set.of("sourceHash", "riskCatalog"));
+            if (node == null || !node.isObject()
                 || !"1".equals(node.path("schemaVersion").asText())
                 || !node.path("modelSource").isTextual() || !node.path("scope").isTextual()
-                || !node.path("lineStart").isIntegralNumber() || !node.path("lineEnd").isIntegralNumber()
+                || !node.path("lineStart").isIntegralNumber() || !node.path("lineStart").canConvertToInt()
+                || !node.path("lineEnd").isIntegralNumber() || !node.path("lineEnd").canConvertToInt()
                 || !node.path("mechanism").isTextual() || !node.path("function").isTextual()
                 || !node.path("context").isTextual() || !node.path("evidenceIds").isArray()) throw new IllegalArgumentException();
-            if (node.size() == 10 && (!node.path("sourceHash").isTextual()
+            for (String key : required) if (!node.has(key)) throw new IllegalArgumentException();
+            var fields = node.fieldNames();
+            while (fields.hasNext()) if (!allowed.contains(fields.next())) throw new IllegalArgumentException();
+            if (node.has("sourceHash") && (!node.path("sourceHash").isTextual()
                 || !node.path("sourceHash").asText().matches("[0-9a-f]{64}"))) throw new IllegalArgumentException();
+            if (node.has("riskCatalog") && !node.path("riskCatalog").isObject()) throw new IllegalArgumentException();
             List<String> ids = new ArrayList<>();
             for (JsonNode id : node.path("evidenceIds")) {
                 if (!id.isTextual() || ids.contains(id.asText())) throw new IllegalArgumentException();
@@ -47,7 +56,8 @@ public final class HypothesisCli {
             var request = new HypothesisService.Request(source, node.path("modelSource").asText(),
                 node.has("sourceHash") ? node.path("sourceHash").asText() : null,
                 node.path("scope").asText(), node.path("lineStart").intValue(), node.path("lineEnd").intValue(),
-                node.path("mechanism").asText(), node.path("function").asText(), node.path("context").asText(), ids);
+                node.path("mechanism").asText(), node.path("function").asText(), node.path("context").asText(), ids,
+                node.has("riskCatalog") ? node.get("riskCatalog") : null);
             String providerName = options.get("--provider");
             ModelGateway gateway = injected;
             if (options.containsKey("--replay-response")) {

@@ -4,23 +4,49 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
+import java.util.Arrays;
 
 /** 将模型输出限制为可追溯的初步假设，任何异常都保持未决。 */
 public final class HypothesisService {
     public record Request(String fullSource, String modelSource, String sourceHash, String scope,
                           int lineStart, int lineEnd, String mechanism, String function,
-                          String context, List<String> evidenceIds) {}
+                          String context, List<String> evidenceIds, JsonNode riskCatalog) {
+        public Request(String fullSource, String modelSource, String sourceHash, String scope,
+                       int lineStart, int lineEnd, String mechanism, String function,
+                       String context, List<String> evidenceIds) {
+            this(fullSource, modelSource, sourceHash, scope, lineStart, lineEnd, mechanism, function, context, evidenceIds, null);
+        }
+    }
     public record Hypothesis(String vulnerabilityType, String contract, String function,
-                             int riskLine, String riskOperation, String reason, List<String> evidenceIds) {}
-    public record RejectedHypothesis(int index, String issue) {}
+                             int riskLine, String riskOperation, String reason, List<String> evidenceIds,
+                             @JsonInclude(JsonInclude.Include.NON_NULL) String riskFactId,
+                             @JsonInclude(JsonInclude.Include.NON_NULL) JsonNode riskSpan) {
+        public Hypothesis(String vulnerabilityType, String contract, String function, int riskLine,
+                          String riskOperation, String reason, List<String> evidenceIds) {
+            this(vulnerabilityType, contract, function, riskLine, riskOperation, reason, evidenceIds, null, null);
+        }
+    }
+    public record RejectedHypothesis(int index, String issue, JsonNode candidate) {
+        public RejectedHypothesis(int index, String issue) { this(index, issue, null); }
+    }
     public record Result(String schemaVersion, String status, String conclusion, List<Hypothesis> hypotheses,
-                         String errorCategory, String validationIssue, Integer inputTokens, Integer outputTokens, long durationMs, Integer requestAttempts, List<RejectedHypothesis> rejectedHypotheses) {}
+                         String errorCategory, String validationIssue, Integer inputTokens, Integer outputTokens,
+                         long durationMs, Integer requestAttempts, List<RejectedHypothesis> rejectedHypotheses,
+                         @JsonInclude(JsonInclude.Include.NON_NULL) JsonNode requestConsumptionReceipt) {
+        public Result(String schemaVersion, String status, String conclusion, List<Hypothesis> hypotheses,
+                      String errorCategory, String validationIssue, Integer inputTokens, Integer outputTokens,
+                      long durationMs, Integer requestAttempts, List<RejectedHypothesis> rejectedHypotheses) {
+            this(schemaVersion, status, conclusion, hypotheses, errorCategory, validationIssue,
+                inputTokens, outputTokens, durationMs, requestAttempts, rejectedHypotheses, null);
+        }
+    }
     private final ModelGateway gateway;
     private final ObjectMapper mapper = new ObjectMapper()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
@@ -28,6 +54,52 @@ public final class HypothesisService {
     public HypothesisService(ModelGateway gateway) { this.gateway = gateway; }
 
     public Result analyze(Request request, String provider) {
+        var captured = new com.fasterxml.jackson.databind.node.ObjectNode[1];
+        ModelGateway recording = (name, system, user) -> {
+            var receipt = mapper.createObjectNode();
+            receipt.put("schemaVersion", "request-consumption-1");
+            receipt.put("sourceHash", sha256(request.fullSource().getBytes(StandardCharsets.UTF_8)));
+            receipt.put("modelSourceHash", sha256(request.modelSource().getBytes(StandardCharsets.UTF_8)));
+            receipt.put("contextSha256", sha256(request.context().getBytes(StandardCharsets.UTF_8)));
+            receipt.set("evidenceIds", mapper.valueToTree(request.evidenceIds()));
+            receipt.put("systemPromptSha256", sha256(system.getBytes(StandardCharsets.UTF_8)));
+            receipt.put("userPromptSha256", sha256(user.getBytes(StandardCharsets.UTF_8)));
+            receipt.put("systemPromptBytes", system.getBytes(StandardCharsets.UTF_8).length);
+            receipt.put("userPromptBytes", user.getBytes(StandardCharsets.UTF_8).length);
+            receipt.put("promptTemplateVersion", "hypotheses-v4-diff-guidance");
+            receipt.put("diffGuidanceVersion", "diff-guidance-1");
+            var components = receipt.putObject("promptBudgetComponents");
+            components.putObject("system").put("bytes", system.getBytes(StandardCharsets.UTF_8).length).putNull("tokens");
+            components.putObject("source").put("bytes", numberedSource(request).getBytes(StandardCharsets.UTF_8).length).putNull("tokens");
+            components.putObject("context").put("bytes", request.context().getBytes(StandardCharsets.UTF_8).length).putNull("tokens");
+            components.putObject("instructionsAndCatalog").put("bytes", user.getBytes(StandardCharsets.UTF_8).length
+                - numberedSource(request).getBytes(StandardCharsets.UTF_8).length
+                - request.context().getBytes(StandardCharsets.UTF_8).length).putNull("tokens");
+            components.putObject("messageOverhead").putNull("tokens");
+            components.putObject("output").putNull("tokens");
+            receipt.set("messageOrder", mapper.valueToTree(List.of("system", "user")));
+            receipt.putNull("tokenizer");
+            var messages = mapper.createArrayNode();
+            messages.addObject().put("role", "system").put("content", system);
+            messages.addObject().put("role", "user").put("content", user);
+            receipt.put("requestSha256", sha256(messages.toString().getBytes(StandardCharsets.UTF_8)));
+            receipt.put("requestHashEncoding", "UTF8_JSON_MESSAGES_ARRAY");
+            receipt.put("provider", name);
+            captured[0] = receipt;
+            return gateway.complete(name, system, user);
+        };
+        Result result = new HypothesisService(recording).analyzeValidated(request, provider);
+        if (captured[0] == null) return result;
+        // 保留供应商实际usage；字节数不能换算或伪装成token数。
+        captured[0].set("inputTokens", mapper.valueToTree(result.inputTokens()));
+        captured[0].set("outputTokens", mapper.valueToTree(result.outputTokens()));
+        captured[0].set("requestAttempts", mapper.valueToTree(result.requestAttempts()));
+        return new Result(result.schemaVersion(), result.status(), result.conclusion(), result.hypotheses(),
+            result.errorCategory(), result.validationIssue(), result.inputTokens(), result.outputTokens(),
+            result.durationMs(), result.requestAttempts(), result.rejectedHypotheses(), captured[0]);
+    }
+
+    private Result analyzeValidated(Request request, String provider) {
         GatewayReply reply;
         try {
             validateRequest(request);
@@ -35,10 +107,13 @@ public final class HypothesisService {
                 + "对象必须且只能有 schemaVersion 和 hypotheses 两个字段；schemaVersion 固定为字符串 2。"
                 + "hypotheses 最多 3 项，每项必须且只能有 vulnerabilityType、contract、function、riskLine、riskOperation、reason、evidenceIds。"
                 + "riskLine 是源码左侧标注的绝对整数行号，不是范围或字符串。证据不足时只返回 {\"schemaVersion\":\"2\",\"hypotheses\":[]}。"
-                + "riskOperation 使用 CALL 表示外部调用、WRITE 表示状态写入，便于后续绑定程序事实。"
+                + "riskOperation 只能为 CALL 或 WRITE；CALL 表示外部调用，WRITE 表示状态写入。"
                 + "重入假设必须定位实际外部调用并使用 CALL；后置状态写入只作为原因中的顺序证据。"
                 + "riskLine 必须是该操作表达式的起始行，不得填写函数声明行、检查行或相邻写入行。"
                 + "先独立检查待审源码，再把检索案例用作比较；自动标注的改动前后不证明修复有效或目标安全。"
+                + "差分引导：只比较配对的变化窗口，识别新增或删除的调用者断言、同资源写入与外部调用的先后关系。"
+                + "改动后代码仅用于解释变化，不替换待审目标源码，不要求目标照抄修复；逐项说明主体、资源或顺序是否可绑定。"
+                + "条件绑定为 UNKNOWN 时保留未知，不把变化窗口、修饰符名称或修复版本名当作适用性证明。"
                 + "无相关检索片段不等于无源码缺陷；不得因案例没有修复而压制有源码证据的假设。"
                 + "公开构造函数及部署者设置参数本身不构成运行期权限缺陷；须说明实际缺失的权限义务。"
                 + "reason 使用简体中文描述保护条件、资源及执行顺序，不提供攻击载荷、利用代码或攻击步骤。"
@@ -55,6 +130,7 @@ public final class HypothesisService {
                     ? "全文可以报告任一真实合约的入口，contract 用该操作所在合约声明名称，function 用其函数声明名称；无名回退函数写 fallback；"
                     : "函数片段的 function 必须等于上述函数，contract 必须等于目标所属合约；无名回退函数写 fallback，构造函数写 constructor；")
                 + "evidenceIds 只能从可引用 ID 中选择，也可以为空数组。"
+                + catalogPrompt(request)
                 + "\n待审源码（左侧为原始行号）：\n" + numberedSource(request);
             reply = gateway.complete(provider, system, user);
         } catch (IllegalArgumentException e) { return failed("INPUT_INVALID", null); }
@@ -84,8 +160,12 @@ public final class HypothesisService {
                     if (!functionNode.isTextual() || functionNode.textValue().length() > 2000) throw invalid("SCHEMA_TEXT");
                     int riskLine = riskLine(item.get("riskLine"));
                     if (riskLine < request.lineStart() || riskLine > request.lineEnd()) throw invalid("RISK_LINE_INVALID");
-                    String function = canonicalFunction(functionNode.textValue(), contract, riskLine, request);
                     String operation = text(item, "riskOperation");
+                    if (!Set.of("CALL", "WRITE").contains(operation)) throw invalid("RISK_OPERATION_INVALID");
+                    if (type.equals("REENTRANCY") && !operation.equals("CALL")) throw invalid("REQUIRES_CALL");
+                    JsonNode bound = bindCatalog(request, contract, functionNode.textValue(), riskLine, operation);
+                    String function = bound == null ? canonicalFunction(functionNode.textValue(), contract, riskLine, request)
+                        : bound.path("function").asText();
                     String reason = text(item, "reason");
                     JsonNode ids = item.get("evidenceIds");
                     if (ids != null && !ids.isNull() && !ids.isArray()) throw invalid("EVIDENCE_IDS_INVALID");
@@ -95,9 +175,10 @@ public final class HypothesisService {
                             throw invalid("EVIDENCE_IDS_INVALID");
                         used.add(id.textValue());
                     }
-                    hypotheses.add(new Hypothesis(type, contract, function, riskLine, operation, reason, List.copyOf(used)));
+                    hypotheses.add(new Hypothesis(type, contract, function, riskLine, operation, reason, List.copyOf(used),
+                        bound == null ? null : bound.path("factId").asText(), bound == null ? null : bound.path("span").deepCopy()));
                 } catch (OutputIssue issue) {
-                    rejected.add(new RejectedHypothesis(entryIndex, issue.code));
+                    rejected.add(new RejectedHypothesis(entryIndex, issue.code, item.deepCopy()));
                 }
                 entryIndex++;
             }
@@ -159,6 +240,160 @@ public final class HypothesisService {
                 if (!actual.equals(request.sourceHash())) throw new IllegalArgumentException();
             } catch (java.security.NoSuchAlgorithmException e) { throw new IllegalStateException(e); }
         }
+        validateCatalog(request);
+    }
+    private static String sha256(byte[] bytes) {
+        try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)); }
+        catch (java.security.NoSuchAlgorithmException error) { throw new IllegalStateException(error); }
+    }
+    private static boolean digest(JsonNode value) {
+        return value != null && value.isTextual() && value.textValue().matches("[0-9a-f]{64}");
+    }
+    private static void validateCatalog(Request request) {
+        JsonNode catalog = request.riskCatalog();
+        if (catalog == null) return;
+        if (!catalog.isObject() || !"compiler-risk-1".equals(catalog.path("schemaVersion").asText())
+            || !"solc-standard-json".equals(catalog.path("provider").asText())
+            || !"RECOMPILED_MATCH".equals(catalog.path("verificationStatus").asText())
+            || !sha256(request.fullSource().getBytes(StandardCharsets.UTF_8)).equals(catalog.path("sourceHash").asText())
+            || !digest(catalog.get("environmentHash")) || !digest(catalog.get("receiptDigest"))
+            || !digest(catalog.get("sourceClosureSha256")) || !catalog.path("targetSourceUnit").isTextual()
+            || catalog.path("targetSourceUnit").asText().isBlank()
+            || !catalog.path("contracts").isArray() || !catalog.path("operations").isArray()
+            || !catalog.path("sourceUnits").isArray()) throw new IllegalArgumentException();
+        java.util.Map<String, JsonNode> units = new java.util.HashMap<>();
+        Set<Integer> unitIds = new java.util.HashSet<>();
+        for (JsonNode unit : catalog.path("sourceUnits")) {
+            if (!unit.path("sourceUnit").isTextual() || unit.path("sourceUnit").asText().isBlank()
+                || !unit.path("sourceUnitId").isIntegralNumber() || !unit.path("sourceUnitId").canConvertToInt()
+                || !digest(unit.get("sha256")) || !unitIds.add(unit.path("sourceUnitId").intValue())
+                || units.putIfAbsent(unit.path("sourceUnit").asText(), unit) != null) throw new IllegalArgumentException();
+        }
+        JsonNode main = units.get(catalog.path("targetSourceUnit").asText());
+        if (main == null || !main.path("sha256").asText().equals(catalog.path("sourceHash").asText()))
+            throw new IllegalArgumentException();
+        java.util.Map<Integer, JsonNode> contracts = new java.util.HashMap<>();
+        for (JsonNode contract : catalog.path("contracts")) {
+            if (!contract.path("declarationId").isIntegralNumber() || !contract.path("declarationId").canConvertToInt()
+                || !contract.path("contract").isTextual() || contract.path("contract").asText().isBlank()
+                || !contract.path("entries").isArray()
+                || contracts.putIfAbsent(contract.path("declarationId").intValue(), contract) != null)
+                throw new IllegalArgumentException();
+            for (JsonNode entry : contract.path("entries")) {
+                if (!entry.path("signature").isTextual() || !entry.path("function").isTextual()
+                    || !entry.path("matched").isBoolean()) throw new IllegalArgumentException();
+            }
+        }
+        byte[] source = request.fullSource().getBytes(StandardCharsets.UTF_8);
+        for (JsonNode operation : catalog.path("operations")) {
+            JsonNode unit = units.get(operation.path("sourceUnit").asText());
+            JsonNode contract = contracts.get(operation.path("contractDeclarationId").asInt(-1));
+            if (unit == null || contract == null || !operation.path("contract").equals(contract.path("contract"))
+                || !unit.path("sha256").equals(operation.path("sourceUnitHash"))
+                || !digest(operation.get("factId")) || !Set.of("CALL", "WRITE").contains(operation.path("riskOperation").asText())
+                || !operation.path("function").isTextual() || !operation.path("entrySignature").isTextual()
+                || !operation.path("line").isIntegralNumber() || !operation.path("line").canConvertToInt()
+                || operation.path("line").intValue() < 1 || !operation.path("candidateEligible").isBoolean()
+                || !operation.path("capability").path("status").isTextual()) throw new IllegalArgumentException();
+            boolean entryMatched = false;
+            for (JsonNode entry : contract.path("entries")) {
+                if (entry.path("matched").asBoolean() && entry.path("signature").equals(operation.path("entrySignature"))
+                    && entry.path("function").equals(operation.path("function"))
+                    && entry.path("declarationId").equals(operation.path("entryDeclarationId"))) entryMatched = true;
+            }
+            JsonNode span = operation.path("span");
+            if (!entryMatched || !span.isObject() || !span.path("sourceUnit").equals(operation.path("sourceUnit"))
+                || !span.path("sourceUnitId").equals(unit.path("sourceUnitId"))
+                || !span.path("line").equals(operation.path("line")) || !digest(span.get("contentSha256"))
+                || !span.path("start").isIntegralNumber() || !span.path("start").canConvertToInt()
+                || !span.path("length").isIntegralNumber() || !span.path("length").canConvertToInt()
+                || span.path("start").intValue() < 0 || span.path("length").intValue() <= 0)
+                throw new IllegalArgumentException();
+            // 依赖源码身份仍保留；只有主源码内容可在当前请求中独立复核。
+            if (!span.path("sourceUnit").asText().equals(catalog.path("targetSourceUnit").asText())) continue;
+            int start = span.path("start").intValue(), length = span.path("length").intValue();
+            if ((long) start + length > source.length) throw new IllegalArgumentException();
+            byte[] prefix = Arrays.copyOfRange(source, 0, start), selected = Arrays.copyOfRange(source, start, start + length);
+            try {
+                StandardCharsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(prefix));
+                StandardCharsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(selected));
+            } catch (java.nio.charset.CharacterCodingException error) { throw new IllegalArgumentException(); }
+            int line = 1;
+            for (byte value : prefix) if (value == '\n') line++;
+            if (line != operation.path("line").intValue() || !sha256(selected).equals(span.path("contentSha256").asText()))
+                throw new IllegalArgumentException();
+        }
+    }
+    private static String catalogPrompt(Request request) {
+        JsonNode catalog = request.riskCatalog();
+        if (catalog == null) return "";
+        var mapper = new ObjectMapper();
+        var compact = mapper.createObjectNode();
+        compact.put("主源码单元", catalog.path("targetSourceUnit").asText());
+        var declarations = compact.putArray("合约及全部运行入口");
+        for (JsonNode contract : catalog.path("contracts")) {
+            var item = declarations.addObject();
+            item.set("contract", contract.path("contract"));
+            item.set("sourceUnit", contract.path("sourceUnit"));
+            item.set("capability", contract.path("capability").path("status"));
+            var entries = item.putArray("entries");
+            for (JsonNode entry : contract.path("entries")) {
+                var row = entries.addObject();
+                row.set("signature", entry.path("signature"));
+                row.set("kind", entry.path("kind"));
+                row.set("matched", entry.path("matched"));
+            }
+        }
+        var operations = compact.putArray("操作位置");
+        for (JsonNode operation : catalog.path("operations")) {
+            var row = operations.addObject();
+            for (String key : List.of("contract", "function", "entrySignature", "sourceUnit", "riskOperation", "line"))
+                row.set(key, operation.path(key));
+            row.set("capability", operation.path("capability").path("status"));
+        }
+        return "\n编译结构目录（仅定位事实，不是漏洞或安全证明）：" + compact
+            + "\n候选须填写可见主源码的真实操作起始行与对应入口；不得把内部调用、函数声明或构造初始化改成运行期风险。"
+            + "能力未覆盖的真实调用仍可提出候选，后续验证保持未知；目录不完整不等于安全。";
+    }
+    private static String catalogFunction(JsonNode contract, String value) {
+        String normalized = normalizeFunction(value);
+        if (normalized.isEmpty() || normalized.equals("(") || normalized.equals("function")) normalized = "fallback";
+        Set<String> exact = new java.util.HashSet<>(), folded = new java.util.HashSet<>();
+        for (JsonNode entry : contract.path("entries")) {
+            String name = entry.path("function").asText(), signature = entry.path("signature").asText();
+            if (name.equals(normalized) || signature.equals(value.trim())) exact.add(name);
+            if (name.equalsIgnoreCase(normalized) || signature.equalsIgnoreCase(value.trim())) folded.add(name);
+        }
+        Set<String> matches = exact.isEmpty() ? folded : exact;
+        if (matches.size() != 1) throw invalid("FUNCTION_MISMATCH");
+        return matches.iterator().next();
+    }
+    private static JsonNode bindCatalog(Request request, String contractName, String function, int line, String operation) {
+        JsonNode catalog = request.riskCatalog();
+        if (catalog == null) return null;
+        JsonNode contract = null;
+        for (JsonNode declaration : catalog.path("contracts")) {
+            if (declaration.path("contract").asText().equals(contractName)
+                && declaration.path("sourceUnit").asText().equals(catalog.path("targetSourceUnit").asText())) {
+                if (contract != null) throw invalid("RISK_CATALOG_AMBIGUOUS");
+                contract = declaration;
+            }
+        }
+        if (contract == null) throw invalid("RISK_CATALOG_POSITION_MISMATCH");
+        String canonical = catalogFunction(contract, function);
+        if (request.scope().equals("FUNCTION") && !canonical.equals(catalogFunction(contract, request.function())))
+            throw invalid("FUNCTION_MISMATCH");
+        List<JsonNode> matches = new ArrayList<>();
+        for (JsonNode item : catalog.path("operations")) {
+            if (item.path("contract").asText().equals(contractName) && item.path("function").asText().equals(canonical)
+                && item.path("sourceUnit").asText().equals(catalog.path("targetSourceUnit").asText())
+                && item.path("sourceUnitHash").asText().equals(catalog.path("sourceHash").asText())
+                && item.path("line").intValue() == line && item.path("riskOperation").asText().equals(operation)
+                && item.path("candidateEligible").asBoolean()) matches.add(item);
+        }
+        if (matches.isEmpty()) throw invalid("RISK_CATALOG_POSITION_MISMATCH");
+        if (matches.size() != 1) throw invalid("RISK_CATALOG_AMBIGUOUS");
+        return matches.getFirst();
     }
     private static void required(JsonNode node, Set<String> keys) {
         if (node == null || !node.isObject()) throw invalid("SCHEMA_FIELDS");

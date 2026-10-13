@@ -171,6 +171,8 @@ class BenchmarkRuntime:
             if bundle['sourceHash'] != target.get('fullSourceHash'):
                 raise ValueError('编译目标与批量消费源码字节不一致')
             view['compiledFacts'] = extract_compiler_facts(bundle)
+        from risk_catalog import prepare_model_context
+        prepare_model_context(self.root, target, view, mode)
         selected = view['d1'].get('selected', [])
         started = monotonic()
         model = self.model_runner(self.root, target, view, mode)
@@ -186,6 +188,7 @@ class BenchmarkRuntime:
             diagnostic_path = str(diagnostic.relative_to(self.root))
         model = {key: value for key, value in model.items() if key != '_rawResponse'}
         compilation_error = None
+        compilation_diagnostic = None
         if (mode == 'real' and target.get('compilerManifest') is None
                 and (self.root / 'config/tools.local.properties').is_file() and model.get('hypotheses')):
             from compilation_runtime import prepare_candidate_compilations
@@ -197,8 +200,9 @@ class BenchmarkRuntime:
                     target['_toolConfiguration'] = configuration
                     target['candidateContracts'] = sorted({h['contract'] for h in model['hypotheses']})
                     target['compilerManifest'] = prepare_candidate_compilations(self.root, target)
-            except (ValueError, OSError):
+            except (ValueError, OSError) as error:
                 compilation_error = 'COMPILATION_BINDING_FAILED'
+                compilation_diagnostic = str(error)
         tool_started = monotonic()
         try:
             tools = getattr(self, 'tool_runner', default_tool_runner)(self.root, target, mode)
@@ -227,6 +231,7 @@ class BenchmarkRuntime:
                 'tools': tools, 'd2': d2,
                 'compilationManifest': target.get('compilerManifest'),
                 'compilationError': compilation_error,
+                'compilationDiagnostic': compilation_diagnostic,
                 'retrieval': view, 'source': target.get('fullSource'),
                 'poolHash': fingerprint(view['pool']),
                 'queryEmbeddingReceipt': view.get('queryEmbeddingReceipt'),

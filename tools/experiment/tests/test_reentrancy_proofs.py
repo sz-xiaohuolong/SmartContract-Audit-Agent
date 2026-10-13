@@ -786,6 +786,13 @@ class ReentrancyProofTest(unittest.TestCase):
         self.assertEqual('AST_AND_SLITHIR', binding['basis'])
         self.assertEqual(self.balance['id'], binding['resource'][1])
 
+    def test_同跨度索引定义与别名赋值分别绑定不互相制造歧义(self):
+        case = self.struct_case()
+        effects = self.ir_aliases(case)
+        for summary in effects:
+            summary['referenceBindings'].append(dict(summary['referenceBindings'][0], irKind='Index', declarationId=None))
+        self.assertEqual('COUNTEREXAMPLE', self.proof(effect_summaries=effects)['status'])
+
     def test_IR别名错根错key多定义和未绑定状态阻止反例(self):
         case = self.struct_case()
         effects = self.ir_aliases(case)

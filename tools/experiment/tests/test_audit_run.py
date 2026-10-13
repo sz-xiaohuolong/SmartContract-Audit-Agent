@@ -129,18 +129,28 @@ class AuditRunTest(unittest.TestCase):
                       'scope': 'FULL', 'lineStart': 1, 'lineEnd': 3002,
                       'mechanism': 'ACCESS_CONTROL', 'function': 'f'}
             view = {'d1': {'selected': [], 'context': ''}}
+            catalog = {'sourceHash': 'a' * 64, 'operations': [{'contract': 'Other', 'riskOperation': 'WRITE'}]}
+            view.update(riskCatalog=catalog, discoveryCompilation={'fixture': True})
             def capture(command, **kwargs):
                 request = decode(Path(command[command.index('--request') + 1]).read_bytes())
+                self.assertEqual(catalog, request['riskCatalog'])
                 self.assertEqual(source, request['modelSource'])
                 self.assertEqual(source.encode(), Path(command[command.index('--source') + 1]).read_bytes())
                 properties = Path(command[command.index('--config') + 1]).read_text()
+                self.assertIn('providers.ark.max-retries=0', properties)
                 self.assertIn('providers.ark.thinking=enabled', properties)
                 self.assertIn('providers.ark.reasoning-effort=low', properties)
                 self.assertIn(f'providers.ark.max-output-tokens={EXPERIMENT_MAX_OUTPUT_TOKENS}', properties)
                 self.assertIn('providers.ark.timeout-seconds=360', properties)
                 return SimpleNamespace(returncode=0, stdout=b'{"status":"COMPLETED","conclusion":"NO_CONFIRMED_FINDINGS"}')
-            with patch('audit_run.subprocess.run', side_effect=capture):
+            with patch('audit_run.subprocess.run', side_effect=capture), \
+                    patch('risk_catalog.load_risk_catalog', return_value=catalog):
                 self.assertEqual('COMPLETED', model_runner(root, target, view, 'real')['status'])
+            with patch('audit_run.subprocess.run') as launch, \
+                    patch('risk_catalog.load_risk_catalog', return_value={**catalog, 'sourceHash': 'b' * 64}):
+                with self.assertRaisesRegex(ValueError, '发生变化'):
+                    model_runner(root, target, view, 'real')
+                launch.assert_not_called()
 
 
 if __name__ == '__main__': unittest.main()

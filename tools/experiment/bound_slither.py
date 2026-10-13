@@ -12,16 +12,18 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
 import uuid
 
-from compiler_facts import load_bound_compilation
-from storage import read_artifact
+from compiler_facts import _walk, load_bound_compilation
+from storage import artifact_exists, read_artifact
 
 
 _SCHEMA = 'bound-slither-1'
 _EVIDENCE = Path('research-artifacts/receipts/slither')
 _PREVIOUS_EVIDENCE = Path('.evidence/R2-20261010/D2-deep-upgrade-20261012/tool')
 _LEGACY_EVIDENCE = Path('.evidence/R2-20261010/S11-resolution/tool-bridge')
+_ADAPTER_VERSION = 'codex-solc-0426-bool-tail-v1'
 _MAX_JSON = 64 * 1024 * 1024
 
 
@@ -87,9 +89,88 @@ def _resolve_python(root, explicit=None):
     return candidate
 
 
-def _failure(category, error, status='PROCESS_ERROR'):
-    return {'engine': 'SLITHER', 'status': status, 'issues': [], 'errorCategory': category,
-            'error': str(error), 'paidModelRequests': 0}
+def _failure(category, error, status='PROCESS_ERROR', diagnostics=None):
+    result = {'engine': 'SLITHER', 'status': status, 'issues': [], 'errorCategory': category,
+              'error': str(error), 'paidModelRequests': 0}
+    if diagnostics is not None:
+        result['diagnostics'] = diagnostics
+    return result
+
+
+def _diagnostics(root, directory, exit_code=None, command=None):
+    """失败也绑定实际工作目录与已有日志字节，不为缺失日志生成成功回执。"""
+    root = Path(root).resolve()
+    directory = _artifact(root, str(directory))
+    compiler_output = directory / 'slither-compiler-stdout.json'
+    if artifact_exists(compiler_output):
+        try:
+            output, _ = _json(compiler_output)
+            warnings = [item for item in output.get('errors', []) if item.get('severity') == 'warning']
+            (directory / 'slither-compiler-warnings.json').write_bytes(_canonical({'warnings': warnings}))
+        except (OSError, ValueError, TypeError, AttributeError):
+            pass  # 无效编译输出仍作为原始字节留档，不把解析失败写成零警告。
+    roles = {'worker-stdout.log': 'WORKER_STDOUT', 'worker-stderr.log': 'WORKER_STDERR',
+             'slither-compiler-stdout.json': 'COMPILER_STDOUT', 'slither-compiler-stderr.txt': 'COMPILER_STDERR',
+             'slither-compiler-warnings.json': 'COMPILER_WARNINGS', 'manifest.json': 'COMPILATION_MANIFEST'}
+    files = []
+    for name, role in roles.items():
+        path = directory / name
+        if artifact_exists(path):
+            data = read_artifact(path)
+            files.append({'role': role, 'path': str(path.relative_to(root)), 'sha256': _digest(data), 'bytes': len(data)})
+    return {'workerDirectory': str(directory.relative_to(root)), 'exitCode': exit_code,
+            'command': command, 'files': files}
+
+
+def _legacy_bool_call(ast):
+    if (not isinstance(ast, dict) or ast.get('nodeType') != 'FunctionCall' or ast.get('kind') != 'functionCall'
+            or ast.get('typeDescriptions', {}).get('typeIdentifier') != 't_bool'):
+        return False
+    expression = ast.get('expression', {})
+    if expression.get('nodeType') == 'FunctionCall':
+        setter = expression.get('expression', {})
+        if (setter.get('nodeType') != 'MemberAccess' or setter.get('memberName') != 'value'
+                or not setter.get('typeDescriptions', {}).get('typeIdentifier', '').startswith('t_function_setvalue_')
+                or len(expression.get('arguments', [])) != 1):
+            return False
+        expression = setter.get('expression', {})
+    return (expression.get('nodeType') == 'MemberAccess' and expression.get('memberName') == 'call'
+            and expression.get('typeDescriptions', {}).get('typeIdentifier')
+            == 't_function_barecall_payable$__$returns$_t_bool_$')
+
+
+def _adapt_compiler_output(output, compiler_version):
+    """仅为 0.4.26 单 bool CALL 的唯一空尾解构复制归一解析 AST，原件和字节码不变。"""
+    adapted = copy.deepcopy(output)
+    receipt = {'version': _ADAPTER_VERSION, 'active': False,
+        'codeSha256': _digest((inspect.getsource(_legacy_bool_call) + inspect.getsource(_adapt_compiler_output)).encode()),
+        'changes': []}
+    if compiler_version != '0.4.26':
+        return adapted, receipt
+    for name, source in adapted.get('sources', {}).items():
+        for node in _walk(source.get('ast')):
+            if node.get('nodeType') != 'VariableDeclarationStatement' or not _legacy_bool_call(node.get('initialValue')):
+                continue
+            declarations = node.get('declarations', [])
+            if len(declarations) == 1 and declarations[0] is not None:
+                continue
+            if (len(declarations) != 2 or not isinstance(declarations[0], dict) or declarations[1] is not None
+                    or declarations[0].get('typeDescriptions', {}).get('typeIdentifier') != 't_bool'
+                    or node.get('assignments') != [declarations[0].get('id')]):
+                raise ValueError('0.4.26 单 bool CALL 只支持一个 bool 声明加唯一尾部空分量，其他形状拒绝适配')
+            original_hash = _digest(_canonical(node))
+            start, length, source_id = map(int, node['src'].split(':'))
+            if source.get('id') != source_id or start < 0 or length < 1:
+                raise ValueError('旧版 CALL 解构没有唯一源码跨度')
+            node['declarations'] = declarations[:1]
+            receipt['changes'].append({'sourceUnit': name, 'statementNodeId': node['id'],
+                'callNodeId': node['initialValue']['id'], 'retainedDeclarationId': declarations[0]['id'],
+                'span': {'sourceUnit': name, 'start': start, 'length': length},
+                'compilerReturnType': 't_bool', 'discardedTailComponents': 1,
+                'originalNodeSha256': original_hash, 'adaptedNodeSha256': _digest(_canonical(node))})
+    receipt['changes'].sort(key=_canonical)
+    receipt['active'] = bool(receipt['changes'])
+    return adapted, receipt
 
 
 def _invoke_worker(manifest_path, *, root, python_executable, directory):
@@ -97,14 +178,22 @@ def _invoke_worker(manifest_path, *, root, python_executable, directory):
     command = [str(python_executable), str(Path(__file__).resolve()), '--worker',
                '--root', str(root), '--manifest', str(manifest_path), '--directory', str(directory)]
     # 原始输出写证据文件，避免进程输出无界增长或混入返回的 JSON。
-    with (directory / 'worker-stdout.log').open('wb') as stdout, (directory / 'worker-stderr.log').open('wb') as stderr:
-        run = subprocess.run(command, cwd=root, stdout=stdout, stderr=stderr, timeout=240, check=False)
+    try:
+        with (directory / 'worker-stdout.log').open('wb') as stdout, (directory / 'worker-stderr.log').open('wb') as stderr:
+            run = subprocess.run(command, cwd=root, stdout=stdout, stderr=stderr, timeout=240, check=False)
+    except subprocess.TimeoutExpired as error:
+        return _failure('TIMEOUT', error, 'TIMEOUT', _diagnostics(root, directory, command=command))
+    diagnostics = _diagnostics(root, directory, run.returncode, command)
     result_path = directory / 'tool-result.json'
     if not result_path.is_file():
-        return _failure('WORKER_FAILED', f'真实工具子进程未产生结果，退出码 {run.returncode}')
-    result, _ = _json(result_path)
+        return _failure('WORKER_FAILED', f'真实工具子进程未产生结果，退出码 {run.returncode}', diagnostics=diagnostics)
+    try:
+        result, _ = _json(result_path)
+    except (OSError, ValueError) as error:
+        return _failure('WORKER_FAILED', error, diagnostics=diagnostics)
     if run.returncode != 0 and result.get('status') == 'OK':
-        return _failure('WORKER_FAILED', f'真实工具子进程异常退出，退出码 {run.returncode}')
+        return _failure('WORKER_FAILED', f'真实工具子进程异常退出，退出码 {run.returncode}', diagnostics=diagnostics)
+    result['diagnostics'] = diagnostics
     return result
 
 
@@ -131,9 +220,9 @@ def analyze_bound(manifest, *, root, python_executable=None):
             _read_tool(result, root)
         return result
     except (subprocess.TimeoutExpired, TimeoutError) as error:
-        return _failure('TIMEOUT', error, 'TIMEOUT')
+        return _failure('TIMEOUT', error, 'TIMEOUT', _diagnostics(root, directory))
     except (OSError, ValueError, TypeError, KeyError) as error:
-        return _failure('WORKER_FAILED', error)
+        return _failure('WORKER_FAILED', error, diagnostics=_diagnostics(root, directory))
 
 
 def _read_tool(tool, root):
@@ -164,12 +253,20 @@ def _read_tool(tool, root):
         raise ValueError('工具第二收据身份不合法')
     if any(tool.get(key) != identity.get(key) for key in ('sourceHash', 'sourceFile')):
         raise ValueError('工具顶层源码身份与第二收据不一致')
+    tool_identity = identity.get('toolIdentity', {})
+    if not isinstance(tool_identity, dict) or not isinstance(tool_identity.get('adapter', {}), dict):
+        raise ValueError('工具实现身份结构不合法')
+    if tool.get('version') != tool_identity.get('version'):
+        if tool_identity.get('adapter', {}).get('active') is True:
+            raise ValueError('适配工具实际版本与第二收据不一致，不能标为原官方版本')
+        raise ValueError('工具实际版本与第二收据不一致')
     return receipt, raw
 
 
 def verify_bound_tool(tool, bundle, *, root):
     """重跑真实后端，拒绝复制环境摘要、重封假收据与实际检测结果漂移。"""
     root = Path(root).resolve()
+    replay = None
     try:
         receipt, raw = _read_tool(tool, root)
         identity = receipt['identity']
@@ -194,13 +291,16 @@ def verify_bound_tool(tool, bundle, *, root):
         if (_canonical(replay_receipt['identity']) != _canonical(identity)
                 or _canonical(replay_raw) != _canonical(raw)):
             raise ValueError('实际工具重放的编译身份、IR 摘要或检测告警发生漂移')
-        return {'status': 'MATCH', 'reason': '实际固定 solc 与官方 Slither 双收据及独立重放均匹配',
+        return {'status': 'MATCH', 'reason': '实际固定 solc 与已登记 Slither 实现的双收据及独立重放均匹配',
                 'effectSummaries': copy.deepcopy(identity.get('effectSummaries', [])),
+                'storageLayout': copy.deepcopy(identity.get('storageLayout', [])),
                 'receipt': copy.deepcopy(tool['compilationReceipt']),
                 'replayReceipt': replay['compilationReceipt'], 'paidModelRequests': 0}
     except (OSError, ValueError, TypeError, KeyError, AttributeError, subprocess.TimeoutExpired, TimeoutError) as error:
+        failed = replay if isinstance(replay, dict) else tool if isinstance(tool, dict) else {}
         return {'status': 'UNKNOWN', 'errorCategory': 'TOOL_BINDING_UNVERIFIED', 'reason': str(error),
-                'effectSummaries': [], 'paidModelRequests': 0}
+                'effectSummaries': [], 'storageLayout': [], 'paidModelRequests': 0,
+                **({'diagnostics': copy.deepcopy(failed['diagnostics'])} if 'diagnostics' in failed else {})}
 
 
 def _tree_digest(module):
@@ -373,6 +473,19 @@ def _ir_state_facts(operations, bundle):
             continue
         expression = getattr(operation, 'expression', None)
         node = ast_node(expression, expression_kinds.get(type(expression).__name__))
+        if node is None and type(operation).__name__ == 'Assignment' and storage_alias(value):
+            # Slither 旧版用 AssignmentOperation 包装声明初始化，但跨度仅覆盖右侧。
+            # 必须由同一局部声明、唯一初始化 AST 和精确字节跨度共同确认，不能忽略类型兜底。
+            identity = declaration(value)
+            initializers = [item.get('initialValue') for item in bundle['nodes'].values()
+                if item.get('nodeType') == 'VariableDeclarationStatement'
+                and item.get('assignments') == [identity]
+                and len(item.get('declarations', [])) == 1
+                and (item['declarations'][0] or {}).get('id') == identity]
+            if len(initializers) == 1 and isinstance(initializers[0], dict):
+                candidate = ast_node(expression, initializers[0].get('nodeType'))
+                if candidate is not None and candidate.get('id') == initializers[0].get('id'):
+                    node = candidate
         binding = {'irVariable': getattr(value, 'name', None), 'irIndex': index,
                    'irKind': type(operation).__name__, 'definitionCount': len(choices),
                    'declarationId': declaration(value), 'astNodeId': node.get('id') if node else None,
@@ -405,6 +518,68 @@ def _ir_state_facts(operations, bundle):
                 gaps.append('SlithIR 状态访问没有完整绑定')
     return {'referenceBindings': bindings, 'stateAccesses': accesses,
             'stateAccessCoverage': 'DIRECT_FUNCTION_OPERATIONS', 'gaps': sorted(set(gaps))}
+
+
+def _storage_layout(slither, bundle):
+    """根布局取实际 Slither 方法；结构值字段使用其类型大小和官方槽打包规则。"""
+    span, declaration, _ = _source_bindings(bundle)
+    result = []
+    for contract in slither.contracts:
+        if getattr(contract, 'id', None) != bundle.get('targetContractId'):
+            continue
+        for variable in contract.storage_variables_ordered:
+            identity = declaration(variable)
+            node = bundle['declarations'].get(identity, {})
+            slot = offset = None
+            reason = None
+            try:
+                slot, offset = contract.compilation_unit.storage_layout_of(contract, variable)
+                if (type(slot) is not int or type(offset) is not int or slot < 0 or not 0 <= offset < 32):
+                    raise ValueError('工具存储布局数值无效')
+            except Exception as error:
+                slot = offset = None
+                reason = f'工具未提供实际布局：{type(error).__name__}'
+            bound = identity is not None and node.get('stateVariable') is True and slot is not None
+            item = {'contractDeclarationId': contract.id, 'declarationId': identity,
+                    'slot': slot, 'offset': offset, 'type': _type_text(variable.type),
+                    'span': span(variable), 'bindingStatus': 'BOUND' if bound else 'UNRESOLVED',
+                    'provider': 'SLITHER_STORAGE_LAYOUT', 'members': []}
+            if reason or not bound:
+                item['reason'] = reason or '存储根未唯一绑定编译 AST 状态声明'
+            value_type, containers = variable.type, []
+            seen_types = set()
+            while hasattr(value_type, 'type_to') and id(value_type) not in seen_types:
+                seen_types.add(id(value_type)); containers.append('MAPPING_VALUE')
+                value_type = value_type.type_to
+            struct = getattr(value_type, 'type', None)
+            fields = getattr(struct, 'elems_ordered', [])
+            relative_slot, relative_offset = 0, 0
+            layout_known = True
+            for field in fields:
+                field_id = declaration(field)
+                try:
+                    size, new_slot = field.type.storage_size
+                    if type(size) is not int or size < 1 or type(new_slot) is not bool:
+                        raise ValueError('字段存储大小无效')
+                    if (new_slot and relative_offset > 0) or (not new_slot and size + relative_offset > 32):
+                        relative_slot += 1; relative_offset = 0
+                    field_slot, field_offset = relative_slot, relative_offset
+                    if new_slot:
+                        relative_slot += (size + 31) // 32
+                    else:
+                        relative_offset += size
+                except Exception:
+                    layout_known = False
+                    field_slot = field_offset = None
+                item['members'].append({'memberDeclarationId': field_id,
+                    'relativeSlot': field_slot if layout_known else None,
+                    'offset': field_offset if layout_known else None, 'type': _type_text(field.type),
+                    'span': span(field), 'bindingStatus': 'BOUND' if layout_known and field_id is not None else 'UNRESOLVED'})
+            if fields:
+                item['memberContainerKinds'] = containers
+                item['memberLayoutAlgorithm'] = 'slither-storage-packing-v1'
+            result.append(item)
+    return result
 
 
 def _effects(slither, bundle):
@@ -572,6 +747,8 @@ def _worker(manifest_path, root, directory):
         def __init__(self):
             super().__init__(copy.deepcopy(bundle['input']))
             self.observed_output = None
+            self.parsed_output = None
+            self.adapter_receipt = None
             self.execution = None
 
         def compile(self, cc, **kwargs):
@@ -598,7 +775,8 @@ def _worker(manifest_path, root, directory):
             unit = CompilationUnit(cc, 'bound_standard_json_execution')
             unit.compiler_version = CompilerVersion(compiler='solc', version=version,
                                                     optimized=optimizer.get('enabled', False), optimize_runs=optimizer.get('runs'))
-            parse_standard_json_output(self.observed_output, unit, solc_working_dir=str(cwd))
+            self.parsed_output, self.adapter_receipt = _adapt_compiler_output(self.observed_output, version)
+            parse_standard_json_output(self.parsed_output, unit, solc_working_dir=str(cwd))
             self.execution = {'binaryPath': str(binary), 'binarySha256Before': before, 'binarySha256After': after,
                               'version': version, 'versionStdoutSha256': _digest(probe.stdout), 'command': command,
                               'cwd': str(cwd), 'inputSha256': _digest(actual_input),
@@ -609,6 +787,10 @@ def _worker(manifest_path, root, directory):
 
     adapter = FixedInput()
     cc = CryticCompile(adapter, cwd=str(cwd))
+    tool_identity['upstreamVersion'] = tool_identity['version']
+    tool_identity['adapter'] = adapter.adapter_receipt
+    if adapter.adapter_receipt['active']:
+        tool_identity['version'] += '+' + _ADAPTER_VERSION
     analyzer = Slither(cc, codex=False, generate_patches=False, triage_mode=False, disallow_partial=True)
     analyzer._previous_results_filename = str(directory / 'unused-triage.json')
     observed = {}
@@ -618,6 +800,7 @@ def _worker(manifest_path, root, directory):
             name = ast['absolutePath']
             code = cc.src_content[source_unit.filename.absolute]
             observed[name] = {'sha256': _digest(code.encode()), 'astSha256': _digest(_canonical(ast)),
+                              'compilerOriginalAstSha256': _digest(_canonical(bundle['output']['sources'][name]['ast'])),
                               'contractAbi': {name: _digest(_canonical(value)) for name, value in source_unit.abis.items()},
                               'contractBytecodeInit': {name: _digest(value.encode()) for name, value in source_unit.bytecodes_init.items()},
                               'contractBytecodeRuntime': {name: _digest(value.encode()) for name, value in source_unit.bytecodes_runtime.items()}}
@@ -625,7 +808,7 @@ def _worker(manifest_path, root, directory):
             or _canonical(adapter.observed_output) != _canonical(bundle['output'])):
         raise ValueError('实际 Slither 编译产物与第一收据不一致')
     for name, source in bundle['input']['sources'].items():
-        if observed[name]['sha256'] != _digest(source['content'].encode()) or observed[name]['astSha256'] != _digest(_canonical(bundle['output']['sources'][name]['ast'])):
+        if observed[name]['sha256'] != _digest(source['content'].encode()) or observed[name]['astSha256'] != _digest(_canonical(adapter.parsed_output['sources'][name]['ast'])):
             raise ValueError('实际 Slither 解析的源码或 AST 闭包不一致')
     classes = {getattr(all_detectors, name) for name in dir(all_detectors) if inspect.isclass(getattr(all_detectors, name))}
     detectors = sorted([value for value in classes if issubclass(value, AbstractDetector) and value != AbstractDetector
@@ -652,7 +835,7 @@ def _worker(manifest_path, root, directory):
                      'optimized': unit.compiler_version.optimized, 'optimizeRuns': unit.compiler_version.optimize_runs}
                     for unit in cc.compilation_units.values()]},
                 'detectorsRun': [detector.ARGUMENT for detector in detectors],
-                'effectSummaries': _effects(analyzer, bundle)}
+                'effectSummaries': _effects(analyzer, bundle), 'storageLayout': _storage_layout(analyzer, bundle)}
     if (producer_hash != _digest(Path(__file__).read_bytes())
             or tool_identity['pythonExecutableSha256'] != _digest(Path(sys.executable).resolve().read_bytes())
             or tool_identity['slitherSource'] != _tree_digest(slither_package)
@@ -682,7 +865,8 @@ def main():
     directory.mkdir(parents=True, exist_ok=True)
     try:
         result = _worker(args.manifest, root, directory)
-    except (ImportError, OSError, ValueError, KeyError, TypeError, AttributeError, subprocess.SubprocessError) as error:
+    except (ImportError, OSError, ValueError, KeyError, TypeError, AttributeError, AssertionError, subprocess.SubprocessError) as error:
+        traceback.print_exc(file=sys.stderr)
         category = 'DEPENDENCY_UNAVAILABLE' if isinstance(error, ImportError) else 'WORKER_FAILED'
         result = _failure(category, error)
     (directory / 'tool-result.json').write_bytes(_canonical(result))

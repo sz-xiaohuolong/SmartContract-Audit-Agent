@@ -666,6 +666,61 @@ def _corroboration(hypothesis, tools, bundle, risk_span, root, matched_tool_inde
     return references
 
 
+def _execution_proof(proof, hypothesis, bundle, graph, risk, tool_binding, root):
+    """仅为已绑定候选补正常业务见证；失败不改变静态证明的未知结论。"""
+    if (proof.get('status') != 'UNKNOWN' or not proof.get('candidateBound')
+            or tool_binding.get('status') != 'MATCH'):
+        return proof
+    scope = proof.get('proofScope', {})
+    authority = (hypothesis['vulnerabilityType'] == 'ACCESS_CONTROL'
+                 and proof.get('proofKind') == 'ACCESS_CONTROL_AUTHORITY_WRITE_CANDIDATE')
+    resource = scope.get('authorityResource') if authority else (
+        scope.get('balanceResource') if hypothesis['vulnerabilityType'] == 'REENTRANCY' else None)
+    if resource is None or scope.get('riskSpan') != risk['span']:
+        return proof
+    from evm_witness import execute_bound_witness
+    execution = execute_bound_witness(bundle, hypothesis, graph, risk, resource, tool_binding, root=root)
+    proof['executionBinding'] = execution
+    witness = execution.get('witness', {})
+    initialization = witness.get('initialization', {})
+    expected_kind = 'ACCESS_CONTROL_AUTHORITY_WRITE' if authority else 'CEI_COUNTEREXAMPLE'
+    expected_assertion = 'PERSISTENT_UNAUTHORIZED_AUTHORITY_WRITE' if authority else 'NORMAL_RETURN_CEI_ORDER'
+    receipts = execution.get('receipts', [])
+    if (execution.get('status') != 'MATCH' or execution.get('provider') != 'bound-evm-1'
+            or len(receipts) != 2 or receipts[0].get('path') == receipts[1].get('path')
+            or any(not item.get('path') or len(item.get('sha256', '')) != 64 for item in receipts)
+            or witness.get('kind') != expected_kind or witness.get('normalExit') is not True
+            or witness.get('location', {}).get('resource') != resource
+            or witness.get('assertion', {}).get('valid') is not True
+            or witness.get('assertion', {}).get('assertion') != expected_assertion
+            or initialization.get('runtimeInitialized' if authority else 'funded') is not True
+            or authority and (not witness.get('effectReferences') or not witness.get('authorityConsumers')
+                or witness.get('consumerExecution', {}).get('valid') is not True
+                or witness.get('consumerExecution', {}).get('normalExit') is not True)):
+        scope.setdefault('gaps', []).append('本机执行见证未通过独立正常提交、初态与资源绑定：'
+                                           + execution.get('reason', '收据或断言不完整'))
+        return proof
+    references = [{'engine': 'LOCAL_EVM', 'provider': execution['provider'], **item} for item in receipts]
+    references.extend(witness.get('effectReferences', []))
+    proof.update(status='COUNTEREXAMPLE', proofKind=expected_kind)
+    scope.update(counterexampleComplete=True, conditionedOnInitialState=False,
+                 conditionedOnExternalCalls=False, executionScope='BOUND_NORMAL_BUSINESS_TRACE')
+    # 静态全入口缺口仍保留；存在性见证不声称完整保护或整合约安全。
+    proof['references'].extend(references)
+    proof['pathEvidence'] = {'status': 'FEASIBLE', 'normalExit': True, 'witness': witness,
+        'references': references, 'transactionFeasibility': 'INDEPENDENT_EVM_REPLAY',
+        'reason': '原字节码正常业务在两个独立本机节点提交相同的有限属性反例'}
+    for obligation in proof['obligations']:
+        if not authority and obligation['name'] == 'pre_risk_guard':
+            from reentrancy_proofs import _prebalance
+            obligation.update(status='SUPPORTED' if _prebalance(graph, risk) else 'UNKNOWN',
+                references=references, reason='余额检查单独按编译控制关系判断，CEI反例不否定所有前置检查')
+            continue
+        obligation.update(status='SUPPORTED' if obligation['name'] in {'actor', 'resource'} else 'REFUTED',
+            references=references, reason='同主体及资源已绑定；正常提交见证否定该候选的完整保护')
+    return proof
+
+
 def _apply_proof(result, proof, hypothesis, tools, bundle, root):
     result['candidateProof'] = proof
     if (proof.get('status') not in {'PROVED', 'COUNTEREXAMPLE'}
@@ -695,8 +750,15 @@ def _apply_proof(result, proof, hypothesis, tools, bundle, root):
           and (hypothesis['vulnerabilityType'] == 'REENTRANCY'
                and proof['pathEvidence'].get('witness', {}).get('initialization', {}).get('funded') is True
                or hypothesis['vulnerabilityType'] == 'ACCESS_CONTROL'
-               and proof.get('proofKind') == 'ACCESS_CONTROL_TERMINATION'
+               and proof.get('proofKind') in {'ACCESS_CONTROL_TERMINATION', 'ACCESS_CONTROL_AUTHORITY_WRITE'}
                and proof['pathEvidence'].get('witness', {}).get('initialization', {}).get('runtimeInitialized') is True)):
+        if (proof.get('proofKind') == 'ACCESS_CONTROL_AUTHORITY_WRITE'
+                and proof.get('executionBinding', {}).get('status') == 'MATCH'
+                and proof['pathEvidence'].get('transactionFeasibility') == 'INDEPENDENT_EVM_REPLAY'
+                and proof['pathEvidence']['witness'].get('effectReferences')):
+            result['corroboration'] = copy.deepcopy(proof['pathEvidence']['witness']['effectReferences'])
+            result.update(verdict='SUPPORTED', protectionVerdict='REFUTED', status='COMPLETED')
+            return
         risk_span = proof['proofScope'].get('riskSpan')
         if isinstance(risk_span, dict):
             corroboration = _corroboration(hypothesis, tools, bundle, risk_span, root,
@@ -805,6 +867,7 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
             result['note'] = '结论仅针对绑定候选与有限静态防御属性，不代表整合约安全或可利用性'
         return result
     risk = risks[0]
+    proof = _execution_proof(proof, hypothesis, bundle, graph, risk, result['toolBinding'], root)
     result['riskBinding'] = {**_reference(risk, bundle), **binding_record(risk, hypothesis)}
     result['cfg'] = graph.public()
     if proof.get('proofKind') == 'ACCESS_CONTROL_TERMINATION':
