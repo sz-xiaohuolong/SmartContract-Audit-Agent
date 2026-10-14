@@ -698,6 +698,16 @@ byId('exploratory-refresh').onclick = loadExploratory;
     if (!selected.length) region.append(node('p', 'ws-caption', '暂无入选案例。'));
     if (list(d1.gaps).length) region.append(node('pre', '', json({gaps: d1.gaps})));
     if (data.retrieval?.pool) region.append(node('pre', '', json({candidatePool: data.retrieval.pool, budget: d1.budget, usedBytes: d1.usedBytes})));
+    const focus = data.retrieval?.focusContext;
+    if (focus) {
+      const details = node('details'); details.append(node('summary', '', '焦点上下文与未解析引用'));
+      details.append(node('pre', '', json(focus))); region.append(details);
+    }
+    const templates = data.retrieval?.templatePresentation;
+    if (templates) {
+      const details = node('details'); details.append(node('summary', '', '检查模板与实例绑定'));
+      details.append(node('pre', '', json(templates))); region.append(details);
+    }
     renderPair();
   }
   function renderPair() {
@@ -790,6 +800,10 @@ byId('exploratory-refresh').onclick = loadExploratory;
     meta(region, 'D2 裁决', {SUPPORTED: '漏洞假设获支持', REFUTED: '漏洞假设被反驳', UNKNOWN: '未知'}[assessment?.verdict] || '未知');
     const reason = hypothesis?.reason || (data.model?.rejectedHypotheses?.length ? '部分模型假设未通过绑定校验，结果保持未决。' : '尚无模型假设。无假设不代表全合约安全。');
     region.append(node('p', 'ws-hypothesis-note', reason));
+    if (assessment?.evidenceReview) {
+      const details = node('details'); details.append(node('summary', '', '独立证据复核'));
+      details.append(node('pre', '', json(assessment.evidenceReview))); region.append(details);
+    }
   }
   function renderVerdict(data) {
     const banner = byId('ws-verdict-banner'); banner.className = 'ws-verdict-banner';

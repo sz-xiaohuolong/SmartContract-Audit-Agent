@@ -31,11 +31,24 @@ def analyze_saved(root, target, hypotheses):
              'candidateContracts': sorted({hypothesis.get('contract') for hypothesis in hypotheses
                                           if isinstance(hypothesis.get('contract'), str)})}
     try:
-        manifest = prepare_compilation(root, bound)
-        bundle = load_bound_compilation(manifest, root)
+        if len(bound['candidateContracts']) > 1:
+            from compilation_runtime import prepare_candidate_compilations
+            manifest = prepare_candidate_compilations(root, bound)
+        else:
+            manifest = prepare_compilation(root, bound)
+        mapped = isinstance(manifest, dict) and manifest.get('provider') == 'contract-map'
+        manifests = manifest['manifests'] if mapped else {'target': manifest}
         from bound_slither import analyze_bound
-        tools = [analyze_bound(manifest, root=root)]
-        result.update(compilerManifest=manifest, compiledFacts=extract_compiler_facts(bundle), tools=tools)
+        facts_by_contract, tools = {}, []
+        for contract, value in manifests.items():
+            bundle = load_bound_compilation(value, root)
+            facts_by_contract[contract] = extract_compiler_facts(bundle)
+            tools.append(analyze_bound(value, root=root))
+        if mapped and manifest.get('errors'):
+            tools.append({'engine': 'SLITHER', 'status': 'PROCESS_ERROR', 'issues': [],
+                          'errorCategory': 'COMPILATION_BINDING_FAILED'})
+        result.update(compilerManifest=manifest, compiledFacts=facts_by_contract if mapped else
+                      facts_by_contract['target'], tools=tools)
         result['d2'] = assess(model, facts, tools, source, target=target if 'scope' in target else None,
                               compilation_manifest=manifest, root=root)
         result['status'] = ('FAILED' if result['d2']['status'] == 'FAILED'

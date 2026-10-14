@@ -134,12 +134,18 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
                      'validationIssue': model.get('validationIssue'),
                      'inputTokens': model.get('inputTokens'), 'outputTokens': model.get('outputTokens')}
         _event(events, 'MODEL_RESULT', {'status': model['status'], 'conclusion': model.get('conclusion')})
+        if view.get('discoveryCompilation') is not None and model.get('hypotheses'):
+            from compilation_runtime import prepare_candidate_compilations
+            target['discoveryCompilation'] = view['discoveryCompilation']
+            target['candidateContracts'] = sorted({h['contract'] for h in model['hypotheses']})
+            target['compilerManifest'] = prepare_candidate_compilations(root, target)
         tools = dependencies.tool_runner(root, target, mode)
         if not isinstance(tools, list): raise ValueError('工具结果无效')
         _event(events, 'TOOL_RESULT', {'statuses': [item.get('status') for item in tools]})
         if model['status'] == 'COMPLETED':
             from audit_workbench import assess
-            d2 = assess(model, view['facts'], tools, target['fullSource'], target=target)
+            d2 = assess(model, view['facts'], tools, target['fullSource'], target=target,
+                        compilation_manifest=target.get('compilerManifest'), root=root)
         _event(events, 'D2_RESULT', {'verdict': d2['verdict']})
     except Exception:
         execution_failed = True

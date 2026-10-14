@@ -208,6 +208,7 @@ def workspace_rehearsal(root, target, strategy='D1', *, analyzer=None, preview=N
         'model': {'status': 'COMPLETED', 'fixture': True, 'hypotheses': hypotheses,
                   'hypothesisOrigin': target.get('claimOrigin'), 'inputTokens': None, 'outputTokens': None},
         'retrieval': retrieval, 'tools': analysis.get('tools') or [], 'd2': analysis.get('d2') or {},
+        'compilationManifest': analysis.get('compilerManifest'),
         'compilerBinding': analysis.get('compilerBinding'), 'environment': analysis.get('environment'),
         'conclusion': 'UNRESOLVED', 'researchEligible': False})
 

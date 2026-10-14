@@ -173,6 +173,11 @@ class BenchmarkRuntime:
             view['compiledFacts'] = extract_compiler_facts(bundle)
         from risk_catalog import prepare_model_context
         prepare_model_context(self.root, target, view, mode)
+        if view.get('discoveryCompilation') is not None:
+            target['discoveryCompilation'] = view['discoveryCompilation']
+        from check_templates import prepare_template_presentation
+        if hasattr(self, 'snapshot'):
+            prepare_template_presentation(self.root, view, self.snapshot)
         selected = view['d1'].get('selected', [])
         started = monotonic()
         model = self.model_runner(self.root, target, view, mode)
@@ -189,7 +194,7 @@ class BenchmarkRuntime:
         model = {key: value for key, value in model.items() if key != '_rawResponse'}
         compilation_error = None
         compilation_diagnostic = None
-        if (mode == 'real' and target.get('compilerManifest') is None
+        if (mode == 'real' and (target.get('compilerManifest') is None or target.get('discoveryCompilation') is not None)
                 and (self.root / 'config/tools.local.properties').is_file() and model.get('hypotheses')):
             from compilation_runtime import prepare_candidate_compilations
             from tool_environment import _configuration

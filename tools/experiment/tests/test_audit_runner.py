@@ -40,6 +40,16 @@ class SavedAuditRunnerTest(unittest.TestCase):
         self.assertEqual(6, len(result['d2']['assessments'][0]['obligations']))
         self.assertEqual('UNKNOWN', result['d2']['verdict'])
 
+    def test_多合约保存候选分别投影不丢失合法合约证明(self):
+        hypotheses = self.hypotheses + [{**self.hypotheses[0], 'contract': '不存在'}]
+        target = {'fullSource': self.fixture.source, 'discoveryCompilation': self.fixture.manifest}
+        with patch('bound_slither.analyze_bound', return_value={'engine': 'SLITHER',
+                'status': 'PROCESS_ERROR', 'issues': []}):
+            result = analyze_saved(self.fixture.root, target, hypotheses)
+        self.assertEqual(2, len(result['d2']['assessments']))
+        self.assertEqual('PROVED', result['d2']['assessments'][0].get('candidateProof', {}).get('status'))
+        self.assertEqual('UNKNOWN', result['d2']['assessments'][1]['verdict'])
+
 
 if __name__ == '__main__':
     unittest.main()

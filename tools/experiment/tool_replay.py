@@ -101,12 +101,16 @@ def _target(row, metadata):
     mechanism = metadata.get('mechanism') or row.get('retrieval', {}).get('targetMechanism')
     if mechanism is None and row['model'].get('hypotheses'):
         mechanism = row['model']['hypotheses'][0].get('vulnerabilityType')
-    return {'sampleId': row['sampleId'], 'fullSource': source, 'source': source,
+    target = {'sampleId': row['sampleId'], 'fullSource': source, 'source': source,
             'sourceHash': row['sourceHash'], 'fullSourceHash': row['sourceHash'],
             'modelSource': model_source, 'modelSourceHash': _sha(model_source.encode()),
             'scope': scope, 'lineStart': start, 'lineEnd': end,
             'mechanism': mechanism, 'function': metadata.get('function', ''),
             'taskKind': 'CLAIM_VALIDATION', 'researchEligible': False}
+    discovery = row.get('retrieval', {}).get('discoveryCompilation')
+    if discovery is not None:
+        target['discoveryCompilation'] = discovery
+    return target
 
 
 def replay(root, original_run, output_run, *, tool_runner=None, environment_resolver=None,

@@ -145,6 +145,9 @@ def load_risk_catalog(manifest, root):
 def prepare_model_context(root, target, view, mode):
     """在模型前构造全合约目录；发现入口与模型后的候选绑定清单分别保存。"""
     manifest = target.get('compilerManifest')
+    from focus_context import build_syntax_context, build_focus_context
+    if isinstance(target.get('fullSource'), str):
+        view['focusContext'] = build_syntax_context(target['fullSource'])
     try:
         if manifest is None:
             if mode != 'real':
@@ -165,6 +168,7 @@ def prepare_model_context(root, target, view, mode):
         view['riskCatalog'] = build_risk_catalog(bundle)
         view['discoveryCompilation'] = manifest
         view['compiledFacts'] = extract_compiler_facts(bundle)
+        view['focusContext'] = build_focus_context(bundle)
         view['riskCatalogDiagnostic'] = {'status': 'BOUND', 'receiptDigest': bundle['receiptDigest']}
     except (ValueError, OSError, subprocess.TimeoutExpired) as error:
         view.pop('riskCatalog', None)

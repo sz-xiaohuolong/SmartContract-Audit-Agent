@@ -776,7 +776,7 @@ def _risk_matches(node, hypothesis, bundle, facts):
             and node['span']['line'] <= hypothesis['riskLine'] <= node['span'].get('endLine', node['line']))
 
 
-def evaluate_compiled(hypothesis, manifest, tools, *, root):
+def _evaluate_compiled(hypothesis, manifest, tools, *, root):
     """重新核验原编译产物，计算局部路径与六义务；不接受人工证明或攻击回执。"""
     result = {'schemaVersion': '2', 'provider': 'solc-standard-json', 'status': 'PARTIAL',
               'verdict': 'UNKNOWN', 'protectionVerdict': 'UNKNOWN', 'references': [],
@@ -993,4 +993,18 @@ def evaluate_compiled(hypothesis, manifest, tools, *, root):
     result['note'] = ('结论仅针对绑定候选与完整编译证明范围' if result['verdict'] == 'REFUTED' else
                       '已核验有限静态反例与同类工具证据；不代表攻击可利用性' if result['verdict'] == 'SUPPORTED' else
                       '局部静态证据保留；路径可满足性、入口覆盖或工具绑定不足，最终未知')
+    return result
+
+
+def evaluate_compiled(hypothesis, manifest, tools, *, root):
+    """最终裁决与独立引用复核分开；复核不改变现行证明门槛。"""
+    result = _evaluate_compiled(hypothesis, manifest, tools, root=root)
+    from evidence_review import review_evidence
+    try:
+        bundle = load_bound_compilation(manifest, root)
+        result['evidenceReview'] = review_evidence(hypothesis, result, bundle)
+    except (ValueError, OSError, KeyError, TypeError):
+        result['evidenceReview'] = {'schemaVersion': 'evidence-review-1', 'status': 'UNRESOLVED',
+            'checks': [], 'gateApplied': False, 'newModelRequests': 0,
+            'reason': '原件或编译身份不可重验，复核保持未决'}
     return result

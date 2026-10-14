@@ -100,6 +100,37 @@ class CompilationRuntimeTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '依赖'):
             prepare_compilation(self.fixture.root, target)
 
+    def test_候选复用发现收据且事实身份不漂移(self):
+        from compilation_runtime import prepare_candidate_compilations
+        from compiler_facts import load_bound_compilation, extract_compiler_facts
+        original = load_bound_compilation(self.fixture.manifest, self.fixture.root)
+        target = {**self.target(), 'discoveryCompilation': self.fixture.manifest,
+                  'compilerTemplate': self.fixture.manifest}
+        before = copy.deepcopy(target)
+        manifest = prepare_candidate_compilations(self.fixture.root, target)
+        bundle = load_bound_compilation(manifest, self.fixture.root)
+        self.assertEqual(original['receiptDigest'], bundle['receiptDigest'])
+        self.assertEqual(original['environmentHash'], bundle['environmentHash'])
+        self.assertEqual(extract_compiler_facts(original), extract_compiler_facts(bundle))
+        self.assertEqual(before, target)
+
+    def test_多合约投影逐项拒绝错合约而保留合法收据(self):
+        from compilation_runtime import prepare_candidate_compilations
+        target = {**self.target(), 'candidateContracts': ['C', '不存在'],
+                  'discoveryCompilation': self.fixture.manifest, 'compilerTemplate': self.fixture.manifest}
+        result = prepare_candidate_compilations(self.fixture.root, target)
+        self.assertEqual(self.fixture.manifest['bindingSha256'], result['manifests']['C']['bindingSha256'])
+        self.assertNotIn('不存在', result['manifests'])
+        self.assertIn('不存在', result['errors'])
+
+    def test_发现收据丢失不能重新编译掩盖身份失败(self):
+        from compilation_runtime import prepare_candidate_compilations
+        manifest = {**self.fixture.manifest, 'bindingPath': 'missing.json'}
+        with self.assertRaises(ValueError):
+            prepare_candidate_compilations(self.fixture.root,
+                {**self.target(), 'discoveryCompilation': manifest,
+                 'compilerTemplate': self.fixture.manifest})
+
 
 if __name__ == '__main__':
     unittest.main()

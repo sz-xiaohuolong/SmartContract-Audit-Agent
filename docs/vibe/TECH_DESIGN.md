@@ -10,6 +10,8 @@
 | `HypothesisCli` / `HypothesisService` | Java 结构化模型网关，最多三项假设，校验名称、操作、位置、引用；缺失 usage 保留 null |
 | `ToolCli` / `ToolAnalyzer` | Slither 与可选 Mythril 子进程，保存状态、版本、耗时、告警和目标源码身份 |
 | `d2_verify.py` | 绑定假设、事实和工具，逐项输出 actor/resource/pre_risk_guard/entry_coverage/state_version/bypass；漏洞裁决与保护裁决分开 |
+| `focus_context.py` / `check_templates.py` | 同重验AST建立ff／fm／fi／fv原字节索引与全合约入口；10条知识来源模板保守实例化，独立展示和保存回执，FULL及默认D1配对不变 |
+| `evidence_review.py` / `real_fix_check.py` / `synapse_protocol.py` | 六项只读复核；真实before／after最终裁决验收；单次三策略授权与待审多因素协议分开，缺独立真值与精确token公平保持未验 |
 | `compiler_facts.py` | 显式绑定 standard-json 输入、输出、源码闭包、固定 solc、声明和 ABI 入口；每次实际重新编译完整 JSON 对照，执行前后核对编译器摘要 |
 | `compiled_d2.py` | 从类型化 AST 展开内部调用和修饰器，按实际 CFG 支配、声明／key／字段和状态版本计算六义务；局部路径、条件前提与整候选缺口分别保存 |
 | `bound_slither.py` / `compilation_runtime.py` | 生成固定编译与官方 Slither 独立收据，重新核验源码闭包、设置、AST 和产物；单文件自动编译，含导入须有完整模板 |
@@ -35,6 +37,8 @@ Java提示模板`hypotheses-v4-diff-guidance`把修复差分作为条件、资�
 本机登记目标可携带 `compilerManifest`；工作台预览保存 `compiledFacts` 与计划中的 `compilerBinding`，执行前再核验，漂移在模型之前终止。批量运行也在模型之前核验编译绑定，D2 公共入口随后自行重载。消费的清理源码必须与编译目标字节一致；不能把原件 AST 直接套在不同摘要的清理输入上。历史报告只读，不因接入重新发送模型请求。S11 的路径 CLI 与本机原件恢复要求见[工具说明](../../tools/experiment/README.md#r2-s11真实编译事实与有限路径)。
 
 
+2026-10-14 SYNAPSE实施贯通发现收据与候选核验，不修改fact ID或原候选。工作台独立保存实际`compilationManifest`，包括多合约投影；公开案例离线演练导出也保留该清单。焦点索引遇到间接函数指针、递归或未知实现时登记缺口；SYNTAX_ONLY不宣称闭包完整。独立复核从重验AST重构入口及资源，PASS／CONFLICT／UNRESOLVED作为侧报告，`gateApplied=false`，现行D2三态不变。详见[实施报告](releases/R2-20261010/experiments/2026-10-14_SYNAPSE_IMPLEMENTATION_REPORT.md)。
+
 ## 环境、原件与可读报告
 
 本机环境位于 `.local/envs/`、`.local/models/`、`.local/services/`、`.local/solidity/`，唯一恢复材料位于 `.local/recovery/`；下载仓库位于 `data/external/`。真实模型批次、派生核验、固定输入、快照和编译／工具收据位于 `research-artifacts/`，按运行编号和类别组织；可读报告在版本实验目录，`.evidence/` 保留关键验证材料。分类与整理命令见[原件说明](../../research-artifacts/README.md)。
@@ -53,7 +57,7 @@ S11／S12 接缝已接通独立编译／工具双收据和有限证明分派。�
 
 2026-10-12 根因修复统一了顶层与机制专用风险图，支持经编译类型核实的旧内置别名、Throw、现代CALL布尔返回解构及精确数值单位。重入资金见证重放同次payable入账的全部相关槽。访问终止CALL只对actor／entry_coverage／bypass给出有限反证，其他义务保持UNKNOWN，完整性为false；最终正裁决只接受suicidal双收据同函数与跨度佐证。原输入阻断按冻结计划核对后纳入派生而不执行工具。证据和限制见[根因修复报告](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md)。
 
-配置固定编译器目录时，正式执行器在模型之后、工具之前为每个候选合约生成 AST 收据；显式登记案例在预览与模型之前重验。旧单 solc 网关保持原兼容入口。工作台的公开案例演练实际执行静态核验，复用登记候选且 usage 缺失为 null；六义务与所选候选同步，离线总审计结论保持未决。派生历史只消费封口产物，逐字节下载并核对可得原件，不重发模型。研究有效性与完整 S12 仍按[R2 验收矩阵](releases/R2-20261010/VERIFICATION.md)分别记录。
+配置固定编译器目录时，发现阶段先生成重验AST收据；模型之后优先复用该input／output／binding并显式投影候选合约，保持receiptDigest及environmentHash。缺原收据拒绝，未提供发现收据的兼容入口才独立生成候选收据；显式登记案例在预览与模型之前重验。旧单 solc 网关保持原兼容入口。工作台的公开案例演练实际执行静态核验，复用登记候选且 usage 缺失为 null；六义务与所选候选同步，离线总审计结论保持未决。派生历史只消费封口产物，逐字节下载并核对可得原件，不重发模型。研究有效性与完整 S12 仍按[R2 验收矩阵](releases/R2-20261010/VERIFICATION.md)分别记录。
 
 默认构建为 `mvn clean verify`；Python 离线验证为 `PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`。CLI 为 `java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help`。本机页面由 `tools/experiment/local_ui.py` 提供，启动与配置见[工具说明](../../tools/experiment/README.md)。
 

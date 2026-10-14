@@ -192,6 +192,9 @@ class AuditWorkbench:
         view = select_strategy(runtime.preview(target), strategy)
         from risk_catalog import prepare_model_context
         prepare_model_context(self.root, target, view, mode)
+        if hasattr(runtime, 'snapshot'):
+            from check_templates import prepare_template_presentation
+            prepare_template_presentation(self.root, view, runtime.snapshot)
         view['modelSourceHash'] = target['modelSourceHash']
         if view.get('sourceHash') != target['fullSourceHash']:
             raise ValueError('检索源码摘要与目标不一致')
@@ -269,6 +272,7 @@ class AuditWorkbench:
         model, tools = _model_error('MODEL_NOT_STARTED'), []
         d2 = {'schemaVersion': '2', 'verdict': 'UNKNOWN', 'assessments': []}
         stages, errors = [], []
+        candidate_compilation = target.get('compilerManifest')
         def stage(name, status, duration, reason=None):
             row = {'name': name, 'status': status, 'durationMs': duration, 'reason': reason}
             stages.append(row)
@@ -277,6 +281,7 @@ class AuditWorkbench:
             result = {'schemaVersion': '2', 'runId': identifier, 'plan': plan, 'planHash': fingerprint(plan),
                       'status': 'FAILED' if failed else 'COMPLETED', 'conclusion': conclusion,
                       'target': target, 'retrieval': view, 'model': model, 'tools': tools, 'd2': d2,
+                      'compilationManifest': candidate_compilation,
                       'stages': stages, 'errors': errors, 'researchEligible': False,
                       'denominators': {'planned': 1, 'failed': int(failed),
                                        'unknown': int(conclusion == 'UNRESOLVED')}}
@@ -341,6 +346,12 @@ class AuditWorkbench:
                             errors.append('MODEL_FAILED')
                         status = model['status']
                     elif name == 'TOOLS':
+                        if view.get('discoveryCompilation') is not None:
+                            call_target['discoveryCompilation'] = view['discoveryCompilation']
+                            if model.get('hypotheses'):
+                                from compilation_runtime import prepare_candidate_compilations
+                                call_target['candidateContracts'] = sorted({h['contract'] for h in model['hypotheses']})
+                                call_target['compilerManifest'] = prepare_candidate_compilations(self.root, call_target)
                         if (plan['mode'] == 'real' and call_target.get('compilerManifest') is None
                                 and Path(call_target.get('_toolConfigPath', '')).is_file()
                                 and model.get('hypotheses')):
@@ -351,6 +362,7 @@ class AuditWorkbench:
                             if call_target['_toolConfiguration'].get('tools.compiler.directory'):
                                 call_target['candidateContracts'] = sorted({h['contract'] for h in model['hypotheses']})
                                 call_target['compilerManifest'] = prepare_candidate_compilations(self.root, call_target)
+                        candidate_compilation = call_target.get('compilerManifest')
                         tools = self.tool(self.root, call_target, plan['mode'])
                         if not isinstance(tools, list) or not tools or any(not isinstance(row, dict) for row in tools):
                             raise ValueError('工具结果缺失或无效')

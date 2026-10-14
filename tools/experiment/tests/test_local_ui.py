@@ -18,6 +18,25 @@ DEMO = json.loads((ROOT / 'tools/experiment/fixtures/research-pilot/pilot.json')
 
 
 class WorkspaceCaseTest(unittest.TestCase):
+    def test_离线演练导出保留实际多合约编译清单且不修改目标(self):
+        from audit_target import pasted_target
+        target = pasted_target('contract C { uint x; function f() public { x = 1; } }', 'ACCESS_CONTROL')
+        target['savedHypotheses'] = [{'contract': 'C', 'function': 'f()', 'riskLine': 1}]
+        original = deepcopy(target)
+        manifest = {'provider': 'contract-map', 'manifests': {
+            'C': {'targetContract': 'C', 'bindingPath': '实际候选收据/binding.json'}}, 'errors': {}}
+        def analyze(*args):
+            return {'status': 'COMPLETED', 'compilerManifest': manifest, 'newModelRequests': 0,
+                'tools': [{'engine': 'SLITHER', 'status': 'OK'}],
+                'd2': {'verdict': 'UNKNOWN', 'assessments': []}}
+        result = local_ui.workspace_rehearsal(ROOT, target, analyzer=analyze)
+        exported = json.loads(json.dumps(result, ensure_ascii=False))
+        self.assertEqual(manifest, exported['compilationManifest'])
+        self.assertEqual(original, target)
+        self.assertEqual(original, exported['target'])
+        self.assertIsNone(exported['telemetry']['totalTokens'])
+        self.assertEqual(0, exported['newModelRequests'])
+
     def test_公开案例的登记候选不读取真值行(self):
         from benchmark_targets import load_benchmark_targets
         with TemporaryDirectory() as directory:

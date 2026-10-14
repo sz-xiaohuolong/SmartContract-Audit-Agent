@@ -41,6 +41,24 @@ def _prepare_compilation(root, target, *, discovery):
     source_hash = _sha(source.encode('utf-8'))
     if any(target.get(key, source_hash) != source_hash for key in ('sourceHash', 'fullSourceHash')):
         raise ValueError('编译源码摘要不一致')
+    if target.get('discoveryCompilation') is not None:
+        original = load_bound_compilation(target['discoveryCompilation'], root)
+        if original['sourceHash'] != source_hash:
+            raise ValueError('发现编译源码摘要不一致')
+        contracts = target.get('candidateContracts', [])
+        contract = target.get('contract')
+        if contract is None and len(contracts) == 1:
+            contract = contracts[0]
+        if discovery:
+            contract = original['targetContract']
+        if not isinstance(contract, str) or not contract or len(set(contracts)) > 1:
+            raise ValueError('候选未唯一绑定目标合约')
+        # 投影只改变目标选择；输入、输出和收据身份保持原始发现字节。
+        manifest = {**original['manifest'], 'targetContract': contract}
+        projected = load_bound_compilation(manifest, root)
+        if any(projected[key] != original[key] for key in ('sourceHash', 'receiptDigest', 'environmentHash')):
+            raise ValueError('发现编译投影身份不一致')
+        return manifest
     if target.get('compilerManifest') is not None:
         bundle = load_bound_compilation(target['compilerManifest'], root)
         if bundle['sourceHash'] != source_hash:
