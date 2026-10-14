@@ -276,7 +276,7 @@ python3 tools/experiment/d2_verify.py \
 
 编译 D2 从 AST 构造有限 CFG，展开内部调用和单占位符修饰器，按实际支配与声明／映射 key／struct 字段／状态版本计算义务。`localPathEvidence` 记录局部命题、范围及条件前提；`pathEvidence` 和 `proofScope` 保留全候选、全入口与早期调用缺口。Rabbit 修复后的权限检查、Atomic 首付款前置锁只提供相应局部证据；Atomic 三版仍有置锁前的 `ACEXT()` 调用。静态可达与工具告警不足以支持可行漏洞。
 
-共享接口 `d2_verify.evaluate`、`audit_workbench.assess` 支持显式 `compilation_manifest` 和 `root`。本机登记目标可携带 `compilerManifest`；单样本预览保存 `compiledFacts` 和计划身份，执行前重核验；批量也在模型前核验绑定。页面请求不能任意指定清单路径。清理后的消费源码须与编译输入字节一致，旧报告只读。配置 `tools.compiler.directory` 时，正式工作台与批量执行器在模型假设返回后自动生成单文件编译收据；仅配置 `tools.slither.solc` 的旧网关仍沿用原入口。含导入的源码须使用完整依赖模板，缺依赖、固定编译器或工具收据时保持未知。
+共享接口 `d2_verify.evaluate`、`audit_workbench.assess` 支持显式 `compilation_manifest` 和 `root`。本机登记目标可携带 `compilerManifest`；单样本预览保存 `compiledFacts` 和计划身份，执行前重核验；批量也在模型前核验绑定。页面请求不能任意指定清单路径。清理后的消费源码须与编译输入字节一致，旧报告只读。配置 `tools.compiler.directory` 时，发现阶段先生成重验编译收据，模型之后复用原input／output／binding并按候选合约投影；缺发现收据的兼容入口独立生成候选清单；仅配置 `tools.slither.solc` 的旧网关仍沿用原入口。含导入的源码须使用完整依赖模板，缺依赖、固定编译器或工具收据时保持未知。
 
 `bound_slither.py` 使用固定 solc 和官方 Slither 编译适配器生成独立收据，重新核对源码闭包、设置、AST、ABI、字节码及工具输出。两个摘要各自保存，通过实际对账建立 `MATCH`，不复制摘要。`candidate_proofs.py` 证明访问控制的权限委派和相关写入口闭包；`reentrancy_proofs.py` 证明有限 CEI 或统一互斥锁覆盖。保护完整且双收据匹配才能 `REFUTED`；合法入账建态、正常退出的 CEI 顺序反例及同源同类告警共同成立才能 `SUPPORTED`。局部保护、工具无告警及未建态路径仍为 `UNKNOWN`。
 
@@ -332,3 +332,16 @@ PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_report.py \
 ```
 
 模型 Precision／Recall／F1 与 D2 裁决独立统计。D2 反驳率为 REFUTED／有效保存假设数；UNKNOWN 不当作误报或安全，缺失核验仍计入未知。自动知识和数据集标签使当前报告属于探索性评测，完整 token 公平、独立适用性真值与研究效果验收仍需单列。
+
+## SYNAPSE 首期证据与上下文接入
+
+这次改动让模型提出的疑似漏洞与工具核验使用同一份编译记录，避免“代码一样、编号不同”导致无法定位。工作台还增加相关源码索引、检查模板和证据复核，帮助人回查结论。2026-10-14工程入口继续使用原工作台和三策略批量。默认模型仍读取完整清理源码（FULL）和原有漏洞／修复参考配对（D1）；新增索引和模板用于展示、回查与保存使用记录，尚未放入模型提示，记录为`consumedByModel=false`。因此，这次三策略实验的F1分数不能证明模板提示提高了效果。
+
+- `compilation_runtime.py`消费`discoveryCompilation`时重验原输入、输出和binding，显式投影候选合约；缺原收据不重新编译掩盖。实际候选`compilationManifest`随报告独立保存，冻结target保持原字节。
+- `focus_context.py`为目标函数（ff）、修饰器（fm）、内部调用（fi）和状态变量（fv）建立原字节索引，列出全部合约入口；间接调用、内联汇编、递归与未知外部实现分别列缺口。编译失败时只提供语法索引（SYNTAX_ONLY），不据此宣称完整或安全。
+- `check_templates.py`读取`data/audit/r2/check-templates.json`，核对知识划分和来源身份，为已入选pair保守实例化；未绑定状态版本或路径不猜配，预算不足整条拒绝。10条来源身份已核验，语义独立审核仍未完成。
+- `evidence_review.py`从重验的编译语法树（AST）独立核对六项接缝，输出通过（PASS）、冲突（CONFLICT）或未决（UNRESOLVED）。`gateApplied=false`表示只生成侧报告，不覆盖D2漏洞三态；缺独立候选真值时精确率保持未知（null）。
+- `real_fix_check.py --help`提供真实before／after最终裁决核验；两侧独立源码、工具COMPLETED、before SUPPORTED与after REFUTED同时成立才通过，局部BLOCKED或义务REFUTED不算最终验收。
+- `synapse_protocol.py`隔离一次三策略采集与待审RQ-A／B／C协议，不覆盖历史六臂协议；缺独立标签、来源谱系审核、精确token公平或真实双向闭环时研究资格false。
+
+当前真实修复与旧133未知门槛仍为部分完成（PARTIAL）；工程结果、完整163／133／151重放、原件指针和研究限制见[实施报告](../../docs/vibe/releases/R2-20261010/experiments/2026-10-14_SYNAPSE_IMPLEMENTATION_REPORT.md)。本次一次真实批量已完成，159正式请求、158模型有效，新163条候选为83支持／0反驳／80未知；三个构建产物阶段及失败限制见[真实报告](../../docs/vibe/releases/R2-20261010/experiments/2026-10-14_SYNAPSE_REAL_API_REPORT.md)。原件继续通过`storage.read_artifact()`读取并核对原始字节身份。

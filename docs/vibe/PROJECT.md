@@ -35,6 +35,8 @@ flowchart LR
 
 研究仍是部分完成、尚未验证：旧 133 条候选的未知数量未达到最多 13 条的目标；真实维护者修复尚未形成完整的漏洞支持／修复反驳对照；独立标签与精确模型文本预算的公平性也未完成核验。模型发现 F1 与这些核验结果分开呈现，详见 [实验现状看板](releases/R2-20261010/attachments/EXPERIMENT_DASHBOARD.md)。
 
+本轮首期工程之后的一次真实采集也已完成：159 次正式请求，158 个模型结果有效、1 个格式失败；52 个共同目标的 F1 为只读源码 0.9792、相似案例 0.9684、D1 配对 0.9787。163 条新候选为 83 条支持、0 条反驳、80 条未知。源码一致，但采集跨三个构建产物阶段；这组新候选与上面的固定候选重放分别统计。具体结果和限制见 [本次真实报告](releases/R2-20261010/experiments/2026-10-14_SYNAPSE_REAL_API_REPORT.md)。
+
 ## 唯一文档地图
 
 这是项目唯一的完整导航地图。下面按读者要解决的问题组织入口。`docs/README.md` 只把读者引到本页；当前版本文档沿用 R2-20261010，历史版本保留在原目录。
@@ -77,6 +79,7 @@ flowchart LR
 | 2026-10-13 两批固定候选重放 | [离线工程报告](releases/R2-20261010/experiments/2026-10-13_STAGE1_5_OFFLINE_REPORT.md) |
 | 2026-10-13 新模型采集 | [真实 API 报告](releases/R2-20261010/experiments/2026-10-13_STAGE1_5_REAL_API_REPORT.md)：当时新 163 条全部未知 |
 | 2026-10-14 同编译证据重放 | [SYNAPSE 实施报告](releases/R2-20261010/experiments/2026-10-14_SYNAPSE_IMPLEMENTATION_REPORT.md)：同 163 条得到 82 支持／81 未知 |
+| 2026-10-14 首期实施后的真实采集 | [真实 API 报告](releases/R2-20261010/experiments/2026-10-14_SYNAPSE_REAL_API_REPORT.md)：159 正式请求，新 163 条为 83 支持／80 未知，构建身份分段保存 |
 | 原件分类与本机空间 | [原件说明](../../research-artifacts/README.md)、[存储整理报告](releases/R2-20261010/STORAGE_LAYOUT_REPORT.md) |
 | 原始证据与历史正文 | [.evidence/R1](../../.evidence/R1/)、[迁移清单](../../.evidence/document-layout/manifest.json)、[R2 证据](../../.evidence/R2-20261010/)；部分材料仅本机保存 |
 
