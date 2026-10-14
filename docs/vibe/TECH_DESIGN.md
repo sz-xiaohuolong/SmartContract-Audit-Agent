@@ -1,64 +1,119 @@
-# 当前工程架构
+# 技术设计：一条审计结论怎样产生
 
-现行工程为 Java 21 / Spring Boot 4.1.1 / Spring AI 2.0.1 与 Python 混合管线。[R1-S9 规格](releases/R1/SPEC.md#r1-workbench)、[实施计划](releases/R1/IMPLEMENTATION_PLAN.md#s9)和[验证记录](releases/R1/VERIFICATION.md#r1-core-evidence)描述当前完整闭环。命令行不启动 Spring 容器，Python 本机 HTTP 服务提供单合约工作台和批量对照。
+VeriRAG 把审计分成两个阶段：先提出可以定位到代码的漏洞猜想，再检查程序证据是否支持这条猜想。Python 组织这条流程，Java 提供结构化模型网关；工作台和命令行共用分析入口。
 
-| 模块 | 当前职责 |
+如果希望先理解 D1、D2 和报告状态，请读 [概念与案例导读](releases/R2-20261010/attachments/CONCEPTS_AND_WALKTHROUGH.md)。本页解释当前源码如何实现这些机制，目标方案另见 [R2 设计](releases/R2-20261010/PROPOSED_DESIGN.md)。
+
+## 为什么使用 Java 与 Python
+
+Java 21 使用 Spring Boot 4.1.1 的依赖体系和 Spring AI 2.0.1，负责供应商配置、模型调用、严格输出协议、超时与命令行接口。CLI 不启动 Spring 容器，也没有另一个 Java Web 服务。Python 负责本机 HTTP 服务、运行计划、批量编排和单写者运行控制，还负责较多变的源码遍历、工具适配、EVM 回放与统计。
+
+这种分工让模型协议集中在 Java，研究机制集中在 Python。两侧通过子进程参数及结构化 JSON 交换数据。Java 检索 CLI 也提供三策略与条件绑定实现，Python 有运行和回退入口；对应配对数量、上下文内容和状态通过一致性检查核对。并发入口与工作台锁位于 Python，不能把所有并发控制归到 Java。
+
+## 一次真实模型审计的时序
+
+```mermaid
+sequenceDiagram
+    actor 用户
+    participant 页面 as 本机工作台
+    participant 核心 as Python 编排
+    participant 编译 as solc 与源码事实
+    participant 知识 as 固定知识快照
+    participant 网关 as Java Spring AI 网关
+    participant 模型 as 配置的大模型
+    participant 验证 as Slither 与 D2
+    用户->>页面: 选择或粘贴 Solidity
+    页面->>核心: 预览目标与审计范围
+    核心->>编译: 清理输入并绑定编译事实
+    核心->>知识: 准备 Dense 或 D1 上下文
+    核心-->>页面: 返回预览与运行计划
+    用户->>页面: 显式选择模型运行
+    页面->>核心: 执行固定计划
+    核心->>网关: 源码、上下文、风险目录
+    网关->>模型: 请求结构化漏洞候选
+    模型-->>网关: 候选、引用与用量
+    网关-->>核心: 已校验候选或失败
+    核心->>验证: 复用编译证据并逐候选核验
+    opt 有限执行提供器已启用且条件满足
+        验证->>验证: 本机 Anvil 独立业务回放
+    end
+    验证-->>核心: 支持、反驳或未知及依据
+    核心-->>页面: 保存报告、历史与导出
+```
+
+Vanilla 模型不接收检索资料。离线演练直接输入登记候选，跳过模型交互；合成模拟只读取夹具，连 D2 也不执行。含依赖项目需提供完整编译模板，语法回退只能展示受限结构。
+
+## 输入：让模型与工具分析同一份程序
+
+`evaluation_input.py` 保留原件，清理可能泄露答案的注释，并用空白保持行列；字符串内容原样保存。源码摘要是字节内容的 SHA-256 校验值，用于发现输入是否变化。原件和清理后输入分别登记摘要。
+
+`audit_target.py` 校验预置或粘贴目标。`program_facts.py` 可以提取受限的函数、调用、状态写入和 CEI 顺序；这种语法结构不具备真实编译器 AST 的全部语义。发现流程不按评分真值选择风险行，给定候选核验显式使用 `CLAIM_VALIDATION`。现有探索实验仍有给定漏洞类别先验，也不能消除模型训练中的潜在数据污染。
+
+`tool_environment.py` 取源码全部有效 `pragma` 的版本交集，选择固定 solc。`compiler_facts.py` 使用 standard-json（Solidity 编译器的结构化输入输出协议），绑定全部源码依赖、编译设置、版本、二进制、AST、ABI 入口和产物；实际重编译后比较完整 JSON。缺依赖、编译器变化或产物不符会阻止证据被继续使用。
+
+## D1：检索、配对与模型消费
+
+当前本机 Nomic 快照使用 768 维向量，包含 300 组、600 条自动标注知识。Dense 与 D1 从同一个固定池选择案例，Vanilla 不向模型传入检索内容。Milvus 是可重建的向量索引，知识快照是案例事实来源。
+
+`d1_consumption.py` 与 Java `AutomaticContrast` 从保存全文提取机制变化窗口，过滤纯改名、多义或不完整配对。Java／Python 最多使用两对，上下文最多 4096 UTF-8 字节；字节限制尚不能证明精确 token 公平。自动配对适用性保留未知。
+
+`HypothesisService` 的 `hypotheses-v4-diff-guidance` 提示引导模型比较权限、同资源写入和调用顺序。参考修复片段不替代待审源码。最终请求回执记录系统提示、源码、上下文、其他指令、消息封装和输出的预算组成。
+
+`focus_context.py` 生成函数、修饰器、传递内部调用和状态声明的原字节索引，代码字段分别为 `ff/fm/fi/fv`。`check_templates.py` 组织 10 条有知识来源的检查模板，按入口、资源和路径保守实例化。当前全文输入及默认 D1 配对保持原方式，焦点与模板的展示能力尚不能证明模型效果提升。间接函数指针、递归、未知实现等会登记缺口，`SYNTAX_ONLY` 只表示语法可读。
+
+## Java 网关：把自由回答变成可检查的候选
+
+`HypothesisCli` 调用 `HypothesisService`，最多接受三项结构化假设，并核对合约、完整函数签名、风险操作、代码位置和引用。名称、位置或类型不匹配时保存失败原因。模型没有提供用量时，界面显示未知，数据层处理见 [运行审计附录](releases/R2-20261010/attachments/OPERATIONS_AND_REPRODUCIBILITY.md)。
+
+风险目录用于让模型引用实际编译操作。发现阶段和候选核验阶段优先复用同一编译收据；多合约通过显式目标投影区分。2026-10-13 的全部新候选曾因跨阶段身份失配等原因未知，后续修复实现了同收据复用，历史正式报告仍保留当时的结果。
+
+## D2：从候选走到证据结论
+
+### 绑定准确的风险位置
+
+`risk_binding.py` 依次尝试精确行、同一语句的真实 UTF-8 字节跨度、±2 行窗口，且必须找到同合约、同入口、同机制的唯一操作。报告同时保留候选原行和实际绑定行，多义、错操作或错来源无法绑定。
+
+`bound_slither.py` 通过官方 Slither 适配器独立生成工具收据，核对源码依赖、设置、AST、ABI 和字节码。只有两份收据匹配，工具告警才能佐证候选。Java `ToolAnalyzer` 负责 Slither 与可选 Mythril 子进程协议；可选工具不等于每次审计都执行。
+
+### 检查六项保护和相关路径
+
+`compiled_d2.py` 从类型化 AST 展开内部调用和受支持修饰器，构建 CFG（控制流图，即可能执行顺序的图）。检查点需要支配风险操作，也就是所有相关执行路径先经过检查。资源按实际声明、映射键、结构字段和状态版本比较。
+
+`candidate_proofs.py` 检查有限权限委派与相关入口；`reentrancy_proofs.py` 检查 CEI、统一锁、合法入账状态和正常退出；`access_call_proofs.py` 为终止调用提供有限访问条件反例。`d2_verify.py` 将它们组织为六项检查和最终候选结论。
+
+支持候选需要受支持范围内可行、正常提交的反例，并有匹配的同类工具佐证。反驳候选要求六项保护、相关入口和状态关系完整。局部路径被阻断，只说明这条路径在给定条件下无法到达；相关入口尚有遗漏时，整条候选仍可能未知。
+
+### 有限本机执行补充什么
+
+`evm_witness.py` 的提供器需要显式启用。它消费固定字节码与双收据，在独立回环 Anvil 上按固定 Istanbul 规则运行正常业务序列，独立部署两次并比较指令轨迹、存储与持久提交。资金初态由合法业务交易产生，区块时间由实际业务交易消费。
+
+辅助调用要绑定实际部署实现和正常返回。权限写入要确实改变紧前权限，并由读取同权限槽的敏感入口实际消费。这些检查避免把日志名称、任意余额或无关写入误当证明。有限执行仅补充具体属性反例，不能把不完整静态范围改成完整保护证明。
+
+### 当前语义覆盖到哪里
+
+| 已处理范围 | 仍会产生未知的情况 |
 |---|---|
-| `audit_target.py` / `program_facts.py` | 校验预置或粘贴目标，提取受限合约/函数语法结构、调用、状态写入与 CEI；保持全文摘要与绝对行号 |
-| `BenchmarkRuntime` / Java retrieval | 固定本机 Nomic 768 维活动快照，复用 300 组/600 条自动标注知识；三策略同池，D1 对照上下文最多 4096 UTF-8 字节 |
-| `d1_consumption.py` / `AutomaticContrast` | 从冻结全文生成可见机制窗口，拒绝纯改名、多义和不完整配对；Java／Python统一两对预算，自动入选绑定及评估全部未知 |
-| `HypothesisCli` / `HypothesisService` | Java 结构化模型网关，最多三项假设，校验名称、操作、位置、引用；缺失 usage 保留 null |
-| `ToolCli` / `ToolAnalyzer` | Slither 与可选 Mythril 子进程，保存状态、版本、耗时、告警和目标源码身份 |
-| `d2_verify.py` | 绑定假设、事实和工具，逐项输出 actor/resource/pre_risk_guard/entry_coverage/state_version/bypass；漏洞裁决与保护裁决分开 |
-| `focus_context.py` / `check_templates.py` | 同重验AST建立ff／fm／fi／fv原字节索引与全合约入口；10条知识来源模板保守实例化，独立展示和保存回执，FULL及默认D1配对不变 |
-| `evidence_review.py` / `real_fix_check.py` / `synapse_protocol.py` | 六项只读复核；真实before／after最终裁决验收；单次三策略授权与待审多因素协议分开，缺独立真值与精确token公平保持未验 |
-| `compiler_facts.py` | 显式绑定 standard-json 输入、输出、源码闭包、固定 solc、声明和 ABI 入口；每次实际重新编译完整 JSON 对照，执行前后核对编译器摘要 |
-| `compiled_d2.py` | 从类型化 AST 展开内部调用和修饰器，按实际 CFG 支配、声明／key／字段和状态版本计算六义务；局部路径、条件前提与整候选缺口分别保存 |
-| `bound_slither.py` / `compilation_runtime.py` | 生成固定编译与官方 Slither 独立收据，重新核验源码闭包、设置、AST 和产物；单文件自动编译，含导入须有完整模板 |
-| `candidate_proofs.py` / `reentrancy_proofs.py` / `access_call_proofs.py` | 有限权限委派与全入口保护闭包；CEI／统一锁覆盖、同次入账状态对账与正常退出反例；终止调用只给真实初态的有限访问义务反例，缺口保持未知 |
-| `evm_witness.py` | 在固定原字节码与双工具收据上，执行两次独立本机正常业务序列；核对合法资金建态、实际源映射／存储槽／权限消费者和持久提交，仅提供有限属性反例 |
-| `research_review.py` / `d1_research_check.py` | 原候选稳定ID、双批次账本与来源缺口；D1消费／差分窗口及完整提示预算组件回读，未核实token数与独立真值保持空缺 |
-| `four_arm_report.py` | 固定候选的无验证／guard名称／行号／完整D2四臂结果、迁移、耗时与门槛检查；缺独立候选真值时混淆矩阵为null |
-| `audit_runner.py` / `tool_replay.py` | 保存候选的零模型核验与只读派生；逐假设未知前后率、原件和实现身份封口 |
-| `audit_workbench.py` / `local_ui.py` | 预览摘要、一次性运行票据、单写者锁、六阶段事件、报告与只读历史；`agent.html` 提供浅色三栏工作台、批量比较和四臂派生下载 |
+| 内部调用、单占位符修饰器、有限分支与相关入口 | 循环、动态调用、未覆盖入口、交易可行性缺口 |
+| storage 根／键／字段与匹配 SlithIR 引用链交叉核对 | 多定义、memory 副本、重赋值和未绑定存储引用 |
+| 同次调用的 `now` 与 `block.timestamp`、独立 `block.number`、精确单位和有限搜索 | 未知返回值、复杂初始状态或搜索预算不足 |
+| 编译类型确认的旧内置别名、Throw、现代 CALL 布尔返回解构 | 未支持的解构、未知实现或回滚路径 |
+| 无转账的绑定查询或辅助调用，在明确正常返回前提下的退出路径 | 实际实现、地址、回调或正常提交证据不足 |
+| 真实 SimpleDAO 候选和若干有限重入／权限例子 | RabbitHole 初始化／继承、Atomic 跨合约 token／回调，以及 solc 0.4.9 协议兼容缺口 |
 
-工作台先绑定源码、范围、池、检索上下文和配置摘要，再执行模型及工具。真实配置与环境凭证捕获后只在内存及权限 600 的临时文件消费，执行结束清理；报告保存摘要，不保存凭证。历史摘要校验失败拒绝回放，服务重启后未封口运行显示 INTERRUPTED，不自动重发模型。新报告 schemaVersion=2，旧历史只读。
+## 报告、复核与工作台
 
-默认受限语法结构不等于编译器 AST。提供显式 `compilation_manifest` 与项目根目录时，D2 使用绑定编译产物重新核验；不会把调用方填写的事实或证明范围当作证据。内部调用、单占位符修饰器和有限分支使用类型化 CFG；循环、未绑定存储引用、动态调用、未覆盖入口与交易可行性仍保留 UNKNOWN。HYPOTHESES_REFUTED 只表示已提出的假设被反驳，NO_CONFIRMED_FINDINGS 只表示没有确证发现，均不能推断合约安全。科研效果和等 token 公平不由工程验收证明。
+`audit_workbench.py` 固定预览、计划与运行事件；`local_ui.py` 提供本机 HTTP；`agent.html` 及 `agent.js` 展示源码、检索对照、候选、六项检查和只读历史。报告使用 `schemaVersion=2`，旧历史只读。`HYPOTHESES_REFUTED` 表示已提出假设被排除，`NO_CONFIRMED_FINDINGS` 表示没有确证发现；两者都有限定对象。
 
-2026-10-12 AST 语义升级采用共享 `risk_binding.py`：精确行、同语句真实 UTF-8 跨度、±2 行窗口按顺序选择唯一风险操作，保留原候选行、实际绑定行与事实／跨度约束。重入结构体 storage 指针按编译声明解析根、key、字段；只有独立工具收据重放 MATCH 后，顶层才向证明器及展示图传递 SlithIR 引用链交叉核验。多定义、内存副本、重赋值及身份冲突保留缺口。`now` 与 `block.timestamp` 共享同次调用的非负 uint256 时间，`block.number` 单独求值；源码常量及邻界进入有预算的有限搜索。
+`evidence_review.py` 独立从重验 AST 核对引用、入口、操作、资源和完整范围，生成通过、冲突或未决的侧报告。它目前不改写 D2 三态，字段为 `gateApplied=false`。`real_fix_check.py` 检查真实维护者补丁的双向结论，`synapse_protocol.py` 区分一次采集与待审的多因素研究协议。
 
-已绑定、无转账的只读查询或辅助日志可以进入带正常返回前提的 EXIT 见证；查询结果尚未求值或后续必然回滚时不生成见证。非静态辅助调用另需无回调修改本合约存储的前提，旧编译器 view 调用以已绑定 IR 的实际 CALL 语义为准。这些前提没有实现／地址与实际正常返回证据时，顶层保留 CONDITIONAL 路径及 UNKNOWN 裁决；不按 `Log`／`AddMessage` 名称认定良性。
+`audit_runner.py` 与 `tool_replay.py` 重新核验保存候选；`four_arm_report.py` 对同候选生成四臂比较；`research_review.py` 和 `d1_research_check.py` 核对候选身份、来源和提示消费。没有独立候选真值时，四臂的混淆矩阵尚无法计算。
 
-2026-10-13 接入显式启用的本机有限EVM提供器：原编译／独立SlithIR收据MATCH、候选及资源唯一绑定后，才对仍未知的支持范围执行正常业务见证。使用独立回环Anvil、固定Istanbul与二进制摘要，不fork外部链、不直接设置storage／balance／code；业务交易直接消费指定的区块时间，两次部署、指令轨迹、存储与正常提交必须相同。辅助调用须绑定实际部署实现；权限写入须实际改变紧前权限，并由同权限槽保护的敏感入口读取和消费。有限执行不能将`complete=false`改为true或产生完整REFUTED，超范围和失败继续UNKNOWN。详见[本轮工程报告](releases/R2-20261010/experiments/2026-10-13_STAGE1_5_OFFLINE_REPORT.md)。
+## 数据位置与恢复
 
-Java提示模板`hypotheses-v4-diff-guidance`把修复差分作为条件、资源和顺序对比的引导，待审源码保持独立。最终消费回执分列system、源码、上下文、其他指令、消息封装和输出的预算；字节摘要可验证，tokenizer未核实的精确token数保持null，不能以字节公平替代token公平。
+公开源码直接读取根目录 `smartbugs-curated/` 与 `SolidiFI-benchmark/`；额外对照位于 `data/controls/openzeppelin/`。当前批量保留原 53 个目标编号与标签，SolidiFI 没有自动并入批量。29 个目标因恢复原始空白改变输入摘要，新输入建立新计划，历史结果使用保存输入。
 
-本机登记目标可携带 `compilerManifest`；工作台预览保存 `compiledFacts` 与计划中的 `compilerBinding`，执行前再核验，漂移在模型之前终止。批量运行也在模型之前核验编译绑定，D2 公共入口随后自行重载。消费的清理源码必须与编译目标字节一致；不能把原件 AST 直接套在不同摘要的清理输入上。历史报告只读，不因接入重新发送模型请求。S11 的路径 CLI 与本机原件恢复要求见[工具说明](../../tools/experiment/README.md#r2-s11真实编译事实与有限路径)。
+本机环境在 `.local/`，下载仓库在 `data/external/`，权威研究原件在 `research-artifacts/`，关键验证在 `.evidence/`。`storage.read_artifact()` 读取原件或 gzip 并核对还原字节；历史迁移保留逻辑路径。详见 [数据说明](../../data/README.md)、[原件说明](../../research-artifacts/README.md) 和 [运行审计附录](releases/R2-20261010/attachments/OPERATIONS_AND_REPRODUCIBILITY.md)。
 
+## 运行与检查入口
 
-2026-10-14 SYNAPSE实施贯通发现收据与候选核验，不修改fact ID或原候选。工作台独立保存实际`compilationManifest`，包括多合约投影；公开案例离线演练导出也保留该清单。焦点索引遇到间接函数指针、递归或未知实现时登记缺口；SYNTAX_ONLY不宣称闭包完整。独立复核从重验AST重构入口及资源，PASS／CONFLICT／UNRESOLVED作为侧报告，`gateApplied=false`，现行D2三态不变。详见[实施报告](releases/R2-20261010/experiments/2026-10-14_SYNAPSE_IMPLEMENTATION_REPORT.md)。
-
-## 环境、原件与可读报告
-
-本机环境位于 `.local/envs/`、`.local/models/`、`.local/services/`、`.local/solidity/`，唯一恢复材料位于 `.local/recovery/`；下载仓库位于 `data/external/`。真实模型批次、派生核验、固定输入、快照和编译／工具收据位于 `research-artifacts/`，按运行编号和类别组织；可读报告在版本实验目录，`.evidence/` 保留关键验证材料。分类与整理命令见[原件说明](../../research-artifacts/README.md)。
-
-`storage.read_artifact()` 透明读取原件或 gzip，冲突、损坏和超限时报错；重放与下载核对还原字节摘要。新批次摘要只保存统计与样本指针，CSV 按需生成。迁移保持原计划、候选和登记不变，旧路径通过相对兼容入口定位同一份原件。Milvus 为可重建索引，知识快照仍是事实源。[整理报告](releases/R2-20261010/STORAGE_LAYOUT_REPORT.md)记录本机完整性证据，远程原件归档尚未配置。
-
-## 构建边界与运行入口
-
-S9 已验工程基线为 `4dfc7e1`；R2 的 S10 局部工程验收已通过，当前状态见[R2 矩阵](releases/R2-20261010/VERIFICATION.md)，目标方案见[R2 设计](releases/R2-20261010/PROPOSED_DESIGN.md)。
-
-S10 增加 `evaluation_input.py`：原件和清理文本分别绑定摘要，注释以空白遮蔽并保留行列，字符串原样保存。发现任务不能用评分真值选函数、风险或查询；已有候选核验显式标为 `CLAIM_VALIDATION`。模型与查询消费清理输入，历史模型保持原污染限制。
-
-`tool_environment.py` 按全部有效 pragma 交集选择固定 solc，并绑定工具、依赖、参数和实际二进制摘要。Java 工具网关保存编译探测与运行的版本、耗时、退出码及脱敏诊断；Python 在执行前后重新核验完整环境。`tool_replay.py` 对保存候选执行零模型派生重放，源码/环境/代码身份控制缓存，封口时核对原批次全部文件和当前实现/JAR，不覆盖原输出。S10 的 53 次真实运行中 51 成功、2 因 Slither 旧 tuple IR 兼容断言失败；这些故障保留未知。
-
-S11／S12 接缝已接通独立编译／工具双收据和有限证明分派。完整六义务及闭包与双收据匹配才能反驳假设；合法资金建态、正常退出的有限 CEI 顺序反例及匹配工具的同类告警才能支持假设。构造语义、其他入口、未知求值、循环、动态调用等缺口阻止完整裁决。实际 SimpleDAO 已支持登记候选；不能将该证据泛化为其他机制或整合约安全。
-
-2026-10-12 根因修复统一了顶层与机制专用风险图，支持经编译类型核实的旧内置别名、Throw、现代CALL布尔返回解构及精确数值单位。重入资金见证重放同次payable入账的全部相关槽。访问终止CALL只对actor／entry_coverage／bypass给出有限反证，其他义务保持UNKNOWN，完整性为false；最终正裁决只接受suicidal双收据同函数与跨度佐证。原输入阻断按冻结计划核对后纳入派生而不执行工具。证据和限制见[根因修复报告](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md)。
-
-配置固定编译器目录时，发现阶段先生成重验AST收据；模型之后优先复用该input／output／binding并显式投影候选合约，保持receiptDigest及environmentHash。缺原收据拒绝，未提供发现收据的兼容入口才独立生成候选收据；显式登记案例在预览与模型之前重验。旧单 solc 网关保持原兼容入口。工作台的公开案例演练实际执行静态核验，复用登记候选且 usage 缺失为 null；六义务与所选候选同步，离线总审计结论保持未决。派生历史只消费封口产物，逐字节下载并核对可得原件，不重发模型。研究有效性与完整 S12 仍按[R2 验收矩阵](releases/R2-20261010/VERIFICATION.md)分别记录。
-
-默认构建为 `mvn clean verify`；Python 离线验证为 `PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`。CLI 为 `java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help`。本机页面由 `tools/experiment/local_ui.py` 提供，启动与配置见[工具说明](../../tools/experiment/README.md)。
-
-旧应用已从当前目录退役。新管线直接读取根目录 `smartbugs-curated/` 的 Solidity 与 `vulnerabilities.json`，额外对照读取 `data/controls/openzeppelin/`；SolidiFI 原件使用根目录保留的 `SolidiFI-benchmark/buggy_contracts/`，未自动加入当前批量。版本与内容身份见[数据说明](../../data/README.md)和[来源登记](../../data/datasets.json)。原 53 个目标编号和标签保持一致；原始空白恢复导致 29 个目标摘要变化，新记录绑定源码路径与标注摘要，历史实验使用原保存输入回放。其 2026-09-18 的源码调查继续保存在[R0 调查](releases/R0-20260918/SOURCE_SURVEY.md)，历史实现通过 Git 恢复。
+[快速上手](releases/R2-20261010/attachments/GETTING_STARTED.md) 给出三条命令、合成演示和真实 SimpleDAO 演练。完整 CLI 参数、编译清单与路径核验见 [工具说明](../../tools/experiment/README.md)。当前能力与实验结果分别见 [进度](PROGRESS.md)、[实验看板](releases/R2-20261010/attachments/EXPERIMENT_DASHBOARD.md)，逐项验收保留在 [R2 验收](releases/R2-20261010/VERIFICATION.md)。

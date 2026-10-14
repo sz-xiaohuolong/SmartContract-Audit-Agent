@@ -1,5 +1,8 @@
 # R1 技术方案
 
+> 阅读提示：本文件保存当时提出的技术方案，按原日期理解其中的状态和数字。当前实现与运行入口请从 [唯一文档地图](../../PROJECT.md) 阅读；实验结果的通俗解释见 [现状看板](../R2-20261010/attachments/EXPERIMENT_DASHBOARD.md)。原正文保留如下。
+
+
 状态：IMPLEMENTED（局部工程设计）。本页归纳 R1 已实施方案及其边界，当前真实架构由[TECH_DESIGN](../../TECH_DESIGN.md)维护。原逐次目标方案见[设计快照](../../../../.evidence/R1/document-archive/PROPOSED_DESIGN.md)。
 
 <a id="r1-design"></a>

@@ -1,3 +1,12 @@
+# 研究差距：从工程可用走向可信实验
+
+这份报告记录 2026-10-13 当时的差距、投入估计和研究路线。其中“尚未接通”“尚未重放”属于当时状态；之后的工程进展请结合当前进度阅读。它区分数据来源、模型发现、候选核验与论文主张，避免把程序可运行直接当作研究目标达成。
+
+先读 [概念与案例](attachments/CONCEPTS_AND_WALKTHROUGH.md) 理解术语，再对照 [当前实验看板](attachments/EXPERIMENT_DASHBOARD.md)。
+
+<details>
+<summary>展开原技术分析、表格与可复核记录</summary>
+
 # VeriRAG：官方实现对标、最终目标差距与剩余阶段审查
 
 审查日期：2026-10-13。范围：研究、只读核查与规划。当前仓库 HEAD 为 `fa4c9f40a8b671fbd324343218044eedca68ccc9`，同时存在未提交实现；本报告不以 HEAD 冒充完整工作区身份。未修改业务源码、标签、冻结知识、历史原件、规格、计划或验收状态；未提交、推送、创建工作树或启动真实模型实验。
@@ -416,49 +425,53 @@ PYTHONPATH=tools/experiment:tools/experiment/tests python3 -m unittest \
 
 这些信息尚缺，不妨碍先执行第一个工作包。若D1无增益或D2达不到目标，报告应保留负结果、收窄论文主张，并将冻结目标变更作为单独决策提出；不能以“必须证明有效”为前提改动数据、分母或裁决语义。
 
-[spec]: /Users/daiyifei/Documents/code/SmartContract-agent/docs/vibe/releases/R2-20261010/SPEC.md:15
-[plan]: /Users/daiyifei/Documents/code/SmartContract-agent/docs/vibe/releases/R2-20261010/IMPLEMENTATION_PLAN.md:15
-[verification]: /Users/daiyifei/Documents/code/SmartContract-agent/docs/vibe/releases/R2-20261010/VERIFICATION.md
-[input]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/evaluation_input.py:5
-[targets]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/benchmark_targets.py:42
-[riskfact]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/benchmark_runtime.py:29
-[exploratory]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/exploratory_targets.py:22
-[auditrun]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/audit_run.py:190
-[auditrequest]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/audit_run.py:208
-[hypothesis]: /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java:65
-[runtime]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/benchmark_runtime.py:114
-[d1consume]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/d1_consumption.py:38
-[retriever]: /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/main/java/com/xhl/audit/retrieval/D1Retriever.java:10
-[automatic]: /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/main/java/com/xhl/audit/retrieval/AutomaticContrast.java:28
-[binder]: /Users/daiyifei/Documents/code/SmartContract-agent/audit-mvp/src/main/java/com/xhl/audit/retrieval/ConditionBinder.java
-[compiler]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/compiler_facts.py:365
-[slitherbound]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/bound_slither.py:200
-[binding]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/risk_binding.py:50
-[graph]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/compiled_d2.py:81
-[candidateproof]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/candidate_proofs.py:268
-[reproof]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/reentrancy_proofs.py:1000
-[verdict]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/compiled_d2.py:669
-[obligations]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/d2_verify.py:11
-[evm]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/evm_witness.py:572
-[catalog]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/risk_catalog.py:42
-[replay]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/tool_replay.py:111
-[reportcode]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/benchmark_report.py:11
-[corpus]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/r1_candidate_corpus.py:50
-[proxy]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/benchmark_batch.py:176
-[isolation]: /Users/daiyifei/Documents/code/SmartContract-agent/tools/experiment/isolation.py:15
-[pilot]: /Users/daiyifei/Documents/code/SmartContract-agent/docs/vibe/releases/R2-20261010/attachments/REAL_CASE_PILOT.md
-[nine]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/S11-integration/cli-candidates/summary.json
-[run]: /Users/daiyifei/Documents/code/SmartContract-agent/research-artifacts/runs/benchmarks/6cae40677b104152bd92efedc5bbc479
-[artifacts]: /Users/daiyifei/Documents/code/SmartContract-agent/research-artifacts/README.md
-[tests]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/targeted-tests.log
-[testfail]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/targeted-tests-import-failure.log
-[evidence]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/README.md
-[script]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/recompute.py
-[recompute]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/batch-recompute.json
-[independent]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/independent-metrics.json
-[triage]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/candidate-triage.json
-[identity]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/execution-identity.json
-[dataidentity]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/data-identity.json
-[workspaceidentity]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/workspace-read-identity.json
-[sources]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/source-registry.json
-[oldcheck]: /Users/daiyifei/Documents/code/SmartContract-agent/.evidence/R2-20261010/research-review-20261013/old-batch-check.json
+[spec]: SPEC.md
+[plan]: IMPLEMENTATION_PLAN.md
+[verification]: VERIFICATION.md
+[input]: ../../../../tools/experiment/evaluation_input.py
+[targets]: ../../../../tools/experiment/benchmark_targets.py
+[riskfact]: ../../../../tools/experiment/benchmark_runtime.py
+[exploratory]: ../../../../tools/experiment/exploratory_targets.py
+[auditrun]: ../../../../tools/experiment/audit_run.py
+[auditrequest]: ../../../../tools/experiment/audit_run.py
+[hypothesis]: ../../../../audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java
+[runtime]: ../../../../tools/experiment/benchmark_runtime.py
+[d1consume]: ../../../../tools/experiment/d1_consumption.py
+[retriever]: ../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/D1Retriever.java
+[automatic]: ../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/AutomaticContrast.java
+[binder]: ../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/ConditionBinder.java
+[compiler]: ../../../../tools/experiment/compiler_facts.py
+[slitherbound]: ../../../../tools/experiment/bound_slither.py
+[binding]: ../../../../tools/experiment/risk_binding.py
+[graph]: ../../../../tools/experiment/compiled_d2.py
+[candidateproof]: ../../../../tools/experiment/candidate_proofs.py
+[reproof]: ../../../../tools/experiment/reentrancy_proofs.py
+[verdict]: ../../../../tools/experiment/compiled_d2.py
+[obligations]: ../../../../tools/experiment/d2_verify.py
+[evm]: ../../../../tools/experiment/evm_witness.py
+[catalog]: ../../../../tools/experiment/risk_catalog.py
+[replay]: ../../../../tools/experiment/tool_replay.py
+[reportcode]: ../../../../tools/experiment/benchmark_report.py
+[corpus]: ../../../../tools/experiment/r1_candidate_corpus.py
+[proxy]: ../../../../tools/experiment/benchmark_batch.py
+[isolation]: ../../../../tools/experiment/isolation.py
+[pilot]: attachments/REAL_CASE_PILOT.md
+[nine]: ../../../../.evidence/R2-20261010/S11-integration/cli-candidates/summary.json
+[run]: ../../../../research-artifacts/runs/benchmarks/6cae40677b104152bd92efedc5bbc479
+[artifacts]: ../../../../research-artifacts/README.md
+[tests]: ../../../../.evidence/R2-20261010/research-review-20261013/targeted-tests.log
+[testfail]: ../../../../.evidence/R2-20261010/research-review-20261013/targeted-tests-import-failure.log
+[evidence]: ../../../../.evidence/R2-20261010/research-review-20261013/README.md
+[script]: ../../../../.evidence/R2-20261010/research-review-20261013/recompute.py
+[recompute]: ../../../../.evidence/R2-20261010/research-review-20261013/batch-recompute.json
+[independent]: ../../../../.evidence/R2-20261010/research-review-20261013/independent-metrics.json
+[triage]: ../../../../.evidence/R2-20261010/research-review-20261013/candidate-triage.json
+[identity]: ../../../../.evidence/R2-20261010/research-review-20261013/execution-identity.json
+[dataidentity]: ../../../../.evidence/R2-20261010/research-review-20261013/data-identity.json
+[workspaceidentity]: ../../../../.evidence/R2-20261010/research-review-20261013/workspace-read-identity.json
+[sources]: ../../../../.evidence/R2-20261010/research-review-20261013/source-registry.json
+[oldcheck]: ../../../../.evidence/R2-20261010/research-review-20261013/old-batch-check.json
+
+</details>
+
+返回 [唯一文档地图](../../PROJECT.md)。

@@ -1,5 +1,8 @@
 # R1 实施计划
 
+> 阅读提示：本文件保存上一阶段的任务与实施记录，按原日期理解其中的状态和数字。当前实现与运行入口请从 [唯一文档地图](../../PROJECT.md) 阅读；实验结果的通俗解释见 [现状看板](../R2-20261010/attachments/EXPERIMENT_DASHBOARD.md)。原正文保留如下。
+
+
 需求依据：[PROJECT_BRIEF](PROJECT_BRIEF.md)与[SPEC](SPEC.md)。本表归纳原执行记录，详细逐次计划保存在[历史快照](../../../../.evidence/R1/document-archive/IMPLEMENTATION_PLAN.md)。
 
 ## Slice Map

@@ -1,8 +1,8 @@
-# SYNAPSE 启发的工程实施与零模型验证
+# 同编译证据重放：最新候选开始获得支持依据
 
-本轮根据用户授权实施统一计划 SYN-01～06。发现与候选核验现在消费同一份重验编译收据；焦点源码索引、10条知识来源检查模板、六项确定性证据复核及单次采集协议已接通。真实维护者修复双向裁决和旧133候选UNKNOWN≤13仍未通过，整体研究保持PARTIAL／UNVERIFIED。
+复用发现阶段的编译证据后，最新 163 条候选为 82 支持、0 反驳、81 未知（49.69%）。旧 133 条和历史 151 条仍为 75／0／58、80／0／71。真实维护者修复仍未知，新增模板与复核的模型增益尚未测得。
 
-工程在当前主目录 `main` 完成，保留已有R1文档改动、三个脚本删除及`.aris/`。工程验证新增模型／嵌入请求0；用户另行授权的一次真实API采集在工程提交后执行，结果独立记录，不能与固定候选重放混为一批。
+这是按原日期保存的探索性记录。状态含义见 [概念速查](../attachments/CONCEPTS_AND_WALKTHROUGH.md)，跨批比较与当前结论见 [实验看板](../attachments/EXPERIMENT_DASHBOARD.md)。
 
 ## 实现与行为边界
 
@@ -40,6 +40,20 @@ RabbitHole与Atomic分别消费维护者before／after自身的源码、编译�
 
 真实补丁原件、局部路径差异及缺口保留，不改候选标签或假装维护者修复无效。旧133未知≤13、AC／RE各一组真实漏洞SUPPORTED与维护者修复REFUTED仍是原验收条件。
 
+
+## 复现与运行记录
+
+下列原段落、表格和数值保留当时口径。凭证、用量缺失、运行锁与证据规范的统一解释见 [运行审计附录](../attachments/OPERATIONS_AND_REPRODUCIBILITY.md)。
+
+<details>
+<summary>展开原实验身份、执行经过与详细限制</summary>
+
+# SYNAPSE 启发的工程实施与零模型验证
+
+本轮根据用户授权实施统一计划 SYN-01～06。发现与候选核验现在消费同一份重验编译收据；焦点源码索引、10条知识来源检查模板、六项确定性证据复核及单次采集协议已接通。真实维护者修复双向裁决和旧133候选UNKNOWN≤13仍未通过，整体研究保持PARTIAL／UNVERIFIED。
+
+工程在当前主目录 `main` 完成，保留已有R1文档改动、三个脚本删除及`.aris/`。工程验证新增模型／嵌入请求0；用户另行授权的一次真实API采集在工程提交后执行，结果独立记录，不能与固定候选重放混为一批。
+
 ## 验证、审查与原件
 
 最终自动验证为758项Python通过（120.619秒）、111项Java通过及CLI帮助退出0。实际浏览器公开SimpleDAO演练得到SUPPORTED；焦点、模板与独立复核可见，JSON下载保留实际候选编译清单，模型请求0、usage=null。最后导出包装补丁有失败→通过回归，全量随后重跑通过。
@@ -49,3 +63,7 @@ RabbitHole与Atomic分别消费维护者before／after自身的源码、编译�
 原件与摘要位于`.evidence/R2-20261010/synapse-implementation-20261014/`：`execution-ledger.md`、`python-final.log`、`maven.log`、`replays-final.json`、`template-verification.json`、`browser-verification.json`及真实修复对。Atomic较大JSON已gzip无损归档，`atomic-pair-storage.json`登记原字节SHA和往返核验。重放原件位于`research-artifacts/runs/derived/<编号>/`，以`manifest.json`的输出SHA及provenance复核，不覆盖历史结果。
 
 真实API沿用deepseek-v4-flash、Ark Agent Plan和Nomic快照，53目标×三策略、最多159正式＋2冒烟、零自动重试，每请求最多16384完成token。代码／JAR／配置／HEAD冻结后执行；单次采集不能评价尚未被模型消费的焦点或模板因素，金额及精确token公平缺依据时保留null／UNVERIFIED。
+
+</details>
+
+返回 [唯一文档地图](../../../PROJECT.md)。

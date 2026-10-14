@@ -1,3 +1,12 @@
+# 有限核验引擎的第一次工程闭环
+
+这份 2026-10-11 报告说明编译器与 Slither 怎样共同支撑 D2。原 172 条保存候选重放后为 6 支持、0 反驳、166 未知，未知率从 100% 降至 96.5116%；这次覆盖增加仍不足以证明研究目标完成。
+
+先读 [概念与案例](attachments/CONCEPTS_AND_WALKTHROUGH.md) 理解术语，再对照 [当前实验看板](attachments/EXPERIMENT_DASHBOARD.md)。
+
+<details>
+<summary>展开原技术分析、表格与可复核记录</summary>
+
 # S11／S12 防御静态核验工程报告
 
 日期：2026-10-11。范围为有限 D2 保护证明、编译／工具双收据、保存候选派生重放与工作台展示。工程验收通过；历史候选 UNKNOWN 的下降幅度有限，尚未证明统计显著性，整个 R2 的研究有效性仍为 UNVERIFIED。
@@ -66,3 +75,7 @@ PYTHONPATH=tools/experiment python3 tools/experiment/local_ui.py --port 8765
 ```
 
 重放须先构建 Java，并使用新的 32 位十六进制输出目录；执行过程中不能改变生产源码或 JAR。完整命令与本机环境要求见[工具说明](../../../../tools/experiment/README.md#r2-s11真实编译事实与有限路径)。在工作台运行历史中可只读打开最终派生报告、逐假设对照和 JSONL，不触发模型请求。提交同步身份记录于本机证据 `git-sync.json`，精确提交相关工具、测试和当前 Release 文档，保留启动时的无关修改。
+
+</details>
+
+返回 [唯一文档地图](../../PROJECT.md)。

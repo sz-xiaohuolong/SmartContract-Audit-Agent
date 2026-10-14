@@ -1,3 +1,12 @@
+# 真实案例先导：源码、报告和维护者修复
+
+本页登记公开项目、原件来源与修复关系。一个事件进入清单，不代表已完成独立审核或真实修复双向验证。RabbitHole 和 Atomic 的完整最终裁决仍有未知缺口，最新结果见实验看板。
+
+先读 [概念与案例](CONCEPTS_AND_WALKTHROUGH.md) 理解术语，再对照 [当前实验看板](EXPERIMENT_DASHBOARD.md)。
+
+<details>
+<summary>展开原技术分析、表格与可复核记录</summary>
+
 # 访问控制与重入真实案例先导盘点
 
 更新：2026-10-10。对应 R2-09 与 R2-11，仅记录当前取得的原件、既有审核和编译依赖缺口。本轮已取得两组真实项目依赖并核对原锁；编译与程序证据仍在单独核验。新增模型请求为0，正式划分未调整。
@@ -145,3 +154,7 @@
 旧 first-batch 分配曾记录 Maia 为 validation、PoolTogether 为 knowledge；现行 formal-v2 为 Maia knowledge、PoolTogether validation。旧记录代表当时划分，本轮不改写；AI Arena 正式重入槽已由 Atomic 替换，也不恢复。正式知识、独立验证、待审候选和自动标注层继续隔离。
 
 `REVIEWED`／`INDEPENDENT` 表示已有外部漏洞裁决与原件／修复准入记录，不表示本项目 D2 条件、目标—案例适用性、全路径覆盖或修复后整份合约已获独立审核。后续先导应固定条件、源码版本和基线契约，并分别记录 TRUE、FALSE、UNKNOWN；真实编译、路径核验和方法效果以统一验收矩阵的独立证据为准，不由本盘点转正。
+
+</details>
+
+返回 [唯一文档地图](../../../PROJECT.md)。
