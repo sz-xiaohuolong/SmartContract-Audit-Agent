@@ -1,6 +1,6 @@
 # VeriRAG-Agent 毕业论文重构
 
-当前 [R1-S9](docs/vibe/releases/R1/SPEC.md#r1-workbench) 打通预置或粘贴 Solidity、受限语法与事实、Nomic D1 配对检索、Java 结构化假设、Slither、D2 六项义务和持久化报告。单合约工作台可查看全部阶段、源码位置与保护证据，批量入口继续比较同池三策略。工程验收见[验证记录](docs/vibe/releases/R1/VERIFICATION.md#r1-core-evidence)；D1 的科研改进与 D2 的核验准确率尚未建立，2026-09-24 的[第二轮查新](thesis/D1_D2第二轮查新与立题裁决_20260924.md)撤回 D2 宽创新主张。
+当前开发版本为 [R2-20261010](docs/vibe/releases/R2-20261010/SPEC.md)，支持预置或粘贴 Solidity、查看源码与候选、重放核验和导出报告。D1 提供漏洞与修复对照，D2 逐项核验漏洞候选并保存依据；批量入口比较同池三策略。工程整体部分完成，D1 的研究增益与 D2 的核验准确率尚未验证，当前结果见[项目总览](docs/vibe/PROJECT.md)、[当前进度](docs/vibe/PROGRESS.md)和 [R2 验收](docs/vibe/releases/R2-20261010/VERIFICATION.md)。2026-09-24 的[第二轮查新](thesis/D1_D2第二轮查新与立题裁决_20260924.md)撤回 D2 宽创新主张。
 
 新模块使用 Java 21。根 `pom.xml` 通过 Spring Boot 4.1.1 的父工程管理构建，并通过 Spring AI 2.0.1 BOM 管理依赖版本；`audit-mvp/pom.xml` 直接声明 `spring-ai-openai`。`SpringAiGateway` 在显式单次审计时调用 Spring AI 模型接口。命令行不启动 Spring 应用容器；D1 检索与 S3 离线实验使用普通 Java/Python 代码，不经过 Spring AI 的 RAG 组件。
 
