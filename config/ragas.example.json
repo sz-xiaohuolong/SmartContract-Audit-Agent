@@ -1,0 +1,11 @@
+{
+  "baseUrl": "http://127.0.0.1:8000/v1",
+  "model": "请填写本地服务实际加载的模型名",
+  "apiKeyEnv": "RAGAS_JUDGE_API_KEY",
+  "maxRequests": 16,
+  "maxOutputTokens": 2048,
+  "timeoutSeconds": 120,
+  "temperature": 0,
+  "responseFormat": "json_schema",
+  "metrics": ["context_relevance", "faithfulness"]
+}

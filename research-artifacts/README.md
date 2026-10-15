@@ -37,6 +37,8 @@ python3 tools/experiment/organize_storage.py --apply --restart-ui
 
 新模型批次的 `summary.json` 只保存统计、计划及 `samples.jsonl` 指针；完整样本只存一份，CSV 按下载请求生成。历史汇总保持原始字节，仅改变压缩编码；即使两批内容近似，也不合并付费响应或改写历史候选。
 
+检索评估的冻结输入和零模型报告放在 `runs/derived/`；可选 Ragas 评判原件放在 `runs/benchmarks/ragas/<运行名>/`。评判目录保存配置身份、每次请求体、原始响应和请求收据，缺失用量不补零。默认不覆盖或续写旧运行，也不从当前快照重建旧消费文本；详情见 [评估说明](../docs/vibe/releases/R2-20261010/attachments/RAG_EVALUATION.md)。
+
 本目录原件默认不提交 Git，README、生成工具、来源登记和可读报告继续版本控制。它们仍需与正式论文一起备份到用户选择的长期存储；当前没有配置远程原件归档，Git 同步不包含这些文件。跨机器恢复需要复制原件目录、按本机重新生成兼容入口，再核对迁移清单中的摘要。
 
 本机环境位于 `.local/envs/`、`.local/models/`、`.local/services/` 和 `.local/solidity/`；唯一恢复材料位于 `.local/recovery/`。下载的外部仓库位于 `data/external/`，正式数据入口与来源登记见 [数据说明](../data/README.md)。

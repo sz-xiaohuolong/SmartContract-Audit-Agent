@@ -24,7 +24,9 @@ R1-S8 的 742 条待审向量可用 `candidate_admission_queue.py` 生成逐项�
 
 本地可视化验收：先运行 `mvn clean verify` 生成 Java 检索 JAR，再运行 `python3 tools/experiment/local_ui.py --port 8765`，打开 `http://127.0.0.1:8765/`。前后端由同一服务提供，仅运行固定合成样例，不读取模型密钥。界面、历史结果与研究限制见 [本地页面说明](../../docs/vibe/releases/R1/attachments/LOCAL_UI.md)。
 
-离线清单、评估、快照和重放使用 Python 3 标准库，无额外依赖。只有 S1b 的 run/resume 命令会显式调用所选模型；单写者锁和进程组控制面向本项目的 macOS/Linux 环境。
+离线清单、评估、快照和重放使用 Python 3 标准库，无额外依赖。真实采集和可选 Ragas 语义评判必须显式选择模型配置与请求范围；单写者锁和进程组控制面向本项目的 macOS/Linux 环境。
+
+检索调优入口为 `python3 tools/experiment/eval_ragas.py --help`：`prepare` 导出冻结批次的实际消费文本与人工相关性模板，`offline` 零请求计算排序指标，`judge` 使用独立安装的 Ragas 0.4.3 和显式评判配置。缺失和未审核不计成零分，语义评分不改变 D2。完整命令、依赖安装与论文口径见 [Ragas 接入说明](../../docs/vibe/releases/R2-20261010/attachments/RAG_EVALUATION.md)。
 
 ```bash
 PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v

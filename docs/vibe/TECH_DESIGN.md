@@ -108,6 +108,8 @@ Vanilla 模型不接收检索资料。离线演练直接输入登记候选，跳
 
 `audit_runner.py` 与 `tool_replay.py` 重新核验保存候选；`four_arm_report.py` 对同候选生成四臂比较；`research_review.py` 和 `d1_research_check.py` 核对候选身份、来源和提示消费。没有独立候选真值时，四臂的混淆矩阵尚无法计算。
 
+`eval_ragas.py` 从冻结批次导出实际检索文本、顺序与模型原候选，核对输入收据后，用独立人工相关性表计算排序指标。`ragas_judge.py` 通过 Ragas 0.4.3 生成可选语义侧报告；端点、模型、凭证环境变量和请求上限均须显式指定。失败分数和缺失用量保留空值，评估不写回模型候选或 D2。忠实度证据包含待审源码与历史案例，参考答案不由原数据集标签自动合成。操作与指标限制见 [Ragas 评估说明](releases/R2-20261010/attachments/RAG_EVALUATION.md)。
+
 ## 数据位置与恢复
 
 公开源码直接读取根目录 `smartbugs-curated/` 与 `SolidiFI-benchmark/`；额外对照位于 `data/controls/openzeppelin/`。当前批量保留原 53 个目标编号与标签，SolidiFI 没有自动并入批量。29 个目标因恢复原始空白改变输入摘要，新输入建立新计划，历史结果使用保存输入。
