@@ -363,3 +363,5 @@ PYTHONPATH=tools/experiment python3 tools/experiment/r3_cli.py --allow-unreviewe
 已获对应一次批量授权时，增加 `--execute --batch-id <32位十六进制编号>` 执行五条件采集。重复批次编号会拒绝，任何模型失败或身份变化会停止后续付费请求，禁止自动换端点或追加请求。原件保存到 `research-artifacts/runs/benchmarks/`，卡片唯一原件保存在 `research-artifacts/snapshots/r3/`。运行期间不得重建共享 JAR 或提交源码。
 
 评估仍使用 `eval_ragas.py`：R3 代码对与卡片统一按案例计数（CASE_PAIR），原片段 ID 继续保存。卡片评估会回读冻结卡片原件并核对实际正文；原实验仍按代码片段计数（SNIPPET）。R3 每次最多两案例，计算案例排序时显式选择 `--k 2`；没有独立相关性标注时分数留空。实施边界与批量预算见 [R3 统一计划](../../docs/vibe/releases/R3-20261015/IMPLEMENTATION_PLAN.md#8-2026-10-16-首期实施决定与状态)。
+
+2026-10-16 的一次真实采集已完成：40/40 模型请求有效、零重试，五条件分类 F1 均为 1.0；完整流程 33 项完成、7 项风险绑定失败。22 条新候选为 10 支持、0 反驳、12 未知。该次授权已消费，结果及原件身份见 [R3 实施与真实实验报告](../../docs/vibe/releases/R3-20261015/experiments/2026-10-16_R3_IMPLEMENTATION_AND_REAL_API_REPORT.md)。

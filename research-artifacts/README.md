@@ -1,13 +1,13 @@
 # 研究原件与可复核产物
 
-本目录保存真实实验响应、固定候选、检索快照、编译与工具收据。人类阅读的实验报告仍位于 `docs/vibe/releases/R2-20261010/experiments/`；原始产物按运行编号组织，与源码、本机环境及可读报告分开。
+本目录保存真实实验响应、固定候选、检索快照、编译与工具收据。人类阅读的实验报告位于对应版本的 `docs/vibe/releases/<release-id>/experiments/`；原始产物按运行编号组织，与源码、本机环境及可读报告分开。
 
 ```text
 research-artifacts/
 ├── runs/benchmarks/             原始模型批次、计划、事件和逐样本结果
 ├── runs/derived/                保存候选的零模型派生重放
 ├── runs/audits/、workbench/     单合约与工作台历史
-├── snapshots/                  BGE、Nomic 与历史知识快照
+├── snapshots/                  BGE、Nomic、R3 附加机制卡片与历史知识快照
 ├── inputs/                     固定历史输入及基线编译原件
 ├── receipts/                   Slither、EVM 与编译双收据
 ├── diagnostics/                模型解析失败的原始响应
@@ -40,5 +40,7 @@ python3 tools/experiment/organize_storage.py --apply --restart-ui
 检索评估的冻结输入和零模型报告放在 `runs/derived/`；可选 Ragas 评判原件放在 `runs/benchmarks/ragas/<运行名>/`。评判目录保存配置身份、每次请求体、原始响应和请求收据，缺失用量不补零。默认不覆盖或续写旧运行，也不从当前快照重建旧消费文本；详情见 [评估说明](../docs/vibe/releases/R2-20261010/attachments/RAG_EVALUATION.md)。
 
 本目录原件默认不提交 Git，README、生成工具、来源登记和可读报告继续版本控制。它们仍需与正式论文一起备份到用户选择的长期存储；当前没有配置远程原件归档，Git 同步不包含这些文件。跨机器恢复需要复制原件目录、按本机重新生成兼容入口，再核对迁移清单中的摘要。
+
+R3 的确定性机制卡片按登记摘要唯一保存到 `snapshots/r3/<registryHash>.json`；它们是原代码快照的附加表达，不能覆盖原代码对或冒充独立审核。五条件批次继续使用 `runs/benchmarks/`，计划登记卡片路径、原快照、完整预检消息摘要、代码与 JAR 身份。卡片保持未审核时只允许工程探索，详情见 [R3 实施计划](../docs/vibe/releases/R3-20261015/IMPLEMENTATION_PLAN.md)。
 
 本机环境位于 `.local/envs/`、`.local/models/`、`.local/services/` 和 `.local/solidity/`；唯一恢复材料位于 `.local/recovery/`。下载的外部仓库位于 `data/external/`，正式数据入口与来源登记见 [数据说明](../data/README.md)。
