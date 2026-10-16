@@ -48,10 +48,17 @@ public final class HypothesisService {
         }
     }
     private final ModelGateway gateway;
+    private final int maxPromptBytes;
     private final ObjectMapper mapper = new ObjectMapper()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
-    public HypothesisService(ModelGateway gateway) { this.gateway = gateway; }
+    public HypothesisService(ModelGateway gateway) { this(gateway, Integer.MAX_VALUE); }
+    public HypothesisService(ModelGateway gateway, int maxPromptBytes) {
+        if (maxPromptBytes <= 0) throw new IllegalArgumentException();
+        this.gateway = gateway;
+        this.maxPromptBytes = maxPromptBytes;
+    }
+    private static final class PromptBudgetExceeded extends IllegalArgumentException { }
 
     public Result analyze(Request request, String provider) {
         var captured = new com.fasterxml.jackson.databind.node.ObjectNode[1];
@@ -86,6 +93,11 @@ public final class HypothesisService {
             receipt.put("requestHashEncoding", "UTF8_JSON_MESSAGES_ARRAY");
             receipt.put("provider", name);
             captured[0] = receipt;
+            receipt.put("maxPromptBytes", maxPromptBytes);
+            boolean blocked = (long) system.getBytes(StandardCharsets.UTF_8).length
+                + user.getBytes(StandardCharsets.UTF_8).length > maxPromptBytes;
+            receipt.put("promptBudgetStatus", blocked ? "BLOCKED" : "WITHIN_TEXT_BYTES");
+            if (blocked) throw new PromptBudgetExceeded();
             return gateway.complete(name, system, user);
         };
         Result result = new HypothesisService(recording).analyzeValidated(request, provider);
@@ -133,6 +145,9 @@ public final class HypothesisService {
                 + catalogPrompt(request)
                 + "\n待审源码（左侧为原始行号）：\n" + numberedSource(request);
             reply = gateway.complete(provider, system, user);
+        } catch (PromptBudgetExceeded e) {
+            return new Result("2", "FAILED", "UNRESOLVED", List.of(), "INPUT_BUDGET_EXCEEDED", null,
+                null, null, 0, 0, List.of());
         } catch (IllegalArgumentException e) { return failed("INPUT_INVALID", null); }
           catch (Exception e) {
               int attempts = e instanceof SpringAiGateway.CallFailure failure ? failure.attempts : 1;

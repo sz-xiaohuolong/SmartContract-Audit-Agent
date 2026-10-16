@@ -154,6 +154,8 @@ class BenchmarkRuntime:
                 'targetMechanism': target['mechanism'], 'facts': facts, 'researchEligible': False,
                 'recall': recalled['recall'],
                 'queryEmbeddingReceipt': query_receipt}
+        if getattr(self, 'r3', None) is not None:
+            view.update(r3QueryVector=query, r3QueryText=target['modelSource'])
         self.views[key] = view
         return view
 
@@ -164,7 +166,14 @@ class BenchmarkRuntime:
             from compilation_runtime import prepare_compilation
             target['compilerManifest'] = prepare_compilation(self.root, target)
         pipeline_started = monotonic()
-        view = select_strategy(self.preview(target), strategy)
+        from r3_retrieval import STRATEGIES as R3_STRATEGIES
+        if strategy in R3_STRATEGIES:
+            if getattr(self, 'r3', None) is None:
+                raise ValueError('R3 策略缺少版本化知识卡片，禁止静默降级')
+            view = self.r3.select(self.preview(target), strategy,
+                                  allow_unreviewed=getattr(self, 'r3_allow_unreviewed', False))
+        else:
+            view = select_strategy(self.preview(target), strategy)
         if target.get('compilerManifest') is not None:
             from compiler_facts import extract_compiler_facts, load_bound_compilation
             bundle = load_bound_compilation(target['compilerManifest'], self.root)

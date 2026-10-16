@@ -347,3 +347,19 @@ PYTHONPATH=tools/experiment python3 tools/experiment/benchmark_report.py \
 - `synapse_protocol.py`隔离一次三策略采集与待审RQ-A／B／C协议，不覆盖历史六臂协议；缺独立标签、来源谱系审核、精确token公平或真实双向闭环时研究资格false。
 
 当前真实修复与旧133未知门槛仍为部分完成（PARTIAL）；工程结果、完整163／133／151重放、原件指针和研究限制见[实施报告](../../docs/vibe/releases/R2-20261010/experiments/2026-10-14_SYNAPSE_IMPLEMENTATION_REPORT.md)。本次一次真实批量已完成，159正式请求、158模型有效，新163条候选为83支持／0反驳／80未知；三个构建产物阶段及失败限制见[真实报告](../../docs/vibe/releases/R2-20261010/experiments/2026-10-14_SYNAPSE_REAL_API_REPORT.md)。原件继续通过`storage.read_artifact()`读取并核对原始字节身份。
+
+## R3 卡片与多路检索实验
+
+R3 在原代码对之外保存可回读的机制卡片，并让代码向量、代码词法、函数名目的代理和行为词法分别召回。它记录资源背景冲突、保护差异的新增覆盖和重复惩罚，方便核对为什么选了这几对参考。当前卡片均未独立语义审核，研究资格为未验证；默认工作台与原批量入口保持原策略。
+
+先完成 `mvn clean verify`，确保本机 Nomic、Milvus 和已有模型／工具配置可用，再执行无付费预检：
+
+```bash
+PYTHONPATH=tools/experiment python3 tools/experiment/r3_cli.py --allow-unreviewed
+```
+
+缺省选择八个已登记目标，按无检索、原代码对、同案例卡片、并集向量排序、并集融合排序五个条件构造实际 Java 请求，并在本机重放空回答。预检不访问付费模型，检查完整提示是否超过 32768 UTF-8 字节；该字节上限不代表精确 token 公平。
+
+已获对应一次批量授权时，增加 `--execute --batch-id <32位十六进制编号>` 执行五条件采集。重复批次编号会拒绝，任何模型失败或身份变化会停止后续付费请求，禁止自动换端点或追加请求。原件保存到 `research-artifacts/runs/benchmarks/`，卡片唯一原件保存在 `research-artifacts/snapshots/r3/`。运行期间不得重建共享 JAR 或提交源码。
+
+评估仍使用 `eval_ragas.py`：R3 代码对与卡片统一按案例计数（CASE_PAIR），原片段 ID 继续保存。卡片评估会回读冻结卡片原件并核对实际正文；原实验仍按代码片段计数（SNIPPET）。R3 每次最多两案例，计算案例排序时显式选择 `--k 2`；没有独立相关性标注时分数留空。实施边界与批量预算见 [R3 统一计划](../../docs/vibe/releases/R3-20261015/IMPLEMENTATION_PLAN.md#8-2026-10-16-首期实施决定与状态)。

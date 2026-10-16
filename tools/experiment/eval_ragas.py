@@ -30,7 +30,7 @@ def validate_dataset(data):
         raise ValueError('评估输入存在重复单元')
 
 
-def normalize_row(raw):
+def normalize_row(raw, registry=None):
     """只读取当时消费的字节；缺收据或函数范围无法恢复时明确弃权。"""
     row = {key: raw.get(key) for key in ('sampleId', 'strategy', 'sourceHash', 'snapshotId', 'poolHash')}
     row.update(inputStatus='MISSING_INPUT', reason='缺少源码、检索或模型输入收据',
@@ -65,8 +65,10 @@ def normalize_row(raw):
         if view.get('modelSourceHash') != sha(source) or receipt.get('modelSourceHash') != sha(source):
             row['reason'] = '无法从保存全文恢复当时模型范围，需提供原始消费文本'
             return row
-        matches = list(HEADER.finditer(context))
-        if (len(matches) != len(ids) or (context and (not matches or matches[0].start() != 0))
+        from r3_retrieval import STRATEGIES as R3_STRATEGIES
+        is_card = row['strategy'] in R3_STRATEGIES and row['strategy'] != 'R3_CODE'
+        matches = [] if is_card else list(HEADER.finditer(context))
+        if not is_card and (len(matches) != len(ids) or (context and (not matches or matches[0].start() != 0))
                 or [m.group(2) for m in matches] != ids
                 or [m.group(1) for m in matches] != [s['candidate']['caseId'] for s in selected]
                 or row['strategy'] == 'VANILLA' and (context or ids)):
@@ -76,9 +78,38 @@ def normalize_row(raw):
         pool = {c['chunkId']: c for c in view['pool']['candidates']}
         for i, selection in enumerate(selected):
             candidate = pool[ids[i]]
-            body = contexts[i][matches[i].end() - matches[i].start():]
-            if selection['candidate'] != candidate or body != candidate['text'] + '\n':
+            body = None if is_card else contexts[i][matches[i].end() - matches[i].start():]
+            if selection['candidate'] != candidate or not is_card and body != candidate['text'] + '\n':
                 raise ValueError('实际消费片段与人工标注所依据的冻结候选池正文不一致')
+        ranking_unit = 'SNIPPET'
+        snippet_ids = list(ids)
+        if row['strategy'] in R3_STRATEGIES:
+            from r3_retrieval import _render, _resource_key, bind_conditions
+            detail = view['r3Receipt']
+            pairs = detail['selectedPairs']
+            if (not registry or registry.get('registryHash') != fingerprint({k: v for k, v in registry.items() if k != 'registryHash'})
+                    or detail['registryHash'] != registry['registryHash']
+                    or view['pool'].get('registryHash') != registry['registryHash']
+                    or len(pairs) != len(set(pairs)) or len(ids) != len(pairs) * 2
+                    or detail['contextHash'] != sha(context)):
+                raise ValueError('R3 卡片原件、案例或消费身份不完整')
+            cards = {c['pairId']: c for c in registry['cards']}
+            case_contexts = []
+            for index, pair in enumerate(pairs):
+                card = cards[pair]
+                pair_selected = selected[index * 2:index * 2 + 2]
+                if ([s['candidate']['chunkId'] for s in pair_selected] != [s['documentId'] for s in card['sources']]
+                        or any(s['candidate']['pairId'] != pair for s in pair_selected)):
+                    raise ValueError('R3 案例与两侧代码原件不符')
+                binding = bind_conditions(card['background'], {'resourceKey': _resource_key(source)})
+                if detail['bindings'].get(pair) != binding:
+                    raise ValueError('R3 条件绑定与当前源码不符')
+                case_contexts.append(_render(card, binding) if is_card else ''.join(contexts[index * 2:index * 2 + 2]))
+            if ''.join(case_contexts) != context:
+                raise ValueError('实际卡片正文与冻结原件表达不符')
+            contexts, ids = case_contexts, pairs
+            pool_ids = list(dict.fromkeys(c['pairId'] for c in view['pool']['candidates']))
+            ranking_unit = 'CASE_PAIR'
         mechanism = view['targetMechanism']
         if mechanism not in ('REENTRANCY', 'ACCESS_CONTROL'):
             raise ValueError('目标机制缺失或未登记')
@@ -93,6 +124,7 @@ def normalize_row(raw):
                    response=response, retrieved_contexts=contexts, retrieved_context_ids=ids, poolIds=pool_ids,
                    contextSha256=sha(context), modelSourceHash=sha(source),
                    contextBytes=len(context.encode('utf-8')), modelStatus=model.get('status'),
+                   rankingUnit=ranking_unit, snippetIds=snippet_ids,
                    hypothesesCount=len(model.get('hypotheses') or []))
     except (KeyError, TypeError, ValueError) as error:
         row.update(inputStatus='INVALID_INPUT', reason=str(error))
@@ -111,11 +143,25 @@ def prepare_dataset(batch, sample_ids=None):
     if not chosen or len(set(chosen)) != len(chosen) or not set(chosen) <= set(report['plan']['sampleIds']):
         raise ValueError('所选样本为空、重复或不在原计划中')
     rows = []
+    registry = None
+    if report['plan'].get('pipelineVersion') == 'r3-v1':
+        from snapshots import verify_snapshot
+        from r3_retrieval import verify_cards
+        root = batch.parents[3]
+        registry_path = (root / report['plan']['registryPath']).resolve()
+        registry_path.relative_to(root / 'research-artifacts/snapshots/r3')
+        registry = decode(read_artifact(registry_path))
+        if registry.get('registryHash') != report['plan']['registryHash']:
+            raise ValueError('R3 评估卡片与冻结计划不符')
+        store = root / ('research-artifacts/snapshots/' + report['plan']['embeddingProfile'])
+        catalog = decode(read_artifact(store / 'catalogs' / (report['plan']['snapshotId'] + '.json')))
+        verify_cards(registry, verify_snapshot(store, report['plan']['snapshotId']), catalog)
     for sample in chosen:
         for strategy in report['plan']['strategies']:
             raw = by_key.get((sample, strategy), {'sampleId': sample, 'strategy': strategy})
-            rows.append(normalize_row(raw))
+            rows.append(normalize_row(raw, registry))
     return seal({'schemaVersion': 'rag-evaluation-1', 'rows': rows,
+                 'comparisonGroups': report['plan'].get('comparisonGroups'),
                  'origin': {'batchId': batch.name, 'batchPath': str(batch), 'mode': report['plan']['mode'],
                             'planHash': report['plan']['planHash'], 'selectedSampleIds': chosen,
                             'samplesSha256': samples_hash},

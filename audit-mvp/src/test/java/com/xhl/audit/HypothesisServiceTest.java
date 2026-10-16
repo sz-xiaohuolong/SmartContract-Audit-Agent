@@ -5,6 +5,29 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HypothesisServiceTest {
+    @Test void 完整中文提示超出字节预算时不得请求模型() {
+        String source = "contract C { uint x; function f() public { x = 1; } }";
+        var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+            "ACCESS_CONTROL", "f", "机制卡片：需要核验权限", List.of());
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        ModelGateway gateway = (name, system, user) -> {
+            calls.incrementAndGet();
+            return new GatewayReply("{\"schemaVersion\":\"2\",\"hypotheses\":[]}", "fixture", "fixture", null, null, 0);
+        };
+        var baseline = new HypothesisService(gateway).analyze(request, "fixture");
+        int bytes = baseline.requestConsumptionReceipt().path("systemPromptBytes").asInt()
+            + baseline.requestConsumptionReceipt().path("userPromptBytes").asInt();
+        calls.set(0);
+        var blocked = new HypothesisService(gateway, bytes - 1).analyze(request, "fixture");
+        assertEquals(0, calls.get());
+        assertEquals("FAILED", blocked.status());
+        assertEquals("INPUT_BUDGET_EXCEEDED", blocked.errorCategory());
+        assertEquals(0, blocked.requestAttempts());
+        assertNull(blocked.inputTokens());
+        assertEquals("BLOCKED", blocked.requestConsumptionReceipt().path("promptBudgetStatus").asText());
+        assertEquals("COMPLETED", new HypothesisService(gateway, bytes).analyze(request, "fixture").status());
+        assertEquals(1, calls.get());
+    }
     @Test void caseSensitiveNamesBindTheExactDeclaredFunction() {
         String source = "contract Vault { address owner; uint balance; uint credit; function withdraw() public { require(msg.sender == owner); balance = 1; } function Withdraw() public { credit = 1; } }";
         var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,

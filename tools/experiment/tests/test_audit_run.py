@@ -9,6 +9,23 @@ from storage import decode
 
 
 class AuditRunTest(unittest.TestCase):
+    def test_完整请求预检使用本机重放且不读取真实凭证(self):
+        from benchmark_targets import _record
+        target = _record('fixture', 'contract C { uint x; function f() public { x = 1; } }',
+                         'ACCESS_CONTROL', 'f', None, True, '夹具', '夹具')
+        target['_maxPromptBytes'] = 32768
+        with tempfile.TemporaryDirectory() as directory:
+            def capture(command, **kwargs):
+                self.assertIn('--replay-response', command)
+                self.assertNotIn('--config', command)
+                request = decode(Path(command[command.index('--request') + 1]).read_bytes())
+                self.assertEqual(32768, request['maxPromptBytes'])
+                self.assertEqual('机制卡片', request['context'])
+                return SimpleNamespace(returncode=0, stdout=b'{"status":"COMPLETED"}')
+            with patch('audit_run.subprocess.run', side_effect=capture):
+                self.assertEqual('COMPLETED', model_runner(Path(directory), target,
+                    {'d1': {'context': '机制卡片', 'selected': []}}, 'preflight')['status'])
+
     def test_offline_fixture_does_not_claim_safe_result(self):
         result = model_runner(Path('.'), {}, {}, 'offline')
         self.assertEqual('UNRESOLVED', result['conclusion'])

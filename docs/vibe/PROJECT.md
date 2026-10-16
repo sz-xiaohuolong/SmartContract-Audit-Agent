@@ -39,7 +39,7 @@ flowchart LR
 
 ## 唯一文档地图
 
-这是项目唯一的完整导航地图。下面按读者要解决的问题组织入口。`docs/README.md` 只把读者引到本页；当前开发版本文档沿用 R2-20261010，R3-20261015 是待确认的优化提案，历史版本保留在原目录。
+这是项目唯一的完整导航地图。下面按读者要解决的问题组织入口。`docs/README.md` 只把读者引到本页；当前首期优化按 R3-20261015 实施，原有系统边界及未完成的真实修复任务继续引用 R2，历史版本保留在原目录。
 
 接手开发时，先读根目录 [Agent 工作约定](../../AGENTS.md)，再读本页与[当前进度](PROGRESS.md)首屏，按任务进入下方的规格、计划或验收。规则文件维护工作边界，本页维护导航，进度页维护当前状态，技术设计维护实际实现；各版本的需求、目标方案、任务和验收仍由对应版本文档分别维护。
 
@@ -73,7 +73,7 @@ flowchart LR
 | 凭证、调用、锁与证据管理 | [合规与运行审计规范](releases/R2-20261010/attachments/OPERATIONS_AND_REPRODUCIBILITY.md)：集中解释运行约束与历史身份 |
 | 真实项目漏洞与维护者修复 | [真实案例先导](releases/R2-20261010/attachments/REAL_CASE_PILOT.md)：来源与修复覆盖 |
 | SYNAPSE 文献和本项目关系 | [文献对照](releases/R2-20261010/attachments/SYNAPSE_REVIEW_20261014.md)、[实施任务](releases/R2-20261010/IMPLEMENTATION_PLAN.md#synapse-优化任务) |
-| Vul-RAG 对后续优化的启发 | [R3 文献与源码分析](releases/R3-20261015/VUL_RAG_ANALYSIS.md)、[R3 统一优化计划](releases/R3-20261015/IMPLEMENTATION_PLAN.md)：知识卡片、多路检索、配对评价与等效修复；范围待确认，尚未实施 |
+| Vul-RAG 启发与当前优化 | [R3 文献与源码分析](releases/R3-20261015/VUL_RAG_ANALYSIS.md)、[R3 统一实施计划](releases/R3-20261015/IMPLEMENTATION_PLAN.md)：首期卡片、多路检索、条件绑定、互补选择与评价；2026-10-16 已授权实施及一次探索批量，正式研究尚未通过准入 |
 | 2026-10-11 有限引擎接入 | [S11／S12 工程报告](releases/R2-20261010/S11_S12_ENGINE_REPORT.md) |
 | 2026-10-11 三策略采集 | [原三策略报告](releases/R2-20261010/experiments/2026-10-11_API_BATCH_REPORT.md) |
 | 2026-10-12 根因修复 | [零模型修复报告](releases/R2-20261010/experiments/2026-10-12_D1_D2_REPAIR_REPORT.md) |

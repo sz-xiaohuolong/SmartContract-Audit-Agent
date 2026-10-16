@@ -10,7 +10,8 @@ from audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS
 from storage import atomic_json, decode, durable_write, exclusive_lock, fingerprint
 
 
-STRATEGIES = frozenset({'VANILLA', 'DENSE', 'FIELD_FILTER', 'D1'})
+STRATEGIES = frozenset({'VANILLA', 'DENSE', 'FIELD_FILTER', 'D1',
+                        'R3_CODE', 'R3_CARD', 'R3_DENSE', 'R3_FUSION'})
 
 
 def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None, embedding_profile='bge',
@@ -218,13 +219,22 @@ def replay_batch(store, batch_id):
     conflicts = [sample for sample in plan['sampleIds'] if len({indexed[(sample, strategy)].get('poolHash')
                  for strategy in plan['strategies'] if (sample, strategy) in indexed
                  and indexed[(sample, strategy)].get('poolHash')}) > 1]
+    comparison = None
+    pair_accuracy = None
+    if plan.get('pipelineVersion') == 'r3-v1':
+        from r3_protocol import comparison_audit, paired_accuracy
+        if plan.get('comparisonGroups') != [['R3_CODE', 'R3_CARD'], ['R3_DENSE', 'R3_FUSION']]:
+            raise ValueError('R3 比较组不能省略或替换')
+        comparison = comparison_audit(samples)
+        pair_accuracy = paired_accuracy(plan['evaluationPairs'], samples, plan['strategies'])
+        conflicts = sorted({row['sampleId'] for row in comparison})
     return {'batchId': batch_id, 'status': 'COMPLETED' if len(samples) == len(units) else 'RUNNING',
             'plan': plan, 'denominators': {'planned': len(units),
                 'completed': sum(row['status'] == 'COMPLETED' for row in samples),
                 'failed': sum(row['status'] == 'FAILED' for row in samples),
                 'unknown': sum(row['prediction'] == 'UNKNOWN' for row in samples),
                 'pending': len(units) - len(samples)}, 'metrics': metrics,
-            'poolConflicts': conflicts, 'pairedSamples': paired_ids,
+            'poolConflicts': conflicts, 'comparisonAudit': comparison, 'pairAccuracy': pair_accuracy, 'pairedSamples': paired_ids,
             'pairedMetrics': paired_metrics, 'samples': samples, 'researchEligible': False}
 
 

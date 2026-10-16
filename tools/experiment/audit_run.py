@@ -202,7 +202,9 @@ def model_runner(root, target, view, mode):
                 'fixture': True}
     from mvp_runtime import _config_values, _properties_text
     config = Path(target['_providerConfigPath']) if '_providerConfigPath' in target else root / 'config/providers.local.properties'
-    if '_providerConfigPath' in target:
+    if mode == 'preflight':
+        provider_text = ''
+    elif '_providerConfigPath' in target:
         # 工作台已校验并冻结配置；不能再次以当前环境解析生成的临时文件。
         provider_text = config.read_text(encoding='utf-8')
     else:
@@ -218,6 +220,8 @@ def model_runner(root, target, view, mode):
                    'lineStart': target['lineStart'], 'lineEnd': target['lineEnd'],
                    'mechanism': target['mechanism'], 'function': target['function'],
                    'context': view['d1'].get('context', ''), 'evidenceIds': ids}
+        if '_maxPromptBytes' in target:
+            request['maxPromptBytes'] = target['_maxPromptBytes']
         if view.get('riskCatalog') is not None:
             from risk_catalog import load_risk_catalog
             catalog = load_risk_catalog(view['discoveryCompilation'], root)
@@ -235,6 +239,11 @@ def model_runner(root, target, view, mode):
         command = ['java', '-jar', str(jar), '--hypotheses', '--source', str(temp / 'source.sol'),
                    '--request', str(temp / 'request.json'), '--config', str(provider_config), '--provider', 'ark',
                    '--diagnostic-output', str(temp / 'raw-response.txt')]
+        if mode == 'preflight':
+            response = temp / 'preflight.json'
+            response.write_text('{"schemaVersion":"2","hypotheses":[]}', encoding='utf-8')
+            command = ['java', '-jar', str(jar), '--hypotheses', '--source', str(temp / 'source.sol'),
+                       '--request', str(temp / 'request.json'), '--replay-response', str(response)]
         completed = subprocess.run(command, cwd=root, capture_output=True, timeout=390)
         if completed.returncode not in (0, 1) or len(completed.stdout) > 1_048_576:
             raise ValueError('模型运行未返回受控结果')
