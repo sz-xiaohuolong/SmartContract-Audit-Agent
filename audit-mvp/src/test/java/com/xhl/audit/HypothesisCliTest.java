@@ -8,6 +8,61 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HypothesisCliTest {
+    @Test void 显式权限事实提示实际消费与回执一致并拒绝漂移和超预算() throws Exception {
+        var directory = Files.createTempDirectory("permission-guidance-test-");
+        try {
+            String content = "contract C { uint x; function f() public { x = 1; } }";
+            var source = directory.resolve("Contract.sol");
+            Files.writeString(source, content);
+            var catalog = RiskCatalogFixture.catalog(content);
+            RiskCatalogFixture.operation(catalog, content, "C", "f", "x = 1", "WRITE", "a".repeat(64));
+            var node = RiskCatalogFixture.MAPPER.createObjectNode();
+            node.put("schemaVersion", "1").put("modelSource", content).put("scope", "FULL")
+                .put("lineStart", 1).put("lineEnd", 1).put("mechanism", "ACCESS_CONTROL")
+                .put("function", "f").put("context", "");
+            node.putArray("evidenceIds");
+            node.set("riskCatalog", catalog);
+            var captured = new java.util.ArrayList<String>();
+            ModelGateway fake = (p, s, u) -> {
+                captured.add(u);
+                return new GatewayReply("{\"schemaVersion\":\"2\",\"hypotheses\":[]}", "fixture", "fixture", null, null, 1);
+            };
+            var request = directory.resolve("request.json");
+            for (boolean enabled : new boolean[]{false, true}) {
+                if (enabled) node.set("factGuidance", RiskCatalogFixture.guidance(catalog, "检查读取状态：x；没有完整保护证明。"));
+                Files.writeString(request, node.toString());
+                var output = new ByteArrayOutputStream();
+                int status = HypothesisCli.run(new String[]{"--source", source.toString(), "--request", request.toString(),
+                    "--provider", "fixture"}, Map.of(), new PrintStream(output), System.err, fake);
+                assertEquals(0, status);
+                var receipt = RiskCatalogFixture.MAPPER.readTree(output.toString()).path("requestConsumptionReceipt");
+                assertEquals(enabled, receipt.has("factGuidance"));
+                if (enabled) {
+                    assertEquals(node.path("factGuidance"), receipt.path("factGuidance"));
+                    assertTrue(captured.getLast().contains(receipt.path("factGuidance").path("text").asText()));
+                    assertTrue(captured.getLast().contains(content));
+                }
+            }
+            for (String field : java.util.List.of("sourceHash", "receiptDigest", "textSha256")) {
+                var broken = node.deepCopy();
+                ((com.fasterxml.jackson.databind.node.ObjectNode) broken.path("factGuidance")).put(field, "0".repeat(64));
+                Files.writeString(request, broken.toString());
+                assertEquals(1, HypothesisCli.run(new String[]{"--source", source.toString(), "--request", request.toString(),
+                    "--provider", "fixture"}, Map.of(), new PrintStream(new ByteArrayOutputStream()), System.err, fake));
+            }
+            node.put("maxPromptBytes", 1);
+            Files.writeString(request, node.toString());
+            var blocked = new ByteArrayOutputStream();
+            assertEquals(1, HypothesisCli.run(new String[]{"--source", source.toString(), "--request", request.toString(),
+                "--provider", "fixture"}, Map.of(), new PrintStream(blocked), System.err, fake));
+            assertTrue(blocked.toString().contains("INPUT_BUDGET_EXCEEDED"));
+            assertEquals(2, captured.size());
+        } finally {
+            try (var files = Files.walk(directory)) {
+                for (var path : files.sorted(java.util.Comparator.reverseOrder()).toList()) Files.deleteIfExists(path);
+            }
+        }
+    }
     @Test void 旧请求与可选源码摘要风险目录均可离线重放且拒绝未知字段() throws Exception {
         var directory = Files.createTempDirectory("hypothesis-catalog-test-");
         try {

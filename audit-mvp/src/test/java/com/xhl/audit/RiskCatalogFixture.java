@@ -25,6 +25,17 @@ final class RiskCatalogFixture {
             .put("sha256", catalog.path("sourceHash").asText());
         return catalog;
     }
+    static ObjectNode guidance(ObjectNode catalog, String text) {
+        var result = MAPPER.createObjectNode().put("schemaVersion", "permission-guidance-1")
+            .put("text", text).put("textSha256", digest(text.getBytes(StandardCharsets.UTF_8)))
+            .put("textBytes", text.getBytes(StandardCharsets.UTF_8).length)
+            .put("indexSha256", "a".repeat(64)).put("complete", false).put("indexOmittedRelationCount", 0);
+        for (String key : java.util.List.of("sourceHash", "receiptDigest", "environmentHash", "sourceClosureSha256"))
+            result.set(key, catalog.get(key));
+        result.putArray("includedRelationIds");
+        result.putArray("omittedRelationIds");
+        return result;
+    }
     static ObjectNode operation(ObjectNode catalog, String source, String contract, String function,
                                 String expression, String operation, String factId) {
         int offset = source.indexOf(expression);

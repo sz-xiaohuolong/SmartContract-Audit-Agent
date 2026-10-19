@@ -132,7 +132,8 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
         if model.get('status') == 'FAILED':
             model = {**_model_error(model.get('errorCategory', 'MODEL_OUTPUT_INVALID')),
                      'validationIssue': model.get('validationIssue'),
-                     'inputTokens': model.get('inputTokens'), 'outputTokens': model.get('outputTokens')}
+                     'inputTokens': model.get('inputTokens'), 'outputTokens': model.get('outputTokens'),
+                     **{key: model[key] for key in ('requestConsumptionReceipt',) if key in model}}
         _event(events, 'MODEL_RESULT', {'status': model['status'], 'conclusion': model.get('conclusion')})
         if view.get('discoveryCompilation') is not None and model.get('hypotheses'):
             from compilation_runtime import prepare_candidate_compilations
@@ -149,7 +150,10 @@ def run_once(root: Path, sample_id: str, mode: str, dependencies: RunDependencie
         _event(events, 'D2_RESULT', {'verdict': d2['verdict']})
     except Exception:
         execution_failed = True
-        model = _model_error('MODEL_OR_TOOL_EXECUTION_ERROR') if model.get('status') != 'COMPLETED' else model
+        if model.get('status') != 'COMPLETED':
+            model = {**_model_error('MODEL_OR_TOOL_EXECUTION_ERROR'),
+                     **{key: model[key] for key in ('requestConsumptionReceipt', 'inputTokens', 'outputTokens')
+                        if key in model}}
         _event(events, 'EXECUTION_FAILED', {'category': 'MODEL_OR_TOOL_EXECUTION_ERROR'})
     failed = execution_failed or model['status'] != 'COMPLETED' or any(item.get('status') not in ('OK', 'SKIPPED') for item in tools)
     result = {'schemaVersion': '1', 'runId': directory.name, 'plan': plan, 'planHash': fingerprint(plan),
@@ -200,6 +204,11 @@ def model_runner(root, target, view, mode):
         return {'schemaVersion': '2', 'status': 'COMPLETED', 'conclusion': 'UNRESOLVED',
                 'hypotheses': [], 'errorCategory': None, 'inputTokens': None, 'outputTokens': None,
                 'fixture': True}
+    enabled = target.get('factGuidanceEnabled', False)
+    if type(enabled) is not bool or enabled and (target.get('scope') != 'FULL'
+            or not view.get('riskCatalog') or not view.get('discoveryCompilation')
+            or view.get('focusContext', {}).get('capability') != 'COMPILED_STRUCTURE'):
+        raise ValueError('显式事实提示需要全文、编译原件、目录和权限索引；不能静默关闭')
     from mvp_runtime import _config_values, _properties_text
     config = Path(target['_providerConfigPath']) if '_providerConfigPath' in target else root / 'config/providers.local.properties'
     if mode == 'preflight':
@@ -228,6 +237,13 @@ def model_runner(root, target, view, mode):
             if catalog != view['riskCatalog'] or catalog['sourceHash'] != target['fullSourceHash']:
                 raise ValueError('模型请求前编译目录或源码身份发生变化')
             request['riskCatalog'] = catalog
+            if enabled:
+                from compiler_facts import load_bound_compilation
+                from focus_context import build_focus_context, build_fact_guidance
+                current = build_focus_context(load_bound_compilation(view['discoveryCompilation'], root))
+                if current != view['focusContext']:
+                    raise ValueError('模型请求前权限事实提示索引发生变化')
+                request['factGuidance'] = build_fact_guidance(current, catalog)
         (temp / 'request.json').write_bytes(encode(request))
         provider_config = temp / 'providers.properties'
         provider_config.write_text(provider_text +

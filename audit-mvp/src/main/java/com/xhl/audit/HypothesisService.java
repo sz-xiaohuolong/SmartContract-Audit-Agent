@@ -17,7 +17,13 @@ import java.util.Arrays;
 public final class HypothesisService {
     public record Request(String fullSource, String modelSource, String sourceHash, String scope,
                           int lineStart, int lineEnd, String mechanism, String function,
-                          String context, List<String> evidenceIds, JsonNode riskCatalog) {
+                          String context, List<String> evidenceIds, JsonNode riskCatalog, JsonNode factGuidance) {
+        public Request(String fullSource, String modelSource, String sourceHash, String scope,
+                       int lineStart, int lineEnd, String mechanism, String function,
+                       String context, List<String> evidenceIds, JsonNode riskCatalog) {
+            this(fullSource, modelSource, sourceHash, scope, lineStart, lineEnd, mechanism, function,
+                context, evidenceIds, riskCatalog, null);
+        }
         public Request(String fullSource, String modelSource, String sourceHash, String scope,
                        int lineStart, int lineEnd, String mechanism, String function,
                        String context, List<String> evidenceIds) {
@@ -73,7 +79,8 @@ public final class HypothesisService {
             receipt.put("userPromptSha256", sha256(user.getBytes(StandardCharsets.UTF_8)));
             receipt.put("systemPromptBytes", system.getBytes(StandardCharsets.UTF_8).length);
             receipt.put("userPromptBytes", user.getBytes(StandardCharsets.UTF_8).length);
-            receipt.put("promptTemplateVersion", "hypotheses-v4-diff-guidance");
+            receipt.put("promptTemplateVersion", request.factGuidance() == null
+                ? "hypotheses-v4-diff-guidance" : "hypotheses-v5-fact-guidance");
             receipt.put("diffGuidanceVersion", "diff-guidance-1");
             var components = receipt.putObject("promptBudgetComponents");
             components.putObject("system").put("bytes", system.getBytes(StandardCharsets.UTF_8).length).putNull("tokens");
@@ -81,7 +88,13 @@ public final class HypothesisService {
             components.putObject("context").put("bytes", request.context().getBytes(StandardCharsets.UTF_8).length).putNull("tokens");
             components.putObject("instructionsAndCatalog").put("bytes", user.getBytes(StandardCharsets.UTF_8).length
                 - numberedSource(request).getBytes(StandardCharsets.UTF_8).length
-                - request.context().getBytes(StandardCharsets.UTF_8).length).putNull("tokens");
+                - request.context().getBytes(StandardCharsets.UTF_8).length
+                - factGuidancePrompt(request).getBytes(StandardCharsets.UTF_8).length).putNull("tokens");
+            if (request.factGuidance() != null) {
+                receipt.set("factGuidance", request.factGuidance().deepCopy());
+                components.putObject("factGuidance").put("bytes",
+                    factGuidancePrompt(request).getBytes(StandardCharsets.UTF_8).length).putNull("tokens");
+            }
             components.putObject("messageOverhead").putNull("tokens");
             components.putObject("output").putNull("tokens");
             receipt.set("messageOrder", mapper.valueToTree(List.of("system", "user")));
@@ -143,6 +156,7 @@ public final class HypothesisService {
                     : "函数片段的 function 必须等于上述函数，contract 必须等于目标所属合约；无名回退函数写 fallback，构造函数写 constructor；")
                 + "evidenceIds 只能从可引用 ID 中选择，也可以为空数组。"
                 + catalogPrompt(request)
+                + factGuidancePrompt(request)
                 + "\n待审源码（左侧为原始行号）：\n" + numberedSource(request);
             reply = gateway.complete(provider, system, user);
         } catch (PromptBudgetExceeded e) {
@@ -256,6 +270,42 @@ public final class HypothesisService {
             } catch (java.security.NoSuchAlgorithmException e) { throw new IllegalStateException(e); }
         }
         validateCatalog(request);
+        validateFactGuidance(request);
+    }
+    private static String factGuidancePrompt(Request request) {
+        return request.factGuidance() == null ? "" : "\n权限事实提示（结构观察，不是授权或安全证明）：\n"
+            + request.factGuidance().path("text").asText();
+    }
+    private static void validateFactGuidance(Request request) {
+        JsonNode facts = request.factGuidance();
+        if (facts == null) return;
+        Set<String> fields = Set.of("schemaVersion", "sourceHash", "receiptDigest", "environmentHash",
+            "sourceClosureSha256", "indexSha256", "text", "textSha256", "textBytes", "includedRelationIds",
+            "omittedRelationIds", "indexOmittedRelationCount", "complete");
+        if (!facts.isObject() || !"FULL".equals(request.scope()) || request.riskCatalog() == null
+            || !"permission-guidance-1".equals(facts.path("schemaVersion").asText())
+            || facts.size() != fields.size()) throw new IllegalArgumentException();
+        var names = facts.fieldNames();
+        while (names.hasNext()) if (!fields.contains(names.next())) throw new IllegalArgumentException();
+        for (String key : List.of("sourceHash", "receiptDigest", "environmentHash", "sourceClosureSha256"))
+            if (!digest(facts.get(key)) || !facts.path(key).equals(request.riskCatalog().path(key)))
+                throw new IllegalArgumentException();
+        if (!digest(facts.get("indexSha256")) || !digest(facts.get("textSha256"))
+            || !facts.path("text").isTextual() || facts.path("text").asText().isBlank()
+            || !facts.path("textBytes").isIntegralNumber() || !facts.path("textBytes").canConvertToInt()
+            || facts.path("textBytes").intValue() != facts.path("text").asText().getBytes(StandardCharsets.UTF_8).length
+            || facts.path("textBytes").intValue() > 16384
+            || !sha256(facts.path("text").asText().getBytes(StandardCharsets.UTF_8)).equals(facts.path("textSha256").asText())
+            || !facts.path("complete").isBoolean() || facts.path("complete").asBoolean()
+            || !facts.path("indexOmittedRelationCount").isIntegralNumber()
+            || !facts.path("indexOmittedRelationCount").canConvertToInt()
+            || facts.path("indexOmittedRelationCount").intValue() < 0) throw new IllegalArgumentException();
+        Set<String> ids = new java.util.HashSet<>();
+        for (String key : List.of("includedRelationIds", "omittedRelationIds")) {
+            if (!facts.path(key).isArray()) throw new IllegalArgumentException();
+            for (JsonNode id : facts.path(key))
+                if (!digest(id) || !ids.add(id.asText())) throw new IllegalArgumentException();
+        }
     }
     private static String sha256(byte[] bytes) {
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)); }

@@ -34,7 +34,7 @@ public final class HypothesisCli {
             Set<String> required = Set.of("schemaVersion", "modelSource", "scope", "lineStart", "lineEnd",
                 "mechanism", "function", "context", "evidenceIds");
             Set<String> allowed = new java.util.HashSet<>(required);
-            allowed.addAll(Set.of("sourceHash", "riskCatalog", "maxPromptBytes"));
+            allowed.addAll(Set.of("sourceHash", "riskCatalog", "maxPromptBytes", "factGuidance"));
             if (node == null || !node.isObject()
                 || !"1".equals(node.path("schemaVersion").asText())
                 || !node.path("modelSource").isTextual() || !node.path("scope").isTextual()
@@ -48,6 +48,7 @@ public final class HypothesisCli {
             if (node.has("sourceHash") && (!node.path("sourceHash").isTextual()
                 || !node.path("sourceHash").asText().matches("[0-9a-f]{64}"))) throw new IllegalArgumentException();
             if (node.has("riskCatalog") && !node.path("riskCatalog").isObject()) throw new IllegalArgumentException();
+            if (node.has("factGuidance") && !node.path("factGuidance").isObject()) throw new IllegalArgumentException();
             if (node.has("maxPromptBytes") && (!node.path("maxPromptBytes").isIntegralNumber()
                 || !node.path("maxPromptBytes").canConvertToInt() || node.path("maxPromptBytes").asInt() <= 0))
                 throw new IllegalArgumentException();
@@ -60,7 +61,8 @@ public final class HypothesisCli {
                 node.has("sourceHash") ? node.path("sourceHash").asText() : null,
                 node.path("scope").asText(), node.path("lineStart").intValue(), node.path("lineEnd").intValue(),
                 node.path("mechanism").asText(), node.path("function").asText(), node.path("context").asText(), ids,
-                node.has("riskCatalog") ? node.get("riskCatalog") : null);
+                node.has("riskCatalog") ? node.get("riskCatalog") : null,
+                node.has("factGuidance") ? node.get("factGuidance") : null);
             String providerName = options.get("--provider");
             ModelGateway gateway = injected;
             if (options.containsKey("--replay-response")) {

@@ -9,6 +9,47 @@ from storage import decode
 
 
 class AuditRunTest(unittest.TestCase):
+    def test_显式事实提示缺少编译原件时必须在模型前拒绝(self):
+        target = {'factGuidanceEnabled': True, 'fullSource': 'contract C {}', 'fullSourceHash': 'a' * 64,
+            'modelSource': 'contract C {}', 'scope': 'FULL', 'lineStart': 1, 'lineEnd': 1,
+            'mechanism': 'ACCESS_CONTROL', 'function': ''}
+        with tempfile.TemporaryDirectory() as directory, patch('audit_run.subprocess.run') as launch:
+            with self.assertRaisesRegex(ValueError, '事实提示'):
+                model_runner(Path(directory), target, {'d1': {'selected': []}}, 'preflight')
+            launch.assert_not_called()
+
+    def test_事实提示开关复核索引并保留原全文(self):
+        import test_compiler_facts as fixtures
+        from focus_context import build_focus_context, build_fact_guidance
+        from risk_catalog import build_risk_catalog
+        fixture = fixtures.CompilerFactsTest(); fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        bundle = fixture.load()
+        context, catalog = build_focus_context(bundle), build_risk_catalog(bundle)
+        target = {'factGuidanceEnabled': True, 'fullSource': fixture.source, 'fullSourceHash': bundle['sourceHash'],
+            'modelSource': fixture.source, 'scope': 'FULL', 'lineStart': 1, 'lineEnd': 2,
+            'mechanism': 'ACCESS_CONTROL', 'function': 'f'}
+        view = {'focusContext': context, 'riskCatalog': catalog, 'discoveryCompilation': fixture.manifest,
+                'd1': {'selected': [], 'context': ''}}
+        def capture(command, **kwargs):
+            request = decode(Path(command[command.index('--request') + 1]).read_bytes())
+            self.assertEqual(fixture.source, request['modelSource'])
+            self.assertEqual(target['factGuidanceEnabled'], 'factGuidance' in request)
+            if target['factGuidanceEnabled']:
+                self.assertEqual(build_fact_guidance(context, catalog), request['factGuidance'])
+            return SimpleNamespace(returncode=0, stdout=b'{"status":"COMPLETED"}')
+        with patch('risk_catalog.load_risk_catalog', return_value=catalog), \
+                patch('compiler_facts.load_bound_compilation', return_value=bundle), \
+                patch('audit_run.subprocess.run', side_effect=capture) as launch:
+            model_runner(fixture.root, target, view, 'preflight')
+            target['factGuidanceEnabled'] = False
+            model_runner(fixture.root, target, view, 'preflight')
+            target['factGuidanceEnabled'] = True
+            context['permissionFacts']['complete'] = True
+            with self.assertRaisesRegex(ValueError, '发生变化'):
+                model_runner(fixture.root, target, view, 'preflight')
+            self.assertEqual(2, launch.call_count)
+
     def test_完整请求预检使用本机重放且不读取真实凭证(self):
         from benchmark_targets import _record
         target = _record('fixture', 'contract C { uint x; function f() public { x = 1; } }',
@@ -90,11 +131,15 @@ class AuditRunTest(unittest.TestCase):
             diagnostic_deps = RunDependencies(None, None, None,
                 lambda *args: {'status': 'FAILED', 'errorCategory': 'MODEL_OUTPUT_INVALID',
                                'validationIssue': 'CONTRACT_MISMATCH', 'inputTokens': 8,
-                               'outputTokens': 4, '_rawResponse': 'private diagnostic'},
+                               'outputTokens': 4, 'requestConsumptionReceipt': {'factGuidance': {'text': '事实原文'}},
+                               '_rawResponse': 'private diagnostic'},
                 lambda *args: [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': []}])
             with patch('audit_run.load_target', return_value=target), patch('audit_run.preview', return_value=view):
                 diagnostic_result = run_once(Path(directory), 'fixture', 'offline', diagnostic_deps)
             self.assertEqual('CONTRACT_MISMATCH', diagnostic_result['model']['validationIssue'])
+            self.assertEqual({'factGuidance': {'text': '事实原文'}},
+                             diagnostic_result['model']['requestConsumptionReceipt'])
+            self.assertEqual(diagnostic_result, replay(Path(directory), diagnostic_result['runId']))
             self.assertNotIn('private diagnostic', str(diagnostic_result))
             self.assertEqual('private diagnostic', (Path(directory) / 'research-artifacts/runs/audits' /
                 diagnostic_result['runId'] / 'raw-response.txt').read_text())
