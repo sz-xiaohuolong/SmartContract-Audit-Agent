@@ -83,6 +83,9 @@ class CompilationRuntimeTest(unittest.TestCase):
         bundle = load_bound_compilation(manifest, self.fixture.root)
         self.assertEqual('RECOMPILED_MATCH', bundle['verificationStatus'])
         self.assertEqual('C', bundle['targetContract'])
+        selection = bundle['input']['settings']['outputSelection']['*']['*']
+        self.assertTrue({'evm.bytecode.sourceMap', 'evm.deployedBytecode.sourceMap',
+                         'evm.methodIdentifiers'}.issubset(selection), '真实 Slither 必须消费原编译收据中的源码映射')
 
     def test_错源码多合约与缺依赖均拒绝(self):
         from compilation_runtime import prepare_compilation

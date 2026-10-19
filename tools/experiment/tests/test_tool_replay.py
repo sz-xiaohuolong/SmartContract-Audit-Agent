@@ -63,6 +63,12 @@ class ToolReplayTest(unittest.TestCase):
             self.assertEqual(3, comparison['beforeUnknown'])
             self.assertEqual(1, comparison['afterUnknown'])
             self.assertEqual(1 / 3, comparison['afterRate'])
+            self.assertEqual(3, summary['verification']['denominator'])
+            self.assertEqual({'SUPPORTED': 1, 'REFUTED': 1, 'UNKNOWN': 1, 'FAILED': 0},
+                             summary['verification']['counts'])
+            self.assertEqual(2 / 3, summary['verification']['decisiveCoverage'])
+            self.assertIsNone(summary['verification']['falseRefutations'])
+            self.assertTrue(summary['discovery']['frozen'])
             self.assertEqual(before, source_path.read_bytes())
             self.assertEqual(3, len((root / 'derived/assessments.jsonl').read_text().splitlines()))
             four = json.loads((root / 'derived/four-arm-summary.json').read_text())

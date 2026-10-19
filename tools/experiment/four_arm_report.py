@@ -56,6 +56,28 @@ def _index(rows):
     return result
 
 
+def _assessments(row):
+    result = {}
+    count = len(row['model'].get('hypotheses', []))
+    for index, item in enumerate(row.get('d2', {}).get('assessments', [])):
+        key = item.get('hypothesisIndex', index)
+        if type(key) is not int or not 0 <= key < count or key in result:
+            raise ValueError('候选核验索引重复或超出冻结候选范围')
+        result[key] = item
+    return result
+
+
+def verification_summary(changes):
+    """按全部冻结候选统计程序证据；正确性必须另有独立真值。"""
+    count = len(changes)
+    counts = Counter(row['verificationStatus'] for row in changes)
+    return {'denominator': count, 'counts': {key: counts[key] for key in
+            ('SUPPORTED', 'REFUTED', 'UNKNOWN', 'FAILED')},
+        'decisiveCoverage': (counts['SUPPORTED'] + counts['REFUTED']) / count if count else None,
+        'falseSupports': None, 'falseRefutations': None, 'independentAccuracy': None,
+        'truthStatus': 'INDEPENDENT_REVIEW_PENDING'}
+
+
 def compare_arms(original, derived, plan):
     """消费同一批原件和当前派生证明；候选真值留给独立审核，不从标签推导。"""
     left, right = _index(original), _index(derived)
@@ -70,8 +92,7 @@ def compare_arms(original, derived, plan):
         provenance = new.get('provenance', {})
         if provenance.get('originalBatchId', plan['batchId']) != plan['batchId']:
             raise ValueError('派生结果来自不同批次')
-        assessments = {item.get('hypothesisIndex', i): item for i, item in enumerate(new.get('d2', {}).get('assessments', []))}
-        prior = {item.get('hypothesisIndex', i): item for i, item in enumerate(old.get('d2', {}).get('assessments', []))}
+        assessments, prior = _assessments(new), _assessments(old)
         for index, hypothesis in enumerate(old['model'].get('hypotheses', [])):
             identity = [plan['batchId'], plan.get('planHash'), *key, index, fingerprint(hypothesis)]
             common = {'candidateId': 'candidate-' + fingerprint(identity), 'candidateHash': fingerprint(hypothesis),
@@ -85,7 +106,7 @@ def compare_arms(original, derived, plan):
             weak_ms = (perf_counter() - started) * 1000
             assessment = assessments.get(index, {})
             failed = (assessment.get('status') == 'FAILED' or assessment.get('errorCategory')
-                      or new.get('d2', {}).get('errorCategory'))
+                      or new.get('d2', {}).get('errorCategory') or new.get('d2', {}).get('status') == 'FAILED')
             verdict = assessment.get('verdict', 'UNKNOWN') if not failed else 'UNKNOWN'
             if verdict not in {'SUPPORTED', 'REFUTED', 'UNKNOWN'}:
                 raise ValueError('D2裁决状态无效')
@@ -97,9 +118,15 @@ def compare_arms(original, derived, plan):
                     'proofVerdict': verdict if arm == 'FULL_D2' else None,
                     'rule': RULES[arm], 'sharedWeakFeatureDurationMs': weak_ms if arm in ARMS[1:3] else None,
                     'sharedUnitDurationMs': new.get('replayTiming', {}).get('durationMs') if arm == 'FULL_D2' else None})
+            proof = assessment.get('candidateProof', {})
+            execution = proof.get('executionBinding', {})
             changes.append({**common, 'before': prior.get(index, {}).get('verdict', 'UNKNOWN'), 'after': verdict,
+                'verificationStatus': 'FAILED' if failed else verdict,
                 'gaps': assessment.get('candidateProof', {}).get('proofScope', assessment.get('proofScope', {})).get('gaps', []),
-                'execution': assessment.get('candidateProof', {}).get('executionBinding', {}).get('status'),
+                'execution': execution.get('status'), 'executionFailureKind': execution.get('failureKind'),
+                'proofKind': proof.get('proofKind'), 'proofProperty': proof.get('proofScope', {}).get('property'),
+                'riskBinding': assessment.get('riskBinding'), 'toolBinding': assessment.get('toolBinding'),
+                'references': assessment.get('references', []),
                 'reason': assessment.get('note', new.get('d2', {}).get('errorCategory', '缺少核验记录'))})
     count = len(changes)
     arms = {}
@@ -120,6 +147,9 @@ def compare_arms(original, derived, plan):
     summary = {'schemaVersion': 'four-arm-1', 'batchId': plan['batchId'], 'planHash': plan.get('planHash'),
         'unitCount': len(original), 'candidateCount': count, 'arms': arms, 'newModelRequests': 0,
         'historicalUsage': usage, 'cost': None, 'researchEligible': False,
+        'verification': verification_summary(changes),
+        'discovery': {'frozen': True, 'newModelRequests': 0,
+                      'scope': '模型发现原样冻结，只比较同一批候选的核验证据'},
         'fullD2DurationMs': sum(times) if all(type(value) in (int, float) for value in times) else None,
         'timingScope': 'D2按单元计时并包含共享编译与工具；候选不得重复累加该耗时。弱臂共享词法扫描，非等计算量对比。',
         'frozenAcceptance': {'applies': plan['batchId'] == '119b4862f8a14818b62848ce709c3ee6',

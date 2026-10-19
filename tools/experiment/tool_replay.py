@@ -285,6 +285,8 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
         summary['unknownReasons'] = dict(Counter(row['reason'] for row in comparisons if row['after'] == 'UNKNOWN'))
         from four_arm_report import compare_arms
         four_arm, arm_rows = compare_arms(rows, collected, {**plan, 'batchId': provenance['originalBatchId']})
+        summary['verification'] = four_arm['verification']
+        summary['discovery'] = four_arm['discovery']
         atomic_json(output / 'four-arm-summary.json', four_arm)
         with (output / 'four-arm-results.jsonl').open('xb') as arm_file:
             for arm_row in arm_rows:
@@ -302,6 +304,8 @@ def replay(root, original_run, output_run, *, tool_runner=None, environment_reso
                   f"保存假设分母 {denominator}；UNKNOWN 从 {before_unknown} 降至 {after_unknown}。"
                   f"下降百分点：{summary['unknownComparison']['reductionPercentagePoints']}。\n\n"
                   f"逐假设迁移：{summary['transitions']}。完整对照与剩余未知原因见 `assessments.jsonl`。\n\n"
+                  f"核验四态：{summary['verification']['counts']}；可裁决覆盖：{summary['verification']['decisiveCoverage']}。"
+                  '全部保存候选保留在分母，失败单独计数；错误支持、错误反驳和独立准确率尚不能判断。\n\n'
                   '四臂完整决策见 `four-arm-results.jsonl`，统计、逐候选稳定ID／变化与计时见 `four-arm-summary.json`。'
                   '候选独立真值尚未审核，混淆矩阵保持null；弱基线的接受／拒绝不代表形式证明。\n\n'
                   '原模型输出与usage保留，原批次samples摘要封口前再次核对。'

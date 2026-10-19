@@ -101,7 +101,8 @@ def _prepare_compilation(root, target, *, discovery):
     unit = original_bundle['targetSourceUnit'] if original_bundle else 'contracts/C.sol'
     settings = original_bundle['input']['settings'] if original_bundle else {'optimizer': {'enabled': False, 'runs': 200},
                 'outputSelection': {'*': {'': ['ast'], '*': ['abi', 'evm.bytecode.object',
-                    'evm.deployedBytecode.object']}}}
+                    'evm.bytecode.sourceMap', 'evm.deployedBytecode.object',
+                    'evm.deployedBytecode.sourceMap', 'evm.methodIdentifiers']}}}
     sources = {name: {'content': value['content']} for name, value in original_bundle['input']['sources'].items()} if original_bundle else {}
     sources[unit] = {'content': source}
     source_receipts, source_hashes = {}, {}

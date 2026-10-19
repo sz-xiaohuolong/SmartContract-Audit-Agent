@@ -1,7 +1,8 @@
-"""沿用批量平台运行 R3 五条件探索；默认只做无付费预检。"""
+"""沿用批量平台运行五条件或权限事实四条件探索；默认只做无付费预检。"""
 import argparse
 import hashlib
 import json
+import subprocess
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -9,9 +10,8 @@ from pathlib import Path
 from audit_run import model_runner
 from benchmark_batch import make_plan, prepare_batch, replay_batch, run_batch, save_summary
 from benchmark_cli import prepare_runtime
-from formal_recall import select_strategy
 from mvp_runtime import _config_values, _properties_text
-from r3_protocol import CONDITIONS, freeze_plan
+from r3_protocol import CONDITIONS, P4_CONDITIONS, freeze_plan, freeze_phase4_plan, condition_target, condition_view
 from r3_retrieval import R3Retrieval
 from risk_catalog import prepare_model_context
 from snapshots import verify_snapshot
@@ -38,34 +38,42 @@ def _emit(kind, **values):
 
 def _view(runtime, target, strategy):
     base = runtime.preview(target)
-    return select_strategy(base, strategy) if strategy == 'VANILLA' else runtime.r3.select(
+    return condition_view(base, strategy) if strategy == 'VANILLA' or strategy in P4_CONDITIONS else runtime.r3.select(
         base, strategy, allow_unreviewed=True)
 
 
-def preflight(root, runtime, targets, max_prompt_bytes):
+def preflight(root, runtime, targets, max_prompt_bytes, conditions=CONDITIONS):
     """经同一个 Java 提示构造器检查全部实际文本，不连接付费端点。"""
     receipts = {}
     for target in targets:
         target['_maxPromptBytes'] = max_prompt_bytes
         receipts[target['sampleId']] = {}
-        for strategy in CONDITIONS:
-            view = _view(runtime, target, strategy)
-            prepare_model_context(root, target, view, 'real')
-            result = model_runner(root, target, view, 'preflight')
-            receipt = result.get('requestConsumptionReceipt')
-            if result.get('status') != 'COMPLETED' or not receipt or receipt.get('requestAttempts') != 0:
-                raise ValueError(f"无付费预检未通过：{target['sampleId']} / {strategy} / {result.get('errorCategory')}")
-            receipts[target['sampleId']][strategy] = {
-                **receipt, 'contextHash': view.get('r3Receipt', {}).get('contextHash'),
-                'selectedPairs': view.get('r3Receipt', {}).get('selectedPairs', []),
-                'poolHash': view['poolHash'], 'riskCatalogStatus': view.get('riskCatalogDiagnostic', {}).get('status')}
-        _emit('目标预检完成', sample=target['sampleId'], conditions=len(CONDITIONS))
+        for strategy in conditions:
+            current, _ = condition_target(target, strategy)
+            try:
+                view = _view(runtime, current, strategy)
+                prepare_model_context(root, current, view, 'real')
+                result = model_runner(root, current, view, 'preflight')
+                receipt = result.get('requestConsumptionReceipt')
+                if result.get('status') != 'COMPLETED' or not receipt or receipt.get('requestAttempts') != 0:
+                    raise ValueError(f"无付费预检未通过：{result.get('errorCategory')}")
+                receipts[target['sampleId']][strategy] = {
+                    **receipt, 'contextHash': view.get('r3Receipt', {}).get('contextHash'),
+                    'selectedPairs': view.get('r3Receipt', {}).get('selectedPairs', []),
+                    'poolHash': view['poolHash'], 'riskCatalogStatus': view.get('riskCatalogDiagnostic', {}).get('status')}
+            except (ValueError, OSError, subprocess.TimeoutExpired) as error:
+                if conditions != P4_CONDITIONS:
+                    raise
+                receipts[target['sampleId']][strategy] = {'status': 'FAILED', 'reason': str(error), 'requestAttempts': 0}
+        _emit('目标预检完成', sample=target['sampleId'], conditions=len(conditions),
+              blocked=any(row.get('status') == 'FAILED' for row in receipts[target['sampleId']].values()))
     return receipts
 
 
 def main():
     parser = argparse.ArgumentParser(description='R3 五条件预检与单次探索批量；正式研究准入独立判断')
     parser.add_argument('--execute', action='store_true', help='显式执行一次已授权真实批量；缺省不调用真实 API')
+    parser.add_argument('--phase4', action='store_true', help='运行全文、权限事实、D1、事实加D1四条件；共同阻断目标保留在分母')
     parser.add_argument('--allow-unreviewed', action='store_true', help='明确接受未独立审核卡片，仅作工程探索')
     parser.add_argument('--batch-id', help='真实批量必须明确指定32位十六进制编号；禁止重复新建同一授权批次')
     parser.add_argument('--sample-ids', nargs='+', default=DEFAULT_TARGETS)
@@ -82,13 +90,21 @@ def main():
     if len(set(args.sample_ids)) != len(args.sample_ids) or not set(args.sample_ids) <= set(indexed):
         parser.error('目标不存在或重复')
     targets = [indexed[key] for key in args.sample_ids]
-    runtime.r3 = R3Retrieval(runtime.store, runtime.pointer['snapshot_id'], runtime.catalog)
-    runtime.r3_allow_unreviewed = True
+    conditions = P4_CONDITIONS if args.phase4 else CONDITIONS
+    if args.phase4 and (len(targets) > 8 or not set(args.sample_ids) <= set(DEFAULT_TARGETS)):
+        parser.error('本次四条件授权只覆盖已有八个开发目标、最多32次正式请求')
+    if not args.phase4:
+        runtime.r3 = R3Retrieval(runtime.store, runtime.pointer['snapshot_id'], runtime.catalog)
+        runtime.r3_allow_unreviewed = True
     provider_path, tool_path = root / 'config/providers.local.properties', root / 'config/tools.local.properties'
-    provider_values = _config_values(provider_path)
-    provider = {'endpoint': provider_values['providers.ark.base-url'], 'model': provider_values['providers.ark.model']}
+    # 离线提示预检不解析凭证，也不因尚待确认的计费入口阻止检查文本。
+    provider_values = _config_values(provider_path) if args.execute else None
+    public_values = {key.strip(): value.strip() for line in provider_path.read_text(encoding='utf-8').splitlines()
+                     for key, separator, value in [line.partition('=')]
+                     if separator and key.strip() in ('providers.ark.base-url', 'providers.ark.model')}
+    provider = {'endpoint': public_values['providers.ark.base-url'], 'model': public_values['providers.ark.model']}
     # 本轮采用现有计费配置，不自动改模型或端点。
-    if provider != {'endpoint': 'https://ark.cn-beijing.volces.com/api/plan/v3', 'model': 'deepseek-v4-flash'}:
+    if args.execute and provider != {'endpoint': 'https://ark.cn-beijing.volces.com/api/plan/v3', 'model': 'deepseek-v4-flash'}:
         raise ValueError('本次批量的模型或计费端点与已核对配置不同')
     tool_values = _configuration(tool_path)
     config_hashes = {str(path.relative_to(root)): _sha(path) for path in (provider_path, tool_path)}
@@ -96,36 +112,49 @@ def main():
     for target in targets:
         target['_toolConfiguration'] = tool_values
         target['_toolConfigPath'] = str(tool_path)
-    receipts = preflight(root, runtime, targets, args.max_prompt_bytes)
+    receipts = preflight(root, runtime, targets, args.max_prompt_bytes, conditions)
+    if args.phase4:
+        for target in targets:
+            failures = [f'{s}：{r["reason"]}' for s, r in receipts[target['sampleId']].items() if r.get('status') == 'FAILED']
+            if failures:
+                target.update(runnable=False, inputReason='四条件共同预检阻断；' + '；'.join(failures))
     if identity != _code_identity(root):
         raise ValueError('预检期间源码或 JAR 已改变')
-    registry = runtime.r3.registry
-    registry_path = root / 'research-artifacts/snapshots/r3' / (registry['registryHash'] + '.json')
-    registry_path.parent.mkdir(parents=True, exist_ok=True)
-    if registry_path.exists():
-        if decode(registry_path.read_bytes()) != registry:
-            raise ValueError('已保存卡片身份冲突')
+    if args.phase4:
+        registry = runtime.catalog
+        registry_path = runtime.store / 'catalogs' / (runtime.pointer['snapshot_id'] + '.json')
     else:
-        durable_write(registry_path, encode(registry) + b'\n')
+        registry = runtime.r3.registry
+        registry_path = root / 'research-artifacts/snapshots/r3' / (registry['registryHash'] + '.json')
+        registry_path.parent.mkdir(parents=True, exist_ok=True)
+        if registry_path.exists():
+            if decode(registry_path.read_bytes()) != registry:
+                raise ValueError('已保存卡片身份冲突')
+        else:
+            durable_write(registry_path, encode(registry) + b'\n')
+    registry_sha = _sha(registry_path)
     preflight_path = root / args.preflight_output
     preflight_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json(preflight_path, {'codeIdentity': identity, 'registryPath': str(registry_path.relative_to(root)),
-        'registryHash': registry['registryHash'], 'cards': len(registry['cards']),
-        'excludedCards': len(registry['excluded']), 'provider': provider, 'receipts': receipts,
+        'registryHash': fingerprint(registry), 'cards': len(registry.get('cards', [])),
+        'excludedCards': len(registry.get('excluded', [])), 'provider': provider, 'receipts': receipts,
         'researchEligible': False, 'paidRequests': 0})
-    _emit('全部预检通过', targets=len(targets), maxRequests=len(targets) * len(CONDITIONS),
-          cards=len(registry['cards']), paidRequests=0)
+    _emit('全部预检完成', targets=len(targets), maxRequests=sum(t['runnable'] for t in targets) * len(conditions),
+          blockedTargets=sum(not t['runnable'] for t in targets), paidRequests=0)
     if not args.execute:
         return
     store = root / 'research-artifacts/runs/benchmarks'
     directory = store / args.batch_id
     if directory.exists():
         raise ValueError('该批量已存在；不得重复消费或覆盖授权，需要先检查保存结果')
-    plan = make_plan(args.sample_ids, CONDITIONS, 'real', targets, runtime.pointer['snapshot_id'], provider, 'nomic')
-    plan = freeze_plan(plan, registry, identity, receipts, args.max_prompt_bytes)
+    plan = make_plan(args.sample_ids, conditions, 'real', targets, runtime.pointer['snapshot_id'], provider, 'nomic',
+                     include_blocked=args.phase4)
+    plan = (freeze_phase4_plan(plan, identity, receipts, args.max_prompt_bytes) if args.phase4 else
+            freeze_plan(plan, registry, identity, receipts, args.max_prompt_bytes))
     plan['configurationHashes'] = config_hashes
     plan['registryPath'] = str(registry_path.relative_to(root))
-    plan['authorization'] = f'用户于2026-10-16明确要求按计划实施并运行一次真实API批量；本批为{len(targets)}目标五条件工程探索'
+    plan['authorization'] = (f'用户于2026-10-19要求优化结束后直接用真实API跑一次实验；{len(targets)}个既有开发目标四条件，最多32次正式请求'
+        if args.phase4 else f'用户于2026-10-16明确要求按计划实施并运行一次真实API批量；本批为{len(targets)}目标五条件工程探索')
     plan['stoppingRule'] = '身份或请求改变、任何模型失败或请求预算耗尽时停止后续付费单元；不重试、不换端点'
     plan['planHash'] = fingerprint({key: value for key, value in plan.items() if key != 'planHash'})
     prepare_batch(store, plan, args.batch_id)
@@ -145,7 +174,7 @@ def main():
             if (identity != _code_identity(root) or any(_sha(root / name) != digest for name, digest in config_hashes.items())
                     or decode((runtime.store / 'active.json').read_bytes()) != runtime.pointer
                     or fingerprint(verify_snapshot(runtime.store, runtime.pointer['snapshot_id'])) != runtime.pointer['snapshot_id']
-                    or _sha(registry_path) != hashlib.sha256(encode(registry) + b'\n').hexdigest()):
+                    or _sha(registry_path) != registry_sha):
                 stopped = '运行身份已改变'
             if stopped or attempted >= plan['requestBounds']['maxRequests']:
                 raise ValueError(stopped or '请求预算耗尽')
@@ -169,7 +198,11 @@ def main():
                         'errorCategory': 'EXPERIMENT_STOPPED', 'stopReason': stopped,
                         'requestAttempts': 0, 'inputTokens': None, 'outputTokens': None, 'model': {}}
             _emit('开始单元', sample=sample, strategy=strategy)
-            row = runtime.run(indexed[sample], strategy, mode)
+            try:
+                row = runtime.run(indexed[sample], strategy, mode)
+            except Exception:
+                stopped = '执行单元异常，停止后续付费'
+                raise
             _emit('完成单元', sample=sample, strategy=strategy, status=row['status'],
                   prediction=row['prediction'], inputTokens=row['inputTokens'], outputTokens=row['outputTokens'],
                   d2=row['d2']['verdict'])

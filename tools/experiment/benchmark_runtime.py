@@ -161,7 +161,8 @@ class BenchmarkRuntime:
 
     def run(self, target, strategy, mode):
         from audit_workbench import assess, final_conclusion
-        target = dict(target)
+        from r3_protocol import condition_target, condition_view
+        target, base_strategy = condition_target(target, strategy)
         if target.get('compilerTemplate') is not None:
             from compilation_runtime import prepare_compilation
             target['compilerManifest'] = prepare_compilation(self.root, target)
@@ -173,7 +174,7 @@ class BenchmarkRuntime:
             view = self.r3.select(self.preview(target), strategy,
                                   allow_unreviewed=getattr(self, 'r3_allow_unreviewed', False))
         else:
-            view = select_strategy(self.preview(target), strategy)
+            view = condition_view(self.preview(target), strategy)
         if target.get('compilerManifest') is not None:
             from compiler_facts import extract_compiler_facts, load_bound_compilation
             bundle = load_bound_compilation(target['compilerManifest'], self.root)
@@ -253,7 +254,7 @@ class BenchmarkRuntime:
                 'selectedIds': [row['candidate']['chunkId'] for row in selected],
                 'selectedEvidence': len(selected),
                 'categoryHit': (any(row['candidate']['mechanism'] == target['mechanism'] for row in selected)
-                                if strategy != 'VANILLA' and target['groundTruth']['hasVulnerability'] else None),
+                                if base_strategy != 'VANILLA' and target['groundTruth']['hasVulnerability'] else None),
                 'retrievalGaps': view['d1'].get('gaps', []),
                 'errorCategory': model.get('errorCategory') or ('TOOLS_FAILED' if failed_tools else 'D2_EXECUTION_ERROR' if d2_failed else None),
                 'inputTokens': model.get('inputTokens'), 'outputTokens': model.get('outputTokens'),

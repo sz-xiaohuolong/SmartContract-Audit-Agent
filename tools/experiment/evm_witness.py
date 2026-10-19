@@ -24,6 +24,31 @@ _MAX_STEPS = 48
 _MAX_SECONDS = 90
 
 
+class _WitnessFailure(ValueError):
+    """失败类别只是证据缺口，不是安全或漏洞结论。"""
+    def __init__(self, kind, reason):
+        super().__init__(reason)
+        self.kind = kind
+
+
+def _failure_kind(error):
+    if isinstance(error, _WitnessFailure):
+        return error.kind
+    if isinstance(error, (TimeoutError, subprocess.TimeoutExpired)):
+        return 'TIMEOUT'
+    if isinstance(error, OSError):
+        return 'ENVIRONMENT_UNAVAILABLE'
+    return 'UNSUPPORTED_SEMANTICS' if isinstance(error, ValueError) else 'EXECUTION_ERROR'
+
+
+def _execution_summary(sessions):
+    records = [record for session in sessions for record in session.records]
+    reverted = sum(record.get('receipt', {}).get('status') in {'0x0', '0x00'} for record in records)
+    return {'sessions': len(sessions), 'transactions': len(records), 'revertedTransactions': reverted,
+        'normalTransactions': sum(record.get('receipt', {}).get('status') in {'0x1', '0x01'}
+                                  and _normal_trace(record.get('trace', {})) for record in records)}
+
+
 def _sha(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -232,7 +257,7 @@ def _node(configuration, directory):
             started = time.monotonic()
             while True:
                 if process.poll() is not None or time.monotonic() - started > 10:
-                    raise ValueError('独立 Anvil 节点启动失败')
+                    raise _WitnessFailure('ENVIRONMENT_UNAVAILABLE', '独立 Anvil 节点启动失败')
                 try:
                     if _hex(rpc.call('eth_chainId', [])) == configuration['chainId']:
                         break
@@ -271,7 +296,7 @@ class _Session:
 
     def transact(self, *, sender, data, address=None, value=0):
         if len(self.records) >= _MAX_STEPS or time.monotonic() - self.started > _MAX_SECONDS:
-            raise ValueError('有限业务序列预算耗尽')
+            raise _WitnessFailure('BUDGET_EXHAUSTED', '有限业务序列预算耗尽')
         # 指定时间直接由本次交易消耗；先挖空块会让业务块重新取墙上时间并漂移。
         self.timestamp += 1
         self.rpc.call('evm_setNextBlockTimestamp', [self.timestamp])
@@ -286,7 +311,7 @@ class _Session:
             time.sleep(.02)
             receipt = self.rpc.call('eth_getTransactionReceipt', [tx_hash])
         if not isinstance(receipt, dict):
-            raise ValueError('正常业务调用缺成功或失败回执原件')
+            raise _WitnessFailure('TIMEOUT', '等待业务调用回执超时，缺成功或失败回执原件')
         trace = self.rpc.call('debug_traceTransaction', [tx_hash,
             {'disableMemory': True, 'disableStack': False, 'disableStorage': False}])
         index = len(self.records)
@@ -308,11 +333,13 @@ class _Session:
             encoded = self.cast('abi-encode', signature, *constructor_args).removeprefix('0x')
         record = self.transact(sender=self.accounts[0], data='0x' + bytecode + encoded)
         address = record['receipt'].get('contractAddress')
-        if _hex(record['receipt']['status']) != 1 or not address or not _normal_trace(record['trace']):
-            raise ValueError('原合约构造程序没有正常部署')
+        if _hex(record['receipt']['status']) != 1:
+            raise _WitnessFailure('TRANSACTION_REVERTED', '原合约构造交易回滚')
+        if not address or not _normal_trace(record['trace']):
+            raise _WitnessFailure('ASSERTION_MISMATCH', '原合约构造程序没有正常部署')
         code = self.rpc.call('eth_getCode', [address, 'latest']).removeprefix('0x')
         if code != artifact['evm']['deployedBytecode']['object']:
-            raise ValueError('实际部署字节码与固定编译原件不一致')
+            raise _WitnessFailure('REPLAY_MISMATCH', '实际部署字节码与固定编译原件不一致')
         self.deployments.append({'identity': identity, 'address': address,
             'constructorArguments': constructor_args, 'runtimeSha256': _sha(bytes.fromhex(code)),
             'codeHash': self.cast('keccak', '0x' + code)})
@@ -551,6 +578,8 @@ def _run_cei(session, bundle, output, graph, risk, resource, tool_binding):
             try:
                 args = _argument_values(deposit, actor, number=0)
                 result = session.transact(sender=actor, address=address, data=session.calldata(deposit, args), value=value)
+            except _WitnessFailure:
+                raise
             except ValueError:
                 continue
             credited = session.storage(address, location)
@@ -595,7 +624,7 @@ def _run_cei(session, bundle, output, graph, risk, resource, tool_binding):
                     # 一次不匹配的成功业务改变状态后，停止沿该状态继续猜测。
                     break
             break
-    raise ValueError('固定正常业务搜索未找到完整 CEI 断言见证')
+    raise _WitnessFailure('SEARCH_NO_WITNESS', '固定正常业务搜索未找到完整 CEI 断言见证')
 
 
 def _run_authority(session, bundle, output, graph, risk, resource, tool_binding):
@@ -628,8 +657,10 @@ def _run_authority(session, bundle, output, graph, risk, resource, tool_binding)
         # 只由真实公开初始化入口形成权限主体，不能直接修改状态。
         result = session.transact(sender=session.accounts[0], address=address,
             data=session.calldata(abi, _argument_values(abi, session.accounts[0])))
-        if _hex(result['receipt']['status']) != 1 or not _normal_trace(result['trace']):
-            raise ValueError('公开初始化没有正常提交')
+        if _hex(result['receipt']['status']) != 1:
+            raise _WitnessFailure('TRANSACTION_REVERTED', '公开初始化交易回滚')
+        if not _normal_trace(result['trace']):
+            raise _WitnessFailure('ASSERTION_MISMATCH', '公开初始化没有满足正常执行断言')
         before = session.storage(address, location)
     actor = session.accounts[1]
     result = session.transact(sender=actor, address=address,
@@ -639,8 +670,10 @@ def _run_authority(session, bundle, output, graph, risk, resource, tool_binding)
                                   artifact['evm']['deployedBytecode']['sourceMap'])
     assertion = check_authority_trace(result['trace'], mapping, risk['span'],
         slot=location['slot'], offset=location['offset'], width=location['width'], before=before, after=after, caller=actor)
-    if _hex(result['receipt']['status']) != 1 or not assertion['valid']:
-        raise ValueError('未授权主体未正常持久改变同一权限资源')
+    if _hex(result['receipt']['status']) != 1:
+        raise _WitnessFailure('TRANSACTION_REVERTED', '未授权调用回滚，不能生成正常提交见证')
+    if not assertion['valid']:
+        raise _WitnessFailure('ASSERTION_MISMATCH', '未授权主体未正常持久改变同一权限资源')
     transaction_index = len(session.records) - 1
     consumer_execution = None
     for consumer in consumers:
@@ -660,7 +693,7 @@ def _run_authority(session, bundle, output, graph, risk, resource, tool_binding)
         if _hex(observed['receipt']['status']) == 1:
             break  # 状态已变化，不能继续在新初态上拼接不同消费者。
     if consumer_execution is None:
-        raise ValueError('权限消费者未在同一初态实际正常读取权限并执行敏感操作')
+        raise _WitnessFailure('SEARCH_NO_WITNESS', '权限消费者未在同一初态实际正常读取权限并执行敏感操作')
     return {'kind': 'ACCESS_CONTROL_AUTHORITY_WRITE', 'assertion': assertion,
             'location': location, 'initialization': {'runtimeInitialized': True, 'authorityBefore': hex(before),
                                                     'consumerFundingReceiptIndex': funding_index},
@@ -680,11 +713,15 @@ def _normalized(records):
 def execute_bound_witness(bundle, hypothesis, graph, risk, resource, tool_binding, *, root):
     """提供器实际执行两次；调用方填写的成功字段不参与准入。"""
     directory = None
+    sessions = []
     try:
         root = Path(root).resolve()
         if bundle.get('verificationStatus') != 'RECOMPILED_MATCH' or tool_binding.get('status') != 'MATCH':
-            raise ValueError('有限执行缺实际编译与独立 Slither 双收据')
-        configuration = _configuration(root)
+            raise _WitnessFailure('BINDING_MISSING', '有限执行缺实际编译与独立 Slither 双收据')
+        try:
+            configuration = _configuration(root)
+        except (OSError, ValueError) as error:
+            raise _WitnessFailure('ENVIRONMENT_UNAVAILABLE', str(error)) from error
         directory = root / _EVIDENCE / uuid.uuid4().hex
         directory.mkdir(parents=True, exist_ok=False)
         identities, witnesses = [], []
@@ -694,6 +731,7 @@ def execute_bound_witness(bundle, hypothesis, graph, risk, resource, tool_bindin
             output, compilation_hash = _execution_artifacts(bundle, run_directory)
             with _node(configuration, run_directory) as rpc:
                 session = _Session(rpc, configuration, run_directory)
+                sessions.append(session)
                 run = _run_cei if hypothesis['vulnerabilityType'] == 'REENTRANCY' else _run_authority
                 witness = run(session, bundle, output, graph, risk, resource, tool_binding)
                 identity = {'schemaVersion': _SCHEMA, 'configuration': configuration,
@@ -706,17 +744,19 @@ def execute_bound_witness(bundle, hypothesis, graph, risk, resource, tool_bindin
                 identities.append(identity)
                 witnesses.append(witness)
         if encode(identities[0]) != encode(identities[1]):
-            raise ValueError('独立 EVM 重放的部署、实际路径或持久状态发生漂移')
+            raise _WitnessFailure('REPLAY_MISMATCH', '独立 EVM 重放的部署、实际路径或持久状态发生漂移')
         for tool in ('anvil', 'cast'):
             if _sha(Path(configuration[tool]['path']).read_bytes()) != configuration[tool]['sha256']:
-                raise ValueError('本机执行工具在重放期间发生漂移')
+                raise _WitnessFailure('REPLAY_MISMATCH', '本机执行工具在重放期间发生漂移')
         receipt_paths = [str((directory / str(index) / 'receipt.json').relative_to(root)) for index in range(2)]
         return {'status': 'MATCH', 'provider': _SCHEMA, 'witness': witnesses[0],
+                'executionSummary': _execution_summary(sessions),
                 'receipts': [{'path': path, 'sha256': _sha((root / path).read_bytes())} for path in receipt_paths],
                 'reason': '固定原字节码的正常业务执行、源映射、实际状态和独立节点重放匹配',
                 'paidModelRequests': 0}
     except (OSError, ValueError, KeyError, TypeError, AttributeError, subprocess.SubprocessError) as error:
         return {'status': 'UNKNOWN', 'provider': _SCHEMA, 'reason': str(error),
+                'failureKind': _failure_kind(error), 'executionSummary': _execution_summary(sessions),
                 'errorCategory': 'EVM_WITNESS_UNVERIFIED', 'paidModelRequests': 0,
                 'artifactDirectory': str(directory.relative_to(root)) if directory is not None else None}
     finally:

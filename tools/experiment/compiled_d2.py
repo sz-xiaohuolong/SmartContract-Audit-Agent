@@ -344,6 +344,8 @@ class _Graph:
             return tails, ('pure-call', builtin, tuple(values)), env
         type_id = expression.get('typeDescriptions', {}).get('typeIdentifier', '')
         if type_id.startswith('t_function_internal') and reference in self.bundle['functions']:
+            if ast.get('names'):
+                self.gap('内部调用命名实参尚未按声明名称代入，不能按位置证明权限')
             target = self.bundle['functions'][reference]
             # 普通虚调用按目标合约有效 override，super 和 private 保留显式声明。
             base = expression.get('expression', {})
@@ -505,6 +507,8 @@ class _Graph:
             if not modifier or modifier['node']['nodeType'] != 'ModifierDefinition':
                 self.gap('修饰器声明无法解析')
                 continue
+            if modifier_id not in self.bundle['contracts'][self.bundle['targetContractId']]['effectiveModifiers']:
+                self.gap('修饰器覆盖后的实际实现尚未解析，不能沿用父合约保护')
             self.closure.add(modifier_id)
             placeholders = [n for n in _walk(modifier['body']) if n['nodeType'] == 'PlaceholderStatement']
             if len(placeholders) != 1:
@@ -751,6 +755,14 @@ def _apply_proof(result, proof, hypothesis, tools, bundle, root):
         return
     if result['toolBinding']['status'] != 'MATCH':
         return
+    if proof.get('proofKind') == 'ACCESS_CONTROL_GUARDED_CALL':
+        declared = hypothesis.get('claimProperty')
+        matched = declared == 'UNAUTHORIZED_CALL_REACHABILITY'
+        result['claimBinding'] = {'status': 'MATCH' if matched else 'UNVERIFIED',
+            'declaredProperty': declared, 'provedProperty': proof['proofScope'].get('property'),
+            'reason': '候选须明确主张未授权调用可达；调用前保护不能反驳资金锁死等其他属性'}
+        if not matched:
+            return
     if (proof['status'] == 'PROVED' and proof['proofScope']['complete']
             and proof['pathEvidence']['status'] == 'BLOCKED'
             and len(proof['obligations']) == len(OBLIGATIONS)
@@ -844,8 +856,13 @@ def _evaluate_compiled(hypothesis, manifest, tools, *, root):
     if mechanism == 'ACCESS_CONTROL':
         if hypothesis['riskOperation'] == 'CALL':
             from access_call_proofs import _AccessCallGraph, prove_access_call
-            proof = prove_access_call(bundle, hypothesis)
-            graph_type = _AccessCallGraph
+            from candidate_proofs import _GuardedCallGraph, prove_guarded_call
+            proof = prove_guarded_call(bundle, hypothesis)
+            if proof.get('applicable'):
+                graph_type = _GuardedCallGraph
+            else:
+                proof = prove_access_call(bundle, hypothesis)
+                graph_type = _AccessCallGraph
         else:
             from candidate_proofs import _PermissionGraph, prove_candidate
             proof = prove_candidate(bundle, hypothesis)
@@ -882,15 +899,19 @@ def _evaluate_compiled(hypothesis, manifest, tools, *, root):
     proof = _execution_proof(proof, hypothesis, bundle, graph, risk, result['toolBinding'], root)
     result['riskBinding'] = {**_reference(risk, bundle), **binding_record(risk, hypothesis)}
     result['cfg'] = graph.public()
-    if proof.get('proofKind') == 'ACCESS_CONTROL_TERMINATION':
-        # 终止调用仅支持有限反例，不能由通用局部检查升级为全入口保护证明。
+    if proof.get('proofKind') in {'ACCESS_CONTROL_TERMINATION', 'ACCESS_CONTROL_GUARDED_CALL'}:
+        # 调用使用各自专用证明；通用局部检查不能把未覆盖语义升级为完整保护。
         for name in ('proofScope', 'pathEvidence', 'obligations', 'references'):
             result[name] = copy.deepcopy(proof[name])
         result['proofScope']['candidate'] = copy.deepcopy(hypothesis)
         _apply_proof(result, proof, hypothesis, tools, bundle, root)
-        result['note'] = ('已核验有限访问义务反例与终止调用工具证据；不代表攻击可利用性'
+        result['note'] = ('已核验调用主体保护；范围仅为绑定操作的可达性，不代表整合约或外部效果安全'
+                          if result['verdict'] == 'REFUTED' else
+                          '已核验有限访问义务反例与终止调用工具证据；不代表攻击可利用性'
                           if result['verdict'] == 'SUPPORTED' else
-                          '终止调用仅保留有限访问义务证据；未建立反例或缺双收据时保持未知')
+                          '调用仅保留有限访问义务证据；证明不完整或缺双收据时保持未知')
+        if result.get('claimBinding', {}).get('status') == 'UNVERIFIED':
+            result['note'] = '已证明调用前保护子属性，但候选所主张属性未匹配，不能据此反驳候选'
         return result
     guards = graph.guards(risk)
     local_gaps = list(graph.gaps)

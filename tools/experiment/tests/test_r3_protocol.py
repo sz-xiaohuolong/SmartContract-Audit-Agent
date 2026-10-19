@@ -3,6 +3,17 @@ import unittest
 
 
 class R3ProtocolTest(unittest.TestCase):
+    def test_双向证据配对保留未知失败及未运行分母(self):
+        from r3_protocol import paired_evidence_coverage
+        pairs = [{'pairId': 'p1', 'before': 'a', 'after': 'b'}, {'pairId': 'p2', 'before': 'c', 'after': 'd'}]
+        rows = [{'sampleId': sample, 'strategy': 'D1', 'd2': {'verdict': verdict}}
+                for sample, verdict in [('a', 'SUPPORTED'), ('b', 'REFUTED'), ('c', 'UNKNOWN')]]
+        result = paired_evidence_coverage(pairs, rows, ['D1'])['D1']
+        self.assertEqual(2, result['plannedPairs'])
+        self.assertEqual(1, result['supportedRefutedPairs'])
+        self.assertEqual(0.5, result['evidenceCoverage'])
+        self.assertIsNone(result['independentAccuracy'])
+
     def test_五条件协议冻结完整预算且未审核保持探索状态(self):
         from r3_protocol import freeze_plan
         from benchmark_batch import make_plan
@@ -16,6 +27,20 @@ class R3ProtocolTest(unittest.TestCase):
         self.assertIsNone(result['requestBounds']['maxInputTokens'])
         self.assertFalse(result['researchEligible'])
         self.assertEqual([], result['evaluationPairs'])
+
+    def test_双向核验缺失或失败不能从分母删除或变为成功(self):
+        from r3_protocol import paired_evidence_coverage
+        pairs = [{'pairId': 'p', 'before': 'a', 'after': 'b'}]
+        rows = [{'sampleId': key, 'strategy': 'D1', 'status': 'COMPLETED'} for key in ('a', 'b')]
+        self.assertEqual(0, paired_evidence_coverage(pairs, rows, ['D1'])['D1']['supportedRefutedPairs'])
+        rows[0]['d2'] = {'verdict': 'SUPPORTED'}
+        rows[1]['d2'] = {'verdict': 'REFUTED', 'status': 'FAILED'}
+        result = paired_evidence_coverage(pairs, rows, ['D1'])['D1']
+        self.assertEqual(1, result['plannedPairs'])
+        self.assertEqual(0, result['evidenceCoverage'])
+        self.assertIsNone(paired_evidence_coverage([], [], ['D1'])['D1']['evidenceCoverage'])
+        with self.assertRaises(ValueError):
+            paired_evidence_coverage(pairs, rows + rows, ['D1'])
 
     def test_配对主分母包含失败与未运行(self):
         from r3_protocol import paired_accuracy
@@ -58,3 +83,5 @@ class R3ProtocolTest(unittest.TestCase):
             self.assertEqual([], report['poolConflicts'])
             self.assertEqual([], report['comparisonAudit'])
             self.assertIsNone(report['pairAccuracy']['R3_CARD']['accuracy'])
+            self.assertEqual(0, report['pairEvidenceCoverage']['R3_CARD']['plannedPairs'])
+            self.assertIsNone(report['pairEvidenceCoverage']['R3_CARD']['independentAccuracy'])

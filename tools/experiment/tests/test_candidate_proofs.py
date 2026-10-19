@@ -177,7 +177,7 @@ class CandidateProofTest(unittest.TestCase):
         entry['body']['statements'] = [assembly('sstore')]
         self.assertEqual('UNKNOWN', self.proof()['status'])
 
-    def test_数组_push_真实根不相关时可排除(self):
+    def test_动态数组_push_未证明物理隔离不能仅按声明根排除(self):
         storage = self.syntax.node('VariableDeclaration', name='unrelatedArray', stateVariable=True,
             visibility='private', typeName=self.syntax.node('ArrayTypeName',
                 baseType=self.syntax.node('ElementaryTypeName', name='uint256'), length=None))
@@ -188,7 +188,7 @@ class CandidateProofTest(unittest.TestCase):
                 expression=self.syntax.node('Identifier', name='unrelatedArray', referencedDeclaration=storage['id']),
                 typeDescriptions={'typeIdentifier': 't_function_arraypush_nonpayable$_t_uint256_$returns$__$'}))
         self.add_entry('changeArray', [self.syntax.node('ExpressionStatement', expression=push)])
-        self.assertEqual('PROVED', self.proof()['status'])
+        self.assertEqual('UNKNOWN', self.proof()['status'])
 
     def test_未知语句不冒充无状态效果(self):
         self.add_entry('futureSyntax', [self.syntax.node('UnknownStorageEffectStatement')])
@@ -328,10 +328,12 @@ class CandidateProofTest(unittest.TestCase):
                 typeDescriptions={'typeIdentifier': 't_function_internal_nonpayable$_t_array$_t_uint256_$dyn_storage_ptr_$returns$__$bound_to$_t_array$_t_uint256_$dyn_storage_ptr_$'}))
         return storage, call, access
 
-    def test_storage_库_receiver_绑定其他根不会破坏权限版本(self):
+    def test_storage_库动态数组_receiver_缺物理隔离不能完整证明(self):
         _, call, _ = self.storage_library()
         self.fixture.function()['body']['statements'].insert(1, self.syntax.node('ExpressionStatement', expression=call))
-        self.assertEqual('PROVED', self.proof()['status'])
+        proof = self.proof()
+        self.assertEqual('UNKNOWN', proof['status'])
+        self.assertTrue(any('物理分离' in gap for gap in proof['proofScope']['gaps']))
 
     def test_storage_库未保护同风险根不能排除(self):
         storage, call, access = self.storage_library()

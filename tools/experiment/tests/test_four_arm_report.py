@@ -61,3 +61,29 @@ class FourArmReportTest(unittest.TestCase):
         rows[0]['model']['hypotheses'][0]['riskLine'] = 4
         _, output = four_arm_report.compare_arms(rows, copy.deepcopy(rows), {'batchId': 'old'})
         self.assertEqual(['ACCEPTED', 'ACCEPTED', 'ACCEPTED', 'UNKNOWN'], [r['prediction'] for r in output])
+
+    def test_核验失败缺失及证明范围均逐候选保留(self):
+        original = self.rows(); derived = copy.deepcopy(original)
+        assessment = derived[0]['d2']['assessments'][0]
+        assessment.update(verdict='REFUTED', status='FAILED', candidateProof={
+            'proofKind': 'ACCESS_CONTROL_GUARDED_CALL', 'proofScope': {'property': 'CALL_REACHABILITY_ONLY'},
+            'executionBinding': {'status': 'UNKNOWN', 'failureKind': 'BUDGET_EXHAUSTED'}})
+        summary, _ = four_arm_report.compare_arms(original, derived, {'batchId': 'old'})
+        self.assertEqual({'SUPPORTED': 0, 'REFUTED': 0, 'UNKNOWN': 0, 'FAILED': 1}, summary['verification']['counts'])
+        self.assertEqual(0, summary['verification']['decisiveCoverage'])
+        self.assertEqual('CALL_REACHABILITY_ONLY', summary['changes'][0]['proofProperty'])
+        self.assertEqual('BUDGET_EXHAUSTED', summary['changes'][0]['executionFailureKind'])
+        derived[0]['d2']['assessments'] = []
+        summary, _ = four_arm_report.compare_arms(original, derived, {'batchId': 'old'})
+        self.assertEqual(1, summary['verification']['counts']['UNKNOWN'])
+        derived[0]['d2'].update(status='FAILED')
+        summary, _ = four_arm_report.compare_arms(original, derived, {'batchId': 'old'})
+        self.assertEqual(1, summary['verification']['counts']['FAILED'])
+
+    def test_重复错位候选索引不能静默计分(self):
+        original = self.rows()
+        for indexes in ([0, 0], [1], [-1], [True]):
+            derived = copy.deepcopy(original)
+            derived[0]['d2']['assessments'] = [{'hypothesisIndex': i, 'verdict': 'REFUTED'} for i in indexes]
+            with self.subTest(indexes=indexes), self.assertRaises(ValueError):
+                four_arm_report.compare_arms(original, derived, {'batchId': 'old'})

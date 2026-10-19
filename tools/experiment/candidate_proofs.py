@@ -1,9 +1,9 @@
 """从已重编译绑定的 AST 证明权限候选；不接收人工完整性断言。"""
 import copy
 
-from compiler_facts import extract_compiler_facts, source_span
+from compiler_facts import extract_compiler_facts, source_span, call_operation
 from risk_binding import bind_risks, binding_record
-from compiled_d2 import _Graph, _authority, _current_authority, _reference, _walk
+from compiled_d2 import _Graph, _authority, _authority_read, _current_authority, _reference, _walk
 
 
 _OBLIGATIONS = ('actor', 'resource', 'pre_risk_guard', 'state_version', 'entry_coverage', 'bypass')
@@ -24,6 +24,41 @@ _AST_SHAPES = frozenset(('Block UncheckedBlock ExpressionStatement VariableDecla
     'ElementaryTypeNameExpression NewExpression MemberAccess IndexAccess IndexRangeAccess '
     'TupleExpression Conditional VariableDeclaration ElementaryTypeName UserDefinedTypeName '
     'ArrayTypeName Mapping FunctionTypeName ParameterList').split())
+
+
+def _permission_read(condition, bundle):
+    """只认实际调用者的地址槽或直接布尔角色键；不按变量名猜测授权。"""
+    if condition[:2] == ('binary', '&&'):
+        return _permission_read(condition[2], bundle) or _permission_read(condition[3], bundle)
+    if condition[:2] == ('binary', '||'):
+        left, right = _permission_read(condition[2], bundle), _permission_read(condition[3], bundle)
+        return left if left and left == right else None
+    scalar = _authority_read(condition)
+    if scalar and not scalar[1][2]:
+        return scalar
+    value = condition
+    if condition[:2] in {('binary', '=='), ('binary', '!=')}:
+        left, right = condition[2:4]
+        desired = ('literal', 'bool', 'true' if condition[1] == '==' else 'false')
+        value = right if left == desired else left if right == desired else None
+    if not isinstance(value, tuple) or value[:1] != ('read',) or value[3] != 't_bool':
+        return None
+    resource = value[1]
+    identifier = bundle['declarations'].get(resource[1], {}).get('typeDescriptions', {}).get('typeIdentifier')
+    if identifier == 't_mapping$_t_address_$_t_bool_$' and resource[2] == (('index', ('builtin', 'msg.sender')),):
+        return value
+    return None
+
+
+def _permission(condition, bundle):
+    value = _permission_read(condition, bundle)
+    return value[1] if value else None
+
+
+def _current_permission(node, condition, bundle):
+    value = _permission_read(condition, bundle)
+    return value is not None and value[2] == (node.get('versionsBefore', {}).get(value[1], 'initial'),
+                                            node.get('epochBefore'))
 
 
 class _PermissionGraph(_Graph):
@@ -58,17 +93,56 @@ class _PermissionGraph(_Graph):
         return super().expr(ast, tails, env, stack, context)
 
 
+class _GuardedCallGraph(_PermissionGraph):
+    """只证明调用之前的主体约束；收款方实现和资产语义不在该属性中。"""
+
+    def call(self, ast, tails, env, stack, context):
+        operation = call_operation(ast, self.bundle)
+        if operation and operation.get('native') and operation['semanticTags'] == ['NATIVE_TRANSFER']:
+            arguments = [operation['receiver']] + operation['options'] + list(ast.get('arguments', []))
+            if any(self.effects(argument) for argument in arguments):
+                self.gap('转账寻址或金额包含副作用，求值顺序尚未证明')
+            for argument in arguments:
+                tails, _, env = self.expr(argument, tails, env, stack, context)
+            node = self.add('CALL', ast, tails, context, env, callKind='CALL',
+                semanticTags=['NATIVE_TRANSFER'], targetDeclarationId=None,
+                targetResource=self.resource(operation['receiver'], env), arguments=())
+            env['epoch'] += 1
+            env['stateValues'].clear()
+            return [node], ('unknown', ast['id']), env
+        return super().call(ast, tails, env, stack, context)
+
+
 class _Effects:
     """全语法递归盘点存储写入；未知别名、动态调用和汇编不当作无效果。"""
 
-    def __init__(self, bundle):
+    def __init__(self, bundle, *, allow_native_transfers=False):
         self.bundle = bundle
+        self.allow_native_transfers = allow_native_transfers
         self.writes, self.gaps, self.calls, self.closure = [], [], [], set()
         self.visits = 0
 
     def gap(self, message):
         if message not in self.gaps:
             self.gaps.append(message)
+
+    def check_storage_separation(self, roots):
+        """动态数组的物理索引可绕回其他槽，不能仅凭声明根断言隔离。"""
+        pending = [self.bundle['declarations'].get(root, {}).get('typeName') for root in roots]
+        seen = set()
+        while pending:
+            for node in _walk(pending.pop()):
+                if node.get('nodeType') == 'ArrayTypeName' and node.get('length') is None:
+                    self.gap('动态存储数组的初始化与索引边界未证明，不能假定与权限槽物理分离')
+                    return
+                if node.get('nodeType') == 'ElementaryTypeName' and node.get('name') in ('bytes', 'string'):
+                    self.gap('动态字节存储的初始化与索引边界未证明，不能假定与权限槽物理分离')
+                    return
+                if node.get('nodeType') == 'UserDefinedTypeName':
+                    identity = node.get('referencedDeclaration')
+                    if identity not in seen:
+                        seen.add(identity)
+                        pending.append(self.bundle['declarations'].get(identity))
 
     def roots(self, ast, aliases):
         if not isinstance(ast, dict):
@@ -136,7 +210,12 @@ class _Effects:
                     aliases[declaration['id']] = self.roots(value.get('initialValue'), aliases)
         if kind == 'Assignment' or kind == 'UnaryOperation' and value.get('operator') in {'++', '--', 'delete'}:
             left = value.get('leftHandSide', value.get('subExpression'))
-            for root in self.roots(left, aliases):
+            roots = self.roots(left, aliases)
+            self.check_storage_separation(roots)
+            if (roots and isinstance(left, dict) and left.get('nodeType') == 'MemberAccess'
+                    and left.get('memberName') == 'length' and left.get('referencedDeclaration') is None):
+                self.gap('可写存储数组长度可能造成跨槽重叠，声明根之间的物理分离尚未证明')
+            for root in roots:
                 self.writes.append({'nodeId': value['id'], 'root': root, 'span': source_span(value, self.bundle['units'])})
             if isinstance(left, dict) and left.get('nodeType') == 'Identifier':
                 declaration = self.bundle['declarations'].get(left.get('referencedDeclaration'), {})
@@ -148,19 +227,28 @@ class _Effects:
             reference = expression.get('referencedDeclaration')
             builtin = self.bundle['builtinReferences'].get(reference)
             declaration = self.bundle['declarations'].get(reference, {})
-            if builtin in {'require', 'assert', 'revert', 'sha256', 'keccak256', 'ripemd160', 'ecrecover', 'addmod', 'mulmod', 'type', 'blockhash', 'gasleft'}:
+            operation = call_operation(value, self.bundle)
+            if (self.allow_native_transfers and operation and operation.get('native')
+                    and operation['semanticTags'] == ['NATIVE_TRANSFER']):
+                self.calls.append({'nodeId': value['id'], 'kind': 'EXTERNAL', 'reference': None,
+                                   'span': source_span(value, self.bundle['units'])})
+            elif builtin in {'require', 'assert', 'revert', 'sha256', 'keccak256', 'ripemd160', 'ecrecover', 'addmod', 'mulmod', 'type', 'blockhash', 'gasleft'}:
                 pass
             elif declaration.get('nodeType') in {'EventDefinition', 'ErrorDefinition'}:
                 pass
             elif expression.get('nodeType') == 'NewExpression' and expression.get('typeName', {}).get('nodeType') == 'ArrayTypeName':
                 pass
             elif type_id.startswith(('t_function_arraypush', 't_function_arraypop')):
-                for root in self.roots(expression.get('expression'), aliases):
+                roots = self.roots(expression.get('expression'), aliases)
+                self.check_storage_separation(roots)
+                for root in roots:
                     self.writes.append({'nodeId': value['id'], 'root': root,
                                         'span': source_span(value, self.bundle['units'])})
             elif type_id.startswith(('t_function_abiencode', 't_function_bytesconcat', 't_function_stringconcat')):
                 pass
             elif type_id.startswith('t_function_internal'):
+                if value.get('names'):
+                    self.gap('内部调用命名实参的资源代入尚未证明')
                 target = self.target(expression)
                 if target is None:
                     self.gap(f'内部调用 {value["id"]} 缺少实际声明')
@@ -199,6 +287,8 @@ class _Effects:
         for invocation in function['modifiers']:
             modifier_id = invocation.get('modifierName', {}).get('referencedDeclaration')
             modifier = self.bundle['functions'].get(modifier_id)
+            if modifier_id not in self.bundle['contracts'][self.bundle['targetContractId']]['effectiveModifiers']:
+                self.gap('修饰器覆盖后的实际写入效果尚未解析')
             # 旧 compact AST 将无括号修饰器的实参表示为 null。
             actuals = invocation.get('arguments') or []
             # 修饰器实参在入口执行，可独立写权限；不能只盘点修饰器函数体。
@@ -267,9 +357,101 @@ def _authority_write_candidate(result, bundle, graph, risk):
     return result
 
 
+def _boolean_gate_read(condition):
+    if not isinstance(condition, tuple) or not condition:
+        return None
+    if condition[:1] == ('read',) and condition[3] == 't_bool' and not condition[1][2]:
+        return condition
+    if condition[:2] == ('unary', '!'):
+        return _boolean_gate_read(condition[2])
+    if condition[:2] in {('binary', '=='), ('binary', '!=')}:
+        for value, other in ((condition[2], condition[3]), (condition[3], condition[2])):
+            if other in {('literal', 'bool', 'true'), ('literal', 'bool', 'false')}:
+                return _boolean_gate_read(value)
+    return None
+
+
+def _prove_closed_gate(result, bundle, graph, risk):
+    """无参数简单初始化加零运行期写入形成不变量；可开启的门不表示调用者获授权。"""
+    from access_call_proofs import _initialize, _value, _CannotEvaluate
+    if graph.gaps or bundle['entryGaps']:
+        return result
+    gates = [(guard, condition, read) for guard, condition in graph.guards(risk)
+             if (read := _boolean_gate_read(condition)) is not None]
+    if not gates:
+        return result
+    if any(function['parameters'] for function in bundle['functions'].values()
+           if function['kind'] == 'constructor'):
+        result['proofScope']['gaps'].append('构造参数未固定，不能把枚举初态当作状态不变量')
+        return result
+    try:
+        initial, initialization = _initialize(bundle, graph)
+    except _CannotEvaluate as error:
+        result['proofScope']['gaps'].append('状态门初始化尚未证明：' + str(error))
+        return result
+    entries, summaries = [], []
+    for entry in bundle['entries']:
+        if not entry['matched']:
+            return result
+        if entry['kind'] == 'getter':
+            continue
+        effects = _Effects(bundle, allow_native_transfers=True)
+        effects.function(entry['declarationId'])
+        if effects.gaps:
+            result['proofScope']['gaps'].extend(effects.gaps)
+            return result
+        summaries.append(effects)
+        entries.append({'signature': entry['signature'], 'declarationId': entry['declarationId'],
+                        'matched': True, 'complete': True})
+    for guard, condition, read in gates:
+        resource, version = read[1:3]
+        if version[0] != 'initial' or any(write['root'] == resource[1] for summary in summaries for write in summary.writes):
+            continue
+        try:
+            blocked = _value(condition, {}, initial, {}, 'UNSPECIFIED_CALLER') is False
+        except _CannotEvaluate:
+            continue
+        if not blocked:
+            continue
+        refs = _append_references(result, [guard, risk], bundle)
+        result['references'].extend(ref for ref in initialization['references'] if ref not in result['references'])
+        result['status'] = 'PROVED'
+        result['initialization'] = initialization
+        result['proofScope'].update(complete=True, gaps=[], entries=entries,
+            property='CALL_UNREACHABLE_INVARIANT', invariantResource=resource,
+            initialValue=initial[resource[1]], runtimeWriters=[],
+            callClosure=sorted(set().union(*(summary.closure for summary in summaries))),
+            rules=['固定编译身份', '无参数简单初始化', '全入口状态写入盘点', '支配检查始终为假'])
+        result['pathEvidence'].update(status='BLOCKED', references=result['references'],
+            reason='状态门在已核初始化后始终关闭，所有运行入口均不能改写该门；绑定调用不可到达')
+        for obligation in result['obligations']:
+            obligation.update(status='SUPPORTED', references=refs,
+                reason='完整运行范围中的固定状态不变量阻断绑定操作；不推断可开启状态下的业务授权')
+        return result
+    result['proofScope']['gaps'].append('状态门可开启或仍有写入者，状态条件不足以证明调用者获授权')
+    return result
+
+
 def prove_candidate(bundle, hypothesis):
-    """输入为 load_bound_compilation 的 bundle；输出不包含最终工具裁决。"""
+    """输入为重编译 bundle；保留原有权限写入入口与兼容行为。"""
+    return _prove_permission(bundle, hypothesis)
+
+
+def prove_guarded_call(bundle, hypothesis):
+    """只处理编译器确认的原生转账；不把未知外部实现当作已证明安全。"""
+    return _prove_permission(bundle, hypothesis, call=True)
+
+
+def _prove_permission(bundle, hypothesis, *, call=False):
     result = _empty()
+    graph_type = _GuardedCallGraph if call else _PermissionGraph
+    risk_kind = 'CALL' if call else 'WRITE'
+    authority_of = (lambda condition: _permission(condition, bundle)) if call else _authority
+    current = (lambda node, condition: _current_permission(node, condition, bundle)) if call else _current_authority
+    if call:
+        result.update(proofKind='ACCESS_CONTROL_GUARDED_CALL', applicable=False)
+        result['proofScope']['property'] = 'CALL_REACHABILITY_ONLY'
+        result['proofScope']['externalEffectsProved'] = False
     gaps = result['proofScope']['gaps']
     if not isinstance(bundle, dict) or bundle.get('verificationStatus') != 'RECOMPILED_MATCH':
         result['status'] = 'FAILED'
@@ -285,14 +467,14 @@ def prove_candidate(bundle, hypothesis):
         result['status'] = 'FAILED'
         gaps.append('候选位置或数据结构无效')
         return result
-    if hypothesis.get('vulnerabilityType') != 'ACCESS_CONTROL' or hypothesis.get('riskOperation') != 'WRITE':
+    if hypothesis.get('vulnerabilityType') != 'ACCESS_CONTROL' or hypothesis.get('riskOperation') != risk_kind:
         gaps.append('该有限证明器只处理权限写入候选')
         return result
     if (hypothesis.get('contract') != bundle['targetContract']
             or hypothesis.get('sourceHash', bundle['sourceHash']) != bundle['sourceHash']
             or hypothesis.get('sourceFile', bundle['targetSourceUnit']) != bundle['targetSourceUnit']
             or hypothesis.get('mechanism', 'ACCESS_CONTROL') != 'ACCESS_CONTROL'
-            or hypothesis.get('riskKind', 'WRITE') != 'WRITE'):
+            or hypothesis.get('riskKind', risk_kind) != risk_kind):
         result['status'] = 'FAILED'
         gaps.append('候选合约、源码或机制与实际编译目标不一致')
         return result
@@ -312,29 +494,34 @@ def prove_candidate(bundle, hypothesis):
         gaps.append('候选运行入口未唯一绑定')
         return result
     entry = candidates[0]
-    graph = _PermissionGraph(bundle, entry)
+    graph = graph_type(bundle, entry)
     gaps.extend(f'{entry["signature"]}：{gap}' for gap in graph.gaps)
     facts = extract_compiler_facts(bundle)
     risks = bind_risks(graph, hypothesis, bundle, facts)
-    if len(risks) != 1 or risks[0].get('resource') is None:
+    if len(risks) != 1 or not call and risks[0].get('resource') is None:
         result['status'] = 'FAILED'
         gaps.append('候选风险写入未唯一绑定')
         return result
     risk = risks[0]
+    if call:
+        if risk.get('semanticTags') != ['NATIVE_TRANSFER']:
+            gaps.append('该调用不是编译器确认的原生转账，只保留位置与未知效果')
+            return result
+        result['applicable'] = True
     result['candidateBound'] = True
     result['riskBinding'] = binding_record(risk, hypothesis)
     result['proofScope']['riskSpan'] = copy.deepcopy(risk['span'])
     primary_guards = [(guard, authority) for guard, condition in graph.guards(risk)
-                      if (authority := _authority(condition)) is not None and _current_authority(guard, condition)
+                      if (authority := authority_of(condition)) is not None and current(guard, condition)
                       and not graph.intervening(guard, risk, authority)]
-    primary_guards = [(guard, authority) for guard, authority in primary_guards if not authority[2]]
+    primary_guards = [(guard, authority) for guard, authority in primary_guards if call or not authority[2]]
     authorities = {authority for _, authority in primary_guards}
     if len(authorities) != 1:
         gaps.append('未证明同主体、同版本的唯一实际权限槽支配风险写入')
-        return _authority_write_candidate(result, bundle, graph, risk)
+        return _prove_closed_gate(result, bundle, graph, risk) if call else _authority_write_candidate(result, bundle, graph, risk)
     authority = next(iter(authorities))
-    risk_root = risk['resource'][1]
-    protected = {risk_root, authority[1]}
+    risk_root = None if call else risk['resource'][1]
+    protected = {authority[1]} | ({risk_root} if risk_root is not None else set())
     graphs = {entry['declarationId']: graph}
     summaries = {}
     entries = list(bundle['entries'])
@@ -352,7 +539,7 @@ def prove_candidate(bundle, hypothesis):
             continue
         if other['kind'] == 'getter':
             continue
-        effects = _Effects(bundle)
+        effects = _Effects(bundle, allow_native_transfers=call)
         effects.function(other['declarationId'])
         summaries[other['declarationId']] = effects
         closure.update(effects.closure)
@@ -370,7 +557,7 @@ def prove_candidate(bundle, hypothesis):
             if not sensitive:
                 continue
             if other['declarationId'] not in graphs:
-                graphs[other['declarationId']] = _PermissionGraph(bundle, other)
+                graphs[other['declarationId']] = graph_type(bundle, other)
                 gaps.extend(f'{other["signature"]}：{gap}' for gap in graphs[other['declarationId']].gaps)
             other_graph = graphs[other['declarationId']]
             expected = {(write['nodeId'], write['root']) for write in sensitive}
@@ -383,8 +570,8 @@ def prove_candidate(bundle, hypothesis):
                     continue
                 inspected.add(key)
                 choices = [(guard, role) for guard, condition in other_graph.guards(write)
-                    if (role := _authority(condition)) is not None and not role[2]
-                    and _current_authority(guard, condition) and not other_graph.intervening(guard, write, role)]
+                    if (role := authority_of(condition)) is not None and (call or not role[2])
+                    and current(guard, condition) and not other_graph.intervening(guard, write, role)]
                 if write['resource'][1] == risk_root and risk_root != authority[1]:
                     choices = [(guard, role) for guard, role in choices if role == authority]
                 roles = {role for _, role in choices}
@@ -423,10 +610,10 @@ def prove_candidate(bundle, hypothesis):
     refs = _append_references(result, [risk] + [guard for guard, _ in primary_guards], bundle)
     for item in result['obligations']:
         if item['name'] in {'actor', 'resource', 'pre_risk_guard', 'state_version'} or not gaps:
-            item.update(status='SUPPORTED', references=refs, reason='真实主体权限检查支配绑定写入；存储版本和所有权限写入口按实际闭包核验')
+            item.update(status='SUPPORTED', references=refs, reason='真实主体权限检查支配绑定操作；存储版本和所有权限写入口按实际闭包核验')
     if not gaps:
         result['status'] = 'PROVED'
         result['proofScope']['complete'] = True
         result['pathEvidence'].update(status='BLOCKED', references=result['references'],
-            reason='未授权主体无法通过任何相关写入入口改变风险资源或取得委派权限')
+            reason='未授权主体无法到达绑定操作或通过相关入口取得委派权限；不证明外部实现与资产语义')
     return result

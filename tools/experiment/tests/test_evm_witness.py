@@ -8,6 +8,46 @@ import evm_witness
 
 
 class EvmWitnessTest(unittest.TestCase):
+    def test_执行失败类别明确且始终返回未知(self):
+        from unittest.mock import patch
+        bundle = {'verificationStatus': 'RECOMPILED_MATCH'}
+        for category in ('SEARCH_NO_WITNESS', 'TRANSACTION_REVERTED', 'BUDGET_EXHAUSTED',
+                         'UNSUPPORTED_SEMANTICS', 'REPLAY_MISMATCH'):
+            with self.subTest(category=category), tempfile.TemporaryDirectory() as directory:
+                with patch('evm_witness._configuration', return_value={}), \
+                     patch('evm_witness._execution_artifacts', side_effect=evm_witness._WitnessFailure(category, '本地失败夹具')):
+                    result = evm_witness.execute_bound_witness(bundle, {}, None, None, None,
+                        {'status': 'MATCH'}, root=directory)
+                self.assertEqual('UNKNOWN', result['status'])
+                self.assertEqual(category, result['failureKind'])
+                self.assertEqual(0, result['paidModelRequests'])
+                self.assertEqual(0, result['executionSummary']['transactions'])
+
+    def test_缺执行环境与缺双收据分别登记(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            with patch('evm_witness._configuration', side_effect=FileNotFoundError('缺本机配置')):
+                result = evm_witness.execute_bound_witness({'verificationStatus': 'RECOMPILED_MATCH'},
+                    {}, None, None, None, {'status': 'MATCH'}, root=directory)
+            self.assertEqual(('UNKNOWN', 'ENVIRONMENT_UNAVAILABLE'), (result['status'], result['failureKind']))
+            result = evm_witness.execute_bound_witness({}, {}, None, None, None, {}, root=directory)
+            self.assertEqual(('UNKNOWN', 'BINDING_MISSING'), (result['status'], result['failureKind']))
+
+    def test_构造回滚与等待回执超时按实际原因分类(self):
+        from unittest.mock import Mock, patch
+        session = object.__new__(_Session)
+        session.accounts = ['0xaa']; session.records = []; session.deployments = []
+        record = {'receipt': {'status': '0x0'}, 'trace': {'failed': True, 'structLogs': []}}
+        artifact = {'abi': [], 'evm': {'bytecode': {'object': '00'}}}
+        with patch.object(session, 'transact', return_value=record), self.assertRaises(ValueError) as failure:
+            session.deploy(artifact, [], 'fixture')
+        self.assertEqual('TRANSACTION_REVERTED', evm_witness._failure_kind(failure.exception))
+        session.timestamp = 1; session.started = 0; session.rpc = Mock()
+        session.rpc.call.side_effect = [None, '0xabc', None]
+        with patch('evm_witness.time.monotonic', side_effect=[0, 0, 6]), self.assertRaises(ValueError) as failure:
+            session.transact(sender='0xaa', data='0x')
+        self.assertEqual('TIMEOUT', evm_witness._failure_kind(failure.exception))
+
     def trace(self, logs, failed=False):
         return {'failed': failed, 'structLogs': logs}
 

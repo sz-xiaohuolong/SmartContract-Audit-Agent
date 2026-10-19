@@ -11,7 +11,8 @@ from storage import atomic_json, decode, durable_write, exclusive_lock, fingerpr
 
 
 STRATEGIES = frozenset({'VANILLA', 'DENSE', 'FIELD_FILTER', 'D1',
-                        'R3_CODE', 'R3_CARD', 'R3_DENSE', 'R3_FUSION'})
+                        'R3_CODE', 'R3_CARD', 'R3_DENSE', 'R3_FUSION',
+                        'P4_BASELINE', 'P4_FACTS', 'P4_D1', 'P4_FACTS_D1'})
 
 
 def make_plan(sample_ids, strategies, mode, targets, snapshot_id, provider=None, embedding_profile='bge',
@@ -221,12 +222,16 @@ def replay_batch(store, batch_id):
                  and indexed[(sample, strategy)].get('poolHash')}) > 1]
     comparison = None
     pair_accuracy = None
-    if plan.get('pipelineVersion') == 'r3-v1':
-        from r3_protocol import comparison_audit, paired_accuracy
-        if plan.get('comparisonGroups') != [['R3_CODE', 'R3_CARD'], ['R3_DENSE', 'R3_FUSION']]:
-            raise ValueError('R3 比较组不能省略或替换')
-        comparison = comparison_audit(samples)
+    pair_evidence = None
+    if plan.get('pipelineVersion') in ('r3-v1', 'phase4-v1'):
+        from r3_protocol import comparison_audit, paired_accuracy, paired_evidence_coverage
+        expected = ([['R3_CODE', 'R3_CARD'], ['R3_DENSE', 'R3_FUSION']] if plan['pipelineVersion'] == 'r3-v1'
+                    else [['P4_BASELINE', 'P4_FACTS'], ['P4_D1', 'P4_FACTS_D1']])
+        if plan.get('comparisonGroups') != expected:
+            raise ValueError('比较组不能省略或替换')
+        comparison = comparison_audit(samples, plan)
         pair_accuracy = paired_accuracy(plan['evaluationPairs'], samples, plan['strategies'])
+        pair_evidence = paired_evidence_coverage(plan['evaluationPairs'], samples, plan['strategies'])
         conflicts = sorted({row['sampleId'] for row in comparison})
     return {'batchId': batch_id, 'status': 'COMPLETED' if len(samples) == len(units) else 'RUNNING',
             'plan': plan, 'denominators': {'planned': len(units),
@@ -234,7 +239,8 @@ def replay_batch(store, batch_id):
                 'failed': sum(row['status'] == 'FAILED' for row in samples),
                 'unknown': sum(row['prediction'] == 'UNKNOWN' for row in samples),
                 'pending': len(units) - len(samples)}, 'metrics': metrics,
-            'poolConflicts': conflicts, 'comparisonAudit': comparison, 'pairAccuracy': pair_accuracy, 'pairedSamples': paired_ids,
+            'poolConflicts': conflicts, 'comparisonAudit': comparison, 'pairAccuracy': pair_accuracy,
+            'pairEvidenceCoverage': pair_evidence, 'pairedSamples': paired_ids,
             'pairedMetrics': paired_metrics, 'samples': samples, 'researchEligible': False}
 
 
