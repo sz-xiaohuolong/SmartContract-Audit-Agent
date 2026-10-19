@@ -483,6 +483,23 @@ class HypothesisServiceTest {
         RiskCatalogFixture.operation(catalog, CATALOG_SOURCE, "Vault", "withdraw", "msg.sender.call(\"\")", "CALL", "a".repeat(64));
         return catalog;
     }
+    @Test void 操作语义标签保持可选且错误版本在调用前拒绝() {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        var service = new HypothesisService((p, s, u) -> {
+            calls.incrementAndGet();
+            return new GatewayReply(CATALOG_BODY, "fixture", "fixture", null, null, 1);
+        });
+        var legacy = service.analyze(catalogRequest(catalog()), "fixture");
+        assertEquals("COMPLETED", legacy.status());
+        var tagged = catalog();
+        tagged.put("semanticTagsVersion", "operation-semantics-1");
+        ((com.fasterxml.jackson.databind.node.ObjectNode) tagged.path("operations").get(0))
+            .putArray("semanticTags").add("LOW_LEVEL_CALL");
+        assertEquals("COMPLETED", service.analyze(catalogRequest(tagged), "fixture").status());
+        tagged.put("semanticTagsVersion", "unknown-version");
+        assertEquals("FAILED", service.analyze(catalogRequest(tagged), "fixture").status());
+        assertEquals(2, calls.get());
+    }
     @Test void 全文第二合约的唯一风险绑定补跨度并保留未覆盖机制() {
         var catalog = catalog();
         var captured = new java.util.ArrayList<String>();

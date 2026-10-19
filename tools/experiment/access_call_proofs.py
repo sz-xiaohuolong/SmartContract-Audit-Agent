@@ -5,7 +5,7 @@ import re
 
 from candidate_proofs import _PermissionGraph
 from compiler_facts import extract_compiler_facts, source_span
-from risk_binding import bind_risks
+from risk_binding import bind_risks, binding_record
 from compiled_d2 import _reference, _risk_matches
 
 
@@ -371,10 +371,12 @@ def prove_access_call(bundle, hypothesis):
         gaps.append('候选风险 CALL 未唯一绑定，不能修正模型给出的风险行')
         return result
     risk = risks[0]
+    result['candidateBound'] = True
+    result['riskBinding'] = binding_record(risk, hypothesis)
+    result['proofScope'].update(riskSpan=copy.deepcopy(risk['span']), callClosure=sorted(graph.closure))
     if not risk.get('terminalBuiltin'):
         gaps.append('调用没有编译器确认的终止内置语义，超出有限证明范围')
         return result
-    result['candidateBound'] = True
     result['proofScope'].update(riskSpan=copy.deepcopy(risk['span']), callClosure=sorted(graph.closure),
         entries=[{'signature': entry['signature'], 'declarationId': entry['declarationId'], 'matched': True,
                   'complete': not graph.gaps}], rules=['实际入口与风险跨度绑定', '编译器终止内置类型',

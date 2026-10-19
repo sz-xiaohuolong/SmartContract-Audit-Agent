@@ -39,7 +39,7 @@ flowchart LR
 
 ## 唯一文档地图
 
-2026-10-19 已完成 **phase 4：访问控制事实引导与双向证据核验**的[ACTaint 分析](releases/phase4-20261019/ACTAINT_ANALYSIS.md)与[优化计划](releases/phase4-20261019/IMPLEMENTATION_PLAN.md)。计划先统一敏感操作定位，再补权限状态关系和有限保护证明。本次只交付规划，业务代码未改，未新增模型调用；已有 phase 2／3 实现及研究限制继续有效。
+2026-10-19 已完成 **phase 4：访问控制事实引导与双向证据核验**的[ACTaint 分析](releases/phase4-20261019/ACTAINT_ANALYSIS.md)与[优化计划](releases/phase4-20261019/IMPLEMENTATION_PLAN.md)。计划先统一敏感操作定位，再补权限状态关系和有限保护证明。用户已授权按计划实施；首个小版本已统一七项历史转账候选的调用定位，详见[验收记录](releases/phase4-20261019/VERIFICATION.md)。后续权限事实与保护证明分批推进；未新增模型调用，已有 phase 2／3 研究限制继续有效。
 
 2026-10-16 已接入 R3 首期机制卡片、多路召回、资源条件过滤和互补选择实验。一次五条件批量的 40 个模型请求全部有效，五条件 F1 均为 1.0，没有观察到分类增益；完整流程 33 项完成、7 项风险绑定失败。22 条新候选为 10 支持、0 反驳、12 未知。卡片未独立审核，真实修复配对与精确预算仍有缺口，正式研究保持未验证。结果见 [R3 实施与真实实验报告](releases/R3-20261015/experiments/2026-10-16_R3_IMPLEMENTATION_AND_REAL_API_REPORT.md)。
 
@@ -57,7 +57,7 @@ flowchart LR
 | phase 1：审计原型与实验基线 | R1；`releases/R1/` | 历史工程与实验 |
 | phase 2：差分检索与路径证据核验 | R2；`releases/R2-20261010/` | 已有能力与未完成的真实修复任务 |
 | phase 3：机制卡片与多路检索 | R3；`releases/R3-20261015/` | 首期已实施，整体部分完成，研究尚未验证 |
-| phase 4：访问控制事实引导与双向证据核验 | 原称 R4；`releases/phase4-20261019/` | 本次完成分析与计划，业务实施未开始 |
+| phase 4：访问控制事实引导与双向证据核验 | 原称 R4；`releases/phase4-20261019/` | 已进入开发；首期统一历史转账候选定位，后续权限事实与保护证明分批推进 |
 
 ### 第一层：5 分钟理解系统
 
@@ -84,7 +84,7 @@ flowchart LR
 
 | 问题或记录 | 阅读入口及用途 |
 |---|---|
-| ACTaint 对下一阶段有什么启发 | [phase 4 文献与工程分析](releases/phase4-20261019/ACTAINT_ANALYSIS.md)、[统一优化计划](releases/phase4-20261019/IMPLEMENTATION_PLAN.md)：纠正六类操作、全文提示和实验口径；安排定位、权限事实、保护证明及独立评价 |
+| ACTaint 对下一阶段有什么启发 | [phase 4 文献与工程分析](releases/phase4-20261019/ACTAINT_ANALYSIS.md)、[统一优化计划](releases/phase4-20261019/IMPLEMENTATION_PLAN.md)：纠正六类操作、全文提示和实验口径；安排定位、权限事实、保护证明及独立评价；实际进展见[验收记录](releases/phase4-20261019/VERIFICATION.md) |
 | 开题的实验设计与稿件审查怎样使用技能 | [本机开题工作流与技能配置](../../thesis/开题工作流评审与Skill配置_20260922.md#七2026-10-16补充实验设计与稿件审查)：2026-10-16 补充两个固定版本技能；开题材料与安装登记不随 Git 同步，安装不代表方法有效或独立审核完成 |
 | 当前实验对照与论文主张边界 | [实验看板](releases/R2-20261010/attachments/EXPERIMENT_DASHBOARD.md)：共同目标 F1、候选未知率、研究缺口 |
 | 怎样评价检索算法与生成依据 | [Ragas 接入与评估口径](releases/R2-20261010/attachments/RAG_EVALUATION.md)：人工相关性排序、可选语义评分、命令与论文边界 |

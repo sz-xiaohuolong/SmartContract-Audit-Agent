@@ -276,6 +276,9 @@ public final class HypothesisService {
             || catalog.path("targetSourceUnit").asText().isBlank()
             || !catalog.path("contracts").isArray() || !catalog.path("operations").isArray()
             || !catalog.path("sourceUnits").isArray()) throw new IllegalArgumentException();
+        if (catalog.has("semanticTagsVersion")
+            && !"operation-semantics-1".equals(catalog.path("semanticTagsVersion").asText()))
+            throw new IllegalArgumentException();
         java.util.Map<String, JsonNode> units = new java.util.HashMap<>();
         Set<Integer> unitIds = new java.util.HashSet<>();
         for (JsonNode unit : catalog.path("sourceUnits")) {
@@ -301,6 +304,16 @@ public final class HypothesisService {
         }
         byte[] source = request.fullSource().getBytes(StandardCharsets.UTF_8);
         for (JsonNode operation : catalog.path("operations")) {
+            if (operation.has("semanticTags")) {
+                if (!catalog.has("semanticTagsVersion") || !operation.path("semanticTags").isArray())
+                    throw new IllegalArgumentException();
+                Set<String> tags = new java.util.HashSet<>();
+                for (JsonNode tag : operation.path("semanticTags")) {
+                    if (!tag.isTextual() || !Set.of("NATIVE_TRANSFER", "LOW_LEVEL_CALL", "DELEGATE_EXECUTION",
+                        "STATIC_CALL", "TERMINATION", "EXTERNAL_CALL", "STATE_WRITE").contains(tag.asText())
+                        || !tags.add(tag.asText())) throw new IllegalArgumentException();
+                }
+            }
             JsonNode unit = units.get(operation.path("sourceUnit").asText());
             JsonNode contract = contracts.get(operation.path("contractDeclarationId").asInt(-1));
             if (unit == null || contract == null || !operation.path("contract").equals(contract.path("contract"))

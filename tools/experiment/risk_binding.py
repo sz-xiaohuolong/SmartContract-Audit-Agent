@@ -9,7 +9,7 @@ _LINE_TOLERANCE = 2
 def operation_matches(node, hypothesis, bundle, facts):
     if node.get('kind') != hypothesis.get('riskOperation') or 'span' not in node:
         return False
-    if node['kind'] == 'CALL' and node.get('callKind') not in {'CALL', 'STATICCALL'}:
+    if node['kind'] == 'CALL' and node.get('callKind') not in {'CALL', 'STATICCALL', 'DELEGATECALL', 'CALLCODE'}:
         return False
     source = hypothesis.get('sourceFile', bundle.get('targetSourceUnit'))
     if source is not None and node['span'].get('sourceUnit') != source:

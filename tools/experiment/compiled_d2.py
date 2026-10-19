@@ -2,7 +2,7 @@
 import copy
 from fractions import Fraction
 
-from compiler_facts import CompilationBindingError, extract_compiler_facts, load_bound_compilation, source_span, _walk
+from compiler_facts import CompilationBindingError, call_operation, extract_compiler_facts, load_bound_compilation, source_span, _walk
 from risk_binding import bind_risks, binding_record, operation_matches
 
 OBLIGATIONS = ('actor', 'resource', 'pre_risk_guard', 'entry_coverage', 'state_version', 'bypass')
@@ -300,6 +300,18 @@ class _Graph:
 
     def call(self, ast, tails, env, stack, context):
         expression, args = ast.get('expression', {}), ast.get('arguments', [])
+        operation = call_operation(ast, self.bundle)
+        if operation is not None and operation.get('native'):
+            # 先统一位置身份；未知外部效果仍阻止完整保护证明。
+            for argument in [operation['receiver']] + operation['options'] + list(args):
+                tails, _, env = self.expr(argument, tails, env, stack, context)
+            self.gap('原生调用结构已绑定，外部效果与正常提交尚未证明')
+            node = self.add('CALL', ast, tails, context, env, callKind=operation['callKind'],
+                semanticTags=operation['semanticTags'], targetDeclarationId=None,
+                targetResource=self.resource(operation['receiver'], env), arguments=())
+            env['epoch'] += 1
+            env['stateValues'].clear()
+            return [node], _unknown(ast['id']), env
         receiver = expression.get('expression', {}) if expression.get('nodeType') == 'MemberAccess' else expression
         if self.effects(receiver):
             self.gap('调用 receiver 含副作用或未知调用，求值顺序和状态效果尚未证明')

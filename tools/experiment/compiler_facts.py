@@ -578,6 +578,50 @@ def _resource(expression, declarations):
     return None
 
 
+def call_operation(node, bundle):
+    """按编译类型识别调用结构；标签不说明授权、外部效果或交易可行性。"""
+    if not isinstance(node, dict) or node.get('nodeType') != 'FunctionCall' or node.get('kind') == 'typeConversion':
+        return None
+    expression = node.get('expression', {})
+    options = []
+    if expression.get('nodeType') == 'FunctionCallOptions':
+        options.extend(expression.get('options', []))
+        expression = expression.get('expression', {})
+    # 旧 solc 的 address.call.value(v)(data) 仍使用最外层调用的原始跨度。
+    while expression.get('nodeType') == 'FunctionCall':
+        setter = expression.get('expression', {})
+        if (setter.get('nodeType') == 'MemberAccess' and setter.get('memberName') in {'value', 'gas'}
+                and setter.get('typeDescriptions', {}).get('typeIdentifier', '').startswith(
+                    ('t_function_setvalue_', 't_function_setgas_'))):
+            options = list(expression.get('arguments', [])) + options
+            expression = setter.get('expression', {})
+        else:
+            break
+    reference = expression.get('referencedDeclaration')
+    identity = expression.get('typeDescriptions', {}).get('typeIdentifier', '')
+    builtin = bundle['builtinReferences'].get(reference)
+    if (expression.get('nodeType') == 'Identifier' and reference not in bundle['declarations']
+            and builtin in {'selfdestruct', 'suicide'} and identity.startswith(f't_function_{builtin}_')):
+        return {'callKind': 'CALL', 'semanticTags': ['TERMINATION']}
+    if identity.startswith('t_function_external'):
+        static = '_view' in identity or '_pure' in identity
+        return {'callKind': 'STATICCALL' if static else 'CALL',
+                'semanticTags': ['EXTERNAL_CALL', 'STATIC_CALL'] if static else ['EXTERNAL_CALL']}
+    if expression.get('nodeType') != 'MemberAccess' or reference in bundle['declarations']:
+        return None
+    kinds = {'transfer': ('transfer', 'CALL', 'NATIVE_TRANSFER'),
+             'send': ('send', 'CALL', 'NATIVE_TRANSFER'),
+             'call': ('barecall', 'CALL', 'LOW_LEVEL_CALL'),
+             'delegatecall': ('baredelegatecall', 'DELEGATECALL', 'DELEGATE_EXECUTION'),
+             'callcode': ('barecallcode', 'CALLCODE', 'DELEGATE_EXECUTION'),
+             'staticcall': ('barestaticcall', 'STATICCALL', 'STATIC_CALL')}
+    spec = kinds.get(expression.get('memberName'))
+    if spec is None or not identity.startswith(f't_function_{spec[0]}_'):
+        return None
+    return {'callKind': spec[1], 'semanticTags': [spec[2]], 'native': True,
+            'receiver': expression.get('expression'), 'options': options}
+
+
 def _call_semantics(node, bundle):
     expression = node.get('expression', {})
     if expression.get('nodeType') == 'FunctionCallOptions':

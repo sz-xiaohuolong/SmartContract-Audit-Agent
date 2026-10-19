@@ -3,7 +3,7 @@ from collections import defaultdict
 from pathlib import Path
 import subprocess
 
-from compiler_facts import (CompilationBindingError, _entry_indices, extract_compiler_facts,
+from compiler_facts import (CompilationBindingError, _entry_indices, call_operation, extract_compiler_facts,
                             load_bound_compilation, source_span)
 from reentrancy_proofs import _ReentrancyGraph, _low_spec
 
@@ -12,7 +12,7 @@ def _capability(status, gaps=()):
     return {'status': status, 'gaps': sorted(set(gaps))}
 
 
-def _structural_nodes(facts, closure):
+def _structural_nodes(facts, closure, bundle):
     """结构位置不要求路径图可证明；仅接纳编译事实确定的状态写入或外部调用。"""
     for fact in facts:
         if fact['functionDeclarationId'] not in closure:
@@ -20,21 +20,12 @@ def _structural_nodes(facts, closure):
         kind, call_kind, value_call = fact['kind'], None, False
         if kind == 'CALL':
             ast = fact['expression']
-            expression = ast.get('expression', {})
-            if expression.get('nodeType') == 'FunctionCallOptions':
-                expression = expression.get('expression', {})
-            type_id = expression.get('typeDescriptions', {}).get('typeIdentifier', '')
+            operation = call_operation(ast, bundle)
             value_call = _low_spec(ast) is not None
-            if fact.get('callKind') == 'external':
-                call_kind = 'STATICCALL' if '_view' in type_id or '_pure' in type_id else 'CALL'
-            elif value_call:
-                call_kind = 'CALL'
-            elif type_id.startswith(('t_function_barecall_', 't_function_baredelegatecall_',
-                                     't_function_barestaticcall_', 't_function_send_', 't_function_transfer_')):
-                call_kind = 'UNKNOWN'
-            else:
+            if operation is None:
                 # internal、require、纯 builtin 和无法识别的动态值都不是已确定的外部调用位置。
                 continue
+            call_kind = operation['callKind']
         elif kind != 'WRITE':
             continue
         yield {'kind': kind, 'nodeId': fact['nodeId'], 'span': fact['span'],
@@ -90,7 +81,7 @@ def build_risk_catalog(bundle):
                 item['capability'] = _capability('BUDGET_EXHAUSTED' if graph.exhausted else 'PARTIAL'
                                                 if graph.gaps else 'STRUCTURAL_ONLY', graph.gaps)
             closure = graph.closure if graph is not None else {entry['declarationId']}
-            structural = list(_structural_nodes(facts['facts'], closure))
+            structural = list(_structural_nodes(facts['facts'], closure, local))
             seen = set()
             for node in (graph.nodes if graph is not None else []) + structural:
                 if node['kind'] not in {'CALL', 'WRITE'} or 'span' not in node:
@@ -102,6 +93,7 @@ def build_risk_catalog(bundle):
                     item['capability']['status'] = 'PARTIAL'
                     continue
                 fact = (preferred or matches)[0]
+                semantics = call_operation(fact['expression'], local) if node['kind'] == 'CALL' else None
                 if fact['id'] in seen:
                     continue
                 seen.add(fact['id'])
@@ -118,7 +110,9 @@ def build_risk_catalog(bundle):
                     'factId': fact['id'], 'nodeId': node['nodeId'], 'riskOperation': node['kind'],
                     'line': node['span']['line'], 'span': dict(node['span']),
                     'sourceUnit': node['span']['sourceUnit'], 'sourceUnitHash': fact['sourceUnitHash'],
-                    'callKind': node.get('callKind'), 'candidateEligible': True,
+                    'callKind': semantics['callKind'] if semantics else node.get('callKind'),
+                    'semanticTags': semantics['semanticTags'] if semantics else ['STATE_WRITE'] if node['kind'] == 'WRITE' else [],
+                    'candidateEligible': True,
                     'origin': 'AST_STRUCTURAL_ONLY' if node.get('structuralOnly') else 'BOUND_CONTROL_FLOW',
                     'capability': _capability(status, item['capability']['gaps'])})
             item['capability']['gaps'] = sorted(set(item['capability']['gaps']))
@@ -127,7 +121,7 @@ def build_risk_catalog(bundle):
         gaps.extend(entry_gaps)
     operations.sort(key=lambda row: (row['contractDeclarationId'], row['entrySignature'],
                                      row['sourceUnit'], row['span']['start'], row['factId']))
-    return {'schemaVersion': 'compiler-risk-1', 'provider': bundle['provider'],
+    return {'schemaVersion': 'compiler-risk-1', 'semanticTagsVersion': 'operation-semantics-1', 'provider': bundle['provider'],
             'verificationStatus': bundle['verificationStatus'], 'sourceHash': bundle['sourceHash'],
             'targetSourceUnit': bundle['targetSourceUnit'], 'environmentHash': bundle['environmentHash'],
             'receiptDigest': bundle['receiptDigest'], 'sourceClosureSha256': bundle['binding']['sourceClosureSha256'],
