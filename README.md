@@ -66,8 +66,9 @@ java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar \
 旧示例曾把供应商密钥写入源码，现改为从 `DASHSCOPE_API_KEY` 环境变量读取；旧值已进入历史提交，需在供应商侧撤销或轮换。不要把真实凭证写入受 Git 跟踪的配置或提交记录。
 
 - [项目入口与唯一文档地图](docs/vibe/PROJECT.md)、[当前进度](docs/vibe/PROGRESS.md)、[当前工程架构](docs/vibe/TECH_DESIGN.md)。
-- R2：[需求基线](docs/vibe/releases/R2-20261010/PROJECT_BRIEF.md)、[完整规格](docs/vibe/releases/R2-20261010/SPEC.md)、[方案](docs/vibe/releases/R2-20261010/PROPOSED_DESIGN.md)、[计划](docs/vibe/releases/R2-20261010/IMPLEMENTATION_PLAN.md)、[验收](docs/vibe/releases/R2-20261010/VERIFICATION.md)。
-- R1：[需求基线](docs/vibe/releases/R1/PROJECT_BRIEF.md)、[完整规格](docs/vibe/releases/R1/SPEC.md)、[计划](docs/vibe/releases/R1/IMPLEMENTATION_PLAN.md)、[验收](docs/vibe/releases/R1/VERIFICATION.md)。
+- phase 4：访问控制事实引导与双向证据核验（原称 R4）：[ACTaint 分析](docs/vibe/releases/phase4-20261019/ACTAINT_ANALYSIS.md)、[优化计划](docs/vibe/releases/phase4-20261019/IMPLEMENTATION_PLAN.md)。当前仅完成规划，阶段名称与历史路径对应关系见唯一文档地图。
+- phase 2：差分检索与路径证据核验（原 R2）：[需求基线](docs/vibe/releases/R2-20261010/PROJECT_BRIEF.md)、[完整规格](docs/vibe/releases/R2-20261010/SPEC.md)、[方案](docs/vibe/releases/R2-20261010/PROPOSED_DESIGN.md)、[计划](docs/vibe/releases/R2-20261010/IMPLEMENTATION_PLAN.md)、[验收](docs/vibe/releases/R2-20261010/VERIFICATION.md)。
+- phase 1：审计原型与实验基线（原 R1）：[需求基线](docs/vibe/releases/R1/PROJECT_BRIEF.md)、[完整规格](docs/vibe/releases/R1/SPEC.md)、[计划](docs/vibe/releases/R1/IMPLEMENTATION_PLAN.md)、[验收](docs/vibe/releases/R1/VERIFICATION.md)。
 - [旧源码调查](docs/vibe/releases/R0-20260918/SOURCE_SURVEY.md)：仅为历史调查记录。
 
 依赖依据：[Spring AI 官方入门](https://docs.spring.io/spring-ai/reference/getting-started.html)、[OpenAI 适配文档](https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html)。Agent Plan 端点依据：[火山引擎 OpenViking 配置示例](https://github.com/volcengine/OpenViking/blob/main/examples/ov.conf.example)。

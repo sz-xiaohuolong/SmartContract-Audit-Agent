@@ -55,8 +55,9 @@
 - 文档恢复：先读 `docs/vibe/PROJECT.md` 的唯一文档地图和 `docs/vibe/PROGRESS.md` 首屏，再按当前任务读取地图中的规格、架构、计划或验证入口。
 - Slice 组织：同一 Release 内的切片记录在统一实施计划的 Slice Map 和进度表中，不新增切片独立目录或整套规格／计划／验证文件；存量目录按地图标明职责，移动前核对代码与证据引用。
 - 文档结构：`docs/vibe/` 根目录只维护 PROJECT、PROGRESS、TECH_DESIGN；各 Release 的基线、规格、目标方案、计划和验收放在 `docs/vibe/releases/<release-id>/`。Slice 只进入统一计划与当前进度。
+- 阶段命名（2026-10-19）：面向读者使用 `phase X：具体工作`；phase 4 与原称 R4 是同一阶段，文档入口为 `docs/vibe/releases/phase4-20261019/`。旧 R0—R3 名称作为历史别名，既有目录、实验 ID、收据及原件路径不批量改名；完整对应关系由 PROJECT 的文档地图维护。版本名称与工作流的 Planning／Building 等执行状态分别记录。
 - 原始证据：关键日志、结果摘要和必要截图放 `.evidence/<release-id>/<task-id>/`，默认 Git 忽略；按下方保留规则控制体积。已有长期证据继续跟踪。配置、来源登记、源码和测试夹具分别放数据或工具目录，不当作原始日志归档。
-- R1 历史基线：`docs/vibe/releases/R1/PROJECT_BRIEF.md`；当前 R2 的有效文档通过唯一地图定位。
+- phase 1（原 R1）历史基线：`docs/vibe/releases/R1/PROJECT_BRIEF.md`；当前有效文档及后续规划通过唯一地图定位。
 - 根构建使用 Java 21、Spring Boot 4.1.1、Spring AI 2.0.1；默认模块 `audit-mvp`。
 - 默认验证：`mvn clean verify`；命令行：`java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help`。
 - 测试不得依赖真实 API、Milvus 或工具环境；使用本地 HTTP 与子进程夹具。
