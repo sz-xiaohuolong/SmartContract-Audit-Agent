@@ -15,6 +15,22 @@ from test_audit_workbench import Runtime, SOURCE
 
 
 class ConfigurationTest(unittest.TestCase):
+    def test_coding入口可显式选择且不改写模型或凭证(self):
+        text = ('providers.ark.base-url=https://ark.cn-beijing.volces.com/api/coding/v3\n'
+                'providers.ark.model=deepseek-v4-flash\nproviders.ark.api-key-env=FIXTURE_KEY\n')
+        values = _configuration_values(text, {'FIXTURE_KEY': 'fixture-only'})
+        self.assertEqual('https://ark.cn-beijing.volces.com/api/coding/v3', values['providers.ark.base-url'])
+        self.assertEqual('deepseek-v4-flash', values['providers.ark.model'])
+        self.assertEqual('fixture-only', values['providers.ark.api-key'])
+
+    def test_未登记端点和相似拼写不能通过配置校验(self):
+        for endpoint in ('https://example.test/api/coding/v3',
+                         'https://ark.cn-beijing.volces.com/api/coding/v3/other',
+                         'https://ark.cn-beijing.volces.com.example.test/api/coding/v3'):
+            with self.subTest(endpoint=endpoint), self.assertRaises(ValueError):
+                _configuration_values(f'providers.ark.base-url={endpoint}\n'
+                    'providers.ark.model=deepseek-v4-flash\nproviders.ark.api-key=fixture-only\n', {})
+
     def test_空白环境凭证拒绝且冻结后不保留环境回退(self):
         text = ('providers.ark.base-url=https://ark.cn-beijing.volces.com/api/plan/v3\n'
                 'providers.ark.model=deepseek-v4-flash\nproviders.ark.api-key-env=S9_FIXTURE_KEY\n')

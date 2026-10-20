@@ -9,6 +9,16 @@ from benchmark_batch import make_plan, replay_batch, run_batch
 
 
 class Phase4ProtocolTest(unittest.TestCase):
+    def test_本次四条件仅允许已授权coding入口和既定模型(self):
+        from r3_cli import _validate_provider
+        coding = {'endpoint': 'https://ark.cn-beijing.volces.com/api/coding/v3', 'model': 'deepseek-v4-flash'}
+        plan = {**coding, 'endpoint': 'https://ark.cn-beijing.volces.com/api/plan/v3'}
+        _validate_provider(coding, True)
+        _validate_provider(plan, False)
+        for provider, phase4 in ((plan, True), (coding, False), ({**coding, 'model': 'other'}, True)):
+            with self.subTest(provider=provider, phase4=phase4), self.assertRaises(ValueError):
+                _validate_provider(provider, phase4)
+
     def test_实际运行按条件消费且无检索命中率不适用(self):
         from benchmark_runtime import BenchmarkRuntime
         from r3_protocol import P4_CONDITIONS

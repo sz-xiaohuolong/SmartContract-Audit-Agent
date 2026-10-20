@@ -36,6 +36,13 @@ def _emit(kind, **values):
     print(json.dumps({'kind': kind, 'at': datetime.now(timezone.utc).isoformat(), **values}, ensure_ascii=False), flush=True)
 
 
+def _validate_provider(provider, phase4):
+    endpoint = ('https://ark.cn-beijing.volces.com/api/coding/v3' if phase4 else
+                'https://ark.cn-beijing.volces.com/api/plan/v3')
+    if provider != {'endpoint': endpoint, 'model': 'deepseek-v4-flash'}:
+        raise ValueError('本次批量的模型或计费端点与已明确选择的配置不同')
+
+
 def _view(runtime, target, strategy):
     base = runtime.preview(target)
     return condition_view(base, strategy) if strategy == 'VANILLA' or strategy in P4_CONDITIONS else runtime.r3.select(
@@ -97,15 +104,15 @@ def main():
         runtime.r3 = R3Retrieval(runtime.store, runtime.pointer['snapshot_id'], runtime.catalog)
         runtime.r3_allow_unreviewed = True
     provider_path, tool_path = root / 'config/providers.local.properties', root / 'config/tools.local.properties'
-    # 离线提示预检不解析凭证，也不因尚待确认的计费入口阻止检查文本。
+    # 离线提示预检不解析凭证，执行时再核对明确选择的计费入口。
     provider_values = _config_values(provider_path) if args.execute else None
     public_values = {key.strip(): value.strip() for line in provider_path.read_text(encoding='utf-8').splitlines()
                      for key, separator, value in [line.partition('=')]
                      if separator and key.strip() in ('providers.ark.base-url', 'providers.ark.model')}
     provider = {'endpoint': public_values['providers.ark.base-url'], 'model': public_values['providers.ark.model']}
     # 本轮采用现有计费配置，不自动改模型或端点。
-    if args.execute and provider != {'endpoint': 'https://ark.cn-beijing.volces.com/api/plan/v3', 'model': 'deepseek-v4-flash'}:
-        raise ValueError('本次批量的模型或计费端点与已核对配置不同')
+    if args.execute:
+        _validate_provider(provider, args.phase4)
     tool_values = _configuration(tool_path)
     config_hashes = {str(path.relative_to(root)): _sha(path) for path in (provider_path, tool_path)}
     identity = _code_identity(root)
@@ -153,7 +160,7 @@ def main():
             freeze_plan(plan, registry, identity, receipts, args.max_prompt_bytes))
     plan['configurationHashes'] = config_hashes
     plan['registryPath'] = str(registry_path.relative_to(root))
-    plan['authorization'] = (f'用户于2026-10-19要求优化结束后直接用真实API跑一次实验；{len(targets)}个既有开发目标四条件，最多32次正式请求'
+    plan['authorization'] = (f'用户于2026-10-19要求优化结束后直接用真实API跑一次实验，2026-10-20明确沿用当前coding/v3入口和既定模型；{len(targets)}个既有开发目标四条件，最多32次正式请求'
         if args.phase4 else f'用户于2026-10-16明确要求按计划实施并运行一次真实API批量；本批为{len(targets)}目标五条件工程探索')
     plan['stoppingRule'] = '身份或请求改变、任何模型失败或请求预算耗尽时停止后续付费单元；不重试、不换端点'
     plan['planHash'] = fingerprint({key: value for key, value in plan.items() if key != 'planHash'})
@@ -193,6 +200,7 @@ def main():
         runtime.model_runner = guarded_model
 
         def runner(sample, strategy, mode):
+            nonlocal stopped
             if stopped:
                 return {'status': 'FAILED', 'prediction': 'UNKNOWN', 'pipelineStatus': 'FAILED',
                         'errorCategory': 'EXPERIMENT_STOPPED', 'stopReason': stopped,

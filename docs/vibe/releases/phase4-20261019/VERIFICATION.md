@@ -90,3 +90,12 @@
 当前尚未发送新增真实请求。本地 `config/providers.local.properties` 的地址为 `https://ark.cn-beijing.volces.com/api/coding/v3`，与此前核对的 `api/plan/v3` 不同，模型仍为 `deepseek-v4-flash`。已向用户澄清入口；在明确前不替换计费端点、不消耗本次授权。真实批次、发现成绩、usage 和费用尚不存在，不能把无付费预检写成真实实验完成。
 
 本轮证据统一位于 `.evidence/phase4-20261019/p4-04-06/`：`python-final.log`、`maven.log`、`cli.log`、`original-verification.json`、`phase2-verification.json`、`real-rules.json`、`real-fixes-summary.json`、`four-condition-preflight.json` 与 `four-condition-plan-preview.json`。Atomic 详细结果按原字节 gzip 保存为 `atomic-fix.json.gz`，逻辑入口仍为 `atomic-fix.json`，用 `storage.read_artifact()` 读取；压缩摘要和中间日志清理记在 `storage-cleanup.json`。原始历史批次路径及摘要沿用首期记录，没有覆盖原件。
+
+
+## 2026-10-20：用户明确计费入口后继续执行
+
+用户明确回复沿用当前 `api/coding/v3`，此前的入口等待已解除，模型仍为 `deepseek-v4-flash`。配置校验仅新增精确登记地址；本次四条件执行只接受选定入口和模型，旧五条件仍限制原入口。未修改本地凭证或自动重写供应商文件。
+
+执行前还补了完整命令行的假模型回归：四条件成功时只能请求四次，首次模型失败后只请求一次，其余三个条件保留失败和零请求记录。这一回归发现并修复了停止标记的 Python 闭包作用域错误；该错误会让单元在请求前失败，不曾造成真实调用。Java 与本机 HTTP 的完整夹具也确认 `api/coding/v3/chat/completions` 路径只请求一次。真实实验继续采用原四条件、完整分母、零重试和超限共同阻断规则。
+
+本轮最终验证：Python 852 项中 845 项通过、7 项可选跳过，105.535 秒，退出码 0；Maven 114 项通过，构建成功；CLI 退出码 0。配置和完整 CLI 相关 22 项通过，独立只读复核无新增阻断问题。证据位于 `.evidence/phase4-20261019/real-api-20261020/`。

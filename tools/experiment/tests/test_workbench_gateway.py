@@ -41,7 +41,7 @@ class WorkbenchGatewayTest(unittest.TestCase):
                 artifact = root / 'audit-mvp/target'
                 artifact.mkdir(parents=True); (artifact / JAR.name).symlink_to(JAR)
                 config = root / 'config'; config.mkdir()
-                values = {'providers.ark.base-url': f'http://127.0.0.1:{server.server_port}',
+                values = {'providers.ark.base-url': f'http://127.0.0.1:{server.server_port}/api/coding/v3',
                           'providers.ark.model': 'deepseek-v4-flash', 'providers.ark.api-key': 'fixture-only',
                           'providers.ark.max-output-tokens': '2048', 'providers.ark.timeout-seconds': '10'}
                 (config / 'providers.local.properties').write_text('\n'.join(key + '=' + value for key, value in values.items()))
@@ -68,7 +68,7 @@ class WorkbenchGatewayTest(unittest.TestCase):
                     preview = workbench.preview(choice)
                     result = workbench.execute(workbench.prepare({**choice, 'planHash': preview['planHash']}))
                 self.assertEqual(1, len(requests), result)
-                self.assertEqual('/chat/completions', requests[0]['path'])
+                self.assertEqual('/api/coding/v3/chat/completions', requests[0]['path'])
                 self.assertEqual('Bearer fixture-only', requests[0]['authorization'])
                 self.assertEqual('json_schema', requests[0]['response_format']['type'])
                 self.assertEqual('COMPLETED', result['status'])

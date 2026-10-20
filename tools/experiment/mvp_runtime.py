@@ -151,8 +151,10 @@ def _configuration_values(text, environment=None):
         if match is None or '\\' in match.group(2) or '\x00' in line:
             raise ValueError('本机供应商配置仅支持单行 key=value，不支持转义键、冒号键或反斜杠续行')
         values[match.group(1)] = match.group(2)
-    if values.get('providers.ark.base-url') != 'https://ark.cn-beijing.volces.com/api/plan/v3' or values.get('providers.ark.model') not in ('deepseek-v4-flash', 'deepseek-v4.1-flash'):
-        raise ValueError('真实运行只允许已核实的 Agent Plan 地址和 DeepSeek 型号')
+    endpoints = ('https://ark.cn-beijing.volces.com/api/plan/v3',
+                 'https://ark.cn-beijing.volces.com/api/coding/v3')
+    if values.get('providers.ark.base-url') not in endpoints or values.get('providers.ark.model') not in ('deepseek-v4-flash', 'deepseek-v4.1-flash'):
+        raise ValueError('真实运行只允许已登记的火山方舟地址和 DeepSeek 型号')
     credential = values.get('providers.ark.api-key') or environment.get(values.get('providers.ark.api-key-env', ''))
     if not isinstance(credential, str) or not credential.strip():
         raise ValueError('本地配置缺少已选供应商的凭证')
