@@ -2,13 +2,27 @@
 
 VeriRAG 把审计分成两个阶段：先提出可以定位到代码的漏洞猜想，再检查程序证据是否支持这条猜想。Python 组织这条流程，Java 提供结构化模型网关；工作台和命令行共用分析入口。
 
-如果希望先理解 D1、D2 和报告状态，请读 [概念与案例导读](releases/R2-20261010/attachments/CONCEPTS_AND_WALKTHROUGH.md)。本页解释当前源码如何实现这些机制，目标方案另见 [R2 设计](releases/R2-20261010/PROPOSED_DESIGN.md)。
+如果希望先理解 D1、D2 和报告状态，请读 [概念与案例导读](releases/R2-20261010/attachments/CONCEPTS_AND_WALKTHROUGH.md)。本页按截至 **2026-10-20** 的源码解释实际实现，目标方案另见 [R2 设计](releases/R2-20261010/PROPOSED_DESIGN.md)。
 
 ## 为什么使用 Java 与 Python
 
 Java 21 使用 Spring Boot 4.1.1 的依赖体系和 Spring AI 2.0.1，负责供应商配置、模型调用、严格输出协议、超时与命令行接口。CLI 不启动 Spring 容器，也没有另一个 Java Web 服务。Python 负责本机 HTTP 服务、运行计划、批量编排和单写者运行控制，还负责较多变的源码遍历、工具适配、EVM 回放与统计。
 
 这种分工让模型协议集中在 Java，研究机制集中在 Python。两侧通过子进程参数及结构化 JSON 交换数据。Java 检索 CLI 也提供三策略与条件绑定实现，Python 有运行和回退入口；对应配对数量、上下文内容和状态通过一致性检查核对。并发入口与工作台锁位于 Python，不能把所有并发控制归到 Java。
+
+## 默认流程与研究开关
+
+默认流程描述系统通常怎样运行；实验入口描述为研究比较而额外选择的功能。默认离线模式不调用模型，真实模式仍需显式选择供应商和工具配置。
+
+| 能力 | 当前入口与默认行为 | 证据边界 |
+|---|---|---|
+| 全文与原三策略 | 工作台选择 Vanilla／Dense／D1；模型分析清理后的全文 | 焦点索引展示不等于默认裁剪全文 |
+| 机制卡片、多路召回及融合 | phase 3 的 `r3_cli.py` 显式研究路径；工作台沿用原检索 | 145 张卡片未独立语义审核，不能直接作为 D2 证明 |
+| 全文加权限事实 | Python 目标设 `factGuidanceEnabled=true`，或 Java 请求中的 `factGuidance` 字段；默认关闭，尚无工作台开关 | 事实是结构观察，不能自动当作完整权限证明 |
+| 四条件比较 | `r3_cli.py --phase4` 的显式研究入口；执行与预检分别控制 | 当前为开发集探索，完整提示按字节设限，尚非等 token 实验 |
+| 有限转账保护的最终反驳 | 保存候选显式声明 `claimProperty=UNAUTHORIZED_CALL_REACHABILITY`，且双收据与六项义务完整 | Java `schemaVersion=2` 不生成该字段，默认模型与历史候选不自动补值 |
+| Anvil 有限执行 | 提供器显式启用且满足固定输入条件 | 只补特定属性与初态下的证据，不是完整获利攻击证明 |
+| 独立证据复核 | 生成旁侧报告，当前 `gateApplied=false` | 不改写 D2 三态；独立候选真值和真实修复验收仍未完成 |
 
 ## 一次真实模型审计的时序
 
@@ -29,7 +43,10 @@ sequenceDiagram
     核心-->>页面: 返回预览与运行计划
     用户->>页面: 显式选择模型运行
     页面->>核心: 执行固定计划
-    核心->>网关: 源码、上下文、风险目录
+    opt 显式开启权限事实提示
+        核心->>编译: 重建并核对权限事实索引
+    end
+    核心->>网关: 全文、检索上下文、风险目录及可选事实
     网关->>模型: 请求结构化漏洞候选
     模型-->>网关: 候选、引用与用量
     网关-->>核心: 已校验候选或失败
@@ -45,6 +62,8 @@ Vanilla 模型不接收检索资料。离线演练直接输入登记候选，跳
 
 ## 输入：让模型与工具分析同一份程序
 
+工具先把代码读成抽象语法树（AST），也就是能区分函数、变量、调用和分支的结构化代码。后续定位与路径检查依赖这个结构，同时用编译收据确认各阶段处理的是同一份输入。
+
 `evaluation_input.py` 保留原件，清理可能泄露答案的注释，并用空白保持行列；字符串内容原样保存。源码摘要是字节内容的 SHA-256 校验值，用于发现输入是否变化。原件和清理后输入分别登记摘要。
 
 `audit_target.py` 校验预置或粘贴目标。`program_facts.py` 可以提取受限的函数、调用、状态写入和 CEI 顺序；这种语法结构不具备真实编译器 AST 的全部语义。发现流程不按评分真值选择风险行，给定候选核验显式使用 `CLAIM_VALIDATION`。现有探索实验仍有给定漏洞类别先验，也不能消除模型训练中的潜在数据污染。
@@ -55,9 +74,21 @@ Vanilla 模型不接收检索资料。离线演练直接输入登记候选，跳
 
 当前本机 Nomic 快照使用 768 维向量，包含 300 组、600 条自动标注知识。Dense 与 D1 从同一个固定池选择案例，Vanilla 不向模型传入检索内容。Milvus 是可重建的向量索引，知识快照是案例事实来源。
 
+### 默认 D1 的案例选择与消费
+
 `d1_consumption.py` 与 Java `AutomaticContrast` 从保存全文提取机制变化窗口，过滤纯改名、多义或不完整配对。Java／Python 最多使用两对，上下文最多 4096 UTF-8 字节；字节限制尚不能证明精确 token 公平。自动配对适用性保留未知。
 
 `HypothesisService` 的 `hypotheses-v4-diff-guidance` 提示引导模型比较权限、同资源写入和调用顺序。参考修复片段不替代待审源码。最终请求回执记录系统提示、源码、上下文、其他指令、消息封装和输出的预算组成。
+
+### 显式研究路径：机制卡片与多路检索
+
+2026-10-16 接入 R3 的显式实验路径：`r3_retrieval.py` 为冻结原件生成独立机制卡片，原快照仍保留代码对。代码向量与代码、函数名目的代理、行为三路 BM25 分别搜索完整知识侧，再合并完整配对。新并集同时供向量排序与倒数名次融合使用，保留各路排名、增量案例、条件冲突和互补选择回执。资源归属键冲突会排除案例，未知路径和状态版本不会变成适用性证明。当前 145 张卡片均未独立语义审核，只能显式用于工程探索；默认工作台仍沿用原检索路径。
+
+`r3_cli.py` 沿用 `benchmark_batch.py` 保存五条件结果。代码与卡片表达共享案例顺序；并集排序共享新池身份。每个实际请求先通过 Java 本机重放，冻结完整消息摘要；`maxPromptBytes` 可在供应商调用前限制系统与用户提示总 UTF-8 字节数。该预算不包括尚未核实的消息封装 token 开销，不能宣称精确 token 公平。卡片与条件回执只指导提出候选，D2 继续使用当前源码、编译与工具证据。
+
+## 权限事实：把相关检查与状态写入连起来
+
+以权限合约为例，只有看到 `require(msg.sender == owner)` 还不够，还要找到谁能修改 `owner`、初值从哪里来、其他入口会不会绕过检查。权限事实索引为模型提供这些关系的定位线索，保护是否成立仍由 D2 判断。
 
 `focus_context.py` 生成函数、修饰器、传递内部调用和状态声明的原字节索引，代码字段分别为 `ff/fm/fi/fv`。新增的 `permissionFacts` 记录状态、构造身份、四种有来源的关系，以及未证明的外部效果；所有记录均标为结构观察。`check_templates.py` 组织 10 条有知识来源的检查模板，按入口、资源和路径保守实例化。当前全文输入及默认 D1 配对保持原方式，焦点与模板的展示能力尚不能证明模型效果提升。间接函数指针、递归、未知实现等会登记缺口，`SYNTAX_ONLY` 只表示语法可读。
 
@@ -65,10 +96,6 @@ Python 目标显式设置 `factGuidanceEnabled=true` 时，请求前重建并核
 
 
 ## Java 网关：把自由回答变成可检查的候选
-
-2026-10-16 接入 R3 的显式实验路径：`r3_retrieval.py` 为冻结原件生成独立机制卡片，原快照仍保留代码对。代码向量与代码、函数名目的代理、行为三路 BM25 分别搜索完整知识侧，再合并完整配对。新并集同时供向量排序与倒数名次融合使用，保留各路排名、增量案例、条件冲突和互补选择回执。资源归属键冲突会排除案例，未知路径和状态版本不会变成适用性证明。当前 145 张卡片均未独立语义审核，只能显式用于工程探索；默认工作台仍沿用原检索路径。
-
-`r3_cli.py` 沿用 `benchmark_batch.py` 保存五条件结果。代码与卡片表达共享案例顺序；并集排序共享新池身份。每个实际请求先通过 Java 本机重放，冻结完整消息摘要；`maxPromptBytes` 可在供应商调用前限制系统与用户提示总 UTF-8 字节数。该预算不包括尚未核实的消息封装 token 开销，不能宣称精确 token 公平。卡片与条件回执只指导提出候选，D2 继续使用当前源码、编译与工具证据。
 
 `HypothesisCli` 调用 `HypothesisService`，最多接受三项结构化假设，并核对合约、完整函数签名、风险操作、代码位置和引用。名称、位置或类型不匹配时保存失败原因。模型没有提供用量时，界面显示未知，数据层处理见 [运行审计附录](releases/R2-20261010/attachments/OPERATIONS_AND_REPRODUCIBILITY.md)。
 
@@ -83,10 +110,6 @@ Python 目标显式设置 `factGuidanceEnabled=true` 时，请求前重建并核
 2026-10-19 统一原生调用的编译类型识别。普通 `transfer/send`、现代 `call{value:...}` 与旧式调用选项可进入访问控制位置绑定；金额或 gas 选项中的嵌套调用也保留结构位置。目录附加版本化语义标签，区分转账、委托、静态与终止操作，并兼容旧目录。定位成功只说明双方分析同一个操作；外部效果或保护证明不足时仍为未知。
 
 `bound_slither.py` 通过官方 Slither 适配器独立生成工具收据，核对源码依赖、设置、AST、ABI 和字节码。只有两份收据匹配，工具告警才能佐证候选。Java `ToolAnalyzer` 负责 Slither 与可选 Mythril 子进程协议；可选工具不等于每次审计都执行。
-
-本地供应商配置只允许登记的火山方舟 `api/plan/v3` 或 `api/coding/v3` 和受支持的 DeepSeek 型号；不自动切换入口。2026-10-20 用户明确选择后，本次 phase 4 四条件执行进一步固定为 `api/coding/v3` 与 `deepseek-v4-flash`，原 R3 五条件仍固定旧入口。
-
-`r3_cli.py --phase4 --allow-unreviewed` 在现有批量平台上预检四个条件：只读全文、全文加权限事实、全文加 D1、全文加事实和 D1。两组事实正文相同，两组 D1 的案例和顺序相同；开关仅写入每个单元的目标副本。默认不付费。目标任一条件超过事实或完整消息预算时，四个条件共同阻断并保留原计划分母。显式执行还需固定一次授权、请求摘要、源码、JAR、知识快照与配置；模型失败或身份变化会停止后续付费。当前仅用于开发集探索，独立标签、真实修复与精确 token 公平仍未通过研究准入。
 
 ### 检查六项保护和相关路径
 
@@ -131,6 +154,27 @@ Python 目标显式设置 `factGuidanceEnabled=true` 时，请求前重建并核
 
 `eval_ragas.py` 从冻结批次导出实际检索文本、顺序与模型原候选，核对输入收据后，用独立人工相关性表计算排序指标。`ragas_judge.py` 通过 Ragas 0.4.3 生成可选语义侧报告；端点、模型、凭证环境变量和请求上限均须显式指定。失败分数和缺失用量保留空值，评估不写回模型候选或 D2。忠实度证据包含待审源码与历史案例，参考答案不由原数据集标签自动合成。操作与指标限制见 [Ragas 评估说明](releases/R2-20261010/attachments/RAG_EVALUATION.md)。
 
+## 实验编排：固定比较条件，再保存完整分母
+
+`r3_cli.py --phase4 --allow-unreviewed` 在现有批量平台上预检四个条件：只读全文、全文加权限事实、全文加 D1、全文加事实和 D1。两组事实正文相同，两组 D1 的案例和顺序相同；开关仅写入每个单元的目标副本。默认不付费。目标任一条件超过事实或完整消息预算时，四个条件共同阻断并保留原计划分母。显式执行还需固定一次授权、请求摘要、源码、JAR、知识快照与配置；模型失败或身份变化会停止后续付费。当前仅用于开发集探索，独立标签、真实修复与精确 token 公平仍未通过研究准入。
+
+2026-10-20 的实际端点选择、构建身份和用量由[复现附录](releases/R2-20261010/attachments/OPERATIONS_AND_REPRODUCIBILITY.md#phase-3-与-phase-4-的运行身份)及原报告维护。五条件、四条件和候选四臂回答不同问题，其成绩分开见[实验总览](releases/R2-20261010/attachments/EXPERIMENT_DASHBOARD.md)。
+
+## 从机制找到源码
+
+下表用于理解职责，完整命令仍由工具说明维护。
+
+| 机制 | 主要源码入口 | 读代码时关注什么 |
+|---|---|---|
+| 工作台编排 | [audit_workbench.py](../../tools/experiment/audit_workbench.py)、[local_ui.py](../../tools/experiment/local_ui.py) | 预览、计划、运行与报告怎样衔接 |
+| 模型协议 | [HypothesisService.java](../../audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java)、[HypothesisCli.java](../../audit-mvp/src/main/java/com/xhl/audit/HypothesisCli.java) | 请求实际消费的资料与输出校验 |
+| 配对与研究检索 | [d1_consumption.py](../../tools/experiment/d1_consumption.py)、[r3_retrieval.py](../../tools/experiment/r3_retrieval.py) | 默认配对与研究多路召回的区别 |
+| 编译和权限事实 | [compiler_facts.py](../../tools/experiment/compiler_facts.py)、[focus_context.py](../../tools/experiment/focus_context.py) | 原字节位置、依赖和事实关系 |
+| 候选定位 | [risk_binding.py](../../tools/experiment/risk_binding.py) | 同一入口、同一操作是否唯一对应 |
+| 路径与保护证明 | [compiled_d2.py](../../tools/experiment/compiled_d2.py)、[candidate_proofs.py](../../tools/experiment/candidate_proofs.py)、[d2_verify.py](../../tools/experiment/d2_verify.py) | 资源、状态与相关入口是否完整 |
+| 有限执行 | [evm_witness.py](../../tools/experiment/evm_witness.py) | 固定初态、正常提交、失败原因与重放 |
+| 比较和研究审核 | [r3_protocol.py](../../tools/experiment/r3_protocol.py)、[four_arm_report.py](../../tools/experiment/four_arm_report.py)、[real_fix_check.py](../../tools/experiment/real_fix_check.py) | 条件隔离、候选分母、真实修复配对 |
+
 ## 数据位置与恢复
 
 公开源码直接读取根目录 `smartbugs-curated/` 与 `SolidiFI-benchmark/`；额外对照位于 `data/controls/openzeppelin/`。当前批量保留原 53 个目标编号与标签，SolidiFI 没有自动并入批量。29 个目标因恢复原始空白改变输入摘要，新输入建立新计划，历史结果使用保存输入。
@@ -139,4 +183,4 @@ Python 目标显式设置 `factGuidanceEnabled=true` 时，请求前重建并核
 
 ## 运行与检查入口
 
-[快速上手](releases/R2-20261010/attachments/GETTING_STARTED.md) 给出三条命令、合成演示和真实 SimpleDAO 演练。完整 CLI 参数、编译清单与路径核验见 [工具说明](../../tools/experiment/README.md)。当前能力与实验结果分别见 [进度](PROGRESS.md)、[实验看板](releases/R2-20261010/attachments/EXPERIMENT_DASHBOARD.md)，逐项验收保留在 [R2 验收](releases/R2-20261010/VERIFICATION.md)。
+[快速上手](releases/R2-20261010/attachments/GETTING_STARTED.md) 给出三条命令、合成演示和真实 SimpleDAO 演练。完整 CLI 参数、编译清单与路径核验见 [工具说明](../../tools/experiment/README.md)。当前能力与实验结果分别见 [进度](PROGRESS.md)、[实验看板](releases/R2-20261010/attachments/EXPERIMENT_DASHBOARD.md)，当前逐项验收见 [phase 4 验收](releases/phase4-20261019/VERIFICATION.md)，基础能力的历史检查保留在 [R2 验收](releases/R2-20261010/VERIFICATION.md)。
