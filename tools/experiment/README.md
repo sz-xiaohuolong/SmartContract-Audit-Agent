@@ -414,4 +414,22 @@ python3 tools/experiment/phase5_cli.py lineage \
 
 `lineage` 检查已填写的字节摘要、项目、事件和补丁是否跨知识／开发／评价划分；缺字段保持需要审核（REVIEW_REQUIRED）。它只检查登记的一致性，不代替独立来源审核。
 
-2026-10-21 的本机集成保留 8 个目标、46 个操作；13 个结构有效，33 个未支持。13 个有效单元均因池内完整材料超过固定模型的 512 token 上限而失败，未执行向量推理；排序指标为空，零真实模型请求。来源登记见 [data/audit/phase5](../../data/audit/phase5/)，测试、技术说明与限制见[统一验收](../../docs/vibe/releases/phase5-20261021/VERIFICATION.md)。这批结果尚不能说明检索质量或漏洞发现效果提高。
+2026-10-21 首期 BGE 本机集成保留 8 个目标、46 个操作；13 个结构有效，33 个未支持。13 个有效单元均因池内完整材料超过固定模型的 512 token 上限而失败，未执行向量推理；排序指标为空，零真实模型请求。来源登记见 [data/audit/phase5](../../data/audit/phase5/)，测试、技术说明与限制见[统一验收](../../docs/vibe/releases/phase5-20261021/VERIFICATION.md)。这批结果尚不能说明检索质量或漏洞发现效果提高。
+
+
+### phase 5 的真实开发集探索
+
+`phase5_experiment.py` 读取上述冻结输入，显式使用本机 Nomic 完整编码，并复用 Java 模型网关与原 D2。默认只做预检；以下命令不发付费请求：
+
+```bash
+PYTHONPATH=tools/experiment python3 tools/experiment/phase5_experiment.py \
+  --dataset research-artifacts/runs/benchmarks/phase5-20261021/prepared/dataset.json \
+  --output research-artifacts/runs/benchmarks/phase5-新的预检目录 \
+  --allow-unreviewed
+```
+
+新编码使用 `/api/embed`、`truncate=false`，逐文本保存实际 token 数；超限不裁剪重试，模型摘要漂移终止整轮。全部结构有效操作按材料等权平均，再分别按原分与差值排序。没有有效对照、评分不完整或资源键不一致时，目标三条件共同阻断，仍占计划分母。
+
+真实执行需要 `--execute` 和本次唯一 `--batch-id`，并重新核对模型、端点、源码、JAR、配置和消费预检。最多 24 个计划单元；每次完整提示最多 32768 UTF-8 字节、输出最多 16384 token，零重试。`--comparison` 可复用保存的完整评分，输出只登记原件指针，不复制向量。单次授权在 `research-artifacts/runs/benchmarks/phase5-20261021/real-authorization.json` 持久登记，换编号也不能自动重跑。已有授权消费后，复核应使用 `benchmark_batch.replay_batch` 和 `phase5_cli.py replay`。
+
+本入口只用于已授权的一次开发集探索。未审核查询、材料与来源仍不能产生正式检索成绩；共同字节上限也不等于精确 token 公平。默认工作台、Java 候选协议及 D2 规则沿用原实现。

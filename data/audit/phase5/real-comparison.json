@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "phase5-real-comparison-register-1",
+  "date": "2026-10-21",
+  "batchId": "e8dd6d6593bb4a508dc788f94fd1d242",
+  "authorization": "关联聊天2026-10-21要求真实模型请求并对比优化前；本次单次授权已消费",
+  "provider": {
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "model": "deepseek-v4-flash"
+  },
+  "conditions": [
+    "P5_FROZEN",
+    "P5_RELEVANCE",
+    "P5_MARGIN"
+  ],
+  "baseCommit": "2484bef8fdd7d3ae9c96a888885ea555eddf037c",
+  "sourceIdentityHash": "cce9cb1d4fb5405caeeec3dc59d4bbfa09f6d47b7828c82b7cf538a9b473c442",
+  "artifactHash": "6dfb60d6687fcbf6a2c33644db9bcd80e59252dcbfc8f038b4c83bbd839efee3",
+  "snapshotId": "a6d70058bb93a26505def7878553d01e7667248d387f41a101a4ff2f71bd36db",
+  "datasetHash": "25188ebb5f1e7bd19ed1d1617e376489eae26fa11c29eec1b2c623caf39b554d",
+  "rerankHash": "363122ac101cac38a3f11fb571ff9bbc1c93588525f3238e89a96b18f5340fe5",
+  "plannedUnits": 24,
+  "paidRequests": 18,
+  "blockedUnits": 6,
+  "pairedTargets": 6,
+  "classificationF1": {
+    "P5_FROZEN": 1.0,
+    "P5_MARGIN": 1.0,
+    "P5_RELEVANCE": 1.0
+  },
+  "candidateVerification": {
+    "P5_FROZEN": {
+      "assessmentMissing": 0,
+      "counts": {
+        "FAILED": 0,
+        "REFUTED": 0,
+        "SUPPORTED": 2,
+        "UNKNOWN": 2
+      },
+      "decisiveCoverage": 0.5,
+      "denominator": 4,
+      "falseRefutations": null,
+      "falseSupports": null,
+      "independentAccuracy": null,
+      "truthStatus": "INDEPENDENT_REVIEW_PENDING"
+    },
+    "P5_MARGIN": {
+      "assessmentMissing": 0,
+      "counts": {
+        "FAILED": 0,
+        "REFUTED": 0,
+        "SUPPORTED": 2,
+        "UNKNOWN": 2
+      },
+      "decisiveCoverage": 0.5,
+      "denominator": 4,
+      "falseRefutations": null,
+      "falseSupports": null,
+      "independentAccuracy": null,
+      "truthStatus": "INDEPENDENT_REVIEW_PENDING"
+    },
+    "P5_RELEVANCE": {
+      "assessmentMissing": 0,
+      "counts": {
+        "FAILED": 0,
+        "REFUTED": 0,
+        "SUPPORTED": 2,
+        "UNKNOWN": 2
+      },
+      "decisiveCoverage": 0.5,
+      "denominator": 4,
+      "falseRefutations": null,
+      "falseSupports": null,
+      "independentAccuracy": null,
+      "truthStatus": "INDEPENDENT_REVIEW_PENDING"
+    }
+  },
+  "usage": {
+    "currencyCost": null,
+    "inputTokens": 36792,
+    "inputTokensMissing": 0,
+    "inputTokensObserved": 36792,
+    "outputTokens": 12031,
+    "outputTokensMissing": 0,
+    "outputTokensObserved": 12031,
+    "requestAttemptsMissing": 0,
+    "requestAttemptsObserved": 18,
+    "validResponses": 18
+  },
+  "artifacts": {
+    "plan": {
+      "path": "research-artifacts/runs/benchmarks/e8dd6d6593bb4a508dc788f94fd1d242/plan.json",
+      "sha256": "a95a008b63d9a4e9c3069a792cf47b7cff0d3324751893614562b371a4450618"
+    },
+    "samples": {
+      "path": "research-artifacts/runs/benchmarks/e8dd6d6593bb4a508dc788f94fd1d242/samples.jsonl",
+      "sha256": "0418e5fe66209e681631a1d419f32461f3eac63e769cb85981b54881cf81dfc1"
+    },
+    "events": {
+      "path": "research-artifacts/runs/benchmarks/e8dd6d6593bb4a508dc788f94fd1d242/events.jsonl",
+      "sha256": "495cf937ec9c0dba38cbc5c3028da70393d90bea00d843d5ff0fba1a8700f6fb"
+    },
+    "summary": {
+      "path": "research-artifacts/runs/benchmarks/e8dd6d6593bb4a508dc788f94fd1d242/summary.json",
+      "sha256": "ecfdad8f1d9407d69a67239c85c1a864351805c18a82eb3306c61a91f10103a1"
+    },
+    "execution": {
+      "path": "research-artifacts/runs/benchmarks/e8dd6d6593bb4a508dc788f94fd1d242/execution-complete.json",
+      "sha256": "f8f336b2071db4ccfe269ab0d264647769018c13592ad8c1f026ba2b4587aee0"
+    },
+    "rerank": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/nomic-preflight/comparison.json",
+      "sha256": "aa549579d1fe1d4a6014b2136666768687d63b600b38f0b78ea3bd79f35cac2d"
+    },
+    "preflight": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/real-preflight/preflight.json",
+      "sha256": "a95a008b63d9a4e9c3069a792cf47b7cff0d3324751893614562b371a4450618"
+    },
+    "aggregation": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/real-preflight/aggregates.json",
+      "sha256": "698dfc6695276092b74f8a9571be6cc987d66862b089b1b05266c105b8b3f132"
+    },
+    "statistics": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/real-analysis/comparison-stats.json",
+      "sha256": "05161517c7b8033a74f7878ae2173f1fa4940a99f9bb30d0279680d28809c9d5"
+    },
+    "authorization": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/real-authorization.json",
+      "sha256": "119fa707809801546ea74f08cf7103fec9beaed178a3f90c0be1f2ed14c25294"
+    }
+  },
+  "researchEligible": false,
+  "limitations": [
+    "八个开发目标仅六个共同有效；安全对照减少到两个",
+    "独立查询、相关性、谱系及候选真值仍缺失",
+    "只有共同字节上限，不能声称精确token公平",
+    "无增益结果不支持默认启用差值排序；不自动追加请求"
+  ]
+}
