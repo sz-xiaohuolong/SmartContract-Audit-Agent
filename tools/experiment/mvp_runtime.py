@@ -14,7 +14,7 @@ from first_batch import prepare
 from evaluation_input import clean_evaluation_source
 from milvus_rest import MilvusRestIndex
 from snapshots import _check_index, vector32
-from storage import atomic_json, decode, encode, fingerprint, durable_write
+from storage import atomic_json, decode, fingerprint, durable_write
 
 
 ROOT = Path(__file__).resolve().parents[2]

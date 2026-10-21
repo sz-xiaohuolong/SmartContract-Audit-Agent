@@ -1,10 +1,8 @@
 """S3 离线谱系门禁、人工判断与可证伪检索指标。"""
 import argparse
 import hashlib
-import json
 import math
 import re
-import subprocess
 from pathlib import Path
 from storage import decode, encode, fingerprint
 

@@ -9,7 +9,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from storage import artifact_exists, decode, durable_write, encode, fingerprint, read_artifact
+from storage import artifact_exists, decode, durable_write, fingerprint, read_artifact
 
 
 DEFAULT_BATCHES = ('119b4862f8a14818b62848ce709c3ee6', '6cae40677b104152bd92efedc5bbc479')

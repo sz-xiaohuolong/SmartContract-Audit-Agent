@@ -132,7 +132,7 @@
 
 ### P4-03：让模型真正消费经过核对的事实
 
-沿用 [HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java)、Python 请求组装与现有消费回执。增加显式“事实提示”开关；首期呈现操作、关联检查、相关状态写入入口、构造身份和缺口，不发送目标真值、目标修复版本或目标配对身份。
+沿用 [HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java)、Python 请求组装与现有消费回执。增加显式“事实提示”开关；首期呈现操作、关联检查、相关状态写入入口、构造身份和缺口，不发送目标真值、目标修复版本或目标配对身份。
 
 事实摘要固定排序与预算，记录实际消费项、被省略项、完整消息摘要和模型配置。预算不足必须显式拒绝或按预登记规则省略，并标为不完整；不能裁掉关键检查后称上下文完整。D1 机制卡片仍属于历史知识，它提供待问的问题，当前事实回答位置与关系，D2 才提供裁决依据。
 

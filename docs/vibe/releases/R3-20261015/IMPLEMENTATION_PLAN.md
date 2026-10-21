@@ -89,7 +89,7 @@ R3 拟回答两个问题：把历史漏洞与修复解释成知识，是否让�
 
 ### R3-03：同一案例的代码与卡片可以切换
 
-在 [HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java) 的现有候选生成与引用校验上增加显式表达方式；通过 Python 运行配置传入。保留原 D1 路径作为对照，卡片缺失或预算不够时记录拒绝原因，不能静默换回代码后仍标记“卡片实验”。
+在 [HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java) 的现有候选生成与引用校验上增加显式表达方式；通过 Python 运行配置传入。保留原 D1 路径作为对照，卡片缺失或预算不够时记录拒绝原因，不能静默换回代码后仍标记“卡片实验”。
 
 表达对照固定选中案例 ID 与顺序，代码臂使用漏洞／修复两侧，卡片臂使用同一历史案例的审核说明。首期每个目标最多两对，卡片最多两张；这是共同上限，不保证每个目标都能装满。记录实际数量、全部呈现文本 SHA、被拒项和源代码范围。
 

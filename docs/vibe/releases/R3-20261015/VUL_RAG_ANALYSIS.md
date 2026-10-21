@@ -101,7 +101,7 @@ Java 的 [D1Retriever.java](../../../../audit-mvp/src/main/java/com/xhl/audit/re
 
 ### 5.3 生成入口已有定位和消费回执
 
-[HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java) 使用 `hypotheses-v4-diff-guidance`，最多生成三条候选，并检查源码定位与引用，记录提示和证据消费身份。知识卡片首先应作为可切换的上下文表达进入这个入口，补充卡片版本、来源与实际呈现内容的回执。
+[HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java) 使用 `hypotheses-v4-diff-guidance`，最多生成三条候选，并检查源码定位与引用，记录提示和证据消费身份。知识卡片首先应作为可切换的上下文表达进入这个入口，补充卡片版本、来源与实际呈现内容的回执。
 
 不宜第一步就重写为多次串行问答，否则无法判断提升来自知识、更长推理还是更多请求。顺序两问只作为后续独立因素评估。
 

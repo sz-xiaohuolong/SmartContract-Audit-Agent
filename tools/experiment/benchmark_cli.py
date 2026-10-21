@@ -12,7 +12,7 @@ from exploratory_corpus import load_corpus
 from milvus_rest import MilvusRestIndex
 from ollama_embed import OllamaEncoder
 from snapshots import active_snapshot, verify_snapshot
-from storage import atomic_json, decode
+from storage import decode
 
 
 def prepare_runtime(root, index=None, encoder=None, model=None, embedding_profile='bge'):

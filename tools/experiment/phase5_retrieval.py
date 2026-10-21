@@ -4,7 +4,7 @@ import time
 
 from compiler_facts import extract_compiler_facts
 from d1_consumption import candidate_context, mechanism_changed, pair_snippets
-from r3_retrieval import _build_cards, _resource_key, bind_conditions
+from r3_retrieval import _build_cards, bind_conditions
 from reentrancy_proofs import _ReentrancyGraph, _caller_balance, _normal_reachable
 from storage import fingerprint
 

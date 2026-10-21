@@ -12,7 +12,7 @@ from compiler_facts import load_bound_compilation
 from phase5_retrieval import (CONDITIONS, QUERY_CONFIG, VERSION, build_queries, freeze_pool,
                               rank_pool, score_pool)
 from snapshots import verify_snapshot
-from storage import atomic_json, decode, durable_write, encode, fingerprint, read_artifact, sync_directory
+from storage import atomic_json, decode, durable_write, fingerprint, read_artifact, sync_directory
 
 
 def sha(data):

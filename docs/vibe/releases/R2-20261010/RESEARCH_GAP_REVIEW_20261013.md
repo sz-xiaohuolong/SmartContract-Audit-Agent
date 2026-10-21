@@ -434,7 +434,7 @@ PYTHONPATH=tools/experiment:tools/experiment/tests python3 -m unittest \
 [exploratory]: ../../../../tools/experiment/exploratory_targets.py
 [auditrun]: ../../../../tools/experiment/audit_run.py
 [auditrequest]: ../../../../tools/experiment/audit_run.py
-[hypothesis]: ../../../../audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java
+[hypothesis]: ../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java
 [runtime]: ../../../../tools/experiment/benchmark_runtime.py
 [d1consume]: ../../../../tools/experiment/d1_consumption.py
 [retriever]: ../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/D1Retriever.java

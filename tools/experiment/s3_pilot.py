@@ -1,7 +1,6 @@
 """S3 同池离线检索先导；真实模型 tokenizer 由显式冻结适配器提供。"""
 import argparse
 import hashlib
-import json
 import subprocess
 import sys
 from pathlib import Path

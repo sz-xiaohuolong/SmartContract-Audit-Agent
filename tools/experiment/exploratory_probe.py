@@ -5,7 +5,7 @@ import math
 import os
 from pathlib import Path
 
-from d1_embed import DIMENSION, MODEL_MANIFEST, load_local_encoder
+from d1_embed import MODEL_MANIFEST, load_local_encoder
 from exploratory_corpus import candidate_metadata, load_corpus, verify_remote
 from exploratory_targets import load_targets
 from evaluation_input import clean_evaluation_source

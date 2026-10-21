@@ -9,8 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from d2_verify import evaluate
-from formal_recall import preview, java_retrieval, select_strategy
+from formal_recall import preview, select_strategy
 from formal_targets import load_target
 from storage import atomic_json, decode, durable_write, encode, fingerprint
 

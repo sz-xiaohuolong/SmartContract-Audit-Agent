@@ -44,15 +44,6 @@ def load_local_encoder(factory, root, manifest):
                                       show_progress_bar=False)
 
 
-def load_encoder(factory, cache):
-    try:
-        model = factory(MODEL, revision=REVISION, cache_folder=str(cache), trust_remote_code=False)
-    except Exception as error:
-        raise ValueError('固定模型权重无法读取，请检查网络或本机缓存') from error
-    return lambda texts: model.encode(texts, normalize_embeddings=True, convert_to_numpy=True,
-                                      show_progress_bar=False)
-
-
 def candidate_vectors(ledger, root, pairs, encode, revision, dimension):
     audit = audit_lineage(ledger, root)
     if not audit['ok']:

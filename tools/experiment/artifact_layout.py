@@ -37,11 +37,3 @@ MAPPINGS = (
     ('.local/experiment-ui', '.local/services/ui'),
     ('.local/r2', '.local/solidity'),
 )
-
-
-def canonical_name(value):
-    """只替换明确登记的路径前缀，避免修改普通字符串或相近目录名。"""
-    for old, new in sorted(MAPPINGS, key=lambda row: len(row[0]), reverse=True):
-        if value == old or value.startswith(old + '/'):
-            return new + value[len(old):]
-    return value

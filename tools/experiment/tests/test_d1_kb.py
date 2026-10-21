@@ -8,7 +8,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from d1_kb import stage_snapshot
-from d1_embed import candidate_vectors, load_encoder, verify_model_dir
+from d1_embed import candidate_vectors, load_local_encoder, verify_model_dir
 from d1_admission import admit_candidates
 from d1_model import MIRROR, fetch_model
 from d1_embed import MODEL, REVISION, DIMENSION
@@ -125,11 +125,19 @@ class D1KnowledgeTest(unittest.TestCase):
                                    'fixed-revision', 2)
         self.assertEqual([0.5, 0.5], output['vectors']['case-original'])
 
-    def test_model_download_failure_has_clear_message(self):
-        def unavailable(*args, **kwargs):
-            raise OSError('TLS 连接失败')
+    def test_local_encoder_load_failure_has_clear_message(self):
+        model_dir = self.root / 'model'
+        model_dir.mkdir()
+        weights = b'fixed weights'
+        (model_dir / 'model.safetensors').write_bytes(weights)
+        manifest = {'modelId': MODEL, 'revision': REVISION, 'dimension': DIMENSION,
+                    'files': {'model.safetensors': hashlib.sha256(weights).hexdigest()}}
+        def unavailable(path, **kwargs):
+            self.assertEqual(str(model_dir), path)
+            self.assertEqual({'local_files_only': True, 'trust_remote_code': False}, kwargs)
+            raise OSError('本机权重无法加载')
         with self.assertRaisesRegex(ValueError, '固定模型权重无法读取'):
-            load_encoder(unavailable, self.root / 'model')
+            load_local_encoder(unavailable, model_dir, manifest)
 
     def test_local_model_files_require_exact_hashes(self):
         path = self.root / 'model'

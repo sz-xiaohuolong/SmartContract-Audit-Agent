@@ -1,8 +1,19 @@
-# 数据与实验工具（S1a / S1b）
+# 数据与实验工具：当前入口与历史复现
 
-## 阶段1～5零模型复现入口
+本目录提供数据检查、检索对照、模型审计编排和保存结果的重放工具。当前研究推进到 phase 5；S1a、S1b、S3 等名称是早期任务编号，并不代表这些工具已经废弃。先根据用途选择入口，再查下文的具体命令。
 
-当前工程进度、最终数字与未达事项见 [2026-10-13离线报告](../../docs/vibe/releases/R2-20261010/experiments/2026-10-13_STAGE1_5_OFFLINE_REPORT.md)。历史原件须按 [原件说明](../../research-artifacts/README.md) 恢复；Git 不包含全部原始响应、固定编译器和收据，单独克隆仓库不足以复现历史实验。
+| 想做什么 | 使用哪个入口 |
+|---|---|
+| 了解当前能力、研究结果与限制 | [唯一文档地图](../../docs/vibe/PROJECT.md)、[当前进度](../../docs/vibe/PROGRESS.md)；工具名称不用于判断研究是否完成 |
+| 启动工作台或跑离线演示 | `local_ui.py`；先按[快速上手](../../docs/vibe/releases/R2-20261010/attachments/GETTING_STARTED.md)操作 |
+| 比较 phase 5 的查询和排序 | `phase5_cli.py` 用于离线准备与回放；`phase5_experiment.py` 用于显式探索，默认仅预检；见本文末尾及[phase 5 验收](../../docs/vibe/releases/phase5-20261021/VERIFICATION.md) |
+| 复核历史批次、候选或检索指标 | `benchmark_report.py` 重算保存结果；`tool_replay.py` 另存工具重放；`eval_ragas.py` 评价检索材料，各自的输入和作用不同 |
+
+旧应用的数据生成脚本 `scripts/build_smartbugs_kb.py`、`scripts/flatten_oz.py`、`scripts/setup_pilot_data_local.py` 已退役。它们面向已移除的 `src/main/resources/` 布局，源码可从清理前提交 `f81aaa8` 取回。当前工具直接读取[数据入口](../../data/README.md)登记的原始数据与固定输入；既有 OpenZeppelin 展平文件和历史标签继续保留，不重新生成。
+
+## 历史复现：phase 2 的五阶段核验
+
+本节对应 [2026-10-13 离线报告](../../docs/vibe/releases/R2-20261010/experiments/2026-10-13_STAGE1_5_OFFLINE_REPORT.md)中的五个实施步骤，和目前的 phase 5 是不同划分；报告保留当时数字与未达事项。历史原件须按 [原件说明](../../research-artifacts/README.md) 恢复；Git 不包含全部原始响应、固定编译器和收据，单独克隆仓库不足以复现历史实验。
 
 ```bash
 mvn clean verify
@@ -120,7 +131,7 @@ python3 tools/experiment/s1b.py snapshot-activate --root /路径/kb --id 生成�
 
 先在临时目录写入并 fsync，读回全部内容校验后原子重命名。激活再次检查完整性，并原子替换 `active.json`；构建中断不会产生可激活目录，失败不会覆盖已有指针。已发布快照目录不得人工编辑；读取必须使用 `verify_snapshot` / `active_snapshot`，不能只检查目录或集合存在。
 
-Milvus 通过 `snapshots.MilvusIndex(client)` 注入同步 `MilvusClient`，再调用 `activate_snapshot(root, snapshot_id, index)`。适配器创建唯一 `s1b_...` 集合，分批插入、flush，并通过 Strong 一致性分页读回每个 ID、向量和文档；完整匹配才替换本地激活指针。应用使用 `active_snapshot(root, index)` 获取经过再次校验的集合名。它不修改旧集合或全局别名，不自动清除构建失败留下的孤立集合。旧 legacy RAG 的启动导入逻辑没有接入此入口。
+Milvus 通过 `snapshots.MilvusIndex(client)` 注入同步 `MilvusClient`，再调用 `activate_snapshot(root, snapshot_id, index)`。适配器创建唯一 `s1b_...` 集合，分批插入、flush，并通过 Strong 一致性分页读回每个 ID、向量和文档；完整匹配才替换本地激活指针。应用使用 `active_snapshot(root, index)` 获取经过再次校验的集合名。它不修改旧集合或全局别名，不自动清除构建失败留下的孤立集合。该适配器仍供显式接入使用；已退役旧应用的启动导入流程不再维护。
 
 R1-S3 的 D1 正式知识候选使用 `d1_kb.py` 从完整审核的谱系清单、逐案审核的补丁对片段、同一固定模型的向量构建上述 S1b 快照和 D1 catalog。构建命令不自动激活；待审标签、未审配对、摘要不符、知识样本覆盖不全或跨划分泄漏都会拒绝。`d1_embed.py` 可先用本地固定模型为待审案例生成候选向量，输出明确标记 `candidateOnly=true`，不绕过正式准入；离线测试用注入的确定性编码器，不下载权重。当前首批材料仍待审，具体原件、候选划分及模型下载阻塞见 [D1 知识库准入记录](../../docs/vibe/releases/R1/attachments/D1_KB_READINESS.md)。现有 `mvp_` 工程演示集合不属于此入口。
 

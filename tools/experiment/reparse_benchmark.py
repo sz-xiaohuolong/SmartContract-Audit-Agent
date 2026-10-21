@@ -10,7 +10,7 @@ from benchmark_batch import replay_batch, run_batch, save_summary
 from benchmark_runtime import interpret_model
 from benchmark_targets import load_benchmark_targets
 from exploratory_corpus import load_corpus
-from storage import atomic_json, decode, encode, fingerprint
+from storage import decode, encode, fingerprint
 
 
 def reparse_rows(report, targets, root, parser, parser_hash):

@@ -7,7 +7,7 @@ from storage import durable_write
 
 from audit_run import model_runner as default_model_runner, tool_runner as default_tool_runner
 from evaluation_input import clean_evaluation_source
-from formal_recall import CONTEXT_BYTES, java_retrieval, select_strategy
+from formal_recall import CONTEXT_BYTES, java_retrieval
 from program_facts import extract_facts
 from recall import _recall_candidates
 from snapshots import active_snapshot, vector32, verify_snapshot

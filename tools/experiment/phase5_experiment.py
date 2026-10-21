@@ -13,7 +13,7 @@ from benchmark_runtime import BenchmarkRuntime, _validate_input
 from ollama_embed import OllamaEncoder, MODEL, DIMENSION, QUERY_PREFIX, DOCUMENT_PREFIX
 from phase5_cli import _batch, compare_dataset, read_pointer, validate_run, verify_sources, write_output
 from phase5_retrieval import rank_pool
-from storage import atomic_json, decode, encode, exclusive_lock, fingerprint, read_artifact
+from storage import atomic_json, decode, exclusive_lock, fingerprint, read_artifact
 from tool_replay import _code_identity
 
 
