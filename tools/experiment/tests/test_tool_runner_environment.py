@@ -7,8 +7,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from audit_run import tool_runner
-from tool_environment import resolve_environment
+from verirag.audit.audit_run import tool_runner
+from verirag.infrastructure.tool_environment import resolve_environment
 
 
 SOURCE = 'pragma solidity ^0.8.20; contract C { uint x; function f() public { x = 1; } }'
@@ -46,7 +46,7 @@ class ToolRunnerEnvironmentTest(unittest.TestCase):
                     'configHash': 'java-configuration', 'compiler': {
                         'path': str(compiler.resolve()), 'version': '0.8.24',
                         'sha256': hashlib.sha256(compiler.read_bytes()).hexdigest()}}).encode(), b'')
-            with patch('audit_run.subprocess.run', side_effect=process):
+            with patch('verirag.audit.audit_run.subprocess.run', side_effect=process):
                 result = tool_runner(root, {'fullSource': SOURCE, 'fullSourceHash': source_hash}, 'real')
             self.assertEqual(1, len(seen))
             self.assertIn(f'tools.slither.solc={compiler.resolve()}', seen[0].encode().decode('unicode_escape'))
@@ -66,7 +66,7 @@ class ToolRunnerEnvironmentTest(unittest.TestCase):
                     'engine': 'SLITHER', 'status': 'OK', 'issues': [], 'sourceHash': source_hash,
                     'compiler': {'path': '/different-solc', 'version': '0.8.25', 'sha256': '0'*64},
                     'configHash': 'actual-configuration'}).encode(), b'')
-            with patch('audit_run.subprocess.run', side_effect=process):
+            with patch('verirag.audit.audit_run.subprocess.run', side_effect=process):
                 result = tool_runner(root, {'fullSource': SOURCE}, 'real')
             self.assertEqual('PROCESS_ERROR', result[0]['status'])
             self.assertEqual('ENVIRONMENT_CHANGED', result[0].get('errorCategory'))
@@ -90,7 +90,7 @@ class ToolRunnerEnvironmentTest(unittest.TestCase):
                     'sourceHash': source_hash, 'configHash': 'a'*64,
                     'compiler': {'path': str(compiler.resolve()), 'version': '0.8.24',
                         'sha256': hashlib.sha256(compiler.read_bytes()).hexdigest()}}).encode(), b'')
-            with patch('audit_run.subprocess.run', side_effect=process):
+            with patch('verirag.audit.audit_run.subprocess.run', side_effect=process):
                 result = tool_runner(root, {'fullSource': SOURCE}, 'real')
             self.assertEqual('PROCESS_ERROR', result[0]['status'])
             self.assertEqual('ENVIRONMENT_CHANGED', result[0].get('errorCategory'))
@@ -126,7 +126,7 @@ class ToolRunnerEnvironmentTest(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 1, json.dumps({
                     'engine': 'SLITHER', 'status': 'PROCESS_ERROR', 'issues': [],
                     'sourceHash': source_hash, 'errorCategory': 'DEPENDENCY_MISSING'}).encode(), b'')
-            with patch('audit_run.subprocess.run', side_effect=process):
+            with patch('verirag.audit.audit_run.subprocess.run', side_effect=process):
                 result = tool_runner(root, {'fullSource': source}, 'real')
             self.assertEqual('DEPENDENCY_MISSING', result[0].get('errorCategory'))
 

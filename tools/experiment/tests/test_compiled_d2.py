@@ -6,8 +6,8 @@ import unittest
 from unittest.mock import patch
 
 import test_compiler_facts as fixtures
-from compiler_facts import extract_compiler_facts
-from compiled_d2 import evaluate_compiled
+from verirag.analysis.compiler_facts import extract_compiler_facts
+from verirag.analysis.compiled_d2 import evaluate_compiled
 
 
 class CompiledD2Test(unittest.TestCase):
@@ -188,7 +188,7 @@ class CompiledD2Test(unittest.TestCase):
 
     def terminal_tool(self, *, check='suicidal', mismatch=None, replay_change=False):
         """原工具与独立重放各生成原件；公共入口仍走真实收据读取和比对。"""
-        import bound_slither
+        from verirag.analysis import bound_slither
         bundle = self._sealed_bundle()
         call = self.function()['body']['statements'][-1]['expression']
         span = next(fact['span'] for fact in extract_compiler_facts(bundle)['facts'] if fact['nodeId'] == call['id'])

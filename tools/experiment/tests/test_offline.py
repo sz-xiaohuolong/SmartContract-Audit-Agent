@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-from offline import inventory, evaluate
+from verirag.evaluation.offline import inventory, evaluate
 
 
 class OfflineTest(unittest.TestCase):

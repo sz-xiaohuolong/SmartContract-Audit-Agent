@@ -33,9 +33,9 @@
 | Gemini 说法 | 实际代码或记录 | 对 phase 5 的处理 |
 |---|---|---|
 | Dense 的 F1 下降已经证明“相关性陷阱” | [2026-10-14 报告](../R2-20261010/experiments/2026-10-14_SYNAPSE_REAL_API_REPORT.md)对 52 个共同有效目标报告 Vanilla 0.9792、Dense 0.9684、D1 0.9787；没有逐条独立相关性／干扰归因标注 | 下降是研究线索；先做盲审误导案例与候选错误类型，不预写根因 |
-| D1 无增益源于同提示词的正反资料抵消 | 当前 [Java 提示](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java)确实一起呈现配对资料；[Python 消费](../../../../tools/experiment/d1_consumption.py)保留完整前后配对与 4096 UTF-8 字节预算；没有只改变上下文结构的对照实验 | 上下文互扰是待测假设，不据此删除修复材料；保留全文和完整配对身份 |
-| 只要把 `a.denseScore()+b.denseScore()` 改成相减就是 CF-RAG | [D1Retriever.java](../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/D1Retriever.java)的该加和仅在条件绑定与覆盖排序之后使用；自动标注路径转交 `AutomaticContrast`，Python 软配对也另有 `min+0.25×差值`；phase 3 已有[多路召回、冲突过滤和互补选择](../../../../tools/experiment/r3_retrieval.py) | 保持现有路径；对同一查询、同一证据比较原问题与有效对照问题的分数，先作离线重排 |
-| CF-RAG 仲裁可以直接由 D2 取代，形成“机器真值” | [D2](../../../../tools/experiment/compiled_d2.py)及[本机执行](../../../../tools/experiment/evm_witness.py)只覆盖受支持属性和可行见证；[phase 4 验收](../phase4-20261019/VERIFICATION.md)保留真实修复未知／未知 | D2 继续逐候选检查；支持、反驳、未知、失败各自保留，不让检索分数更改裁决 |
+| D1 无增益源于同提示词的正反资料抵消 | 当前 [Java 提示](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java)确实一起呈现配对资料；[Python 消费](../../../../tools/experiment/verirag/retrieval/d1_consumption.py)保留完整前后配对与 4096 UTF-8 字节预算；没有只改变上下文结构的对照实验 | 上下文互扰是待测假设，不据此删除修复材料；保留全文和完整配对身份 |
+| 只要把 `a.denseScore()+b.denseScore()` 改成相减就是 CF-RAG | [D1Retriever.java](../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/D1Retriever.java)的该加和仅在条件绑定与覆盖排序之后使用；自动标注路径转交 `AutomaticContrast`，Python 软配对也另有 `min+0.25×差值`；phase 3 已有[多路召回、冲突过滤和互补选择](../../../../tools/experiment/verirag/retrieval/r3_retrieval.py) | 保持现有路径；对同一查询、同一证据比较原问题与有效对照问题的分数，先作离线重排 |
+| CF-RAG 仲裁可以直接由 D2 取代，形成“机器真值” | [D2](../../../../tools/experiment/verirag/analysis/compiled_d2.py)及[本机执行](../../../../tools/experiment/verirag/analysis/evm_witness.py)只覆盖受支持属性和可行见证；[phase 4 验收](../phase4-20261019/VERIFICATION.md)保留真实修复未知／未知 | D2 继续逐候选检查；支持、反驳、未知、失败各自保留，不让检索分数更改裁决 |
 
 一个具体例子：审计目标在 `transfer` 前有 `require(msg.sender == owner)`，历史案例只是也包含 `transfer`。原查询可问“这个入口的转账是否受同一调用者权限条件约束”；有效对照可问“若检查的主体换成 `tx.origin`，该历史案例是否仍解释同一约束”。这个问题只有在编译事实能准确绑定主体、入口和资源时才可使用。得分低仅提示案例可能不合适，不能直接判定目标安全；权限状态是否能被其他入口改写，仍由 D2 检查。重入场景同理，可对照“状态更新在外部调用前／后”，并保持同一余额资源与回调前提。
 

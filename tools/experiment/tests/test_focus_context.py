@@ -7,7 +7,7 @@ import test_compiler_facts as fixtures
 
 class FocusContextTest(unittest.TestCase):
     def test_权限事实连接检查读状态写入与入口且不当作证明(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         fixture = fixtures.CompilerFactsTest(); fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         bundle = fixture.load()
@@ -30,14 +30,14 @@ class FocusContextTest(unittest.TestCase):
 
     def test_索引写盘回读不改变字段类型(self):
         import json
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         fixture = fixtures.CompilerFactsTest(); fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         context = build_focus_context(fixture.load())
         self.assertEqual(context, json.loads(json.dumps(context)))
 
     def test_检查中的纯赋值只记写入而复合赋值保留读取(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         import test_access_call_proofs as access
         helper = access.AccessCallProofTest(); helper.setUp()
         self.addCleanup(helper.doCleanups)
@@ -52,8 +52,8 @@ class FocusContextTest(unittest.TestCase):
                             for r in index['relations']))
 
     def test_条件内部函数读取及外部未知效果均可追溯(self):
-        from focus_context import build_focus_context, build_fact_guidance
-        from risk_catalog import build_risk_catalog
+        from verirag.analysis.focus_context import build_focus_context, build_fact_guidance
+        from verirag.analysis.risk_catalog import build_risk_catalog
         import test_access_call_proofs as access
         helper = access.AccessCallProofTest(); helper.setUp()
         self.addCleanup(helper.doCleanups)
@@ -84,7 +84,7 @@ class FocusContextTest(unittest.TestCase):
         self.assertIn('EXTERNAL_EFFECT', guidance['text'])
 
     def test_条件内部虚调用按实际合约读取覆盖实现(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         import test_access_call_proofs as access
         helper = access.AccessCallProofTest(); helper.setUp()
         self.addCleanup(helper.doCleanups)
@@ -114,7 +114,7 @@ class FocusContextTest(unittest.TestCase):
                              and r['contractDeclarationId'] == derived['id'] for r in reads))
 
     def test_编译器纯编码不伪造外部回调(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         import test_access_call_proofs as access
         helper = access.AccessCallProofTest(); helper.setUp()
         self.addCleanup(helper.doCleanups)
@@ -127,19 +127,19 @@ class FocusContextTest(unittest.TestCase):
         self.assertFalse(any(r['kind'] == 'EXTERNAL_EFFECT' for r in index['unknownEdges']))
 
     def test_权限事实预算不足明确记录遗漏(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         from unittest.mock import patch
         fixture = fixtures.CompilerFactsTest(); fixture.setUp()
         self.addCleanup(fixture.doCleanups)
-        with patch('focus_context._PERMISSION_RELATION_LIMIT', 1):
+        with patch('verirag.analysis.focus_context._PERMISSION_RELATION_LIMIT', 1):
             index = build_focus_context(fixture.load())['permissionFacts']
         self.assertEqual(1, len(index['relations']))
         self.assertGreater(index['omittedRelationCount'], 0)
         self.assertTrue(any('预算' in gap for gap in index['gaps']))
 
     def test_事实提示固定排序超限拒绝且不包含真值(self):
-        from focus_context import build_focus_context, build_fact_guidance
-        from risk_catalog import build_risk_catalog
+        from verirag.analysis.focus_context import build_focus_context, build_fact_guidance
+        from verirag.analysis.risk_catalog import build_risk_catalog
         fixture = fixtures.CompilerFactsTest(); fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         bundle = fixture.load()
@@ -155,7 +155,7 @@ class FocusContextTest(unittest.TestCase):
             build_fact_guidance(context, catalog, max_bytes=1)
 
     def test_普通同名初始化函数的未保护写入不能从索引遗漏(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         import test_compiled_d2 as compiled
         syntax = compiled.CompiledD2Test(); syntax.setUp()
         self.addCleanup(syntax.doCleanups)
@@ -176,7 +176,7 @@ class FocusContextTest(unittest.TestCase):
         self.assertIn('C()', [e['signature'] for e in context['entries'][0]['relatedEntries']])
 
     def test_角色映射保留调用者键而构造初始化单独展示(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         import test_access_call_proofs as access
         helper = access.AccessCallProofTest(); helper.setUp()
         self.addCleanup(helper.doCleanups)
@@ -196,7 +196,7 @@ class FocusContextTest(unittest.TestCase):
         self.assertFalse(index['constructors'][0]['executed'])
 
     def test_语法回退保留中文跨度空权限修饰器及导入缺口(self):
-        from focus_context import build_syntax_context
+        from verirag.analysis.focus_context import build_syntax_context
         source = '// 中文\nimport "missing.sol";\ncontract C { modifier onlyOwner(){_;} function f() public onlyOwner {} }'
         result = build_syntax_context(source)
         self.assertEqual('SYNTAX_ONLY', result['capability'])
@@ -213,7 +213,7 @@ class FocusContextTest(unittest.TestCase):
             self.assertEqual(hashlib.sha256(raw).hexdigest(), block['bytesSha256'])
 
     def test_编译索引绑定声明和状态写入不消费真值(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         fixture = fixtures.CompilerFactsTest(); fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         result = build_focus_context(fixture.load())
@@ -227,14 +227,14 @@ class FocusContextTest(unittest.TestCase):
         self.assertIn('f()', [e['signature'] for e in entry['relatedEntries']])
 
     def test_未闭合源码回退必须显式失败(self):
-        from focus_context import build_syntax_context
+        from verirag.analysis.focus_context import build_syntax_context
         result = build_syntax_context('contract C { function f() public {')
         self.assertEqual('UNAVAILABLE', result['capability'])
         self.assertEqual([], result['blocks'])
         self.assertFalse(result['complete'])
 
     def test_全文多合约入口均进入索引(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         fixture = fixtures.CompilerFactsTest(); fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         second = copy.deepcopy(fixture.output['sources']['contracts/C.sol']['ast']['nodes'][0])
@@ -255,7 +255,7 @@ class FocusContextTest(unittest.TestCase):
         self.assertEqual({4, 104}, {e['declarationId'] for e in result['entries']})
 
     def test_内部函数指针未解析必须登记闭包缺口(self):
-        from focus_context import build_focus_context
+        from verirag.analysis.focus_context import build_focus_context
         fixture = fixtures.CompilerFactsTest(); fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         expression = fixture.function()['body']['statements'][0]['expression']['expression']

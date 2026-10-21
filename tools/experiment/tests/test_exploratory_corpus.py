@@ -3,9 +3,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from exploratory_corpus import load_corpus, verify_remote, candidate_metadata, _pair_predicate
-from r1_candidate_corpus import documents
-from storage import atomic_json, encode, fingerprint
+from verirag.knowledge.exploratory_corpus import load_corpus, verify_remote, candidate_metadata, _pair_predicate
+from verirag.knowledge.r1_candidate_corpus import documents
+from verirag.infrastructure.storage import atomic_json, encode, fingerprint
 
 
 class FakeIndex:

@@ -3,11 +3,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from audit_target import pasted_target
-from audit_workbench import AuditWorkbench, assess, final_conclusion
-from benchmark_runtime import BenchmarkRuntime
-from program_facts import extract_facts
-from storage import fingerprint
+from verirag.audit.audit_target import pasted_target
+from verirag.audit.audit_workbench import AuditWorkbench, assess, final_conclusion
+from verirag.experiments.benchmark_runtime import BenchmarkRuntime
+from verirag.analysis.program_facts import extract_facts
+from verirag.infrastructure.storage import fingerprint
 
 SOURCE = '''contract Vault {
  mapping(address => uint) balances;

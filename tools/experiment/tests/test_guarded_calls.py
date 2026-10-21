@@ -2,9 +2,9 @@
 import copy
 import unittest
 
-from candidate_proofs import prove_guarded_call
-from compiler_facts import extract_compiler_facts
-from compiled_d2 import evaluate_compiled
+from verirag.analysis.candidate_proofs import prove_guarded_call
+from verirag.analysis.compiler_facts import extract_compiler_facts
+from verirag.analysis.compiled_d2 import evaluate_compiled
 import test_access_call_proofs as fixtures
 
 

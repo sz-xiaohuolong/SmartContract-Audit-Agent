@@ -3,8 +3,8 @@ import copy
 import unittest
 from unittest.mock import patch
 
-from compiler_facts import CompilationBindingError
-from risk_catalog import build_risk_catalog, prepare_model_context
+from verirag.analysis.compiler_facts import CompilationBindingError
+from verirag.analysis.risk_catalog import build_risk_catalog, prepare_model_context
 import test_compiler_facts as fixtures
 
 
@@ -22,8 +22,8 @@ class RiskCatalogTest(unittest.TestCase):
         bundle = fixture.load()
         target = {'fullSourceHash': bundle['sourceHash'], '_toolConfiguration': {'tools.compiler.directory': 'fixture'}}
         view = {}
-        with patch('compilation_runtime.prepare_discovery_compilation', return_value={'fixture': True}), \
-                patch('risk_catalog.load_bound_compilation', return_value=bundle):
+        with patch('verirag.analysis.compilation_runtime.prepare_discovery_compilation', return_value={'fixture': True}), \
+                patch('verirag.analysis.risk_catalog.load_bound_compilation', return_value=bundle):
             prepare_model_context(fixture.root, target, view, 'real')
         self.assertNotIn('compilerManifest', target)
         self.assertEqual('BOUND', view['riskCatalogDiagnostic']['status'])
@@ -32,7 +32,7 @@ class RiskCatalogTest(unittest.TestCase):
     def test_编译失败不制造空成功目录(self):
         target = {'_toolConfiguration': {'tools.compiler.directory': 'fixture'}}
         view = {}
-        with patch('compilation_runtime.prepare_discovery_compilation', side_effect=ValueError('编译协议不支持')):
+        with patch('verirag.analysis.compilation_runtime.prepare_discovery_compilation', side_effect=ValueError('编译协议不支持')):
             prepare_model_context(self.fixture.root, target, view, 'real')
         self.assertNotIn('riskCatalog', view)
         self.assertEqual({'status': 'UNAVAILABLE', 'reason': '编译协议不支持'}, view['riskCatalogDiagnostic'])
@@ -151,21 +151,21 @@ class RiskCatalogTest(unittest.TestCase):
         self.assertTrue(any('WhileStatement' in gap for gap in catalog['limitations']))
 
     def test_入口图预算缺口须传播且不能变成完整覆盖(self):
-        import risk_catalog
+        from verirag.analysis import risk_catalog
         original = risk_catalog._ReentrancyGraph
         def exhausted(bundle, entry):
             graph = original(bundle, entry)
             graph.exhausted = True
             graph.gaps = ['CFG 节点预算超限']
             return graph
-        with patch('risk_catalog._ReentrancyGraph', side_effect=exhausted):
+        with patch('verirag.analysis.risk_catalog._ReentrancyGraph', side_effect=exhausted):
             catalog = self.catalog()
         entry = next(row for row in catalog['contracts'][0]['entries'] if row['function'] == 'f')
         self.assertEqual('BUDGET_EXHAUSTED', entry['capability']['status'])
         self.assertIn('CFG 节点预算超限', catalog['limitations'])
 
     def test_图提取失败仍保留已确定的主入口结构写入(self):
-        with patch('risk_catalog._ReentrancyGraph', side_effect=CompilationBindingError('夹具失败')):
+        with patch('verirag.analysis.risk_catalog._ReentrancyGraph', side_effect=CompilationBindingError('夹具失败')):
             catalog = self.catalog()
         self.assertEqual(1, len(catalog['operations']))
         self.assertEqual('WRITE', catalog['operations'][0]['riskOperation'])

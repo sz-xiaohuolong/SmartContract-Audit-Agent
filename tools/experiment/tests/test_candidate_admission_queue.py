@@ -1,7 +1,7 @@
 """待审候选逐项准入清单的确定性测试。"""
 import unittest
 
-from candidate_admission_queue import build_queue
+from verirag.knowledge.candidate_admission_queue import build_queue
 
 
 class CandidateAdmissionQueueTest(unittest.TestCase):

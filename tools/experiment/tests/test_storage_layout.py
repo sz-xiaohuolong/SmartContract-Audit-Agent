@@ -7,10 +7,10 @@ from tempfile import TemporaryDirectory
 import unittest
 import threading
 
-from benchmark_batch import make_plan, replay_batch, run_batch, save_summary
-from organize_storage import archive_file, compact, migrate, restore_compatibility
-from local_ui import create_server
-from storage import read_artifact
+from verirag.experiments.benchmark_batch import make_plan, replay_batch, run_batch, save_summary
+from verirag.infrastructure.organize_storage import archive_file, compact, migrate, restore_compatibility
+from verirag.web.local_ui import create_server
+from verirag.infrastructure.storage import read_artifact
 
 
 class StorageLayoutTest(unittest.TestCase):

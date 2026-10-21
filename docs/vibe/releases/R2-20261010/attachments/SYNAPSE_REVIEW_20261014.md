@@ -78,15 +78,15 @@ SYNAPSE 已有 invariant thoughts，因此“没有相同模板就完全无法�
 
 | 路径 | 已完成且可在代码中核对的能力 | 对应优化缺口 |
 |---|---|---|
-| [d1_consumption.py](../../../../../tools/experiment/d1_consumption.py)、[AutomaticContrast.java](../../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/AutomaticContrast.java) | 从冻结diff片段提取可见机制变化；拒绝纯改名、不唯一配对；Java／Python自动层保留UNKNOWN | 缺有版本、来源和证据需求的模板；当前AutoMESC“全文”仍可能只是diff片段，不能推导完整业务语义 |
-| [ConditionBinder.java](../../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/ConditionBinder.java)、[formal_recall.py](../../../../../tools/experiment/formal_recall.py) | 明确主体／资源、直线作用域及前置关系；修饰器名称只说明声明存在 | 模板实例化需与编译声明、key、字段及路径证据连接；自动层条件不能由文字转为正式证明 |
+| [d1_consumption.py](../../../../../tools/experiment/verirag/retrieval/d1_consumption.py)、[AutomaticContrast.java](../../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/AutomaticContrast.java) | 从冻结diff片段提取可见机制变化；拒绝纯改名、不唯一配对；Java／Python自动层保留UNKNOWN | 缺有版本、来源和证据需求的模板；当前AutoMESC“全文”仍可能只是diff片段，不能推导完整业务语义 |
+| [ConditionBinder.java](../../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/ConditionBinder.java)、[formal_recall.py](../../../../../tools/experiment/verirag/retrieval/formal_recall.py) | 明确主体／资源、直线作用域及前置关系；修饰器名称只说明声明存在 | 模板实例化需与编译声明、key、字段及路径证据连接；自动层条件不能由文字转为正式证明 |
 | [HypothesisService.java](../../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java) | `hypotheses-v4-diff-guidance`、最多三候选、风险目录校验、最终提示消费回执；缺tokenizer保持null | 无新增模型请求即可补确定性证据复核；第二个模型只能作为另行预注册的实验因素 |
-| [program_facts.py](../../../../../tools/experiment/program_facts.py)、[risk_catalog.py](../../../../../tools/experiment/risk_catalog.py) | 受限词法事实；真实编译闭包下全合约入口／操作目录和能力标签 | 尚无可独立消费的焦点上下文回执；语法与编译能力需显式区分 |
-| [compiler_facts.py](../../../../../tools/experiment/compiler_facts.py)、[compilation_runtime.py](../../../../../tools/experiment/compilation_runtime.py)、[benchmark_runtime.py](../../../../../tools/experiment/benchmark_runtime.py) | 编译重验、完整闭包、收据身份；发现与候选阶段分别编译 | 事实ID包含 `environmentHash`，后者含 `receiptDigest`；收据路径／环境改变可令相同AST操作得到不同ID。需要保持同一证据身份贯穿两阶段 |
-| [risk_binding.py](../../../../../tools/experiment/risk_binding.py)、[专项测试](../../../../../tools/experiment/tests/test_risk_binding.py) | 唯一语句／±2行容差，显式事实／跨度漂移和多义拒绝 | 延续现有规则；新增跨阶段同收据、多合约投影及归档恢复回归 |
-| [compiled_d2.py](../../../../../tools/experiment/compiled_d2.py)、[candidate_proofs.py](../../../../../tools/experiment/candidate_proofs.py)、[reentrancy_proofs.py](../../../../../tools/experiment/reentrancy_proofs.py) | 六义务、权限／CEI／锁保护、局部与全候选缺口分开 | 真正完整的保护闭包、代理／跨合约／动态实现和旧协议仍有限制 |
-| [bound_slither.py](../../../../../tools/experiment/bound_slither.py)、[evm_witness.py](../../../../../tools/experiment/evm_witness.py) | 双工具收据核验；两次本机正常业务重放、存储与提交核对 | 有限见证只能支持有限属性反例，不能证明完整安全或攻击收益；真实维护者修复双向闭环待验 |
-| [d1_research_check.py](../../../../../tools/experiment/d1_research_check.py)、[four_arm_report.py](../../../../../tools/experiment/four_arm_report.py) | 消费核对、六臂待审协议、四臂固定候选报告 | 独立候选真值、精确token预算和处理组真实差异尚未通过准入 |
+| [program_facts.py](../../../../../tools/experiment/verirag/analysis/program_facts.py)、[risk_catalog.py](../../../../../tools/experiment/verirag/analysis/risk_catalog.py) | 受限词法事实；真实编译闭包下全合约入口／操作目录和能力标签 | 尚无可独立消费的焦点上下文回执；语法与编译能力需显式区分 |
+| [compiler_facts.py](../../../../../tools/experiment/verirag/analysis/compiler_facts.py)、[compilation_runtime.py](../../../../../tools/experiment/verirag/analysis/compilation_runtime.py)、[benchmark_runtime.py](../../../../../tools/experiment/verirag/experiments/benchmark_runtime.py) | 编译重验、完整闭包、收据身份；发现与候选阶段分别编译 | 事实ID包含 `environmentHash`，后者含 `receiptDigest`；收据路径／环境改变可令相同AST操作得到不同ID。需要保持同一证据身份贯穿两阶段 |
+| [risk_binding.py](../../../../../tools/experiment/verirag/analysis/risk_binding.py)、[专项测试](../../../../../tools/experiment/tests/test_risk_binding.py) | 唯一语句／±2行容差，显式事实／跨度漂移和多义拒绝 | 延续现有规则；新增跨阶段同收据、多合约投影及归档恢复回归 |
+| [compiled_d2.py](../../../../../tools/experiment/verirag/analysis/compiled_d2.py)、[candidate_proofs.py](../../../../../tools/experiment/verirag/analysis/candidate_proofs.py)、[reentrancy_proofs.py](../../../../../tools/experiment/verirag/analysis/reentrancy_proofs.py) | 六义务、权限／CEI／锁保护、局部与全候选缺口分开 | 真正完整的保护闭包、代理／跨合约／动态实现和旧协议仍有限制 |
+| [bound_slither.py](../../../../../tools/experiment/verirag/analysis/bound_slither.py)、[evm_witness.py](../../../../../tools/experiment/verirag/analysis/evm_witness.py) | 双工具收据核验；两次本机正常业务重放、存储与提交核对 | 有限见证只能支持有限属性反例，不能证明完整安全或攻击收益；真实维护者修复双向闭环待验 |
+| [d1_research_check.py](../../../../../tools/experiment/verirag/evaluation/d1_research_check.py)、[four_arm_report.py](../../../../../tools/experiment/verirag/evaluation/four_arm_report.py) | 消费核对、六臂待审协议、四臂固定候选报告 | 独立候选真值、精确token预算和处理组真实差异尚未通过准入 |
 
 ### 4.1 当前基线不能与历史混算
 

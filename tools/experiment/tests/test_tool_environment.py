@@ -8,7 +8,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 try:
-    from tool_environment import resolve_environment
+    from verirag.infrastructure.tool_environment import resolve_environment
 except ModuleNotFoundError as error:
     if error.name != 'tool_environment':
         raise
@@ -144,13 +144,13 @@ contract C { string label = "pragma solidity 0.8.30;"; }
         binary.parent.mkdir()
         binary.write_text('#!/bin/sh\necho "Version: 0.4.25+commit.fixture"\n')
         binary.chmod(0o755)
-        with patch('tool_environment.Path.home', return_value=self.directory):
+        with patch('verirag.infrastructure.tool_environment.Path.home', return_value=self.directory):
             result = resolve_environment('pragma solidity 0.4.25;')
         self.assertEqual('OK', result['status'])
         self.assertEqual(str(binary.resolve()), result['compiler']['path'])
 
     def test_properties_reject_ambiguous_semantics_instead_of_loading_different_java_values(self):
-        from tool_environment import _configuration
+        from verirag.infrastructure.tool_environment import _configuration
         config = self.directory / 'tools.properties'
         for text in ('tools.slither.executable=A\ntools.slither.executable=B\n',
                      'tools.slither.executable=A\\\n B\n', 'tools.slither.executable=C\\:\\folder\n',
@@ -217,7 +217,7 @@ contract C { string label = "pragma solidity 0.8.30;"; }
         self.assertNotEqual(before, result['diagnostics'][0]['afterSha256'])
 
     def test_named_tool_is_frozen_to_path_and_actual_binary_changes_configuration_hash(self):
-        from tool_environment import _configuration
+        from verirag.infrastructure.tool_environment import _configuration
         self.compiler('0.4.25')
         tool = self.directory / 'fixture-slither'
         tool.write_text('#!/bin/sh\necho fixture-tool\n')

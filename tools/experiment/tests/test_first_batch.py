@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from first_batch import prepare
+from verirag.knowledge.first_batch import prepare
 
 
 class FirstBatchTest(unittest.TestCase):

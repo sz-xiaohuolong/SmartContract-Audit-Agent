@@ -3,8 +3,8 @@ import copy
 import unittest
 
 import test_compiled_d2 as syntax_fixtures
-from compiler_facts import extract_compiler_facts
-from candidate_proofs import prove_candidate
+from verirag.analysis.compiler_facts import extract_compiler_facts
+from verirag.analysis.candidate_proofs import prove_candidate
 
 
 class CandidateProofTest(unittest.TestCase):

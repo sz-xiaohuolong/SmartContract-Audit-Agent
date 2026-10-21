@@ -12,15 +12,15 @@ class RealFixCheckTest(unittest.TestCase):
                           'riskOperation': 'WRITE', 'vulnerabilityType': 'ACCESS_CONTROL'}
 
     def test_错机制的跨版本候选不得比较(self):
-        from real_fix_check import validate_fix_pair
+        from verirag.evaluation.real_fix_check import validate_fix_pair
         after = {**self.candidate, 'vulnerabilityType': 'REENTRANCY', 'riskOperation': 'CALL'}
         with self.assertRaises(ValueError):
             validate_fix_pair(self.fixture.root, self.fixture.manifest, self.candidate,
                               self.fixture.manifest, after)
 
     def test_同源码或缺工具即使局部保护已证也不算真实修复验收(self):
-        from real_fix_check import validate_fix_pair
-        with patch('bound_slither.analyze_bound', return_value={'engine': 'SLITHER',
+        from verirag.evaluation.real_fix_check import validate_fix_pair
+        with patch('verirag.analysis.bound_slither.analyze_bound', return_value={'engine': 'SLITHER',
                 'status': 'PROCESS_ERROR', 'issues': []}):
             result = validate_fix_pair(self.fixture.root, self.fixture.manifest, self.candidate,
                                       self.fixture.manifest, self.candidate)

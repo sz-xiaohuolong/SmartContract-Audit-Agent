@@ -25,9 +25,9 @@ class ToolReplayTest(unittest.TestCase):
             source_path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
             bundle = {'sourceHash': rows[0]['sourceHash'], 'environmentHash': 'e', 'manifestDigest': 'm', 'receiptDigest': 'r'}
             manifest = {'bindingPath': 'new/binding.json'}
-            with patch('tool_replay.load_bound_compilation', return_value=bundle), \
-                 patch('tool_replay.extract_compiler_facts', return_value={'status': 'PARTIAL'}), \
-                 patch('tool_replay.assess', return_value={'status': 'COMPLETED', 'verdict': 'UNKNOWN', 'assessments': []}):
+            with patch('verirag.evaluation.tool_replay.load_bound_compilation', return_value=bundle), \
+                 patch('verirag.evaluation.tool_replay.extract_compiler_facts', return_value={'status': 'PARTIAL'}), \
+                 patch('verirag.evaluation.tool_replay.assess', return_value={'status': 'COMPLETED', 'verdict': 'UNKNOWN', 'assessments': []}):
                 self.module().replay(root, original, root / 'derived',
                     tool_runner=lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}],
                     environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
@@ -53,7 +53,7 @@ class ToolReplayTest(unittest.TestCase):
             outcomes = [{'status': 'COMPLETED', 'verdict': verdict, 'assessments': [
                 {'hypothesisIndex': 0, 'verdict': verdict, 'note': '本地接缝夹具'}]}
                 for verdict in ('SUPPORTED', 'REFUTED', 'UNKNOWN')]
-            with patch('tool_replay.assess', side_effect=outcomes):
+            with patch('verirag.evaluation.tool_replay.assess', side_effect=outcomes):
                 summary = self.module().replay(root, original, root / 'derived',
                     tool_runner=lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}],
                     environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
@@ -78,8 +78,8 @@ class ToolReplayTest(unittest.TestCase):
             self.assertGreaterEqual(four['fullD2DurationMs'], 0)
 
     def module(self):
-        self.assertIsNotNone(importlib.util.find_spec('tool_replay'), '尚未提供保护原件的工具派生重放')
-        return importlib.import_module('tool_replay')
+        self.assertIsNotNone(importlib.util.find_spec('verirag.evaluation.tool_replay'), '尚未提供保护原件的工具派生重放')
+        return importlib.import_module('verirag.evaluation.tool_replay')
 
     def original(self, root):
         path = root / 'original'
@@ -124,7 +124,7 @@ class ToolReplayTest(unittest.TestCase):
             environment = Mock(return_value={'status': 'OK', 'configHash': 'cfg'})
             compilation = Mock(return_value=None)
             tools = Mock(return_value=[{'engine': 'SLITHER', 'status': 'OK', 'issues': []}])
-            with patch('audit_run.model_runner', side_effect=AssertionError('不得新增模型请求')):
+            with patch('verirag.audit.audit_run.model_runner', side_effect=AssertionError('不得新增模型请求')):
                 summary = self.module().replay(root, original, root / 'derived', tool_runner=tools,
                     environment_resolver=environment, compilation_resolver=compilation,
                     code_identity={'commit': 'fixture'})
@@ -163,7 +163,7 @@ class ToolReplayTest(unittest.TestCase):
             self.add_blocked(original, only_blocked=True)
             tools = Mock(side_effect=AssertionError('输入阻断不得执行工具'))
             compilation = Mock(side_effect=AssertionError('输入阻断不得编译'))
-            with patch('tool_environment._configuration', side_effect=AssertionError('无需工具配置')):
+            with patch('verirag.infrastructure.tool_environment._configuration', side_effect=AssertionError('无需工具配置')):
                 summary = self.module().replay(root, original, root / 'derived', tool_runner=tools,
                     compilation_resolver=compilation, code_identity={'commit': 'fixture'})
             self.assertEqual(3, summary['units'])
@@ -210,7 +210,7 @@ class ToolReplayTest(unittest.TestCase):
                 calls.append(target['sampleId'])
                 return [{'engine': 'SLITHER', 'status': 'OK', 'issues': [],
                          'sourceHash': target['sourceHash'], 'sourceFile': 'Contract.sol'}]
-            with patch('audit_run.model_runner', side_effect=AssertionError('重放不得调用模型')):
+            with patch('verirag.audit.audit_run.model_runner', side_effect=AssertionError('重放不得调用模型')):
                 result = replay(root, original, root / 'derived', tool_runner=tools,
                                 environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg-one'},
                                 code_identity={'commit': 'fixture', 'artifactHash': 'jar-one'})
@@ -268,7 +268,7 @@ class ToolReplayTest(unittest.TestCase):
     def test_D2异常保持流水线失败且原模型仍保留(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); original = self.original(root)
-            with patch('tool_replay.assess', side_effect=ValueError('不可裁决')):
+            with patch('verirag.evaluation.tool_replay.assess', side_effect=ValueError('不可裁决')):
                 self.module().replay(root, original, root / 'derived',
                     tool_runner=lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}],
                     environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
@@ -302,6 +302,30 @@ class ToolReplayTest(unittest.TestCase):
             after = self.module()._code_identity(root)
             self.assertNotEqual(before, after)
 
+    def test_包内业务实现变化也必须改变代码身份(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            module = root / 'tools/experiment/verirag/audit/audit_target.py'
+            module.parent.mkdir(parents=True)
+            module.write_text('版本一')
+            before = self.module()._code_identity(root)
+            module.write_text('版本二')
+            after = self.module()._code_identity(root)
+            self.assertNotEqual(before, after)
+
+    def test_测试夹具变化不混入生产源码身份(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            module = root / 'tools/experiment/verirag/audit/audit_target.py'
+            module.parent.mkdir(parents=True)
+            module.write_text('固定实现')
+            fixture = root / 'tools/experiment/tests/example.py'
+            fixture.parent.mkdir(parents=True)
+            fixture.write_text('夹具一')
+            before = self.module()._code_identity(root)
+            fixture.write_text('夹具二')
+            self.assertEqual(before, self.module()._code_identity(root))
+
     def test_编译提供器接入共享评估并保留原候选(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); original = self.original(root)
@@ -315,9 +339,9 @@ class ToolReplayTest(unittest.TestCase):
                 self.assertEqual(manifest, target['compilerManifest'])
                 calls.append(target['sampleId'])
                 return [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}]
-            with patch('tool_replay.load_bound_compilation', return_value=bundle), \
-                 patch('tool_replay.extract_compiler_facts', return_value=compiled), \
-                 patch('tool_replay.assess', return_value=result) as assessment:
+            with patch('verirag.evaluation.tool_replay.load_bound_compilation', return_value=bundle), \
+                 patch('verirag.evaluation.tool_replay.extract_compiler_facts', return_value=compiled), \
+                 patch('verirag.evaluation.tool_replay.assess', return_value=result) as assessment:
                 self.module().replay(root, original, root / 'derived', tool_runner=tools,
                     environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
                     compilation_resolver=lambda target: manifest, code_identity={'commit': 'fixture'})
@@ -332,7 +356,7 @@ class ToolReplayTest(unittest.TestCase):
     def test_结构化D2失败进入重放失败分母(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); original = self.original(root)
-            with patch('tool_replay.assess', return_value={'status': 'FAILED', 'verdict': 'UNKNOWN', 'assessments': []}):
+            with patch('verirag.evaluation.tool_replay.assess', return_value={'status': 'FAILED', 'verdict': 'UNKNOWN', 'assessments': []}):
                 self.module().replay(root, original, root / 'derived',
                     tool_runner=lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}],
                     environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},
@@ -344,8 +368,8 @@ class ToolReplayTest(unittest.TestCase):
     def test_编译源码身份不一致不能退回词法判定(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); original = self.original(root)
-            with patch('tool_replay.load_bound_compilation', return_value={'sourceHash': '0' * 64}), \
-                 patch('tool_replay.assess') as assessment:
+            with patch('verirag.evaluation.tool_replay.load_bound_compilation', return_value={'sourceHash': '0' * 64}), \
+                 patch('verirag.evaluation.tool_replay.assess') as assessment:
                 self.module().replay(root, original, root / 'derived',
                     tool_runner=lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}],
                     environment_resolver=lambda source: {'status': 'OK', 'configHash': 'cfg'},

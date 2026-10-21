@@ -7,8 +7,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
 
-from audit_run import model_runner, tool_runner
-from audit_workbench import AuditWorkbench
+from verirag.audit.audit_run import model_runner, tool_runner
+from verirag.audit.audit_workbench import AuditWorkbench
 from test_audit_workbench import Runtime
 from test_d2_verify import ACCESS
 
@@ -64,7 +64,7 @@ class WorkbenchGatewayTest(unittest.TestCase):
                                            target_loader=lambda: [], tool=tool_runner)
                 choice = {'source': ACCESS, 'function': 'withdraw', 'mechanism': 'ACCESS_CONTROL', 'mode': 'real'}
                 # 仅替换 Python 的生产端点准入；Java 真实发送到 loopback，不调用任何外部模型。
-                with patch('mvp_runtime._configuration_values', return_value=values):
+                with patch('verirag.experiments.mvp_runtime._configuration_values', return_value=values):
                     preview = workbench.preview(choice)
                     result = workbench.execute(workbench.prepare({**choice, 'planHash': preview['planHash']}))
                 self.assertEqual(1, len(requests), result)

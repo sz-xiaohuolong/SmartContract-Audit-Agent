@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-import bound_slither
+from verirag.analysis import bound_slither
 
 
 def canonical(value):
@@ -72,6 +72,15 @@ class BoundSlitherTest(unittest.TestCase):
         with patch.object(bound_slither, '_invoke_worker', side_effect=self.fake_worker), patch.object(
                 bound_slither, '_resolve_python', return_value=Path(sys.executable).resolve()):
             return bound_slither.verify_bound_tool(tool, self.bundle, root=self.root)
+
+    def test_独立工作目录中的工具子进程仍能加载包并保存失败原件(self):
+        directory = self.root / bound_slither._EVIDENCE / 'worker-bootstrap'
+        result = bound_slither._invoke_worker(self.root / 'missing-manifest.json', root=self.root,
+                                             python_executable=Path(sys.executable), directory=directory)
+        self.assertNotEqual('OK', result['status'])
+        self.assertTrue((directory / 'tool-result.json').is_file())
+        self.assertEqual(0, result['paidModelRequests'])
+        self.assertNotIn("No module named 'verirag'", (directory / 'worker-stderr.log').read_text())
 
     def test_analyze_returns_standard_tool_and_original_element_spans(self):
         tool = self.analyze()

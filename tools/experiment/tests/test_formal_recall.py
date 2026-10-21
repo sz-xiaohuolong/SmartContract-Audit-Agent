@@ -7,11 +7,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 from test_isolation import manifest
-from snapshots import build_snapshot, activate_snapshot
-from storage import atomic_json, fingerprint
-from d1_embed import MODEL, REVISION, DIMENSION
-from formal_recall import preview, select_strategy, _risk_fact
-from program_facts import extract_facts
+from verirag.knowledge.snapshots import build_snapshot, activate_snapshot
+from verirag.infrastructure.storage import atomic_json, decode, fingerprint
+from verirag.knowledge.d1_embed import MODEL, REVISION, DIMENSION
+from verirag.retrieval.formal_recall import preview, select_strategy, _risk_fact
+from verirag.analysis.program_facts import extract_facts
 
 
 class FakeIndex:
@@ -70,7 +70,7 @@ class FormalRecallTest(unittest.TestCase):
             'gaps': ['条件未知：d0'], 'evaluations': {'d0': {'applicability': 'UNKNOWN'}}}]}
 
     def test_formal_pair_pool_and_unknown_binding(self):
-        with patch('formal_recall.load_target', return_value=self.target):
+        with patch('verirag.retrieval.formal_recall.load_target', return_value=self.target):
             result = preview(self.root, self.target, self.index,
                              lambda texts: [[1.0] + [0.0] * (DIMENSION - 1)], self.java)
         self.assertEqual(result['snapshotId'], self.snapshot)
@@ -79,7 +79,7 @@ class FormalRecallTest(unittest.TestCase):
         self.assertEqual({row['role'] for row in result['pool']['candidates']}, {'VULNERABLE', 'DEFENSE'})
         self.assertEqual(result['d1']['evaluations']['d0']['applicability'], 'UNKNOWN')
         self.assertEqual(self.java_calls[0]['target']['riskFactId'],
-                         __import__('program_facts').extract_facts(self.target['fullSource'])['facts'][0]['id'])
+                         extract_facts(self.target['fullSource'])['facts'][0]['id'])
         self.assertEqual(result['researchEligible'], False)
 
     def test_no_compatible_risk_fact_is_visible_without_forging_one(self):
@@ -90,7 +90,7 @@ class FormalRecallTest(unittest.TestCase):
         target['modelSource'] = target['fullSource']
         target['modelSourceHash'] = target['fullSourceHash']
         target.update(lineStart=1, lineEnd=1)
-        with patch('formal_recall.load_target', return_value=target):
+        with patch('verirag.retrieval.formal_recall.load_target', return_value=target):
             result = preview(self.root, target, self.index,
                              lambda texts: [[1.0] + [0.0] * (DIMENSION - 1)], self.java)
         self.assertEqual(result['d1']['status'], 'NO_RISK_FACT')
@@ -99,7 +99,7 @@ class FormalRecallTest(unittest.TestCase):
 
     def test_bad_milvus_model_or_pointer_is_rejected(self):
         vector = [1.0] + [0.0] * (DIMENSION - 1)
-        with patch('formal_recall.load_target', return_value=self.target):
+        with patch('verirag.retrieval.formal_recall.load_target', return_value=self.target):
             self.index.hits = [{'id': 'unknown', 'distance': 1.0}] * 4
             with self.assertRaises(ValueError): preview(self.root, self.target, self.index, lambda texts: [vector], self.java)
             self.index.hits = [{'id': row['id'], 'distance': 0.5} for row in self.index.rows]
@@ -116,13 +116,13 @@ class FormalRecallTest(unittest.TestCase):
             result = self.java(source, request)
             result['results'][0]['snapshotId'] = '0' * 64
             return result
-        with patch('formal_recall.load_target', return_value=self.target):
+        with patch('verirag.retrieval.formal_recall.load_target', return_value=self.target):
             with self.assertRaisesRegex(ValueError, 'D1'):
                 preview(self.root, self.target, self.index,
                         lambda texts: [[1.0] + [0.0] * (DIMENSION - 1)], stale_java)
 
     def test_three_strategies_share_pool_and_unknown_is_not_applicable(self):
-        with patch('formal_recall.load_target', return_value=self.target):
+        with patch('verirag.retrieval.formal_recall.load_target', return_value=self.target):
             view = preview(self.root, self.target, self.index,
                            lambda texts: [[1.0] + [0.0] * (DIMENSION - 1)], self.java)
         dense, filtered, d1 = (select_strategy(view, name) for name in ('DENSE', 'FIELD_FILTER', 'D1'))
@@ -192,7 +192,7 @@ class FormalRecallTest(unittest.TestCase):
         def encoder(texts):
             queries.extend(texts)
             return [[1.0] + [0.0] * (DIMENSION - 1)]
-        with patch('formal_recall.load_target', return_value=target):
+        with patch('verirag.retrieval.formal_recall.load_target', return_value=target):
             result = preview(self.root, target, self.index, encoder,
                 lambda source, request: {'results': [{'strategy': 'D1', 'selected': [], 'context': '',
                     'sourceHash': hashlib.sha256(source.encode()).hexdigest(), 'snapshotId': self.snapshot}]})
@@ -209,7 +209,7 @@ class FormalRecallTest(unittest.TestCase):
             def encoder(texts):
                 queries.extend(texts)
                 return [[1.0] + [0.0] * (DIMENSION - 1)]
-            with self.subTest(field=field), patch('formal_recall.load_target', return_value=target):
+            with self.subTest(field=field), patch('verirag.retrieval.formal_recall.load_target', return_value=target):
                 with self.assertRaises(ValueError):
                     preview(self.root, target, self.index, encoder, self.java)
                 self.assertEqual([], queries)
@@ -230,10 +230,10 @@ class FormalRecallTest(unittest.TestCase):
             {'model': MODEL, 'dimension': DIMENSION, 'revision': REVISION}, {'version': 'fixture'},
             {doc['id']: vector for doc in docs})
         pointer = activate_snapshot(store, snapshot, self.index)
-        catalog = __import__('storage').decode((store / 'catalogs' / (self.snapshot + '.json')).read_bytes())
+        catalog = decode((store / 'catalogs' / (self.snapshot + '.json')).read_bytes())
         catalog['snapshotId'] = snapshot
         atomic_json(store / 'catalogs' / (snapshot + '.json'), catalog)
-        with patch('formal_recall.load_target', return_value=target):
+        with patch('verirag.retrieval.formal_recall.load_target', return_value=target):
             with self.assertRaisesRegex(ValueError, '知识'):
                 preview(self.root, target, self.index, lambda texts: [vector], self.java)
 

@@ -4,12 +4,12 @@ import unittest
 import hashlib
 from pathlib import Path
 
-from exploratory_probe import build_pool, compare_target, run_probe, replay_probe
-from evaluation_input import clean_evaluation_source
-from exploratory_corpus import load_corpus
-from formal_recall import select_strategy
-from storage import atomic_json, fingerprint
-from r1_candidate_corpus import documents
+from verirag.experiments.exploratory_probe import build_pool, compare_target, run_probe, replay_probe
+from verirag.evaluation.evaluation_input import clean_evaluation_source
+from verirag.knowledge.exploratory_corpus import load_corpus
+from verirag.retrieval.formal_recall import select_strategy
+from verirag.infrastructure.storage import atomic_json, fingerprint
+from verirag.knowledge.r1_candidate_corpus import documents
 
 
 class SearchIndex:

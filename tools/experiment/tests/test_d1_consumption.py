@@ -1,8 +1,8 @@
 """自动标注消费层只识别可见改动，不把片段改动当作适用性证明。"""
 import unittest
 
-from d1_consumption import NO_CHANGE, candidate_context, mechanism_changed, pair_snippets, risk_bindings, soft_pairs
-from program_facts import extract_facts
+from verirag.retrieval.d1_consumption import NO_CHANGE, candidate_context, mechanism_changed, pair_snippets, risk_bindings, soft_pairs
+from verirag.analysis.program_facts import extract_facts
 
 
 class D1ConsumptionTest(unittest.TestCase):

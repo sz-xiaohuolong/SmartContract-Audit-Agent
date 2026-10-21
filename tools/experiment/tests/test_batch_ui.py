@@ -7,9 +7,9 @@ import time
 import unittest
 from pathlib import Path
 
-from local_ui import create_server
-from batch_compare import make_plan, prepare_batch
-from storage import encode
+from verirag.web.local_ui import create_server
+from verirag.experiments.batch_compare import make_plan, prepare_batch
+from verirag.infrastructure.storage import encode
 
 ROOT = Path(__file__).resolve().parents[3]
 

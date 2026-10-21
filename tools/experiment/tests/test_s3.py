@@ -6,8 +6,8 @@ import unittest
 from unittest import mock
 import subprocess
 from pathlib import Path
-from s3 import audit_lineage, score_sample, token_budget_select, validate_judgments, d2_baselines, validate_d2_challenges, d2_denominators
-from s3_pilot import strategies, run
+from verirag.experiments.s3 import audit_lineage, score_sample, token_budget_select, validate_judgments, d2_baselines, validate_d2_challenges, d2_denominators
+from verirag.experiments.s3_pilot import strategies, run
 
 H = lambda text: hashlib.sha256(text.encode()).hexdigest()
 
@@ -187,7 +187,7 @@ class S3Test(unittest.TestCase):
 
 
     def test_candidate_text_cannot_hide_target_or_locked_content(self):
-        from storage import decode
+        from verirag.infrastructure.storage import decode
         base=Path('tools/experiment/fixtures/research-pilot')
         ledger=decode((base/'ledger.json').read_bytes())
         plan=decode((base/'plan.json').read_bytes())
@@ -214,13 +214,13 @@ class S3Test(unittest.TestCase):
         self.assertIsNone(summary['falseAcceptRate'])
 
     def test_s2_timeout_is_recorded_as_failed_sample(self):
-        from storage import decode
+        from verirag.infrastructure.storage import decode
         base = Path('tools/experiment/fixtures/research-pilot')
         ledger = decode((base/'ledger.json').read_bytes())
         plan = decode((base/'plan.json').read_bytes())
         labels = decode((base/'judgments.json').read_bytes())
-        with mock.patch('s3_pilot.tokenizer_adapter', return_value=len), mock.patch(
-                's3_pilot.subprocess.run', side_effect=subprocess.TimeoutExpired('java', 30)):
+        with mock.patch('verirag.experiments.s3_pilot.tokenizer_adapter', return_value=len), mock.patch(
+                'verirag.experiments.s3_pilot.subprocess.run', side_effect=subprocess.TimeoutExpired('java', 30)):
             result = run(ledger, '.', plan, labels, base/'codepoint_tokenizer.py', 'missing.jar', 'missing.py')
         self.assertEqual(1, result['denominators']['failed'])
         self.assertEqual('FAILED', result['samples'][0]['status'])

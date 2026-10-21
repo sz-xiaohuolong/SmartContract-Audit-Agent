@@ -6,8 +6,8 @@ import threading
 import unittest
 from pathlib import Path
 
-from audit_workbench import AuditWorkbench
-from local_ui import create_server
+from verirag.audit.audit_workbench import AuditWorkbench
+from verirag.web.local_ui import create_server
 from test_audit_workbench import Runtime, SOURCE
 
 

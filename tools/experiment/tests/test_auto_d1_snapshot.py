@@ -4,9 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from auto_d1_snapshot import stage_auto_snapshot
-from recall import _recall_candidates
-from snapshots import activate_snapshot, verify_snapshot
+from verirag.knowledge.auto_d1_snapshot import stage_auto_snapshot
+from verirag.retrieval.recall import _recall_candidates
+from verirag.knowledge.snapshots import activate_snapshot, verify_snapshot
 
 
 class FakeIndex:

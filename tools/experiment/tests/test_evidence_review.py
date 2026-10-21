@@ -11,7 +11,7 @@ class EvidenceReviewTest(unittest.TestCase):
         self.bundle = self.fixture.load()
         self.hypothesis = {'contract': 'C', 'function': 'f()', 'riskOperation': 'WRITE', 'riskLine': 2,
                            'vulnerabilityType': 'ACCESS_CONTROL'}
-        from compiler_facts import source_span
+        from verirag.analysis.compiler_facts import source_span
         self.span = source_span(self.bundle['nodes'][21], self.bundle['units'])
         self.result = {'verdict': 'SUPPORTED', 'binding': {key: self.bundle[key] for key in
             ['sourceHash', 'environmentHash', 'receiptDigest']}, 'toolBinding': {'status': 'MATCH'},
@@ -24,7 +24,7 @@ class EvidenceReviewTest(unittest.TestCase):
                              'witness': {'location': {'resource': ['resource', 2, []]}}}}
 
     def review(self, result):
-        from evidence_review import review_evidence
+        from verirag.evaluation.evidence_review import review_evidence
         return review_evidence(self.hypothesis, result, self.bundle)
 
     def test_错源码字节与伪收据分项报告冲突(self):
@@ -53,7 +53,7 @@ class EvidenceReviewTest(unittest.TestCase):
         for key, value in [('function', 'notExisting()'), ('riskOperation', 'CALL'),
                            ('riskFactId', 'forged'), ('sourceFile', 'other.sol')]:
             with self.subTest(key=key):
-                from evidence_review import review_evidence
+                from verirag.evaluation.evidence_review import review_evidence
                 hypothesis = {**self.hypothesis, key: value}
                 report = review_evidence(hypothesis, self.result, self.bundle)
                 self.assertEqual('CONFLICT', report['checks'][2]['status'])

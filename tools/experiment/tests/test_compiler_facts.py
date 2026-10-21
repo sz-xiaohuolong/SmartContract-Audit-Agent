@@ -7,9 +7,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import subprocess
-import compiler_facts
+from verirag.analysis import compiler_facts
 
-from compiler_facts import CompilationBindingError, extract_compiler_facts, load_bound_compilation
+from verirag.analysis.compiler_facts import CompilationBindingError, extract_compiler_facts, load_bound_compilation
 
 
 def digest(data):

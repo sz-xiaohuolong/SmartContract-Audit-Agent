@@ -1,7 +1,7 @@
 """嵌入对照必须使用一致目标，并保留失败与共同有效分母。"""
 import copy
 import unittest
-from embedding_compare import compare_reports
+from verirag.evaluation.embedding_compare import compare_reports
 
 
 class EmbeddingCompareTest(unittest.TestCase):

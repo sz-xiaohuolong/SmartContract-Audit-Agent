@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from offline import digest
+from verirag.evaluation.offline import digest
 from test_isolation import sample
 
 CLI = Path(__file__).resolve().parents[1] / "s1b.py"
@@ -83,7 +83,7 @@ print(json.dumps(result))
         self.assertEqual(1, json.loads(resumed.stdout)["results"][0]["attempt"])
 
     def test_executor_uses_frozen_jar_and_config_bytes(self):
-        from java_adapter import JavaExecutor
+        from verirag.infrastructure.java_adapter import JavaExecutor
         from unittest.mock import patch
         self.java.write_text("#!" + sys.executable + "\n" + """import sys
 from pathlib import Path

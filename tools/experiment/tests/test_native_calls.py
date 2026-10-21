@@ -1,10 +1,10 @@
 """原生调用须在发现与访问控制核验中绑定同一事实；定位不代表证明。"""
 import unittest
 
-from access_call_proofs import _AccessCallGraph, prove_access_call
-from compiler_facts import extract_compiler_facts
-from risk_binding import bind_risks
-from risk_catalog import build_risk_catalog
+from verirag.analysis.access_call_proofs import _AccessCallGraph, prove_access_call
+from verirag.analysis.compiler_facts import extract_compiler_facts
+from verirag.analysis.risk_binding import bind_risks
+from verirag.analysis.risk_catalog import build_risk_catalog
 import test_compiled_d2 as fixtures
 
 

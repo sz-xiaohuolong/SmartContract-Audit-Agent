@@ -2,7 +2,7 @@
 import copy
 import unittest
 
-from storage import fingerprint
+from verirag.infrastructure.storage import fingerprint
 import test_access_call_proofs as access
 import test_reentrancy_proofs as reentry
 
@@ -54,7 +54,7 @@ class Phase5RetrievalTest(unittest.TestCase):
         return helper, helper.fixture.load()
 
     def build(self, bundle, mechanism='ACCESS_CONTROL', **options):
-        from phase5_retrieval import build_queries
+        from verirag.retrieval.phase5_retrieval import build_queries
         return build_queries(bundle, {'sourceHash': bundle['sourceHash'],
             'receiptDigest': bundle['receiptDigest'], 'mechanism': mechanism}, {**config(), **options})
 
@@ -72,7 +72,7 @@ class Phase5RetrievalTest(unittest.TestCase):
         self.assertIn('entry', row)
 
     def test_错编译身份伪造绑定和标签输入均拒绝(self):
-        from phase5_retrieval import build_queries
+        from verirag.retrieval.phase5_retrieval import build_queries
         _, bundle = self.access_bundle()
         binding = {'sourceHash': bundle['sourceHash'], 'receiptDigest': bundle['receiptDigest'], 'mechanism': 'ACCESS_CONTROL'}
         for extra in ({'groundTruth': True}, {'sampleId': 'safe'}, {'riskFactId': '伪造'}, {'receiptDigest': '错收据'}):
@@ -150,7 +150,7 @@ class Phase5RetrievalTest(unittest.TestCase):
         self.assertNotEqual(valid[0]['context'], valid[1]['context'])
 
     def test_查询写盘回读保持相同JSON字段类型(self):
-        from storage import decode, encode
+        from verirag.infrastructure.storage import decode, encode
         helper = reentry.ReentrancyProofTest(); helper.setUp()
         self.addCleanup(helper.doCleanups)
         helper.fixture.seal()
@@ -169,7 +169,7 @@ class Phase5RetrievalTest(unittest.TestCase):
         self.assertTrue(any(gap.get('entry', {}).get('signature') == 'unparsed()' for gap in result['entryGaps']))
 
     def test_固定干扰档位能分别重算两种排序(self):
-        from phase5_retrieval import score_pool, rank_pool
+        from verirag.retrieval.phase5_retrieval import score_pool, rank_pool
         q = query(); q['contrasts'] = q['contrasts'][:1]
         for level in (0, 1, 2, 4):
             rows = [evidence()[0]]
@@ -185,7 +185,7 @@ class Phase5RetrievalTest(unittest.TestCase):
             self.assertEqual(level + 1, len(margin['ranking']))
 
     def test_逐材料最大差值保留负值且不先求均值(self):
-        from phase5_retrieval import score_pool
+        from verirag.retrieval.phase5_retrieval import score_pool
         # 原查询与两条对照分别沿 x、y、负 y 轴，两份材料分别沿 x、y。
         result = score_pool(query(), evidence(), FixedEncoder([[1, 0], [0, 1], [0, -1], [1, 0], [0, 1]]), scoring_config())
         self.assertEqual('SCORED', result['status'])
@@ -195,7 +195,7 @@ class Phase5RetrievalTest(unittest.TestCase):
         self.assertIn('vectors', result)
 
     def test_异常向量和截断使整个比较单元失败(self):
-        from phase5_retrieval import score_pool
+        from verirag.retrieval.phase5_retrieval import score_pool
         for vector in ([0, 0], [float('nan'), 0], [1], [True, 0]):
             encoder = FixedEncoder([[1, 0], [0, 1], [0, -1], [1, 0], vector])
             result = score_pool(query(), evidence(), encoder, scoring_config())
@@ -209,7 +209,7 @@ class Phase5RetrievalTest(unittest.TestCase):
         self.assertEqual('FAILED', score_pool(query(), evidence(), truncated, scoring_config())['status'])
 
     def test_评分器身份漂移拒绝且无对照差值为空(self):
-        from phase5_retrieval import score_pool
+        from verirag.retrieval.phase5_retrieval import score_pool
         encoder = FixedEncoder([[1, 0]] * 5)
         encoder.identity = {**encoder.identity, 'revision': '漂移'}
         self.assertEqual('FAILED', score_pool(query(), evidence(), encoder, scoring_config())['status'])
@@ -219,11 +219,11 @@ class Phase5RetrievalTest(unittest.TestCase):
         self.assertIsNone(result['margin'])
 
     def scores(self):
-        from phase5_retrieval import score_pool
+        from verirag.retrieval.phase5_retrieval import score_pool
         return score_pool(query(), evidence(), FixedEncoder([[1, 0], [0, 1], [0, -1], [1, 0], [0, 1]]), scoring_config())
 
     def test_同池只换排序键且预算拒绝整对(self):
-        from phase5_retrieval import rank_pool
+        from verirag.retrieval.phase5_retrieval import rank_pool
         pool = {'evidence': evidence(), 'poolHash': fingerprint(evidence())}
         scores = self.scores()
         scores['scores'][0].update(originalScore=0.9, margin=-0.9)
@@ -238,7 +238,7 @@ class Phase5RetrievalTest(unittest.TestCase):
         self.assertEqual([], rank_pool(pool, scores, 'P5_MARGIN', {'maxPairs': 1, 'maxBytes': 1})['selectedPairs'])
 
     def test_同分按ID稳定且重复完整材料不挤占预算(self):
-        from phase5_retrieval import rank_pool
+        from verirag.retrieval.phase5_retrieval import rank_pool
         rows = evidence(); rows[1]['text'] = rows[0]['text']
         scores = self.scores(); scores['evidenceHash'] = fingerprint(rows)
         for row in scores['scores']:
@@ -248,7 +248,7 @@ class Phase5RetrievalTest(unittest.TestCase):
         self.assertEqual('DUPLICATE_MATERIAL', result['rejected'][0]['reason'])
 
     def test_错池和不完整评分不能继续排名(self):
-        from phase5_retrieval import rank_pool
+        from verirag.retrieval.phase5_retrieval import rank_pool
         for change in ('hash', 'missing'):
             scores = self.scores()
             if change == 'hash': scores['evidenceHash'] = '错池'
@@ -258,7 +258,7 @@ class Phase5RetrievalTest(unittest.TestCase):
                           'P5_MARGIN', {'maxPairs': 2, 'maxBytes': 4096})
 
     def test_机制和资源冲突在两种排序共同过滤(self):
-        from phase5_retrieval import score_pool, rank_pool
+        from verirag.retrieval.phase5_retrieval import score_pool, rank_pool
         rows = evidence(); rows[0]['mechanism'] = 'ACCESS_CONTROL'
         rows[1]['background']['resourceKey'] = 'tx.origin'
         scores = score_pool(query(), rows, FixedEncoder([[1, 0]] * 5), scoring_config())
@@ -271,7 +271,7 @@ class Phase5RetrievalTest(unittest.TestCase):
     def test_冻结池核对快照文本且拒绝半对与重复候选(self):
         from tempfile import TemporaryDirectory
         from test_r3_retrieval import R3RetrievalTest
-        from phase5_retrieval import freeze_pool
+        from verirag.retrieval.phase5_retrieval import freeze_pool
         with TemporaryDirectory() as directory:
             runtime, target = R3RetrievalTest().setup_runtime(directory)
             view = runtime.r3.select(runtime.preview(target), 'R3_FUSION', allow_unreviewed=True)

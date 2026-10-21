@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 
 import test_compiler_facts as fixtures
-from compiled_d2 import evaluate_compiled
+from verirag.analysis.compiled_d2 import evaluate_compiled
 
 
 class D2ResolutionTest(unittest.TestCase):
@@ -22,7 +22,7 @@ class D2ResolutionTest(unittest.TestCase):
                                  [self.tool] if tools is None else tools, root=self.fixture.root)
 
     def test_完整权限闭包与独立双收据匹配才反驳(self):
-        with patch('bound_slither.verify_bound_tool', return_value={'status': 'MATCH'}):
+        with patch('verirag.analysis.bound_slither.verify_bound_tool', return_value={'status': 'MATCH'}):
             result = self.evaluate()
         self.assertEqual('PROVED', result['candidateProof']['status'])
         self.assertEqual('REFUTED', result['verdict'])
@@ -31,7 +31,7 @@ class D2ResolutionTest(unittest.TestCase):
         self.assertTrue(result['proofScope']['complete'])
 
     def test_缺少工具或双收据不匹配不能继承安全(self):
-        with patch('bound_slither.verify_bound_tool', return_value={'status': 'UNKNOWN'}):
+        with patch('verirag.analysis.bound_slither.verify_bound_tool', return_value={'status': 'UNKNOWN'}):
             result = self.evaluate()
         self.assertEqual('UNKNOWN', result['verdict'])
         self.assertEqual('UNKNOWN', self.evaluate([])['verdict'])
@@ -40,7 +40,7 @@ class D2ResolutionTest(unittest.TestCase):
         self.fixture.function()['body']['statements'].reverse()
         self.fixture.seal()
         self.tool['sourceHash'] = self.fixture.manifest['expectedSourceHash']
-        with patch('bound_slither.verify_bound_tool', return_value={'status': 'MATCH'}):
+        with patch('verirag.analysis.bound_slither.verify_bound_tool', return_value={'status': 'MATCH'}):
             result = self.evaluate()
         self.assertEqual('UNKNOWN', result['verdict'])
 
@@ -56,7 +56,7 @@ class D2ResolutionTest(unittest.TestCase):
         self.assertEqual('UNKNOWN', result['verdict'])
 
     def test_旧AST构造与fallback依编译属性区分(self):
-        from compiler_facts import _function_kind, _signature
+        from verirag.analysis.compiler_facts import _function_kind, _signature
         constructor = {'nodeType': 'FunctionDefinition', 'name': 'C', 'isConstructor': True,
                        'parameters': {'parameters': []}}
         fallback = {'nodeType': 'FunctionDefinition', 'name': '', 'isConstructor': False,
@@ -66,7 +66,7 @@ class D2ResolutionTest(unittest.TestCase):
         self.assertEqual('fallback()', _signature(fallback, {}))
 
     def test_未获得独立匹配收据的工具不能补正裁决佐证(self):
-        from compiled_d2 import _corroboration
+        from verirag.analysis.compiled_d2 import _corroboration
         bundle = self.fixture.load()
         fake = {**self.tool, 'sourceFile': 'wrong.sol', 'targetContract': 'Other',
                 'issues': [{'check': 'protected-vars'}]}

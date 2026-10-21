@@ -5,8 +5,8 @@ import threading
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from local_ui import create_server, pending_knowledge_status
-from storage import fingerprint
+from verirag.web.local_ui import create_server, pending_knowledge_status
+from verirag.infrastructure.storage import fingerprint
 
 ROOT = Path(__file__).resolve().parents[3]
 

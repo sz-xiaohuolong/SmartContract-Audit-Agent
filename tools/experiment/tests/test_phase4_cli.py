@@ -9,9 +9,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from r3_cli import DEFAULT_TARGETS, main
-from r3_protocol import condition_target, condition_view
-from storage import atomic_json, fingerprint
+from verirag.experiments.r3_cli import DEFAULT_TARGETS, main
+from verirag.experiments.r3_protocol import condition_target, condition_view
+from verirag.infrastructure.storage import atomic_json, fingerprint
 
 
 class Phase4CliTest(unittest.TestCase):
@@ -60,10 +60,10 @@ class Phase4CliTest(unittest.TestCase):
             runtime.run = run
             args = ['r3_cli', '--phase4', '--execute', '--allow-unreviewed', '--sample-ids', target['sampleId'],
                     '--batch-id', '1' * 32, '--preflight-output', 'preflight.json']
-            with patch('r3_cli.Path.cwd', return_value=root), patch('r3_cli.prepare_runtime', return_value=([target], runtime)), \
-                 patch('r3_cli._configuration', return_value={}), patch('r3_cli._code_identity', return_value={'artifactHash': 'a' * 64}), \
-                 patch('r3_cli.prepare_model_context'), patch('r3_cli.model_runner', side_effect=model), \
-                 patch('r3_cli.verify_snapshot', return_value=snapshot), patch('sys.argv', args), \
+            with patch('verirag.experiments.r3_cli.Path.cwd', return_value=root), patch('verirag.experiments.r3_cli.prepare_runtime', return_value=([target], runtime)), \
+                 patch('verirag.experiments.r3_cli._configuration', return_value={}), patch('verirag.experiments.r3_cli._code_identity', return_value={'artifactHash': 'a' * 64}), \
+                 patch('verirag.experiments.r3_cli.prepare_model_context'), patch('verirag.experiments.r3_cli.model_runner', side_effect=model), \
+                 patch('verirag.experiments.r3_cli.verify_snapshot', return_value=snapshot), patch('sys.argv', args), \
                  contextlib.redirect_stdout(io.StringIO()):
                 main()
             batch = root / 'research-artifacts/runs/benchmarks' / ('1' * 32)

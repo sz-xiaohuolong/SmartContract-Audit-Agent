@@ -190,20 +190,28 @@ Python 目标显式设置 `factGuidanceEnabled=true` 时，请求前重建并核
 
 2026-10-20 的实际端点选择、构建身份和用量由[复现附录](releases/R2-20261010/attachments/OPERATIONS_AND_REPRODUCIBILITY.md#phase-3-与-phase-4-的运行身份)及原报告维护。五条件、四条件和候选四臂回答不同问题，其成绩分开见[实验总览](releases/R2-20261010/attachments/EXPERIMENT_DASHBOARD.md)。
 
+## Python 工程结构
+
+实验引擎位于 `tools/experiment/verirag/`，76 个实现模块按 `audit`（审计编排）、`analysis`（源码分析与证明）、`retrieval`（检索）、`knowledge`（知识与快照）、`experiments`（实验运行）、`evaluation`（评价与重放）、`infrastructure`（存储及外部适配）、`web`（HTTP 服务）组织。各包显式导入实际模块；库模块导入不会启动实验或服务。详细目录职责与运行方式见[工具说明](../../tools/experiment/README.md#python-代码放在哪里)。
+
+37 个旧脚本保留为调用 `main()` 的薄入口；业务实现只有一份。网页、测试夹具和模型清单保持原位置，由 [paths.py](../../tools/experiment/verirag/infrastructure/paths.py) 统一定位。Slither 工作进程通过 `-m verirag.analysis.bound_slither` 启动，并显式传入包搜索路径，工作目录独立于代码目录。
+
+Java 执行适配器与候选重放的源码身份同时扫描根脚本和包内实现，排除测试与夹具；嵌套实现变化会使身份变化。迁移后的新运行不能混入旧实验，历史原件仍按原身份保存。该整理已通过离线测试、跨目录入口与 Java 接缝验证，结果与限制见[统一验收](releases/phase5-20261021/VERIFICATION.md#python-工程规范化2026-10-21)。
+
 ## 从机制找到源码
 
 下表用于理解职责，完整命令仍由工具说明维护。
 
 | 机制 | 主要源码入口 | 读代码时关注什么 |
 |---|---|---|
-| 工作台编排 | [audit_workbench.py](../../tools/experiment/audit_workbench.py)、[local_ui.py](../../tools/experiment/local_ui.py) | 预览、计划、运行与报告怎样衔接 |
+| 工作台编排 | [audit_workbench.py](../../tools/experiment/verirag/audit/audit_workbench.py)、[local_ui.py](../../tools/experiment/verirag/web/local_ui.py) | 预览、计划、运行与报告怎样衔接 |
 | 模型协议 | [HypothesisService.java](../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java)、[HypothesisCli.java](../../audit-mvp/src/main/java/com/xhl/audit/cli/HypothesisCli.java) | 请求实际消费的资料与输出校验 |
-| 配对与研究检索 | [d1_consumption.py](../../tools/experiment/d1_consumption.py)、[r3_retrieval.py](../../tools/experiment/r3_retrieval.py) | 默认配对与研究多路召回的区别 |
-| 编译和权限事实 | [compiler_facts.py](../../tools/experiment/compiler_facts.py)、[focus_context.py](../../tools/experiment/focus_context.py) | 原字节位置、依赖和事实关系 |
-| 候选定位 | [risk_binding.py](../../tools/experiment/risk_binding.py) | 同一入口、同一操作是否唯一对应 |
-| 路径与保护证明 | [compiled_d2.py](../../tools/experiment/compiled_d2.py)、[candidate_proofs.py](../../tools/experiment/candidate_proofs.py)、[d2_verify.py](../../tools/experiment/d2_verify.py) | 资源、状态与相关入口是否完整 |
-| 有限执行 | [evm_witness.py](../../tools/experiment/evm_witness.py) | 固定初态、正常提交、失败原因与重放 |
-| 比较和研究审核 | [r3_protocol.py](../../tools/experiment/r3_protocol.py)、[four_arm_report.py](../../tools/experiment/four_arm_report.py)、[real_fix_check.py](../../tools/experiment/real_fix_check.py) | 条件隔离、候选分母、真实修复配对 |
+| 配对与研究检索 | [d1_consumption.py](../../tools/experiment/verirag/retrieval/d1_consumption.py)、[r3_retrieval.py](../../tools/experiment/verirag/retrieval/r3_retrieval.py) | 默认配对与研究多路召回的区别 |
+| 编译和权限事实 | [compiler_facts.py](../../tools/experiment/verirag/analysis/compiler_facts.py)、[focus_context.py](../../tools/experiment/verirag/analysis/focus_context.py) | 原字节位置、依赖和事实关系 |
+| 候选定位 | [risk_binding.py](../../tools/experiment/verirag/analysis/risk_binding.py) | 同一入口、同一操作是否唯一对应 |
+| 路径与保护证明 | [compiled_d2.py](../../tools/experiment/verirag/analysis/compiled_d2.py)、[candidate_proofs.py](../../tools/experiment/verirag/analysis/candidate_proofs.py)、[d2_verify.py](../../tools/experiment/verirag/analysis/d2_verify.py) | 资源、状态与相关入口是否完整 |
+| 有限执行 | [evm_witness.py](../../tools/experiment/verirag/analysis/evm_witness.py) | 固定初态、正常提交、失败原因与重放 |
+| 比较和研究审核 | [r3_protocol.py](../../tools/experiment/verirag/experiments/r3_protocol.py)、[four_arm_report.py](../../tools/experiment/verirag/evaluation/four_arm_report.py)、[real_fix_check.py](../../tools/experiment/verirag/evaluation/real_fix_check.py) | 条件隔离、候选分母、真实修复配对 |
 
 ## 数据位置与恢复
 

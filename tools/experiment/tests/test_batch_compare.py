@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from batch_compare import make_plan, run_batch, replay_batch
-from storage import encode
+from verirag.experiments.batch_compare import make_plan, run_batch, replay_batch
+from verirag.infrastructure.storage import encode
 
 
 class BatchCompareTest(unittest.TestCase):

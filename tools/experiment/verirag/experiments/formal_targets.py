@@ -1,0 +1,121 @@
+"""仅允许固定开发样本进入正式知识快照的本机工程试跑。"""
+import hashlib
+from pathlib import Path
+
+from verirag.knowledge.first_batch import prepare
+from verirag.evaluation.evaluation_input import clean_evaluation_source
+from verirag.analysis.program_facts import _tokens
+from verirag.experiments.s3 import audit_lineage
+from verirag.infrastructure.storage import decode, fingerprint
+
+
+INTAKE = Path('data/audit/r1/first-batch/first-batch-intake.json')
+ASSIGNMENT = Path('data/audit/r1/first-batch/first-batch-assignment.json')
+FORMAL_LEDGER = Path('research-artifacts/inputs/knowledge-v1/ledger.json')
+FORMAL_V2_LEDGER = Path('research-artifacts/inputs/formal-v2/formal-v2/ledger.json')
+SOURCE_DIR = 'research-artifacts/inputs/first-batch/sources'
+DEVELOPMENT_IDS = frozenset({'AC-ASE-006', 'AC-ASE-009', 'RE-SCRUBD-001', 'RE-SCRUBD-002'})
+FUNCTION_SCOPE = {'RE-SCRUBD-001': 'matchOrderWithReserve',
+                  'AC-ASE-040': 'mintYieldFee', 'RE-JPEGD-001': 'deposit',
+                  'RE-INFINITY-001': 'matchOneToManyOrders'}
+MAX_MODEL_SOURCE_BYTES = 6000
+
+
+def _function_range(source, name):
+    tokens, pairs = _tokens(source)
+    matches = []
+    for index, token in enumerate(tokens[:-1]):
+        if token[0] != 'function' or tokens[index + 1][0] != name:
+            continue
+        opening = next((at for at in range(index + 2, len(tokens)) if tokens[at][0] in ('{', ';')), None)
+        if opening is None or tokens[opening][0] != '{':
+            raise ValueError('工程目标函数没有可核对的函数体')
+        matches.append((token[2], tokens[pairs[opening]][2]))
+    if len(matches) != 1:
+        raise ValueError('工程目标函数不存在或定位不唯一')
+    start, end = matches[0]
+    lines = source.splitlines()
+    return start, end, '\n'.join(lines[start - 1:end])
+
+
+def _records(root):
+    root = Path(root)
+    intake = decode((root / INTAKE).read_bytes())
+    assignment = decode((root / ASSIGNMENT).read_bytes())
+    ledger, old_audit = prepare(intake, assignment, root, SOURCE_DIR)
+    if not old_audit['ok']:
+        raise ValueError('原开发清单存在谱系隔离错误')
+    formal_path = FORMAL_V2_LEDGER if (root / FORMAL_V2_LEDGER).is_file() else FORMAL_LEDGER
+    formal = decode((root / formal_path).read_bytes())
+    targets = [row for row in ledger['samples'] if row['split'] == 'development']
+    if {row['id'] for row in targets} != DEVELOPMENT_IDS:
+        raise ValueError('已登记开发目标与固定范围不一致')
+    target_sources = {row['sourceId'] for row in targets}
+    formal_ids = {row['id'] for row in formal['samples']}
+    if DEVELOPMENT_IDS & formal_ids:
+        raise ValueError('工程开发目标已进入正式知识或验证清单')
+    combined = {'schemaVersion': '1', 'sources': formal['sources'] +
+                [row for row in ledger['sources'] if row['id'] in target_sources],
+                'samples': formal['samples'] + targets,
+                'edges': [edge for edge in ledger['edges'] if edge['left'] in DEVELOPMENT_IDS and edge['right'] in DEVELOPMENT_IDS]}
+    audit = audit_lineage(combined, root)
+    if not audit['ok']:
+        raise ValueError('开发目标与正式知识库同组或存在跨划分隔离错误')
+    cases = {row['id']: row for row in intake['cases']}
+    result = []
+    runnable_rows = targets + ([row for row in formal['samples'] if row['split'] == 'validation']
+                               if formal_path == FORMAL_V2_LEDGER else [])
+    for row in sorted(runnable_rows, key=lambda value: value['id']):
+        original = (root / row['path']).read_bytes().decode('utf-8')
+        governed = clean_evaluation_source(original)
+        source = governed['fullSource']
+        name = row.get('evaluationFunction') if row['split'] == 'validation' else FUNCTION_SCOPE.get(row['id'])
+        if row['split'] == 'validation' and name is None:
+            name = FUNCTION_SCOPE.get(row['id'])
+        if row['split'] == 'validation' and not name:
+            raise ValueError('验证目标缺少固定函数范围')
+        if name:
+            start, end, model_source = _function_range(source, name)
+            scope = 'FUNCTION'
+        else:
+            start, end, model_source = 1, len(source.splitlines()), source
+            scope = 'FULL'
+        size = len(model_source.encode('utf-8'))
+        model_hash = hashlib.sha256(model_source.encode('utf-8')).hexdigest()
+        governed['inputGovernanceReceipt'].update(taskKind='CLAIM_VALIDATION', scope=scope,
+            lineStart=start, lineEnd=end, modelSourceHash=model_hash)
+        result.append({**governed, 'sampleId': row['id'], 'split': row['split'], 'scope': scope,
+                       'sourceKind': 'FORMAL',
+                       'taskKind': 'CLAIM_VALIDATION', 'claimOrigin': 'REGISTERED_FUNCTION_SCOPE',
+                       'function': name or cases[row['id']]['function'],
+                       'mechanism': row['vulnerabilityType'] if row['split'] == 'validation' else
+                       ('REENTRANCY' if cases[row['id']]['direction'] == '重入' else 'ACCESS_CONTROL'),
+                       'runnable': size <= MAX_MODEL_SOURCE_BYTES,
+                       'reason': None if size <= MAX_MODEL_SOURCE_BYTES else '超过首版单次提示上限',
+                       'lineStart': start, 'lineEnd': end,
+                       'modelSource': model_source, 'modelSourceHash': model_hash,
+                       'assignmentHash': fingerprint(assignment),
+                       'formalLedgerHash': fingerprint(formal), 'groupId': audit['groupIds'][row['id']],
+                       'projectId': row['projectId'], 'eventId': row['eventId'],
+                       'researchEligible': False})
+    return result
+
+
+def list_targets(root):
+    return [{key: value for key, value in row.items() if key not in ('source', 'fullSource', 'modelSource', 'originalSource')}
+            for row in _records(root)]
+
+
+def load_target(root, sample_id):
+    allowed = set(DEVELOPMENT_IDS)
+    if (Path(root) / FORMAL_V2_LEDGER).is_file():
+        formal = decode((Path(root) / FORMAL_V2_LEDGER).read_bytes())
+        allowed.update(row['id'] for row in formal['samples'] if row['split'] == 'validation')
+    if sample_id not in allowed:
+        raise ValueError('目标未登记为工程开发或验证样本')
+    row = next((item for item in _records(root) if item['sampleId'] == sample_id), None)
+    if row is None:
+        raise ValueError('目标未登记为工程开发或验证样本')
+    if not row['runnable']:
+        raise ValueError(row['reason'])
+    return row

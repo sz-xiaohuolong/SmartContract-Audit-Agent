@@ -11,6 +11,33 @@
 
 旧应用的数据生成脚本 `scripts/build_smartbugs_kb.py`、`scripts/flatten_oz.py`、`scripts/setup_pilot_data_local.py` 已退役。它们面向已移除的 `src/main/resources/` 布局，源码可从清理前提交 `f81aaa8` 取回。当前工具直接读取[数据入口](../../data/README.md)登记的原始数据与固定输入；既有 OpenZeppelin 展平文件和历史标签继续保留，不重新生成。
 
+## Python 代码放在哪里
+
+76 个实验实现模块已按职责移入 `verirag/`；根目录的 37 个 `.py` 命令只负责转交 `main()`，原参数和退出方式继续使用。例如，原来的 `python3 tools/experiment/local_ui.py --port 8765` 仍可启动工作台。前端、测试夹具、依赖锁与模型清单仍在原位置。
+
+| 包目录 | 负责的工作 |
+|---|---|
+| `verirag/audit/` | 单样本审计、候选核验编排与工作台业务 |
+| `verirag/analysis/` | 编译事实、候选定位、权限与重入证明、有限执行 |
+| `verirag/retrieval/` | 检索、案例配对与对照排序 |
+| `verirag/knowledge/` | 知识准入、语料、嵌入与快照 |
+| `verirag/experiments/` | 批量实验、条件冻结与运行入口 |
+| `verirag/evaluation/` | 指标、报告、研究审核与保存结果重放 |
+| `verirag/infrastructure/` | 存储、资源定位、Java／工具子进程与外部服务适配 |
+| `verirag/web/` | 本机 HTTP 服务；网页文件仍在 `local_ui/` |
+
+修改实现时，使用明确的包导入，例如 `from verirag.analysis.program_facts import extract_facts`；旧脚本只保留命令兼容，不再导出库函数。模块方式也可运行：
+
+```bash
+PYTHONPATH=tools/experiment python3 -m verirag.web.local_ui --help
+PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v
+PYTHONPATH=tools/proposal_workflow python3 -m unittest discover -s tools/proposal_workflow/tests -v
+```
+
+以上命令从仓库根目录运行。从其他目录执行时，脚本路径或 `PYTHONPATH` 应使用绝对路径，数据参数按相应命令契约填写。`infrastructure/paths.py` 统一定位代码与资源；源码身份覆盖兼容入口和包内实现，因此本次迁移会改变新运行的身份，不能续写依赖旧源码身份的实验。历史计划、候选和收据保留原字节，继续走既有只读报告或另存重放入口。
+
+`tools/proposal_workflow/` 是独立的开题材料辅助工具，保留原有两个模块及自己的测试；不依赖实验引擎，也不机械增加分层。验证结果见[Python 整理验收](../../docs/vibe/releases/phase5-20261021/VERIFICATION.md#python-工程规范化2026-10-21)。
+
 ## 历史复现：phase 2 的五阶段核验
 
 本节对应 [2026-10-13 离线报告](../../docs/vibe/releases/R2-20261010/experiments/2026-10-13_STAGE1_5_OFFLINE_REPORT.md)中的五个实施步骤，和目前的 phase 5 是不同划分；报告保留当时数字与未达事项。历史原件须按 [原件说明](../../research-artifacts/README.md) 恢复；Git 不包含全部原始响应、固定编译器和收据，单独克隆仓库不足以复现历史实验。

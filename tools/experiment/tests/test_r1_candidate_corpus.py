@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from r1_candidate_corpus import documents, select_forge, upload_candidates
+from verirag.knowledge.r1_candidate_corpus import documents, select_forge, upload_candidates
 
 
 class FakeIndex:

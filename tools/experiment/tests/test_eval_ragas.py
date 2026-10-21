@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from storage import fingerprint
-from eval_ragas import normalize_row, rank_metrics, evaluate_offline, qrels_template, seal, validate_dataset, prepare_dataset
+from verirag.infrastructure.storage import fingerprint
+from verirag.evaluation.eval_ragas import normalize_row, rank_metrics, evaluate_offline, qrels_template, seal, validate_dataset, prepare_dataset
 
 
 def sample(strategy='D1'):
@@ -138,7 +138,7 @@ class RagasEvaluationTest(unittest.TestCase):
         with self.assertRaises(ValueError): validate_dataset(dataset(rows))
 
     def test_真实批次入口读取gzip原件且保留未完成单元(self):
-        from benchmark_batch import make_plan, prepare_batch, run_batch
+        from verirag.experiments.benchmark_batch import make_plan, prepare_batch, run_batch
         raw = sample()
         with tempfile.TemporaryDirectory() as temp:
             targets = [{'sampleId': 'target', 'sourceHash': raw['sourceHash'], 'runnable': True,

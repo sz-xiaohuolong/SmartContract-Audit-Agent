@@ -1,8 +1,8 @@
 """访问控制终止调用的有限证明；合成 AST 只验证离线适配契约。"""
 import unittest
 
-from access_call_proofs import _AccessCallGraph, prove_access_call
-from compiler_facts import extract_compiler_facts
+from verirag.analysis.access_call_proofs import _AccessCallGraph, prove_access_call
+from verirag.analysis.compiler_facts import extract_compiler_facts
 import test_compiled_d2 as compiled
 
 

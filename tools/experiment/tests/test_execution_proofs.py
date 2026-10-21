@@ -3,8 +3,8 @@ import copy
 import unittest
 from unittest.mock import patch
 
-import compiled_d2
-from d2_verify import OBLIGATIONS
+from verirag.analysis import compiled_d2
+from verirag.analysis.d2_verify import OBLIGATIONS
 
 
 class ExecutionProofTest(unittest.TestCase):
@@ -30,7 +30,7 @@ class ExecutionProofTest(unittest.TestCase):
                 'authorityConsumers': [{'entry': 'withdraw()'}]}}
 
     def augment(self, receipt=None, binding=None):
-        with patch('evm_witness.execute_bound_witness', return_value=receipt or self.receipt):
+        with patch('verirag.analysis.evm_witness.execute_bound_witness', return_value=receipt or self.receipt):
             # 返回证明必须由本机执行接口产生，不能读取模型填写的“成功”字段。
             return compiled_d2._execution_proof(copy.deepcopy(self.proof), self.hypothesis,
                 {}, None, {'span': self.span}, binding or self.binding, '.')

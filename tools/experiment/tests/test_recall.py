@@ -3,9 +3,9 @@ import tempfile
 import unittest
 from pathlib import Path
 from test_isolation import manifest
-from snapshots import build_snapshot
-from storage import fingerprint
-from recall import _recall_candidates, recall_pool
+from verirag.knowledge.snapshots import build_snapshot
+from verirag.infrastructure.storage import fingerprint
+from verirag.retrieval.recall import _recall_candidates, recall_pool
 
 
 class RecallTest(unittest.TestCase):

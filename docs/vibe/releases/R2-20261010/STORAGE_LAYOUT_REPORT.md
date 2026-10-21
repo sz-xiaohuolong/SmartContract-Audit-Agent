@@ -37,7 +37,7 @@
 
 `.local` 主要占用为 Python 嵌入环境约 877 MiB、Milvus 约 233 MiB、BGE 模型约 128 MiB、Solidity 环境约 101 MiB。本轮保留可用运行环境，仅减少重复存储与归档编码。
 
-详细分类及恢复见[研究原件入口](../../../../research-artifacts/README.md)，全部映射见[目录映射](../../../../tools/experiment/artifact_layout.py)。迁移使用原地重命名，旧路径保留相对兼容链接，定位同一份原件；新写入默认使用规范目录。EVM 历史入口预留到规范收据目录，已有未提交实现未来写入也会落入该目录。
+详细分类及恢复见[研究原件入口](../../../../research-artifacts/README.md)，全部映射见[目录映射](../../../../tools/experiment/verirag/infrastructure/artifact_layout.py)。迁移使用原地重命名，旧路径保留相对兼容链接，定位同一份原件；新写入默认使用规范目录。EVM 历史入口预留到规范收据目录，已有未提交实现未来写入也会落入该目录。
 
 ## 论文开源工程参考
 

@@ -7,13 +7,13 @@ import unittest
 from decimal import Decimal
 from pathlib import Path
 
-from d1_kb import stage_snapshot
-from d1_embed import candidate_vectors, load_local_encoder, verify_model_dir
-from d1_admission import admit_candidates
-from d1_model import MIRROR, fetch_model
-from d1_embed import MODEL, REVISION, DIMENSION
-from snapshots import verify_snapshot
-from storage import fingerprint
+from verirag.knowledge.d1_kb import stage_snapshot
+from verirag.knowledge.d1_embed import candidate_vectors, load_local_encoder, verify_model_dir
+from verirag.knowledge.d1_admission import admit_candidates
+from verirag.knowledge.d1_model import MIRROR, fetch_model
+from verirag.knowledge.d1_embed import MODEL, REVISION, DIMENSION
+from verirag.knowledge.snapshots import verify_snapshot
+from verirag.infrastructure.storage import fingerprint
 
 
 def digest(data):
@@ -248,7 +248,7 @@ class D1KnowledgeTest(unittest.TestCase):
             admit_candidates(self.ledger, decision, self.root)
 
     def test_merge_admitted_rejects_same_project_across_knowledge_and_validation(self):
-        from d1_admission import merge_admitted
+        from verirag.knowledge.d1_admission import merge_admitted
         extension = copy.deepcopy(self.ledger)
         extension['sources'][0]['id'] = 'other-source'
         extension['samples'][0].update(id='other', sourceId='other-source', split='validation')

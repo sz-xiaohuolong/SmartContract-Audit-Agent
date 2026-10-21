@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from storage import encode, fingerprint, read_artifact
-from research_review import (review_batch, resolve_candidate, write_review,
+from verirag.infrastructure.storage import encode, fingerprint, read_artifact
+from verirag.evaluation.research_review import (review_batch, resolve_candidate, write_review,
                              inventory_sources, split_audit, sha, benchmark_provenance)
 
 
@@ -162,7 +162,7 @@ class ResearchReviewTest(unittest.TestCase):
         self.assertIsNone(event['independentReview']['candidateTruth'])
 
     def test_来源定位不以当前输入替换冻结输入且OZ保留同一上游(self):
-        from exploratory_targets import _sample_id
+        from verirag.experiments.exploratory_targets import _sample_id
         dataset = self.root / 'smartbugs-curated'
         (dataset / 'dataset/reentrancy').mkdir(parents=True)
         (dataset / 'dataset/reentrancy/C.sol').write_text(self.source)

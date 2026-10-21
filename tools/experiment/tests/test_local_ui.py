@@ -8,8 +8,8 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from local_ui import create_server
-import local_ui
+from verirag.web.local_ui import create_server
+from verirag.web import local_ui
 from dataset_fixture import smartbugs_fixture
 
 
@@ -19,7 +19,7 @@ DEMO = json.loads((ROOT / 'tools/experiment/fixtures/research-pilot/pilot.json')
 
 class WorkspaceCaseTest(unittest.TestCase):
     def test_离线演练导出保留实际多合约编译清单且不修改目标(self):
-        from audit_target import pasted_target
+        from verirag.audit.audit_target import pasted_target
         target = pasted_target('contract C { uint x; function f() public { x = 1; } }', 'ACCESS_CONTROL')
         target['savedHypotheses'] = [{'contract': 'C', 'function': 'f()', 'riskLine': 1}]
         original = deepcopy(target)
@@ -38,7 +38,7 @@ class WorkspaceCaseTest(unittest.TestCase):
         self.assertEqual(0, exported['newModelRequests'])
 
     def test_公开案例的登记候选不读取真值行(self):
-        from benchmark_targets import load_benchmark_targets
+        from verirag.experiments.benchmark_targets import load_benchmark_targets
         with TemporaryDirectory() as directory:
             root = Path(directory)
             smartbugs_fixture(root / 'smartbugs-curated',
@@ -66,7 +66,7 @@ class WorkspaceCaseTest(unittest.TestCase):
                          [row['savedHypotheses'][0]['function'] for row in cases])
 
     def test_离线演练保留核验矩阵且不能升级为学术安全结论(self):
-        from audit_target import pasted_target
+        from verirag.audit.audit_target import pasted_target
         target = pasted_target('contract C { uint x; function f() public { x = 1; } }', 'ACCESS_CONTROL')
         target.update(savedHypotheses=[{'contract': 'C', 'function': 'f()', 'riskLine': 1}],
                       caseLabel='公开案例的登记候选', claimOrigin='REGISTERED_DEFENSIVE_DEMONSTRATION')
@@ -89,7 +89,7 @@ class WorkspaceCaseTest(unittest.TestCase):
         self.assertEqual(1, len(calls))
 
     def test_离线演练工具失败仍未知(self):
-        from audit_target import pasted_target
+        from verirag.audit.audit_target import pasted_target
         target = pasted_target('contract C { uint x; function f() public { x = 1; } }', 'ACCESS_CONTROL')
         target['savedHypotheses'] = [{'contract': 'C', 'function': 'f()', 'riskLine': 1}]
         def analyze(*args):
@@ -101,7 +101,7 @@ class WorkspaceCaseTest(unittest.TestCase):
         self.assertEqual('UNRESOLVED', result['conclusion'])
 
     def test_显式演练接口只接受登记候选且读取不执行工具(self):
-        from audit_target import pasted_target
+        from verirag.audit.audit_target import pasted_target
         target = pasted_target('contract C { uint x; function f() public { x = 1; } }', 'ACCESS_CONTROL')
         target.update(sampleId='academic-ac', savedHypotheses=[{'contract': 'C', 'function': 'f()', 'riskLine': 1}])
         calls = []

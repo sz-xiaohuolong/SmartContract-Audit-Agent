@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from benchmark_batch import make_plan, replay_batch, run_batch
-from benchmark_report import render_report, summarize_d2
+from verirag.experiments.benchmark_batch import make_plan, replay_batch, run_batch
+from verirag.evaluation.benchmark_report import render_report, summarize_d2
 
 
 class BenchmarkReportTest(unittest.TestCase):

@@ -85,19 +85,19 @@ Gemini 给出的函数调用前后余额断言，也不足以证明外部调用�
 
 ### 5.1 D1 已经有差异提取，缺的是审核与表达实验
 
-D1 是向模型提供漏洞与修复对照的检索环节。[d1_consumption.py](../../../../tools/experiment/d1_consumption.py) 的 `pair_snippets()` 已有局部标识符归一化，并围绕机制事件的差异截取窗口，半径依次尝试 1、0。它还保留位置与未审核提示；并非 Gemini 描述的固定前后各两行。
+D1 是向模型提供漏洞与修复对照的检索环节。[d1_consumption.py](../../../../tools/experiment/verirag/retrieval/d1_consumption.py) 的 `pair_snippets()` 已有局部标识符归一化，并围绕机制事件的差异截取窗口，半径依次尝试 1、0。它还保留位置与未审核提示；并非 Gemini 描述的固定前后各两行。
 
 Java 的 [D1Retriever.java](../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/D1Retriever.java) 在审核模式下已有条件绑定、完整配对、去重与预算处理，自动模式另走 `AutomaticContrast`。因此不必推倒 D1；更合适的是为经过审核的案例增加独立、版本化的知识描述，与原代码对做同案例比较。
 
-当前 300 组／600 条自动快照不等于 300 组经过审核的真实安全修复。[check_templates.py](../../../../tools/experiment/check_templates.py) 已有 10 条来源检查模板，但来源身份核对 10／10、独立语义审核 0；呈现回执仍为 `consumedByModel=False`、适用性未知。可以复用这些登记与绑定设施，不能据此宣布模型已消费知识或知识已正确。
+当前 300 组／600 条自动快照不等于 300 组经过审核的真实安全修复。[check_templates.py](../../../../tools/experiment/verirag/retrieval/check_templates.py) 已有 10 条来源检查模板，但来源身份核对 10／10、独立语义审核 0；呈现回执仍为 `consumedByModel=False`、适用性未知。可以复用这些登记与绑定设施，不能据此宣布模型已消费知识或知识已正确。
 
 ### 5.2 检索要先扩展候选来源，再研究融合
 
-[recall.py](../../../../tools/experiment/recall.py) 已结合向量候选、Jaccard 词法分数和配对补齐；[benchmark_runtime.py](../../../../tools/experiment/benchmark_runtime.py) 的 `preview()` 通常先取得向量前 80 项再选择。相关案例若不在这个池里，仅在池内加倒数排名融合无法召回它。
+[recall.py](../../../../tools/experiment/verirag/retrieval/recall.py) 已结合向量候选、Jaccard 词法分数和配对补齐；[benchmark_runtime.py](../../../../tools/experiment/verirag/experiments/benchmark_runtime.py) 的 `preview()` 通常先取得向量前 80 项再选择。相关案例若不在这个池里，仅在池内加倒数排名融合无法召回它。
 
 [HybridRetriever.java](../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/HybridRetriever.java) 是可选对照；底层 [RetrievalSupport.java](../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/RetrievalSupport.java) 确实支持向量分数与词法分数相加，但不能把它写成当前 Python 三策略批次的统一默认路径。
 
-建议让多路检索各自搜索知识划分，登记并集，再在同一并集上比较排序。保留历史检索作为独立基线。已有 [formal_recall.py](../../../../tools/experiment/formal_recall.py) 的 4096 UTF-8 字节、最多 4 片段预算，也要与模型完整提示的 token 预算区分。
+建议让多路检索各自搜索知识划分，登记并集，再在同一并集上比较排序。保留历史检索作为独立基线。已有 [formal_recall.py](../../../../tools/experiment/verirag/retrieval/formal_recall.py) 的 4096 UTF-8 字节、最多 4 片段预算，也要与模型完整提示的 token 预算区分。
 
 ### 5.3 生成入口已有定位和消费回执
 
@@ -107,7 +107,7 @@ Java 的 [D1Retriever.java](../../../../audit-mvp/src/main/java/com/xhl/audit/re
 
 ### 5.4 D2 的未知不能只靠提示消除
 
-D2 是对模型候选进行证据核验的环节。[d2_verify.py](../../../../tools/experiment/d2_verify.py)、[compiled_d2.py](../../../../tools/experiment/compiled_d2.py) 已核对源码、风险操作、入口、资源、位置和工具身份，不是泛泛搜索 `reason` 中的词。[reentrancy_proofs.py](../../../../tools/experiment/reentrancy_proofs.py) 已检查局部／完整状态先更新规则和互斥锁，并考虑其他入口及正常返回。
+D2 是对模型候选进行证据核验的环节。[d2_verify.py](../../../../tools/experiment/verirag/analysis/d2_verify.py)、[compiled_d2.py](../../../../tools/experiment/verirag/analysis/compiled_d2.py) 已核对源码、风险操作、入口、资源、位置和工具身份，不是泛泛搜索 `reason` 中的词。[reentrancy_proofs.py](../../../../tools/experiment/verirag/analysis/reentrancy_proofs.py) 已检查局部／完整状态先更新规则和互斥锁，并考虑其他入口及正常返回。
 
 按 [R2 固定重放报告](../R2-20261010/experiments/2026-10-14_SYNAPSE_IMPLEMENTATION_REPORT.md)，163 条保存候选为 82 支持、0 反驳、81 未知。未知原因是：
 
@@ -132,7 +132,7 @@ D2 是对模型候选进行证据核验的环节。[d2_verify.py](../../../../to
 | 替换全部快照即可消除过拟合 | 先做可追溯的附加卡片，保留原件；安全相关实体不能盲目删去 |
 | 找到支配节点上的保护即可反驳 | 还须满足适用范围、资源身份、其他入口与完整路径等核验义务 |
 | 顺序两问必然降低未知、解决注意力问题 | 是待测假设；调用成本、知识顺序和早停会影响结果 |
-| 瞬态存储锁可作为立即执行的反例 | 当前 [evm_witness.py](../../../../tools/experiment/evm_witness.py) 默认 Istanbul 执行规则，不能把 EIP-1153 当作现有执行能力。首期使用当前工具可表达的等效修复与近似错误修复 |
+| 瞬态存储锁可作为立即执行的反例 | 当前 [evm_witness.py](../../../../tools/experiment/verirag/analysis/evm_witness.py) 默认 Istanbul 执行规则，不能把 EIP-1153 当作现有执行能力。首期使用当前工具可表达的等效修复与近似错误修复 |
 | 论文验证了整个 Linux 内核的新漏洞 | 案例为 drivers 的随机子集 1568 函数，报告 10 个此前未知 bug，其中 6 个获确认与 CVE；不能扩大为整个内核或全部已确认 |
 
 原项目 [真实采集报告](../R2-20261010/experiments/2026-10-14_SYNAPSE_REAL_API_REPORT.md) 中，共同有效 52 个目标的 F1 为 Vanilla 0.9792、Dense 0.9684、D1 0.9787。全 53 目标只有 4 个负例，采集还跨三个 JAR 身份阶段。0.0005 的差异不能证明具体噪声机制，更不能支撑预设“提升超过 20%”的成功标准。

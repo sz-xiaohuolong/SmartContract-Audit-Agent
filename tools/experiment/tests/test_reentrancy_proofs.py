@@ -3,8 +3,8 @@ import copy
 import unittest
 
 import test_compiled_d2 as syntax_fixtures
-from compiler_facts import extract_compiler_facts
-from reentrancy_proofs import prove_reentrancy
+from verirag.analysis.compiler_facts import extract_compiler_facts
+from verirag.analysis.reentrancy_proofs import prove_reentrancy
 
 
 class ReentrancyProofTest(unittest.TestCase):
@@ -128,7 +128,7 @@ class ReentrancyProofTest(unittest.TestCase):
         self.assertEqual('UNKNOWN', self.proof()['status'])
 
     def test_顶层风险图与专用重入证明使用相同CALL语义(self):
-        from compiled_d2 import evaluate_compiled
+        from verirag.analysis.compiled_d2 import evaluate_compiled
         self.fixture.seal()
         result = evaluate_compiled({'contract': 'C', 'function': 'f()', 'riskLine': 1,
             'riskOperation': 'CALL', 'vulnerabilityType': 'REENTRANCY'},
@@ -715,7 +715,7 @@ class ReentrancyProofTest(unittest.TestCase):
 
     def test_有限枚举预算耗尽不能变为安全证明(self):
         from unittest.mock import patch
-        with patch('reentrancy_proofs._MAX_ASSIGNMENTS', 1):
+        with patch('verirag.analysis.reentrancy_proofs._MAX_ASSIGNMENTS', 1):
             result = self.proof()
         self.assertEqual('UNKNOWN', result['status'])
         self.assertTrue(any('预算耗尽' in gap for gap in result['proofScope']['gaps']))
@@ -724,7 +724,7 @@ class ReentrancyProofTest(unittest.TestCase):
         from unittest.mock import patch
         self.amount_case()
         self.time_case()
-        with patch('reentrancy_proofs._MAX_ASSIGNMENTS', 500):
+        with patch('verirag.analysis.reentrancy_proofs._MAX_ASSIGNMENTS', 500):
             result = self.proof(function='f(uint256)')
         self.assertEqual('COUNTEREXAMPLE', result['status'])
         self.assertTrue(result['pathEvidence']['witness']['initialization']['funded'])
@@ -739,7 +739,7 @@ class ReentrancyProofTest(unittest.TestCase):
         self.assertGreater(result['pathEvidence']['witness']['environment']['blockNumber'], 0)
 
     def test_区块环境负数布尔及越界值不能求值(self):
-        from reentrancy_proofs import _value, _Unevaluated
+        from verirag.analysis.reentrancy_proofs import _value, _Unevaluated
         for name in ('block.timestamp', 'block.number'):
             term = ('builtin', name)
             for value in (-1, True, 2 ** 256):
@@ -761,7 +761,7 @@ class ReentrancyProofTest(unittest.TestCase):
 
     def ir_aliases(self, case):
         """模拟独立工具收据中的引用事实，使用编译声明和真实字节跨度。"""
-        from compiler_facts import source_span
+        from verirag.analysis.compiler_facts import source_span
         self.fixture.seal()
         bundle = self.fixture.load()
         result = []
@@ -843,14 +843,14 @@ class ReentrancyProofTest(unittest.TestCase):
 
     def test_IR工具收据仅匹配后传入证明和展示图(self):
         from unittest.mock import patch
-        from compiled_d2 import evaluate_compiled
+        from verirag.analysis.compiled_d2 import evaluate_compiled
         case = self.struct_case()
         effects = self.ir_aliases(case)
         self.fixture.seal()
         hypothesis = {'contract': 'C', 'function': 'f()', 'riskLine': 1,
             'riskOperation': 'CALL', 'vulnerabilityType': 'REENTRANCY'}
         for status in ('MATCH', 'UNKNOWN'):
-            with self.subTest(status=status), patch('compiled_d2._tool_binding', return_value={
+            with self.subTest(status=status), patch('verirag.analysis.compiled_d2._tool_binding', return_value={
                     'status': status, 'receipts': [{'effectSummaries': effects}]}):
                 result = evaluate_compiled(hypothesis, self.fixture.manifest, [], root=self.fixture.root)
             bindings = result['proofScope']['storageAliasBindings']
@@ -865,7 +865,7 @@ class ReentrancyProofTest(unittest.TestCase):
         self.assertNotIn('witness', result['pathEvidence'])
 
     def test_旧view实际IR为CALL时保留无回调前提(self):
-        from compiler_facts import source_span
+        from verirag.analysis.compiler_facts import source_span
         helper = self.helper()
         self.fixture.function()['body']['statements'].append(self.statement(helper))
         self.fixture.seal()
@@ -877,7 +877,7 @@ class ReentrancyProofTest(unittest.TestCase):
         self.assertEqual('AUXILIARY', result['pathEvidence']['witness']['calls'][-1]['helperKind'])
 
     def test_顶层保留辅助调用条件见证且裁决未知(self):
-        from compiled_d2 import evaluate_compiled
+        from verirag.analysis.compiled_d2 import evaluate_compiled
         self.fixture.function()['body']['statements'].append(self.statement(self.helper()))
         self.fixture.seal()
         fact = next(fact for fact in extract_compiler_facts(self.fixture.load())['facts']

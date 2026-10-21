@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from nomic_snapshot import build_nomic_snapshot
-from snapshots import active_snapshot, verify_snapshot
+from verirag.knowledge.nomic_snapshot import build_nomic_snapshot
+from verirag.knowledge.snapshots import active_snapshot, verify_snapshot
 
 
 class Encoder:

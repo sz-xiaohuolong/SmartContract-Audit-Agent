@@ -33,29 +33,29 @@ class CompilationRuntimeTest(unittest.TestCase):
             'sha256': hashlib.sha256(self.fixture.binary.read_bytes()).hexdigest()}}
 
     def test_发现预编译不消费候选合约或真值(self):
-        from compilation_runtime import prepare_discovery_compilation
+        from verirag.analysis.compilation_runtime import prepare_discovery_compilation
         target = {**self.target(), 'candidateContracts': ['不存在'], 'contract': '不存在',
                   'groundTruth': {'contract': '不存在'}, 'vulnerableLines': [999]}
         before = copy.deepcopy(target)
-        with patch('compilation_runtime.resolve_environment', return_value=self.compiler_environment()):
+        with patch('verirag.analysis.compilation_runtime.resolve_environment', return_value=self.compiler_environment()):
             manifest = prepare_discovery_compilation(self.fixture.root, target)
         self.assertEqual('C', manifest['targetContract'])
         self.assertEqual(before, target)
-        from compiler_facts import load_bound_compilation
+        from verirag.analysis.compiler_facts import load_bound_compilation
         self.assertEqual('RECOMPILED_MATCH', load_bound_compilation(manifest, self.fixture.root)['verificationStatus'])
 
     def test_发现预编译缺可绑定主源码合约不能返回空成功(self):
-        from compilation_runtime import prepare_discovery_compilation
+        from verirag.analysis.compilation_runtime import prepare_discovery_compilation
         output = copy.deepcopy(self.fixture.output)
         output['contracts']['contracts/C.sol'] = {}
-        with patch('compilation_runtime.resolve_environment', return_value=self.compiler_environment(output)):
+        with patch('verirag.analysis.compilation_runtime.resolve_environment', return_value=self.compiler_environment(output)):
             with self.assertRaisesRegex(ValueError, '主源码.*合约'):
                 prepare_discovery_compilation(self.fixture.root, self.target())
 
     def test_旧编译器不支持协议须明确诊断并保留原输出(self):
-        from compilation_runtime import prepare_compilation
+        from verirag.analysis.compilation_runtime import prepare_compilation
         message = 'unrecognised option --standard-json\n'
-        with patch('compilation_runtime.resolve_environment', return_value=self.compiler_environment(error=message)):
+        with patch('verirag.analysis.compilation_runtime.resolve_environment', return_value=self.compiler_environment(error=message)):
             with self.assertRaisesRegex(ValueError, '不支持.*standard-json'):
                 prepare_compilation(self.fixture.root, self.target())
         logs = list((self.fixture.root / 'research-artifacts/receipts/compilations').glob('*/compiler-stderr.log'))
@@ -63,13 +63,13 @@ class CompilationRuntimeTest(unittest.TestCase):
         self.assertEqual(message, logs[0].read_text())
 
     def test_错误编译输出须保留明确失败而非JSON解析异常(self):
-        from compilation_runtime import prepare_compilation
-        with patch('compilation_runtime.resolve_environment', return_value=self.compiler_environment(error='compiler crashed')):
+        from verirag.analysis.compilation_runtime import prepare_compilation
+        with patch('verirag.analysis.compilation_runtime.resolve_environment', return_value=self.compiler_environment(error='compiler crashed')):
             with self.assertRaisesRegex(ValueError, '固定编译器执行失败'):
                 prepare_compilation(self.fixture.root, self.target())
 
     def test_实际标准输入输出生成可重新核验收据(self):
-        from compilation_runtime import prepare_compilation
+        from verirag.analysis.compilation_runtime import prepare_compilation
         environment = {'status': 'OK', 'compiler': {'path': str(self.fixture.binary),
             'sha256': hashlib.sha256(self.fixture.binary.read_bytes()).hexdigest()}}
         # 输出夹具校验器由此测试的输入捕获替代，仍实际执行本地编译子进程。
@@ -77,9 +77,9 @@ class CompilationRuntimeTest(unittest.TestCase):
             'if sys.argv[1:] == ["--version"]: print("solc fixture\\nVersion: 0.8.15+fixture")\n'
             'else: sys.stdin.buffer.read(); sys.stdout.buffer.write((Path(__file__).parent/"output.json").read_bytes())\n')
         environment['compiler']['sha256'] = hashlib.sha256(self.fixture.binary.read_bytes()).hexdigest()
-        with patch('compilation_runtime.resolve_environment', return_value=environment):
+        with patch('verirag.analysis.compilation_runtime.resolve_environment', return_value=environment):
             manifest = prepare_compilation(self.fixture.root, self.target())
-        from compiler_facts import load_bound_compilation
+        from verirag.analysis.compiler_facts import load_bound_compilation
         bundle = load_bound_compilation(manifest, self.fixture.root)
         self.assertEqual('RECOMPILED_MATCH', bundle['verificationStatus'])
         self.assertEqual('C', bundle['targetContract'])
@@ -88,7 +88,7 @@ class CompilationRuntimeTest(unittest.TestCase):
                          'evm.methodIdentifiers'}.issubset(selection), '真实 Slither 必须消费原编译收据中的源码映射')
 
     def test_错源码多合约与缺依赖均拒绝(self):
-        from compilation_runtime import prepare_compilation
+        from verirag.analysis.compilation_runtime import prepare_compilation
         target = self.target()
         target['sourceHash'] = '0' * 64
         with self.assertRaisesRegex(ValueError, '源码'):
@@ -104,8 +104,8 @@ class CompilationRuntimeTest(unittest.TestCase):
             prepare_compilation(self.fixture.root, target)
 
     def test_候选复用发现收据且事实身份不漂移(self):
-        from compilation_runtime import prepare_candidate_compilations
-        from compiler_facts import load_bound_compilation, extract_compiler_facts
+        from verirag.analysis.compilation_runtime import prepare_candidate_compilations
+        from verirag.analysis.compiler_facts import load_bound_compilation, extract_compiler_facts
         original = load_bound_compilation(self.fixture.manifest, self.fixture.root)
         target = {**self.target(), 'discoveryCompilation': self.fixture.manifest,
                   'compilerTemplate': self.fixture.manifest}
@@ -118,7 +118,7 @@ class CompilationRuntimeTest(unittest.TestCase):
         self.assertEqual(before, target)
 
     def test_多合约投影逐项拒绝错合约而保留合法收据(self):
-        from compilation_runtime import prepare_candidate_compilations
+        from verirag.analysis.compilation_runtime import prepare_candidate_compilations
         target = {**self.target(), 'candidateContracts': ['C', '不存在'],
                   'discoveryCompilation': self.fixture.manifest, 'compilerTemplate': self.fixture.manifest}
         result = prepare_candidate_compilations(self.fixture.root, target)
@@ -127,7 +127,7 @@ class CompilationRuntimeTest(unittest.TestCase):
         self.assertIn('不存在', result['errors'])
 
     def test_发现收据丢失不能重新编译掩盖身份失败(self):
-        from compilation_runtime import prepare_candidate_compilations
+        from verirag.analysis.compilation_runtime import prepare_candidate_compilations
         manifest = {**self.fixture.manifest, 'bindingPath': 'missing.json'}
         with self.assertRaises(ValueError):
             prepare_candidate_compilations(self.fixture.root,

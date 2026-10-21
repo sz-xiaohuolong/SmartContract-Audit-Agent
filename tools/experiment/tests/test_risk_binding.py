@@ -2,7 +2,7 @@
 import unittest
 from types import SimpleNamespace
 
-from risk_binding import bind_risks
+from verirag.analysis.risk_binding import bind_risks
 
 
 class RiskBindingTest(unittest.TestCase):

@@ -3,7 +3,7 @@ import json
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from milvus_rest import MilvusRestIndex
+from verirag.infrastructure.milvus_rest import MilvusRestIndex
 
 
 class MilvusRestTest(unittest.TestCase):

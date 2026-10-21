@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from exploratory_targets import load_targets
+from verirag.experiments.exploratory_targets import load_targets
 from dataset_fixture import smartbugs_fixture
 
 

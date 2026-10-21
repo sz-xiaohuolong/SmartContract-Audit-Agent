@@ -5,11 +5,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from offline import digest
-from isolation import validate_manifest
-from storage import decode, encode, exclusive_lock, fingerprint
+from verirag.evaluation.offline import digest
+from verirag.infrastructure.isolation import validate_manifest
+from verirag.infrastructure.storage import decode, encode, exclusive_lock, fingerprint
 from test_isolation import sample
-from batch import run_batch, replay, normalize_result
+from verirag.experiments.batch import run_batch, replay, normalize_result
 
 
 def reply(row, status="COMPLETED", conclusion="NO_CONFIRMED_FINDINGS", vulnerability_type=""):
@@ -137,7 +137,7 @@ class BatchTest(unittest.TestCase):
         self.assertEqual(2, replay(self.journal)["metrics"]["failed"])
 
     def test_bound_snapshot_is_required_and_must_match_full_isolation_manifest(self):
-        from snapshots import build_snapshot
+        from verirag.knowledge.snapshots import build_snapshot
         knowledge = sample("c", "knowledge")
         self.plan["manifest"]["samples"].append(knowledge)
         kb = self.root / "kb"
@@ -159,12 +159,12 @@ class BatchTest(unittest.TestCase):
         self.assertEqual([], self.calls)
 
     def test_fsync_failure_before_start_prevents_external_call(self):
-        with patch("storage.os.fsync", side_effect=OSError("落盘失败")):
+        with patch('verirag.infrastructure.storage.os.fsync', side_effect=OSError("落盘失败")):
             with self.assertRaises(OSError): self.run_batch()
         self.assertEqual([], self.calls)
 
     def test_result_write_interruption_does_not_repeat_paid_call(self):
-        import batch
+        from verirag.experiments import batch
         original = batch._append
         def interrupted(output, events, payload):
             if payload["kind"] == "RESULT":
@@ -172,7 +172,7 @@ class BatchTest(unittest.TestCase):
                 output.flush()
                 raise OSError("结果持久化中断")
             original(output, events, payload)
-        with patch("batch._append", side_effect=interrupted):
+        with patch('verirag.experiments.batch._append', side_effect=interrupted):
             with self.assertRaises(OSError): self.run_batch()
         self.assertEqual(["a"], self.calls)
         self.run_batch()

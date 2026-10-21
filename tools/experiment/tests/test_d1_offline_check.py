@@ -9,10 +9,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from benchmark_batch import make_plan, run_batch
-from snapshots import build_snapshot
-from storage import atomic_json, fingerprint
-from d1_offline_check import inspect_batch, pair_summary, run_check
+from verirag.experiments.benchmark_batch import make_plan, run_batch
+from verirag.knowledge.snapshots import build_snapshot
+from verirag.infrastructure.storage import atomic_json, fingerprint
+from verirag.evaluation.d1_offline_check import inspect_batch, pair_summary, run_check
 
 
 class D1OfflineCheckTest(unittest.TestCase):
@@ -266,7 +266,7 @@ class D1OfflineCheckTest(unittest.TestCase):
         self.assertEqual(set(plan['strategies']), set(check['metrics']))
 
     def test_现行机制窗口必须按冻结全文重算而非历史前700字符(self):
-        from d1_consumption import CONSUMPTION_VERSION, pair_snippets
+        from verirag.retrieval.d1_consumption import CONSUMPTION_VERSION, pair_snippets
         rows, catalog = self.saved_inputs()
         payload = json.loads((self.store / self.snapshot / 'snapshot.json').read_text())
         texts = {row['id']: row['text'] for row in payload['documents']}

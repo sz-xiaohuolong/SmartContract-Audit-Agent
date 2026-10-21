@@ -72,11 +72,11 @@
 
 | 核心代码 | 解决的问题 |
 |---|---|
-| [strict_nomic_encoder](../../../../../tools/experiment/phase5_experiment.py) | 固定模型摘要、前缀和实际 token；超限不裁剪，身份漂移终止整轮 |
+| [strict_nomic_encoder](../../../../../tools/experiment/verirag/experiments/phase5_experiment.py) | 固定模型摘要、前缀和实际 token；超限不裁剪，身份漂移终止整轮 |
 | 同文件 `aggregate_target`、`build_views` | 汇总全部有效操作，从冻结完整池选择材料，保留原方案消费文本 |
 | 同文件 `FrozenRuntime` | 复用原 Java 发现与 D2 路径，不重新召回，不改候选协议 |
 | 同文件 `PaidGuard`、`reserve_batch` | 付费前后核对身份与实际请求；回执不符记失败，保留用量，停止后续；换批次编号也不能重复消费单次授权 |
-| [benchmark_batch.py](../../../../../tools/experiment/benchmark_batch.py) 与 `candidate_summary` | 回放消费审核，逐候选统计支持／反驳／未知／失败及缺失分母 |
+| [benchmark_batch.py](../../../../../tools/experiment/verirag/experiments/benchmark_batch.py) 与 `candidate_summary` | 回放消费审核，逐候选统计支持／反驳／未知／失败及缺失分母 |
 
 审查发现的重复授权消费、消费漂移仍计成功、预检期间身份变化、编码漂移只阻断局部、候选四态缺失均已修复并有回归。新增 11 项测试通过；Python 全量 898 项中 891 项通过、7 项 Ragas 可选集成跳过；Java 21 环境下 114 项通过，JAR 与新命令帮助退出 0。本次没有运行真实评判模型。
 

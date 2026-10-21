@@ -2,7 +2,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-from reparse_benchmark import reparse_rows
+from verirag.evaluation.reparse_benchmark import reparse_rows
 
 
 class ReparseBenchmarkTest(unittest.TestCase):

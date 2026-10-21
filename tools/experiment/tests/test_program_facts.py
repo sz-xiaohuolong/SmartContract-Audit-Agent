@@ -1,6 +1,6 @@
 """受限事实提取的作用域、时序与降级语义。"""
 import unittest
-from program_facts import extract_facts
+from verirag.analysis.program_facts import extract_facts
 
 
 class ProgramFactsTest(unittest.TestCase):

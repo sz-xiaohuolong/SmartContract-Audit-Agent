@@ -10,12 +10,12 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
-from audit_workbench import assess
-import d2_verify
+from verirag.audit.audit_workbench import assess
+from verirag.analysis import d2_verify
 import test_compiler_facts as compiler_fixture
 import test_audit_workbench as workbench_fixture
-from audit_target import pasted_target
-from audit_workbench import AuditWorkbench
+from verirag.audit.audit_target import pasted_target
+from verirag.audit.audit_workbench import AuditWorkbench
 
 
 def unknown_result():
@@ -36,7 +36,7 @@ class CompiledIntegrationTest(unittest.TestCase):
         self.manifest = {'provider': 'solc-standard-json'}
 
     def test_显式编译输入不用外部填写的词法事实作证明(self):
-        with patch.dict(sys.modules, {'compiled_d2': self.module}):
+        with patch.dict(sys.modules, {'verirag.analysis.compiled_d2': self.module}):
             result = d2_verify.evaluate(self.hypothesis, {'status': 'COMPLETE', 'facts': ['伪造']}, [],
                                         source=self.source, compilation_manifest=self.manifest, root='.')
         self.assertEqual('solc-standard-json', result['provider'])
@@ -46,7 +46,7 @@ class CompiledIntegrationTest(unittest.TestCase):
         self.assertNotIn('sourceHash', self.hypothesis)
 
     def test_调用方摘要与实际源码不同时不消费编译产物(self):
-        with patch.dict(sys.modules, {'compiled_d2': self.module}):
+        with patch.dict(sys.modules, {'verirag.analysis.compiled_d2': self.module}):
             result = d2_verify.evaluate({**self.hypothesis, 'sourceHash': '0' * 64}, {}, [],
                                         source=self.source, compilation_manifest=self.manifest, root='.')
         self.assertEqual('UNKNOWN', result['verdict'])
@@ -58,14 +58,14 @@ class CompiledIntegrationTest(unittest.TestCase):
         failed = unknown_result()
         failed['status'] = 'FAILED'
         self.worker.return_value = failed
-        with patch.dict(sys.modules, {'compiled_d2': self.module}), patch.object(d2_verify, 'extract_facts') as lexical:
+        with patch.dict(sys.modules, {'verirag.analysis.compiled_d2': self.module}), patch.object(d2_verify, 'extract_facts') as lexical:
             result = d2_verify.evaluate(self.hypothesis, {}, [], compilation_manifest=self.manifest, root='.')
         lexical.assert_not_called()
         self.assertEqual(('FAILED', 'UNKNOWN'), (result['status'], result['verdict']))
 
     def test_共享评估入口保留模型未知与usage原值(self):
         model = {'status': 'COMPLETED', 'hypotheses': [self.hypothesis], 'inputTokens': None}
-        with patch.dict(sys.modules, {'compiled_d2': self.module}):
+        with patch.dict(sys.modules, {'verirag.analysis.compiled_d2': self.module}):
             result = assess(model, {}, [], self.source, compilation_manifest=self.manifest, root='.')
         self.assertEqual('UNKNOWN', result['verdict'])
         self.assertEqual('solc-standard-json', result['assessments'][0]['provider'])
@@ -78,7 +78,7 @@ class CompiledIntegrationTest(unittest.TestCase):
             arguments = ['d2_verify.py', '--manifest', 'manifest.json', '--hypothesis',
                          str(root / 'hypothesis.json'), '--root', directory]
             output = io.StringIO()
-            with patch.dict(sys.modules, {'compiled_d2': self.module}), patch.object(sys, 'argv', arguments), contextlib.redirect_stdout(output):
+            with patch.dict(sys.modules, {'verirag.analysis.compiled_d2': self.module}), patch.object(sys, 'argv', arguments), contextlib.redirect_stdout(output):
                 exit_code = d2_verify.main()
             result = json.loads(output.getvalue())
             self.assertEqual(0, exit_code)
@@ -160,7 +160,7 @@ class CompiledIntegrationTest(unittest.TestCase):
         fixture, runtime, workbench, _ = self.compiled_workbench()
         target = {**workbench.target_loader()[0], 'groundTruth': {'hasVulnerability': False}}
         (fixture.root / 'output.json').write_text('{}')
-        from benchmark_runtime import BenchmarkRuntime
+        from verirag.experiments.benchmark_runtime import BenchmarkRuntime
         runner = BenchmarkRuntime.__new__(BenchmarkRuntime)
         runner.root = fixture.root
         runner.preview = runtime.preview

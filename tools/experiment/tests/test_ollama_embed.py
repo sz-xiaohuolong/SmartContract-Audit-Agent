@@ -1,7 +1,7 @@
 """Ollama 编码适配的离线确定性测试。"""
 import unittest
 
-from ollama_embed import ContextLengthError, OllamaEncoder
+from verirag.infrastructure.ollama_embed import ContextLengthError, OllamaEncoder
 
 
 class OllamaEncoderTest(unittest.TestCase):

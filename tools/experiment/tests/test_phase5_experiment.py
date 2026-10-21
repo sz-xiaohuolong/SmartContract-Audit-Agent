@@ -4,14 +4,14 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import phase5_cli
-from storage import fingerprint
+from verirag.experiments import phase5_cli
+from verirag.infrastructure.storage import fingerprint
 from test_phase5_cli import dataset, run_fixture
 
 
 class Phase5ExperimentTest(unittest.TestCase):
     def module(self):
-        import phase5_experiment
+        from verirag.experiments import phase5_experiment
         return phase5_experiment
 
     def transport(self, malformed=False):
@@ -114,13 +114,13 @@ class Phase5ExperimentTest(unittest.TestCase):
                 'requestConsumptionReceipt': receipt if mode == 'preflight' else {'requestSha256': '其他请求'}}
         guard = self.module().PaidGuard({'目标': {'P5_MARGIN': receipt}}, 1, lambda: True, model)
         result = guard(None, {'sampleId': '目标', '_phase5Condition': 'P5_MARGIN'}, {}, 'real')
-        from benchmark_runtime import interpret_model
+        from verirag.experiments.benchmark_runtime import interpret_model
         self.assertEqual('UNKNOWN', interpret_model(result, 'real'))
         self.assertEqual(10, result['inputTokens']); self.assertIsNone(result['outputTokens'])
         self.assertTrue(guard.stopped)
 
     def test_更换批次编号不能重复消费单次授权(self):
-        from benchmark_batch import make_plan
+        from verirag.experiments.benchmark_batch import make_plan
         target = {'sampleId': '目标', 'runnable': True, 'sourceHash': 'a' * 64,
                   'groundTruth': {'hasVulnerability': True}}
         plan = make_plan(['目标'], ['P5_MARGIN'], 'real', [target], 'b' * 64)

@@ -4,7 +4,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 import test_compiler_facts as fixtures
-from audit_runner import analyze_saved
+from verirag.audit.audit_runner import analyze_saved
 
 
 class SavedAuditRunnerTest(unittest.TestCase):
@@ -17,9 +17,9 @@ class SavedAuditRunnerTest(unittest.TestCase):
                             'riskOperation': 'WRITE', 'vulnerabilityType': 'ACCESS_CONTROL'}]
 
     def test_CLI最小目标仍核验候选但缺双收据未知(self):
-        with patch('bound_slither.analyze_bound', return_value={'engine': 'SLITHER',
+        with patch('verirag.analysis.bound_slither.analyze_bound', return_value={'engine': 'SLITHER',
                 'status': 'PROCESS_ERROR', 'issues': []}), \
-                patch('audit_run.model_runner', side_effect=AssertionError('保存候选不得调用模型')):
+                patch('verirag.audit.audit_run.model_runner', side_effect=AssertionError('保存候选不得调用模型')):
             result = analyze_saved(self.fixture.root, self.target, self.hypotheses)
         self.assertEqual('FAILED', result['status'])
         assessment = result['d2']['assessments'][0]
@@ -33,7 +33,7 @@ class SavedAuditRunnerTest(unittest.TestCase):
             analyze_saved(self.fixture.root, {**self.target, 'sourceHash': '0' * 64}, self.hypotheses)
 
     def test_编译失败逐候选保留六义务与失败状态(self):
-        with patch('audit_runner.prepare_compilation', side_effect=ValueError('证据缺失')):
+        with patch('verirag.audit.audit_runner.prepare_compilation', side_effect=ValueError('证据缺失')):
             result = analyze_saved(self.fixture.root, self.target, self.hypotheses)
         self.assertEqual('FAILED', result['status'])
         self.assertEqual('FAILED', result['d2']['status'])
@@ -43,7 +43,7 @@ class SavedAuditRunnerTest(unittest.TestCase):
     def test_多合约保存候选分别投影不丢失合法合约证明(self):
         hypotheses = self.hypotheses + [{**self.hypotheses[0], 'contract': '不存在'}]
         target = {'fullSource': self.fixture.source, 'discoveryCompilation': self.fixture.manifest}
-        with patch('bound_slither.analyze_bound', return_value={'engine': 'SLITHER',
+        with patch('verirag.analysis.bound_slither.analyze_bound', return_value={'engine': 'SLITHER',
                 'status': 'PROCESS_ERROR', 'issues': []}):
             result = analyze_saved(self.fixture.root, target, hypotheses)
         self.assertEqual(2, len(result['d2']['assessments']))

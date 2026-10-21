@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from benchmark_batch import make_plan, run_batch, replay_batch, export_csv
-from audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS
+from verirag.experiments.benchmark_batch import make_plan, run_batch, replay_batch, export_csv
+from verirag.audit.audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS
 
 
 class BenchmarkBatchTest(unittest.TestCase):

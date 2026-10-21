@@ -3,14 +3,14 @@ import unittest
 import copy
 import hashlib
 
-from benchmark_runtime import BenchmarkRuntime, interpret_model, soft_without_risk, _risk_fact
-from program_facts import extract_facts
-from benchmark_targets import _record
-from snapshots import build_snapshot, activate_snapshot
-from storage import atomic_json
+from verirag.experiments.benchmark_runtime import BenchmarkRuntime, interpret_model, soft_without_risk, _risk_fact
+from verirag.analysis.program_facts import extract_facts
+from verirag.experiments.benchmark_targets import _record
+from verirag.knowledge.snapshots import build_snapshot, activate_snapshot
+from verirag.infrastructure.storage import atomic_json
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from formal_recall import select_strategy
+from verirag.retrieval.formal_recall import select_strategy
 
 
 class LocalIndex:

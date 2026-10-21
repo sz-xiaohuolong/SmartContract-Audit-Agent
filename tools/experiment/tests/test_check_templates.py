@@ -21,7 +21,7 @@ class CheckTemplatesTest(unittest.TestCase):
             'contractType': '状态写入合约', 'patchPointer': 'p_before → p_after'}
 
     def test_知识划分或原件摘要漂移拒绝模板(self):
-        from check_templates import verify_templates
+        from verirag.retrieval.check_templates import verify_templates
         self.assertEqual(1, len(verify_templates([self.template], self.snapshot)))
         changed = copy.deepcopy(self.snapshot); changed['manifest']['samples'][0]['split'] = 'test'
         with self.assertRaises(ValueError): verify_templates([self.template], changed)
@@ -29,7 +29,7 @@ class CheckTemplatesTest(unittest.TestCase):
         with self.assertRaises(ValueError): verify_templates([self.template], changed)
 
     def test_状态版本和路径缺失不得猜测完全绑定(self):
-        from check_templates import instantiate_template
+        from verirag.retrieval.check_templates import instantiate_template
         operation = {'contract': 'C', 'entrySignature': 'f()', 'entryDeclarationId': 1,
             'factId': 'x', 'riskOperation': 'WRITE', 'span': {'start': 4, 'length': 2},
             'sourceUnit': 'C.sol'}
@@ -40,7 +40,7 @@ class CheckTemplatesTest(unittest.TestCase):
         self.assertEqual('UNKNOWN', instance['applicability'])
 
     def test_预算不足整条拒绝不截断必要前提(self):
-        from check_templates import render_template
+        from verirag.retrieval.check_templates import render_template
         self.assertIsNone(render_template(self.template, [], max_bytes=10))
         text = render_template(self.template, [], max_bytes=4096)
         self.assertIn('必须核对完整路径和其他写入者', text)

@@ -5,20 +5,20 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import test_benchmark_runtime as fixtures
-from storage import fingerprint
+from verirag.infrastructure.storage import fingerprint
 
 
 class R3RetrievalTest(unittest.TestCase):
     def setup_runtime(self, directory):
         helper = fixtures.BenchmarkRuntimeTest()
         runtime = helper.runtime(Path(directory))
-        from r3_retrieval import R3Retrieval
+        from verirag.retrieval.r3_retrieval import R3Retrieval
         runtime.r3 = R3Retrieval(runtime.store, runtime.pointer['snapshot_id'], runtime.catalog)
         runtime.r3_allow_unreviewed = True
         return runtime, helper.discovery_target()
 
     def test_卡片回读绑定原件且不能自称审核通过(self):
-        from r3_retrieval import verify_cards
+        from verirag.retrieval.r3_retrieval import verify_cards
         with TemporaryDirectory() as directory:
             runtime, _ = self.setup_runtime(directory)
             cards = runtime.r3.registry
@@ -48,7 +48,7 @@ class R3RetrievalTest(unittest.TestCase):
                 runtime.r3.select(base, 'R3_CARD', allow_unreviewed=True)
 
     def test_BM25可从向量候选外召回且融合从名次一开始(self):
-        from r3_retrieval import bm25, reciprocal_fusion
+        from verirag.retrieval.r3_retrieval import bm25, reciprocal_fusion
         ranked = bm25({'a': 'withdraw balance', 'b': 'grantRole onlyRole'}, 'grantRole', 1)
         self.assertEqual(['b'], ranked)
         fused = reciprocal_fusion({'dense': ['a'], 'code': ['b', 'a'], 'purpose': ['b']})
@@ -56,11 +56,11 @@ class R3RetrievalTest(unittest.TestCase):
         self.assertEqual(1.5, fused['a'])
 
     def test_真实多路并集包含向量八十片段之外的完整对(self):
-        from benchmark_runtime import BenchmarkRuntime
-        from benchmark_targets import _record
-        from r3_retrieval import R3Retrieval
-        from snapshots import activate_snapshot, build_snapshot
-        from storage import atomic_json
+        from verirag.experiments.benchmark_runtime import BenchmarkRuntime
+        from verirag.experiments.benchmark_targets import _record
+        from verirag.retrieval.r3_retrieval import R3Retrieval
+        from verirag.knowledge.snapshots import activate_snapshot, build_snapshot
+        from verirag.infrastructure.storage import atomic_json
         with TemporaryDirectory() as directory:
             store = Path(directory) / 'snapshots'
             samples, docs, vectors, cases = [], [], {}, {}
@@ -108,7 +108,7 @@ class R3RetrievalTest(unittest.TestCase):
                 self.assertTrue(view['r3Receipt']['rejected'])
 
     def test_错资源被排除而缺路径条件保持未知(self):
-        from r3_retrieval import bind_conditions
+        from verirag.retrieval.r3_retrieval import bind_conditions
         binding = bind_conditions({'resourceKey': 'msg.sender'}, {'resourceKey': 'tx.origin'})
         self.assertEqual('CONTRADICTED', binding['applicability'])
         binding = bind_conditions({'resourceKey': 'msg.sender'}, {'resourceKey': 'msg.sender'})
@@ -117,7 +117,7 @@ class R3RetrievalTest(unittest.TestCase):
         self.assertIsNone(binding['path'])
 
     def test_互补选择优先新增保护差异而非重复案例(self):
-        from r3_retrieval import complementary_order
+        from verirag.retrieval.r3_retrieval import complementary_order
         rows = [{'pairId': 'a', 'features': ['ORDER'], 'score': 1.0},
                 {'pairId': 'b', 'features': ['ORDER'], 'score': 0.99},
                 {'pairId': 'c', 'features': ['MUTEX'], 'score': 0.98}]
@@ -140,7 +140,7 @@ class R3RetrievalTest(unittest.TestCase):
 
     def test_评估按同一案例恢复卡片正文且拒绝伪造(self):
         import hashlib
-        from eval_ragas import normalize_row
+        from verirag.evaluation.eval_ragas import normalize_row
         with TemporaryDirectory() as directory:
             runtime, target = self.setup_runtime(directory)
             for strategy in ('R3_CODE', 'R3_CARD'):

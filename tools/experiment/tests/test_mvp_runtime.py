@@ -7,8 +7,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
-import mvp_runtime
-from evaluation_input import clean_evaluation_source
+from verirag.experiments import mvp_runtime
+from verirag.evaluation.evaluation_input import clean_evaluation_source
 
 
 class FakeIndex:

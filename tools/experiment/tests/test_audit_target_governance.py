@@ -3,7 +3,7 @@ import copy
 import hashlib
 import unittest
 
-from audit_target import pasted_target, normalize_target, hypothesis_matches_target
+from verirag.audit.audit_target import pasted_target, normalize_target, hypothesis_matches_target
 
 
 SOURCE = ('// <yes> <report> ACCESS_CONTROL https://example.test/answer\n'

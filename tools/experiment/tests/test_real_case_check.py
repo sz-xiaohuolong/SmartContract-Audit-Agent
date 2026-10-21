@@ -15,7 +15,7 @@ class RealCaseCheckTest(unittest.TestCase):
                           'riskOperation': 'WRITE', 'vulnerabilityType': 'ACCESS_CONTROL'}
 
     def test_重新编译只给局部诊断且不改候选(self):
-        from real_case_check import check_case
+        from verirag.evaluation.real_case_check import check_case
         original = copy.deepcopy(self.candidate)
         report = check_case(self.fixture.root, self.fixture.manifest, self.candidate)
         self.assertEqual('RECOMPILED_MATCH', report['compilation']['status'])
@@ -28,7 +28,7 @@ class RealCaseCheckTest(unittest.TestCase):
         self.assertTrue(report['candidateUnchanged'])
 
     def test_损坏原件保留编译失败和未知(self):
-        from real_case_check import check_case
+        from verirag.evaluation.real_case_check import check_case
         (self.fixture.root / 'contracts/C.sol').write_text('损坏')
         report = check_case(self.fixture.root, self.fixture.manifest, self.candidate)
         self.assertEqual('FAILED', report['status'])
@@ -38,7 +38,7 @@ class RealCaseCheckTest(unittest.TestCase):
         self.assertNotIn('candidateProof', report)
 
     def test_不支持机制不能当作成功空证明(self):
-        from real_case_check import check_case
+        from verirag.evaluation.real_case_check import check_case
         candidate = {**self.candidate, 'vulnerabilityType': 'OTHER'}
         report = check_case(self.fixture.root, self.fixture.manifest, candidate)
         self.assertEqual('FAILED', report['status'])
@@ -46,8 +46,8 @@ class RealCaseCheckTest(unittest.TestCase):
         self.assertEqual('UNSUPPORTED_MECHANISM', report['errorCategory'])
 
     def test_证明器异常保留编译证据但不产生裁决(self):
-        from real_case_check import check_case
-        with patch('real_case_check.prove_candidate', side_effect=ValueError('不支持的控制流')):
+        from verirag.evaluation.real_case_check import check_case
+        with patch('verirag.evaluation.real_case_check.prove_candidate', side_effect=ValueError('不支持的控制流')):
             report = check_case(self.fixture.root, self.fixture.manifest, self.candidate)
         self.assertEqual('RECOMPILED_MATCH', report['compilation']['status'])
         self.assertEqual('CANDIDATE_PROOF_FAILED', report['errorCategory'])

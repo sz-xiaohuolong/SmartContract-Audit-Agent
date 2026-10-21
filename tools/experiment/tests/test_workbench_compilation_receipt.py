@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 import test_compiler_facts as fixtures
 from test_audit_workbench import Runtime
-from audit_workbench import AuditWorkbench
+from verirag.audit.audit_workbench import AuditWorkbench
 
 
 class WorkbenchCompilationReceiptTest(unittest.TestCase):
@@ -19,7 +19,7 @@ class WorkbenchCompilationReceiptTest(unittest.TestCase):
         source_hash = hashlib.sha256(fixture.source.encode()).hexdigest()
         fixture.binding['sourceUnits']['contracts/C.sol']['sha256'] = source_hash
         fixture.manifest['expectedSourceHash'] = source_hash
-        from compiler_facts import _walk
+        from verirag.analysis.compiler_facts import _walk
         for node in _walk(fixture.output['sources']['contracts/C.sol']['ast']):
             node['src'] = f'0:{len(fixture.source.encode())}:0'
         fixture.seal()
@@ -33,7 +33,7 @@ class WorkbenchCompilationReceiptTest(unittest.TestCase):
         workbench = AuditWorkbench(fixture.root, runtime_factory=lambda profile: runtime,
             target_loader=lambda: [], tool=lambda *args: [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': []}])
         choice = {'source': fixture.source, 'mechanism': 'ACCESS_CONTROL', 'function': 'f'}
-        with patch('risk_catalog.prepare_model_context', side_effect=context):
+        with patch('verirag.analysis.risk_catalog.prepare_model_context', side_effect=context):
             preview = workbench.preview(choice)
             original = copy.deepcopy(preview['target'])
             result = workbench.execute(workbench.prepare({**choice, 'planHash': preview['planHash']}))

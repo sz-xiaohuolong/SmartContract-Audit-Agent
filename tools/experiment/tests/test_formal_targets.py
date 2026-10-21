@@ -5,9 +5,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from storage import atomic_json
-from storage import decode
-from formal_targets import list_targets, load_target
+from verirag.infrastructure.storage import atomic_json
+from verirag.infrastructure.storage import decode
+from verirag.experiments.formal_targets import list_targets, load_target
 
 
 class FormalTargetsTest(unittest.TestCase):

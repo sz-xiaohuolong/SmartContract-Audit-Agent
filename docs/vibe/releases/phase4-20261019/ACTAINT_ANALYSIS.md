@@ -101,15 +101,15 @@ TP 表示正确报告的漏洞，FP 表示错误告警，FN 表示漏掉的漏�
 
 | 模块与已核实事实 | 对计划的影响 |
 |---|---|
-| [program_facts.py](../../../../tools/experiment/program_facts.py) 是受限词法／结构提取器，不是真实编译器 AST | 编译语义应落在 `compiler_facts.py` 等已有入口；词法结果继续只作展示或诊断 |
-| [risk_catalog.py](../../../../tools/experiment/risk_catalog.py) 枚举多合约运行入口，输出 `CALL/WRITE`、事实 ID、跨度和能力缺口 | 已有定位基础。业务标签可附着于操作，不能用六个新枚举直接替换结构种类 |
+| [program_facts.py](../../../../tools/experiment/verirag/analysis/program_facts.py) 是受限词法／结构提取器，不是真实编译器 AST | 编译语义应落在 `compiler_facts.py` 等已有入口；词法结果继续只作展示或诊断 |
+| [risk_catalog.py](../../../../tools/experiment/verirag/analysis/risk_catalog.py) 枚举多合约运行入口，输出 `CALL/WRITE`、事实 ID、跨度和能力缺口 | 已有定位基础。业务标签可附着于操作，不能用六个新枚举直接替换结构种类 |
 | [HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java) 允许模型返回 `CALL/WRITE`，再用目录校验并附加 `riskFactId/riskSpan` | 模型不是任意生成事实 ID；新提示和绑定方式要同时覆盖 Java 校验、Python 消费及旧候选兼容 |
-| [risk_binding.py](../../../../tools/experiment/risk_binding.py) 检查类型、文件、跨度和事实 ID，再做精确行、语句跨度与有限行窗口匹配；多义拒绝 | 绑定失败不仅是行号问题；不能扩大窗口、选最近操作来追求绑定率 |
-| [focus_context.py](../../../../tools/experiment/focus_context.py) 已有函数、修饰器、内部调用、状态引用及相关入口索引 | 并非从零开始切片；当前为 `FULL_UNCHANGED`、`consumedByModel=False`，尚无关键状态读写关系进入模型的效果证据 |
-| [candidate_proofs.py](../../../../tools/experiment/candidate_proofs.py) 已能在有限范围内证明权限写入被完整保护，并盘点权限相关入口和状态效果 | “没有反驳引擎”不成立；应分析真实候选为何不满足现有证明前提 |
-| [access_call_proofs.py](../../../../tools/experiment/access_call_proofs.py) 只对编译器确认的 `selfdestruct/suicide` 给有限访问义务反例 | 访问控制 CALL 的覆盖较窄，普通转账和动态委托不应被冒充为已支持的终止调用 |
-| [compiled_d2.py](../../../../tools/experiment/compiled_d2.py) 分派专用证明，校验编译／工具身份、正常路径和六项义务 | 一个支配节点、模型自评或名称命中都不足以给出最终反驳；应保留现有门槛 |
-| [evm_witness.py](../../../../tools/experiment/evm_witness.py) 已有固定原字节码、源映射、正常提交和两个独立节点回放 | 当前只支持有限 CEI 顺序及标量地址权限写入／消费者断言；不是通用攻击生成或完整合约安全证明 |
+| [risk_binding.py](../../../../tools/experiment/verirag/analysis/risk_binding.py) 检查类型、文件、跨度和事实 ID，再做精确行、语句跨度与有限行窗口匹配；多义拒绝 | 绑定失败不仅是行号问题；不能扩大窗口、选最近操作来追求绑定率 |
+| [focus_context.py](../../../../tools/experiment/verirag/analysis/focus_context.py) 已有函数、修饰器、内部调用、状态引用及相关入口索引 | 并非从零开始切片；当前为 `FULL_UNCHANGED`、`consumedByModel=False`，尚无关键状态读写关系进入模型的效果证据 |
+| [candidate_proofs.py](../../../../tools/experiment/verirag/analysis/candidate_proofs.py) 已能在有限范围内证明权限写入被完整保护，并盘点权限相关入口和状态效果 | “没有反驳引擎”不成立；应分析真实候选为何不满足现有证明前提 |
+| [access_call_proofs.py](../../../../tools/experiment/verirag/analysis/access_call_proofs.py) 只对编译器确认的 `selfdestruct/suicide` 给有限访问义务反例 | 访问控制 CALL 的覆盖较窄，普通转账和动态委托不应被冒充为已支持的终止调用 |
+| [compiled_d2.py](../../../../tools/experiment/verirag/analysis/compiled_d2.py) 分派专用证明，校验编译／工具身份、正常路径和六项义务 | 一个支配节点、模型自评或名称命中都不足以给出最终反驳；应保留现有门槛 |
+| [evm_witness.py](../../../../tools/experiment/verirag/analysis/evm_witness.py) 已有固定原字节码、源映射、正常提交和两个独立节点回放 | 当前只支持有限 CEI 顺序及标量地址权限写入／消费者断言；不是通用攻击生成或完整合约安全证明 |
 
 D2 的六项义务分别核对主体、资源、风险前检查、入口覆盖、状态版本和绕过路径。这里还有一个易误读点：**保护义务被反驳**可能支持漏洞候选；**漏洞候选被反驳**则要求保护证据完整。两层对象相反，不能仅统计 JSON 中出现的 `REFUTED` 字样。
 

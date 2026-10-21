@@ -9,9 +9,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
 
-from eval_ragas import qrels_template
+from verirag.evaluation.eval_ragas import qrels_template
 from test_eval_ragas import dataset
-from ragas_judge import run_judge
+from verirag.evaluation.ragas_judge import run_judge
 
 
 class JudgeBoundaryTest(unittest.TestCase):

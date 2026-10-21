@@ -5,12 +5,12 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from benchmark_batch import make_plan, replay_batch, run_batch
+from verirag.experiments.benchmark_batch import make_plan, replay_batch, run_batch
 
 
 class Phase4ProtocolTest(unittest.TestCase):
     def test_本次四条件仅允许已授权coding入口和既定模型(self):
-        from r3_cli import _validate_provider
+        from verirag.experiments.r3_cli import _validate_provider
         coding = {'endpoint': 'https://ark.cn-beijing.volces.com/api/coding/v3', 'model': 'deepseek-v4-flash'}
         plan = {**coding, 'endpoint': 'https://ark.cn-beijing.volces.com/api/plan/v3'}
         _validate_provider(coding, True)
@@ -20,8 +20,8 @@ class Phase4ProtocolTest(unittest.TestCase):
                 _validate_provider(provider, phase4)
 
     def test_实际运行按条件消费且无检索命中率不适用(self):
-        from benchmark_runtime import BenchmarkRuntime
-        from r3_protocol import P4_CONDITIONS
+        from verirag.experiments.benchmark_runtime import BenchmarkRuntime
+        from verirag.experiments.r3_protocol import P4_CONDITIONS
         runtime = BenchmarkRuntime.__new__(BenchmarkRuntime)
         runtime.root = Path('/不存在的测试根目录')
         runtime.preview = lambda target: {'pool': {'candidates': []},
@@ -44,8 +44,8 @@ class Phase4ProtocolTest(unittest.TestCase):
     def test_共同预检阻断不付费且不删除原计划目标(self):
         from unittest.mock import patch
         from types import SimpleNamespace
-        from r3_cli import preflight
-        from r3_protocol import P4_CONDITIONS, freeze_phase4_plan
+        from verirag.experiments.r3_cli import preflight
+        from verirag.experiments.r3_protocol import P4_CONDITIONS, freeze_phase4_plan
         runtime = SimpleNamespace(preview=lambda target: {'pool': {}, 'd1': {'selected': [], 'context': ''}})
         target = {'sampleId': 'a'}
         def model(root, current, view, mode):
@@ -53,7 +53,7 @@ class Phase4ProtocolTest(unittest.TestCase):
             if current['factGuidanceEnabled']:
                 raise ValueError('事实超出预算')
             return {'status': 'COMPLETED', 'requestConsumptionReceipt': {'requestAttempts': 0, 'requestSha256': 'hash'}}
-        with patch('r3_cli.model_runner', side_effect=model), patch('r3_cli.prepare_model_context'):
+        with patch('verirag.experiments.r3_cli.model_runner', side_effect=model), patch('verirag.experiments.r3_cli.prepare_model_context'):
             receipts = preflight(Path('.'), runtime, [target], 32768, P4_CONDITIONS)
         self.assertEqual('FAILED', receipts['a']['P4_FACTS']['status'])
         self.assertEqual(4, len(receipts['a']))
@@ -69,16 +69,16 @@ class Phase4ProtocolTest(unittest.TestCase):
         from subprocess import TimeoutExpired
         from unittest.mock import patch
         from types import SimpleNamespace
-        from r3_cli import preflight
-        from r3_protocol import P4_CONDITIONS
+        from verirag.experiments.r3_cli import preflight
+        from verirag.experiments.r3_protocol import P4_CONDITIONS
         runtime = SimpleNamespace(preview=lambda target: {'pool': {}, 'd1': {'selected': [], 'context': ''}})
-        with patch('r3_cli.model_runner', side_effect=TimeoutExpired('java', 390)), patch('r3_cli.prepare_model_context'):
+        with patch('verirag.experiments.r3_cli.model_runner', side_effect=TimeoutExpired('java', 390)), patch('verirag.experiments.r3_cli.prepare_model_context'):
             receipts = preflight(Path('.'), runtime, [{'sampleId': 'a'}], 32768, P4_CONDITIONS)
         self.assertEqual(set(P4_CONDITIONS), set(receipts['a']))
         self.assertTrue(all(row['status'] == 'FAILED' and row['requestAttempts'] == 0 for row in receipts['a'].values()))
 
     def receipts(self):
-        from r3_protocol import P4_CONDITIONS
+        from verirag.experiments.r3_protocol import P4_CONDITIONS
         return {'a': {s: {'requestSha256': str(i) * 64, 'contextSha256': 'd1' if i > 1 else hashlib.sha256(b'').hexdigest(),
             'sourceHash': 'a' * 64, 'modelSourceHash': 'a' * 64,
             'evidenceIds': ['p'] if i > 1 else [], 'poolHash': 'pool',
@@ -86,13 +86,13 @@ class Phase4ProtocolTest(unittest.TestCase):
             for i, s in enumerate(P4_CONDITIONS)}}
 
     def plan(self, preflight=None):
-        from r3_protocol import P4_CONDITIONS, freeze_phase4_plan
+        from verirag.experiments.r3_protocol import P4_CONDITIONS, freeze_phase4_plan
         base = make_plan(['a'], P4_CONDITIONS, 'real', [{'sampleId': 'a', 'runnable': True,
             'sourceHash': 'a' * 64, 'groundTruth': {'hasVulnerability': True}}], 'b' * 64)
         return freeze_phase4_plan(base, {'artifactHash': 'c' * 64}, preflight or self.receipts(), 32768)
 
     def test_四条件只修改副本且保留同一D1文本(self):
-        from r3_protocol import condition_target, condition_view, P4_CONDITIONS
+        from verirag.experiments.r3_protocol import condition_target, condition_view, P4_CONDITIONS
         original = {'factGuidanceEnabled': True, 'sampleId': 'a'}
         base = {'pool': {'candidates': []}, 'd1': {'selected': [], 'context': '同一历史知识'}}
         for strategy, expected in zip(P4_CONDITIONS, [False, True, False, True]):
@@ -107,7 +107,7 @@ class Phase4ProtocolTest(unittest.TestCase):
         self.assertEqual('同一历史知识', base['d1']['context'])
 
     def test_冻结四条件预算且拒绝不同事实或案例(self):
-        from r3_protocol import freeze_phase4_plan
+        from verirag.experiments.r3_protocol import freeze_phase4_plan
         plan = self.plan()
         self.assertEqual('phase4-v1', plan['pipelineVersion'])
         self.assertEqual(4, plan['requestBounds']['maxRequests'])
@@ -120,7 +120,7 @@ class Phase4ProtocolTest(unittest.TestCase):
                 freeze_phase4_plan(plan, {'artifactHash': 'c' * 64}, receipts, 32768)
 
     def test_报告按实际消费回执核对并保留缺失单元(self):
-        from r3_protocol import comparison_audit
+        from verirag.experiments.r3_protocol import comparison_audit
         plan = self.plan()
         receipts = self.receipts()['a']
         rows = [{'sampleId': 'a', 'strategy': s, 'poolHash': 'pool',

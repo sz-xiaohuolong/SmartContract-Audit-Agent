@@ -5,8 +5,8 @@ import threading
 import unittest
 from pathlib import Path
 
-import local_ui
-from audit_target import pasted_target
+from verirag.web import local_ui
+from verirag.audit.audit_target import pasted_target
 
 ROOT = Path(__file__).resolve().parents[3]
 

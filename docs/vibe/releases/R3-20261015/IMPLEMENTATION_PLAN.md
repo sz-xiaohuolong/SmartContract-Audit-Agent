@@ -44,7 +44,7 @@ R3 拟回答两个问题：把历史漏洞与修复解释成知识，是否让�
 
 ### R3-00：补齐真实配对与公平比较的前提
 
-沿用 [真实案例先导](../R2-20261010/attachments/REAL_CASE_PILOT.md)、`data/audit/` 的来源账本和 [d1_research_check.py](../../../../tools/experiment/d1_research_check.py)。先盘点能实际取得的漏洞、维护者补丁、报告、许可、依赖与编译范围，再决定可评估规模。
+沿用 [真实案例先导](../R2-20261010/attachments/REAL_CASE_PILOT.md)、`data/audit/` 的来源账本和 [d1_research_check.py](../../../../tools/experiment/verirag/evaluation/d1_research_check.py)。先盘点能实际取得的漏洞、维护者补丁、报告、许可、依赖与编译范围，再决定可评估规模。
 
 拟以 **20 对为先导收集目标**，并尽量平衡访问控制与重入；这不是“已经有 20 对”，也不是统计充分性保证。当前先导只有六项正式事件、四项待审，不能直接转成十组或二十组合格测试对。未达到准入规模时先提交数据缺口和描述性结果，不用合成补丁填满正式样本数。
 
@@ -56,7 +56,7 @@ R3 拟回答两个问题：把历史漏洞与修复解释成知识，是否让�
 
 ### R3-01：卡片附着于原件，保留安全相关语义
 
-复用 [check_templates.py](../../../../tools/experiment/check_templates.py) 的来源校验与保守绑定，并沿用 [d1_consumption.py](../../../../tools/experiment/d1_consumption.py) 的原始代码对。新增的卡片是附加描述，即与原件分开保存、通过身份关联的文件；旧快照及历史候选不覆盖。
+复用 [check_templates.py](../../../../tools/experiment/verirag/retrieval/check_templates.py) 的来源校验与保守绑定，并沿用 [d1_consumption.py](../../../../tools/experiment/verirag/retrieval/d1_consumption.py) 的原始代码对。新增的卡片是附加描述，即与原件分开保存、通过身份关联的文件；旧快照及历史候选不覆盖。
 
 | 字段组 | 最少内容与约束 |
 |---|---|
@@ -75,7 +75,7 @@ R3 拟回答两个问题：把历史漏洞与修复解释成知识，是否让�
 
 ### R3-02：先独立召回，再冻结并集排序
 
-主要接入 [recall.py](../../../../tools/experiment/recall.py)、[benchmark_runtime.py](../../../../tools/experiment/benchmark_runtime.py)、[formal_recall.py](../../../../tools/experiment/formal_recall.py)。Python 是本批实验编排入口；只有实际经过 Java 检索时才同步对应策略，避免只改 `HybridRetriever` 却没有影响运行路径。
+主要接入 [recall.py](../../../../tools/experiment/verirag/retrieval/recall.py)、[benchmark_runtime.py](../../../../tools/experiment/verirag/experiments/benchmark_runtime.py)、[formal_recall.py](../../../../tools/experiment/verirag/retrieval/formal_recall.py)。Python 是本批实验编排入口；只有实际经过 Java 检索时才同步对应策略，避免只改 `HybridRetriever` 却没有影响运行路径。
 
 首期提议采用现有密集向量召回，加三路本地 BM25：代码、已审核目的描述、可见行为。查询目的若无法从现有证据确定则标缺失；AST 行为摘要标明范围与限制。若后续采用模型生成目的和行为，作为单独协议版本核算调用，不静默混入。
 
@@ -99,7 +99,7 @@ R3 拟回答两个问题：把历史漏洞与修复解释成知识，是否让�
 
 ### R3-04：把表达、排序与证明分开评价
 
-扩展 [eval_ragas.py](../../../../tools/experiment/eval_ragas.py) 和既有计分入口，不新增第二套结果平台。先完成人工相关性，后续若使用 Ragas，只作语义诊断并另计成本；不能把卡片或模型回答当独立参考答案。
+扩展 [eval_ragas.py](../../../../tools/experiment/verirag/evaluation/eval_ragas.py) 和既有计分入口，不新增第二套结果平台。先完成人工相关性，后续若使用 Ragas，只作语义诊断并另计成本；不能把卡片或模型回答当独立参考答案。
 
 新卡片、索引、查询和候选并集必须生成新的 schema／快照／pool 身份。现有比较要求来源、快照与 pool 一致；需要通过显式适配验证两种表达的原件、选择 ID 和顺序对应，而不是伪造旧 `poolHash` 或绕过校验。保留历史格式只读回放测试。
 
@@ -109,7 +109,7 @@ R3 拟回答两个问题：把历史漏洞与修复解释成知识，是否让�
 
 ### R3-05：让卡片提出问题，让独立证据给出结论
 
-沿用 [d2_verify.py](../../../../tools/experiment/d2_verify.py)、[compiled_d2.py](../../../../tools/experiment/compiled_d2.py)、[reentrancy_proofs.py](../../../../tools/experiment/reentrancy_proofs.py) 和 R2 真实修复检查。卡片可以携带待检查的操作、资源和保护义务；这些值都须重新绑定当前源码，不能继承历史案例的路径或真值。
+沿用 [d2_verify.py](../../../../tools/experiment/verirag/analysis/d2_verify.py)、[compiled_d2.py](../../../../tools/experiment/verirag/analysis/compiled_d2.py)、[reentrancy_proofs.py](../../../../tools/experiment/verirag/analysis/reentrancy_proofs.py) 和 R2 真实修复检查。卡片可以携带待检查的操作、资源和保护义务；这些值都须重新绑定当前源码，不能继承历史案例的路径或真值。
 
 回归矩阵至少覆盖：原始漏洞、历史补丁、当前语义范围内的等效修复、表面相似但无效的保护、证据不完整。等效修复可选状态先更新与完整互斥锁；近似错误修复包括锁只覆盖一个入口、检查错调用者或余额键、失败后异常状态。人工构造变体只用于机制回归，不冒充真实研究配对。
 
@@ -119,7 +119,7 @@ R3 拟回答两个问题：把历史漏洞与修复解释成知识，是否让�
 
 ### R3-06：先做离线准入，再运行研究条件
 
-复用 [synapse_protocol.py](../../../../tools/experiment/synapse_protocol.py) 的冻结、预算、执行锁与回执设施。先用假模型走通全部请求、失败、恢复和统计，再确认实际模型配置。冻结代码及 JAR、依赖、快照、卡片、查询、目标、提示与协议摘要；运行中变化即停止受影响单元，不能跨二进制阶段后合称单身份实验。
+复用 [synapse_protocol.py](../../../../tools/experiment/verirag/experiments/synapse_protocol.py) 的冻结、预算、执行锁与回执设施。先用假模型走通全部请求、失败、恢复和统计，再确认实际模型配置。冻结代码及 JAR、依赖、快照、卡片、查询、目标、提示与协议摘要；运行中变化即停止受影响单元，不能跨二进制阶段后合称单身份实验。
 
 采集授权必须写明确切模型、计费端点、请求数、重试、输入／输出预算和停止条件。2026-10-14 的历史授权已消费；2026-10-16 用户另行授权本轮一次真实批量，具体边界见第 8 节。真实凭证继续使用现有忽略配置，测试不依赖实际端点。
 

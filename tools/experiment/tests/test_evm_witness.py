@@ -3,8 +3,8 @@ import unittest
 import tempfile
 from pathlib import Path
 
-from evm_witness import map_program_counters, check_cei_trace, check_authority_trace, _Rpc, _normal_trace, _access_fact, _Session
-import evm_witness
+from verirag.analysis.evm_witness import map_program_counters, check_cei_trace, check_authority_trace, _Rpc, _normal_trace, _access_fact, _Session
+from verirag.analysis import evm_witness
 
 
 class EvmWitnessTest(unittest.TestCase):
@@ -14,8 +14,8 @@ class EvmWitnessTest(unittest.TestCase):
         for category in ('SEARCH_NO_WITNESS', 'TRANSACTION_REVERTED', 'BUDGET_EXHAUSTED',
                          'UNSUPPORTED_SEMANTICS', 'REPLAY_MISMATCH'):
             with self.subTest(category=category), tempfile.TemporaryDirectory() as directory:
-                with patch('evm_witness._configuration', return_value={}), \
-                     patch('evm_witness._execution_artifacts', side_effect=evm_witness._WitnessFailure(category, '本地失败夹具')):
+                with patch('verirag.analysis.evm_witness._configuration', return_value={}), \
+                     patch('verirag.analysis.evm_witness._execution_artifacts', side_effect=evm_witness._WitnessFailure(category, '本地失败夹具')):
                     result = evm_witness.execute_bound_witness(bundle, {}, None, None, None,
                         {'status': 'MATCH'}, root=directory)
                 self.assertEqual('UNKNOWN', result['status'])
@@ -26,7 +26,7 @@ class EvmWitnessTest(unittest.TestCase):
     def test_缺执行环境与缺双收据分别登记(self):
         from unittest.mock import patch
         with tempfile.TemporaryDirectory() as directory:
-            with patch('evm_witness._configuration', side_effect=FileNotFoundError('缺本机配置')):
+            with patch('verirag.analysis.evm_witness._configuration', side_effect=FileNotFoundError('缺本机配置')):
                 result = evm_witness.execute_bound_witness({'verificationStatus': 'RECOMPILED_MATCH'},
                     {}, None, None, None, {'status': 'MATCH'}, root=directory)
             self.assertEqual(('UNKNOWN', 'ENVIRONMENT_UNAVAILABLE'), (result['status'], result['failureKind']))
@@ -44,7 +44,7 @@ class EvmWitnessTest(unittest.TestCase):
         self.assertEqual('TRANSACTION_REVERTED', evm_witness._failure_kind(failure.exception))
         session.timestamp = 1; session.started = 0; session.rpc = Mock()
         session.rpc.call.side_effect = [None, '0xabc', None]
-        with patch('evm_witness.time.monotonic', side_effect=[0, 0, 6]), self.assertRaises(ValueError) as failure:
+        with patch('verirag.analysis.evm_witness.time.monotonic', side_effect=[0, 0, 6]), self.assertRaises(ValueError) as failure:
             session.transact(sender='0xaa', data='0x')
         self.assertEqual('TIMEOUT', evm_witness._failure_kind(failure.exception))
 

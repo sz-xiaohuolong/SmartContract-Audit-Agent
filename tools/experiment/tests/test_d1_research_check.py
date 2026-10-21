@@ -3,8 +3,8 @@ import copy
 import hashlib
 import unittest
 
-from d1_consumption import candidate_context, pair_snippets
-from d1_research_check import inspect_consumption, inspect_bindings, inspect_pair_sources, build_protocol
+from verirag.retrieval.d1_consumption import candidate_context, pair_snippets
+from verirag.evaluation.d1_research_check import inspect_consumption, inspect_bindings, inspect_pair_sources, build_protocol
 
 
 def sha(text):

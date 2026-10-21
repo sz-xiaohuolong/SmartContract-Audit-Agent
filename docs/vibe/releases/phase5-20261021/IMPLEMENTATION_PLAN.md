@@ -52,13 +52,13 @@
 
 | 操作 | 文件或目录 | 计划职责与关联任务 |
 |---|---|---|
-| 新增 | `tools/experiment/phase5_retrieval.py` | 纯离线查询构造、评分和同池选择；P5-01—02 |
-| 新增 | `tools/experiment/phase5_cli.py` | 只读冻结输入、导出审核材料与比较回执；首期没有真实模型执行选项；P5-00—03 |
-| 复用，必要时增加窄接口 | [r3_retrieval.py](../../../../tools/experiment/r3_retrieval.py)、[d1_consumption.py](../../../../tools/experiment/d1_consumption.py) | 固定多路候选池、配对材料、冲突过滤和相同预算选择；不改变原策略行为 |
-| 复用 | [compiler_facts.py](../../../../tools/experiment/compiler_facts.py)、[focus_context.py](../../../../tools/experiment/focus_context.py)、[risk_binding.py](../../../../tools/experiment/risk_binding.py) | 读取已校验事实与来源，不扩充证明能力；P5-01 |
-| 修改 | [eval_ragas.py](../../../../tools/experiment/eval_ragas.py) | 接入按完整配对计分的离线适配和审核覆盖；保留原片段指标定义；P5-03 |
+| 新增 | `tools/experiment/verirag/retrieval/phase5_retrieval.py` | 纯离线查询构造、评分和同池选择；P5-01—02 |
+| 新增 | `tools/experiment/verirag/experiments/phase5_cli.py` | 只读冻结输入、导出审核材料与比较回执；首期没有真实模型执行选项；P5-00—03 |
+| 复用，必要时增加窄接口 | [r3_retrieval.py](../../../../tools/experiment/verirag/retrieval/r3_retrieval.py)、[d1_consumption.py](../../../../tools/experiment/verirag/retrieval/d1_consumption.py) | 固定多路候选池、配对材料、冲突过滤和相同预算选择；不改变原策略行为 |
+| 复用 | [compiler_facts.py](../../../../tools/experiment/verirag/analysis/compiler_facts.py)、[focus_context.py](../../../../tools/experiment/verirag/analysis/focus_context.py)、[risk_binding.py](../../../../tools/experiment/verirag/analysis/risk_binding.py) | 读取已校验事实与来源，不扩充证明能力；P5-01 |
+| 修改 | [eval_ragas.py](../../../../tools/experiment/verirag/evaluation/eval_ragas.py) | 接入按完整配对计分的离线适配和审核覆盖；保留原片段指标定义；P5-03 |
 | 新增／修改测试 | `tests/test_phase5_retrieval.py`、`tests/test_phase5_cli.py`，及现有 [test_r3_retrieval.py](../../../../tools/experiment/tests/test_r3_retrieval.py)、[test_eval_ragas.py](../../../../tools/experiment/tests/test_eval_ragas.py) | 测试均位于 `tools/experiment/` 下；用固定向量和事实夹具，不依赖真实 API、Milvus 或工具安装 |
-| 后置，首期只读 | [benchmark_runtime.py](../../../../tools/experiment/benchmark_runtime.py)、[r3_protocol.py](../../../../tools/experiment/r3_protocol.py)、[r3_cli.py](../../../../tools/experiment/r3_cli.py)、[HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java) | P5-04 获准后才接入新条件、冻结和消费预检；不直接复用旧 CLI 中一次实验的历史授权文字 |
+| 后置，首期只读 | [benchmark_runtime.py](../../../../tools/experiment/verirag/experiments/benchmark_runtime.py)、[r3_protocol.py](../../../../tools/experiment/verirag/experiments/r3_protocol.py)、[r3_cli.py](../../../../tools/experiment/verirag/experiments/r3_cli.py)、[HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java) | P5-04 获准后才接入新条件、冻结和消费预检；不直接复用旧 CLI 中一次实验的历史授权文字 |
 | 附加数据 | `data/audit/phase5/`；派生运行放 `research-artifacts/runs/benchmarks/` | 前者保存来源与审核登记，后者保存冻结派生结果；不复制整个数据集或覆盖历史快照 |
 | 文档 | 本计划、分析、PROJECT、PROGRESS；开工后按需维护同目录 `VERIFICATION.md` | 任务统一在本计划，状态统一在 PROGRESS；实现成立后再更新 TECH_DESIGN |
 
@@ -106,6 +106,7 @@ margin(e) = originalScore(e) − max(contrastScores(e))
 | P5-05：多视角起草，条件性后续 | 单独研究是否值得增加分支 | P5-04 完成，另行确认成本和范围 | AC5-07 |
 | CLEAN-01：废弃代码与文档清理 | 删除有替代或确认无用途的实现，修正当前入口和失效引用；保留历史复现能力 | 用户已确认先清理代码与文档，本机目录只盘点；先核实调用与恢复来源 | 见[清理验收](VERIFICATION.md#废弃代码与文档清理2026-10-21) |
 | 工程维护：Java 职责分包 | 落实用户补充的 Spring Boot 工程规范，保持命令行行为 | 核对现有包、构建入口与依赖关系 | 见下方工程维护验收 |
+| 工程维护：Python 职责分包 | 整理 `tools` 的平铺实验实现，保留现有命令和研究数据契约 | 核对导入、资源定位、子进程与源码身份范围 | 见第 9 节及对应验收 |
 
 **就绪前沿：** P5-00—03 的工程设施已实施；随后获准的一次 P5-04 开发集探索也已完成，真实结果见[追加报告](experiments/2026-10-21_REAL_MODEL_COMPARISON.md)。Nomic 已解决首期评分长度阻断，但三条件未观察到分类或候选核验增益。来源谱系、查询与完整池相关性的独立审核仍缺，正式研究准入未通过，P5-05 继续后置；本次单次调用授权已消费。
 
@@ -228,3 +229,11 @@ java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help
 **实施顺序：** 先清点受版本管理的源码、说明与资源，记录每项候选的用途、大小、引用和恢复位置；再确认三个旧数据脚本的删除，移除无调用的路径转换函数、已被本机固定加载替代的联网加载函数及未使用导入。同步现有加载失败测试，使其覆盖仍使用的本机加载路径。最后修正根入口和工具说明中的过时阶段、缺失论文指引及移动源码后的相对链接，不改写历史实验正文与数字。
 
 **验证与恢复：** 使用现有 Python 测试、Java 21 的 `mvn clean verify`、CLI 帮助及只读链接／资源检查；对受保护文件和研究原件比较清理前后摘要。三个脚本与移除函数均可从清理前提交 `f81aaa8` 取回，不复制整套仓库作为备份。维护结果见[清理验收](VERIFICATION.md#废弃代码与文档清理2026-10-21)，任务状态见[当前进度](../../PROGRESS.md#废弃代码与文档清理2026-10-21)，不改变 phase 5 的研究验收状态。
+
+## 9. 工程维护：Python 职责分包（2026-10-21）
+
+**目标与范围：** 用户要求继续规范 `tools/` 的 Python 代码。本次在根规则补充 Python 工程规范，将平铺的实验实现按审计、分析、检索、知识、实验、评价、基础设施和网页服务移入 `tools/experiment/verirag/`。现有 37 个脚本命令保留为薄入口，导入与测试改用明确包名。独立的开题辅助工具保持现有职责，不为两个文件新增复杂分层。
+
+**兼容与风险：** 参数、退出码、JSON 字段和原始数据位置保持原契约；统一定位源码根、前端资源与模型清单。工具子进程使用明确的模块和搜索路径；源码身份扫描覆盖包内实际实现及兼容入口，新增源码变化不能续写旧实验。已有计划、候选、收据和历史结果只读，真实模型与外部嵌入请求上限为零。
+
+**验收：** 全部内部导入和模拟替身指向实际包；导入无服务、实验或模型调用副作用；旧命令与模块入口的帮助、外部工作目录启动、网页静态资源及 Java 事实提取均通过。执行实验与开题辅助工具测试、Java 21 构建及相关回归，验证嵌套源码变化仍会使运行身份改变。结果记录在[统一验收](VERIFICATION.md)，状态进入现有进度；不改变 phase 5 研究结论。

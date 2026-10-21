@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-from audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS, RunDependencies, run_once, replay, selected_ids, model_runner, tool_runner
-from storage import decode
+from verirag.audit.audit_run import EXPERIMENT_MAX_OUTPUT_TOKENS, RunDependencies, run_once, replay, selected_ids, model_runner, tool_runner
+from verirag.infrastructure.storage import decode
 
 
 class AuditRunTest(unittest.TestCase):
@@ -13,15 +13,15 @@ class AuditRunTest(unittest.TestCase):
         target = {'factGuidanceEnabled': True, 'fullSource': 'contract C {}', 'fullSourceHash': 'a' * 64,
             'modelSource': 'contract C {}', 'scope': 'FULL', 'lineStart': 1, 'lineEnd': 1,
             'mechanism': 'ACCESS_CONTROL', 'function': ''}
-        with tempfile.TemporaryDirectory() as directory, patch('audit_run.subprocess.run') as launch:
+        with tempfile.TemporaryDirectory() as directory, patch('verirag.audit.audit_run.subprocess.run') as launch:
             with self.assertRaisesRegex(ValueError, '事实提示'):
                 model_runner(Path(directory), target, {'d1': {'selected': []}}, 'preflight')
             launch.assert_not_called()
 
     def test_事实提示开关复核索引并保留原全文(self):
         import test_compiler_facts as fixtures
-        from focus_context import build_focus_context, build_fact_guidance
-        from risk_catalog import build_risk_catalog
+        from verirag.analysis.focus_context import build_focus_context, build_fact_guidance
+        from verirag.analysis.risk_catalog import build_risk_catalog
         fixture = fixtures.CompilerFactsTest(); fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         bundle = fixture.load()
@@ -38,9 +38,9 @@ class AuditRunTest(unittest.TestCase):
             if target['factGuidanceEnabled']:
                 self.assertEqual(build_fact_guidance(context, catalog), request['factGuidance'])
             return SimpleNamespace(returncode=0, stdout=b'{"status":"COMPLETED"}')
-        with patch('risk_catalog.load_risk_catalog', return_value=catalog), \
-                patch('compiler_facts.load_bound_compilation', return_value=bundle), \
-                patch('audit_run.subprocess.run', side_effect=capture) as launch:
+        with patch('verirag.analysis.risk_catalog.load_risk_catalog', return_value=catalog), \
+                patch('verirag.analysis.compiler_facts.load_bound_compilation', return_value=bundle), \
+                patch('verirag.audit.audit_run.subprocess.run', side_effect=capture) as launch:
             model_runner(fixture.root, target, view, 'preflight')
             target['factGuidanceEnabled'] = False
             model_runner(fixture.root, target, view, 'preflight')
@@ -51,7 +51,7 @@ class AuditRunTest(unittest.TestCase):
             self.assertEqual(2, launch.call_count)
 
     def test_完整请求预检使用本机重放且不读取真实凭证(self):
-        from benchmark_targets import _record
+        from verirag.experiments.benchmark_targets import _record
         target = _record('fixture', 'contract C { uint x; function f() public { x = 1; } }',
                          'ACCESS_CONTROL', 'f', None, True, '夹具', '夹具')
         target['_maxPromptBytes'] = 32768
@@ -63,7 +63,7 @@ class AuditRunTest(unittest.TestCase):
                 self.assertEqual(32768, request['maxPromptBytes'])
                 self.assertEqual('机制卡片', request['context'])
                 return SimpleNamespace(returncode=0, stdout=b'{"status":"COMPLETED"}')
-            with patch('audit_run.subprocess.run', side_effect=capture):
+            with patch('verirag.audit.audit_run.subprocess.run', side_effect=capture):
                 self.assertEqual('COMPLETED', model_runner(Path(directory), target,
                     {'d1': {'context': '机制卡片', 'selected': []}}, 'preflight')['status'])
 
@@ -99,7 +99,7 @@ class AuditRunTest(unittest.TestCase):
                 return {'status': 'COMPLETED', 'conclusion': 'NO_CONFIRMED_FINDINGS',
                         'hypotheses': [], 'inputTokens': None, 'outputTokens': None}
             deps = RunDependencies(None, None, None, model, lambda *args: [{'engine': 'SLITHER', 'status': 'OK', 'issues': []}])
-            with patch('audit_run.load_target', return_value=target), patch('audit_run.preview', return_value=preview):
+            with patch('verirag.audit.audit_run.load_target', return_value=target), patch('verirag.audit.audit_run.preview', return_value=preview):
                 result = run_once(root, 'fixture', 'offline', deps)
             self.assertEqual('COMPLETED', result['status'])
             self.assertEqual(['model'], calls)
@@ -123,7 +123,7 @@ class AuditRunTest(unittest.TestCase):
             view = {'snapshotId': 's'*64, 'collection': 's1b_'+'f'*32, 'sourceHash': 'a'*64,
                     'modelSourceHash': 'b'*64, 'pool': {}, 'facts': {'facts': []},
                     'd1': {'status': 'NO_RISK_FACT', 'selected': [], 'context': ''}}
-            with patch('audit_run.load_target', return_value=target), patch('audit_run.preview', return_value=view):
+            with patch('verirag.audit.audit_run.load_target', return_value=target), patch('verirag.audit.audit_run.preview', return_value=view):
                 result = run_once(Path(directory), 'fixture', 'offline', deps)
             self.assertEqual('FAILED', result['status'])
             self.assertEqual('UNRESOLVED', result['conclusion'])
@@ -134,7 +134,7 @@ class AuditRunTest(unittest.TestCase):
                                'outputTokens': 4, 'requestConsumptionReceipt': {'factGuidance': {'text': '事实原文'}},
                                '_rawResponse': 'private diagnostic'},
                 lambda *args: [{'engine': 'SLITHER', 'status': 'SKIPPED', 'issues': []}])
-            with patch('audit_run.load_target', return_value=target), patch('audit_run.preview', return_value=view):
+            with patch('verirag.audit.audit_run.load_target', return_value=target), patch('verirag.audit.audit_run.preview', return_value=view):
                 diagnostic_result = run_once(Path(directory), 'fixture', 'offline', diagnostic_deps)
             self.assertEqual('CONTRACT_MISMATCH', diagnostic_result['model']['validationIssue'])
             self.assertEqual({'factGuidance': {'text': '事实原文'}},
@@ -156,7 +156,7 @@ class AuditRunTest(unittest.TestCase):
                     'd1': {'status': 'NO_RISK_FACT', 'selected': [], 'context': ''}}
             calls = []
             deps = RunDependencies(None, None, None, lambda *args: calls.append(1), lambda *args: [])
-            with patch('audit_run.load_target', side_effect=[target, changed]), patch('audit_run.preview', return_value=view):
+            with patch('verirag.audit.audit_run.load_target', side_effect=[target, changed]), patch('verirag.audit.audit_run.preview', return_value=view):
                 with self.assertRaises(ValueError): run_once(Path(directory), 'fixture', 'offline', deps)
             self.assertEqual([], calls)
 
@@ -173,7 +173,7 @@ class AuditRunTest(unittest.TestCase):
             deps = RunDependencies(None, None, None, lambda *args: calls.append(1) or {
                 'status': 'COMPLETED', 'conclusion': 'NO_CONFIRMED_FINDINGS', 'hypotheses': [],
                 'inputTokens': None, 'outputTokens': None}, lambda *args: [])
-            with patch('audit_run.load_target', return_value=target), patch('audit_run.preview', return_value=view):
+            with patch('verirag.audit.audit_run.load_target', return_value=target), patch('verirag.audit.audit_run.preview', return_value=view):
                 result = run_once(Path(directory), 'fixture', 'offline', deps)
             self.assertEqual([1], calls)
             self.assertIsNone(result['plan']['maxInputBytes'])
@@ -205,11 +205,11 @@ class AuditRunTest(unittest.TestCase):
                 self.assertIn(f'providers.ark.max-output-tokens={EXPERIMENT_MAX_OUTPUT_TOKENS}', properties)
                 self.assertIn('providers.ark.timeout-seconds=360', properties)
                 return SimpleNamespace(returncode=0, stdout=b'{"status":"COMPLETED","conclusion":"NO_CONFIRMED_FINDINGS"}')
-            with patch('audit_run.subprocess.run', side_effect=capture), \
-                    patch('risk_catalog.load_risk_catalog', return_value=catalog):
+            with patch('verirag.audit.audit_run.subprocess.run', side_effect=capture), \
+                    patch('verirag.analysis.risk_catalog.load_risk_catalog', return_value=catalog):
                 self.assertEqual('COMPLETED', model_runner(root, target, view, 'real')['status'])
-            with patch('audit_run.subprocess.run') as launch, \
-                    patch('risk_catalog.load_risk_catalog', return_value={**catalog, 'sourceHash': 'b' * 64}):
+            with patch('verirag.audit.audit_run.subprocess.run') as launch, \
+                    patch('verirag.analysis.risk_catalog.load_risk_catalog', return_value={**catalog, 'sourceHash': 'b' * 64}):
                 with self.assertRaisesRegex(ValueError, '发生变化'):
                     model_runner(root, target, view, 'real')
                 launch.assert_not_called()

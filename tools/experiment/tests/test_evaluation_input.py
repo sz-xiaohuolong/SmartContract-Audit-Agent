@@ -1,7 +1,7 @@
 """评测源码清理的词法与原始位置约束。"""
 import unittest
 
-from benchmark_targets import _record
+from verirag.experiments.benchmark_targets import _record
 
 
 class EvaluationInputTest(unittest.TestCase):

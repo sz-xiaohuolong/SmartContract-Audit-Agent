@@ -2,7 +2,7 @@
 import copy
 import unittest
 
-from isolation import validate_manifest, validate_documents
+from verirag.infrastructure.isolation import validate_manifest, validate_documents
 
 
 def sample(identifier, split="test", project=None, source_hash=None):

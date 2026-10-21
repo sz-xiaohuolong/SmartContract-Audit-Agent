@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from test_isolation import manifest
-from snapshots import build_snapshot, verify_snapshot, activate_snapshot, active_snapshot, MilvusIndex
+from verirag.knowledge.snapshots import build_snapshot, verify_snapshot, activate_snapshot, active_snapshot, MilvusIndex
 
 
 class ClientFixture:
@@ -55,7 +55,7 @@ class SnapshotTest(unittest.TestCase):
         self.assertEqual(snapshot, active_snapshot(self.root)["snapshot_id"])
 
     def test_interrupted_build_never_activates(self):
-        with patch("snapshots.os.replace", side_effect=OSError("模拟断电")):
+        with patch('verirag.knowledge.snapshots.os.replace', side_effect=OSError("模拟断电")):
             with self.assertRaises(OSError): self.build()
         self.assertFalse((self.root / "active.json").exists())
         for path in self.root.glob(".building-*"):

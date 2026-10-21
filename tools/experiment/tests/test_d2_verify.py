@@ -2,8 +2,8 @@
 import copy
 import unittest
 
-from d2_verify import evaluate
-from program_facts import extract_facts
+from verirag.analysis.d2_verify import evaluate
+from verirag.analysis.program_facts import extract_facts
 
 
 ACCESS = '''contract Vault {

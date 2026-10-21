@@ -4,7 +4,7 @@ import unittest
 import hashlib
 from pathlib import Path
 
-from benchmark_targets import load_benchmark_targets, _scopes, _record
+from verirag.experiments.benchmark_targets import load_benchmark_targets, _scopes, _record
 from dataset_fixture import smartbugs_fixture
 
 

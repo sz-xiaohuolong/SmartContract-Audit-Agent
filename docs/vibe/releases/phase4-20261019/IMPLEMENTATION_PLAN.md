@@ -102,13 +102,13 @@
 
 对 12 条未知分别登记绑定问题、未支持语义、入口／状态缺口、执行／环境缺口等原因，允许一条候选有多个缺口。独立标注“候选确有漏洞／候选错误／证据不足”，审核者和争议另记；程序诊断不能冒充独立真值。
 
-**输出与接缝：** 在原批次之外保存紧凑派生摘要和原件指针，复用 [benchmark_runtime.py](../../../../tools/experiment/benchmark_runtime.py)、[d2_verify.py](../../../../tools/experiment/d2_verify.py)。同时冻结源代码、候选顺序、工具身份与本轮基点。
+**输出与接缝：** 在原批次之外保存紧凑派生摘要和原件指针，复用 [benchmark_runtime.py](../../../../tools/experiment/verirag/experiments/benchmark_runtime.py)、[d2_verify.py](../../../../tools/experiment/verirag/analysis/d2_verify.py)。同时冻结源代码、候选顺序、工具身份与本轮基点。
 
 **通过条件：** 40 个请求、22 条候选、7 项管线失败能复算；错误原因可定位到具体候选；旧 163 条的历史重放与新采集 163 条分组保存。缺失原件时写明不可复核范围，不从摘要重造原候选。
 
 ### P4-01：先修复绑定，再扩充可解释的分类
 
-修改范围为 [compiler_facts.py](../../../../tools/experiment/compiler_facts.py)、[risk_catalog.py](../../../../tools/experiment/risk_catalog.py)、[risk_binding.py](../../../../tools/experiment/risk_binding.py)、访问控制调用图，以及必要的 Java 校验与对应测试。优先复用现有低级调用识别，避免再写一套按字符串名称匹配的分类器。
+修改范围为 [compiler_facts.py](../../../../tools/experiment/verirag/analysis/compiler_facts.py)、[risk_catalog.py](../../../../tools/experiment/verirag/analysis/risk_catalog.py)、[risk_binding.py](../../../../tools/experiment/verirag/analysis/risk_binding.py)、访问控制调用图，以及必要的 Java 校验与对应测试。优先复用现有低级调用识别，避免再写一套按字符串名称匹配的分类器。
 
 普通 `transfer/send/call{value:...}` 在发现与核验阶段须绑定同一 AST 操作，即使其证明能力尚不充分。终止内置、静态调用、委托调用、内部同名函数必须区分。保留 `sourceHash`、完整源码闭包、编译收据、合约与入口签名、`factId`、原字节跨度及调用上下文；共享内部函数从不同入口到达时，不能只靠一个节点 ID 合并上下文。
 
@@ -120,7 +120,7 @@
 
 ### P4-02：把权限检查与状态修改入口联系起来
 
-在 [focus_context.py](../../../../tools/experiment/focus_context.py) 及编译事实入口上扩展，不将 [program_facts.py](../../../../tools/experiment/program_facts.py) 的词法结果升级为证明。首期种子包括条件读取的状态变量、地址状态、修饰器条件，以及 `msg.sender/tx.origin` 等身份来源。
+在 [focus_context.py](../../../../tools/experiment/verirag/analysis/focus_context.py) 及编译事实入口上扩展，不将 [program_facts.py](../../../../tools/experiment/verirag/analysis/program_facts.py) 的词法结果升级为证明。首期种子包括条件读取的状态变量、地址状态、修饰器条件，以及 `msg.sender/tx.origin` 等身份来源。
 
 拟记录四类关系：函数写状态、检查读状态、入口调用函数、检查与操作的控制关系。每条关系保留声明身份、源码跨度、事实 ID、编译收据和关系类型。结构观察与已经证明的支配关系要分别标记；没有入边只说明当前索引没有记录对应检查，不能标成“无权限保护”。
 
@@ -140,7 +140,7 @@
 
 ### P4-04：逐项证明保护，而非扩大“安全”规则
 
-复用 [candidate_proofs.py](../../../../tools/experiment/candidate_proofs.py)、[compiled_d2.py](../../../../tools/experiment/compiled_d2.py) 的六项义务。先将已支持的地址权限检查可靠连接到已绑定普通转账，再考虑直接布尔角色映射，最后考虑有完整写入者集合的简单状态开关。
+复用 [candidate_proofs.py](../../../../tools/experiment/verirag/analysis/candidate_proofs.py)、[compiled_d2.py](../../../../tools/experiment/verirag/analysis/compiled_d2.py) 的六项义务。先将已支持的地址权限检查可靠连接到已绑定普通转账，再考虑直接布尔角色映射，最后考虑有完整写入者集合的简单状态开关。
 
 | 新规则顺序 | 必须同时核对的内容 | 无法满足时 |
 |---|---|---|
@@ -156,7 +156,7 @@
 
 ### P4-05：复用执行见证，补齐真实正反对照
 
-先使用 [evm_witness.py](../../../../tools/experiment/evm_witness.py) 已有的标量权限写入及敏感消费者回放，建立正确保护、错误保护、未初始化、正常提交和回滚的对照。CEI 表示检查、状态更新、外部交互的顺序；其执行顺序反例继续只按原有限属性解释，不等同于完整重入获利证明。
+先使用 [evm_witness.py](../../../../tools/experiment/verirag/analysis/evm_witness.py) 已有的标量权限写入及敏感消费者回放，建立正确保护、错误保护、未初始化、正常提交和回滚的对照。CEI 表示检查、状态更新、外部交互的顺序；其执行顺序反例继续只按原有限属性解释，不等同于完整重入获利证明。
 
 每份见证绑定原字节码、初始化、调用者、权限或资产资源、风险源映射、正常提交效果，以及两个独立节点的重放。不得直接改写存储来制造攻击初态；没有正常提交、没有敏感消费者、没有授权规则依据，都不能只凭一次调用成功支持业务越权。
 
@@ -168,7 +168,7 @@
 
 ### P4-06：将工程改进和方法效果分开比较
 
-沿用 [r3_protocol.py](../../../../tools/experiment/r3_protocol.py)、[benchmark_batch.py](../../../../tools/experiment/benchmark_batch.py) 的冻结、锁、消费回执和计分机制。首期不复制一套 phase 4 运行平台。
+沿用 [r3_protocol.py](../../../../tools/experiment/verirag/experiments/r3_protocol.py)、[benchmark_batch.py](../../../../tools/experiment/verirag/experiments/benchmark_batch.py) 的冻结、锁、消费回执和计分机制。首期不复制一套 phase 4 运行平台。
 
 先做零模型重放：固定候选、源码与输入收据，分别比较原核验器和新核验器。新引擎身份与派生结果另存，不覆盖原始判断。22 条为首批诊断集，旧 163 条为独立回归组，均是开发材料；不要据此声称独立泛化效果。
 

@@ -4,7 +4,7 @@ import unittest
 
 class R3ProtocolTest(unittest.TestCase):
     def test_双向证据配对保留未知失败及未运行分母(self):
-        from r3_protocol import paired_evidence_coverage
+        from verirag.experiments.r3_protocol import paired_evidence_coverage
         pairs = [{'pairId': 'p1', 'before': 'a', 'after': 'b'}, {'pairId': 'p2', 'before': 'c', 'after': 'd'}]
         rows = [{'sampleId': sample, 'strategy': 'D1', 'd2': {'verdict': verdict}}
                 for sample, verdict in [('a', 'SUPPORTED'), ('b', 'REFUTED'), ('c', 'UNKNOWN')]]
@@ -15,8 +15,8 @@ class R3ProtocolTest(unittest.TestCase):
         self.assertIsNone(result['independentAccuracy'])
 
     def test_五条件协议冻结完整预算且未审核保持探索状态(self):
-        from r3_protocol import freeze_plan
-        from benchmark_batch import make_plan
+        from verirag.experiments.r3_protocol import freeze_plan
+        from verirag.experiments.benchmark_batch import make_plan
         plan = make_plan(['a'], ['VANILLA', 'R3_CODE', 'R3_CARD', 'R3_DENSE', 'R3_FUSION'],
                          'real', [{'sampleId': 'a', 'runnable': True, 'sourceHash': 'a' * 64,
                                    'groundTruth': {'hasVulnerability': True}}], 'b' * 64, {'model': 'fixture'})
@@ -29,7 +29,7 @@ class R3ProtocolTest(unittest.TestCase):
         self.assertEqual([], result['evaluationPairs'])
 
     def test_双向核验缺失或失败不能从分母删除或变为成功(self):
-        from r3_protocol import paired_evidence_coverage
+        from verirag.experiments.r3_protocol import paired_evidence_coverage
         pairs = [{'pairId': 'p', 'before': 'a', 'after': 'b'}]
         rows = [{'sampleId': key, 'strategy': 'D1', 'status': 'COMPLETED'} for key in ('a', 'b')]
         self.assertEqual(0, paired_evidence_coverage(pairs, rows, ['D1'])['D1']['supportedRefutedPairs'])
@@ -43,7 +43,7 @@ class R3ProtocolTest(unittest.TestCase):
             paired_evidence_coverage(pairs, rows + rows, ['D1'])
 
     def test_配对主分母包含失败与未运行(self):
-        from r3_protocol import paired_accuracy
+        from verirag.experiments.r3_protocol import paired_accuracy
         pairs = [{'pairId': 'p1', 'before': 'a', 'after': 'b'},
                  {'pairId': 'p2', 'before': 'c', 'after': 'd'}]
         rows = [{'sampleId': 'a', 'strategy': 'R3_CARD', 'status': 'COMPLETED', 'prediction': 'REPORT'},
@@ -53,7 +53,7 @@ class R3ProtocolTest(unittest.TestCase):
         self.assertEqual({'plannedPairs': 2, 'correctPairs': 1, 'completePairs': 1, 'accuracy': 0.5}, result)
 
     def test_不同池按表达和排序组分别校验(self):
-        from r3_protocol import comparison_audit
+        from verirag.experiments.r3_protocol import comparison_audit
         rows = [{'sampleId': 'a', 'strategy': strategy, 'poolHash': pool,
                  'retrieval': {'r3Receipt': {'selectedPairs': ['p']}}}
                 for strategy, pool in [('R3_CODE', 'old'), ('R3_CARD', 'old'),
@@ -65,8 +65,8 @@ class R3ProtocolTest(unittest.TestCase):
     def test_五条件使用原批量平台回放且不同实验组不误报池冲突(self):
         from pathlib import Path
         from tempfile import TemporaryDirectory
-        from benchmark_batch import make_plan, replay_batch, run_batch
-        from r3_protocol import CONDITIONS, freeze_plan
+        from verirag.experiments.benchmark_batch import make_plan, replay_batch, run_batch
+        from verirag.experiments.r3_protocol import CONDITIONS, freeze_plan
         plan = make_plan(['a'], CONDITIONS, 'real', [{'sampleId': 'a', 'runnable': True,
             'sourceHash': 'a' * 64, 'groundTruth': {'hasVulnerability': True}}], 'b' * 64)
         plan = freeze_plan(plan, {'registryHash': 'c' * 64}, {'artifactHash': 'd' * 64},

@@ -1,7 +1,7 @@
 """四臂共享原候选身份；弱过滤与证明、样本标签与候选真值严格分开。"""
 import copy
 import unittest
-import four_arm_report
+from verirag.evaluation import four_arm_report
 
 
 class FourArmReportTest(unittest.TestCase):

@@ -8,9 +8,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from audit_run import tool_runner
-from audit_workbench import AuditWorkbench
-from mvp_runtime import _configuration_values
+from verirag.audit.audit_run import tool_runner
+from verirag.audit.audit_workbench import AuditWorkbench
+from verirag.experiments.mvp_runtime import _configuration_values
 from test_audit_workbench import Runtime, SOURCE
 
 
@@ -98,7 +98,7 @@ class ConfigurationTest(unittest.TestCase):
             choice = {'source': SOURCE, 'mechanism': 'REENTRANCY', 'function': 'withdraw', 'mode': 'real'}
             preview = workbench.preview(choice)
             prepared = workbench.prepare({**choice, 'planHash': preview['planHash']})
-            with patch('audit_run.subprocess.run', side_effect=process):
+            with patch('verirag.audit.audit_run.subprocess.run', side_effect=process):
                 result = workbench.execute(prepared)
             self.assertEqual('COMPLETED', result['status'], result)
             self.assertEqual(1, len(consumed))
