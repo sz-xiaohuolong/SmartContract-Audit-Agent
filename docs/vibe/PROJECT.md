@@ -39,9 +39,9 @@ flowchart LR
 
 ## 当前能做什么，研究还缺什么
 
-**截至 2026-10-21，已实施至 phase 4，工程部分完成（PARTIAL），研究效果尚未验证（UNVERIFIED）。** 工作台、Java 模型网关、固定候选重放与有限 D2 核验已经接通。phase 3 增加机制卡片与多路检索，phase 4 修复七项历史转账定位失败，并接入可选权限事实提示与有限转账保护证明。这些新增能力各有开关和适用范围，见[技术设计](TECH_DESIGN.md#默认流程与研究开关)。
+**截至 2026-10-21，已实施至 phase 5 的离线工程设施，工程部分完成（PARTIAL），研究效果尚未验证（UNVERIFIED）。** 工作台、Java 模型网关、固定候选重放与有限 D2 核验已经接通。phase 3 增加机制卡片与多路检索，phase 4 修复七项历史转账定位失败，并接入可选权限事实提示与有限转账保护证明。这些新增能力各有开关和适用范围，见[技术设计](TECH_DESIGN.md#默认流程与研究开关)。
 
-phase 5 已形成[CF-RAG 文献与工程分析](releases/phase5-20261021/CF_RAG_ANALYSIS.md)和[对照查询重排计划](releases/phase5-20261021/IMPLEMENTATION_PLAN.md)。建议先比较同一份材料对原查询和对照查询的得分，再独立评价选材质量。目前仅完成规划，工程尚未开工，没有新增模型实验，不改变上述研究结论。
+phase 5 已依据[CF-RAG 分析](releases/phase5-20261021/CF_RAG_ANALYSIS.md)和[统一计划](releases/phase5-20261021/IMPLEMENTATION_PLAN.md)实现对照问题、同池两种排序、来源回放及独立评价设施。8 个历史目标登记 46 个操作，13 个结构有效；这 13 个单元均因完整材料超出固定本机编码器上限而失败，33 个未支持。真实排序成绩为空，零真实模型请求；结果与核心代码见[phase 5 验收](releases/phase5-20261021/VERIFICATION.md)。
 
 最近两次探索均未观察到模型分类增益：2026-10-16 的五条件在八个开发目标上，F1（综合衡量报告准确程度与漏报情况的指标）均为 1.0000；2026-10-20 的四条件只有四个共同有效目标，F1 均为 1.0，另四目标的 16 个计划单元因输入超限而未请求。后一批产生 12 条候选，8 条支持、4 条未知。小规模开发集满分不能证明新增方法更好，也不能代替独立评价。
 
@@ -64,7 +64,7 @@ phase 5 已形成[CF-RAG 文献与工程分析](releases/phase5-20261021/CF_RAG_
 
 这是项目唯一的完整导航地图。先读本页与概念案例，可建立 5 分钟全景；再读技术设计和实验总览，目标是在 15 分钟内找到方法、实现、主要结果与限制。表中的旧目录名用于保留历史引用，不能据此认定系统仍停留在该阶段。
 
-接手开发时先读根目录 [Agent 工作约定](../../AGENTS.md)与[当前进度](PROGRESS.md)首屏。下表和后续地图覆盖全部 61 份 `docs/` Markdown；[简短文档入口](../README.md)只引导到本页。本文维护导航，进度页维护当前状态，技术设计解释实际实现，各阶段计划和验收保留各自职责。
+接手开发时先读根目录 [Agent 工作约定](../../AGENTS.md)与[当前进度](PROGRESS.md)首屏。下表和后续地图覆盖全部 62 份 `docs/` Markdown；[简短文档入口](../README.md)只引导到本页。本文维护导航，进度页维护当前状态，技术设计解释实际实现，各阶段计划和验收保留各自职责。
 
 ### 阶段名称与历史路径
 
@@ -77,7 +77,7 @@ phase 5 已形成[CF-RAG 文献与工程分析](releases/phase5-20261021/CF_RAG_
 | phase 2：差分检索与路径证据核验 | R2；`releases/R2-20261010/` | 已有能力与未完成的真实修复任务 |
 | phase 3：机制卡片与多路检索 | R3；`releases/R3-20261015/` | 首期已实施，整体部分完成，研究尚未验证 |
 | phase 4：访问控制事实引导与双向证据核验 | 原称 R4；`releases/phase4-20261019/` | 工程部分完成，已完成一次四条件探索；真实修复与独立研究待完成 |
-| phase 5：对照查询与证据区分度重排 | `releases/phase5-20261021/` | 仅完成文献分析与优化计划，规划中（PLANNING）；范围待确认，工程未开工 |
+| phase 5：对照查询与证据区分度重排 | `releases/phase5-20261021/` | 开发中（BUILDING），首期离线设施已实施；本机评分受长度阻断，独立审核和研究增益尚缺 |
 
 ### 第一层：5 分钟理解系统
 
@@ -94,7 +94,7 @@ phase 5 已形成[CF-RAG 文献与工程分析](releases/phase5-20261021/CF_RAG_
 | 确认 Agent 的规则入口和修改边界 | [根目录 AGENTS.md](../../AGENTS.md)：当前唯一项目规则入口；保留中文、当前目录开发、提交同步、凭证和原件约束 |
 | 用三条命令启动演示 | [快速上手](releases/R2-20261010/attachments/GETTING_STARTED.md) |
 | 看数据流、时序和源码职责 | [技术设计](TECH_DESIGN.md) |
-| 了解当前阶段与沿用的基础需求 | [phase 4 计划](releases/phase4-20261019/IMPLEMENTATION_PLAN.md)、[phase 4 验收](releases/phase4-20261019/VERIFICATION.md)；基础行为见 [R2 需求基线](releases/R2-20261010/PROJECT_BRIEF.md)、[行为规格](releases/R2-20261010/SPEC.md) |
+| 了解当前阶段与沿用的基础需求 | [phase 5 计划](releases/phase5-20261021/IMPLEMENTATION_PLAN.md)、[phase 5 验收](releases/phase5-20261021/VERIFICATION.md)；已有证明能力见 [phase 4 计划](releases/phase4-20261019/IMPLEMENTATION_PLAN.md)、[phase 4 验收](releases/phase4-20261019/VERIFICATION.md)；基础行为见 [R2 需求基线](releases/R2-20261010/PROJECT_BRIEF.md)、[行为规格](releases/R2-20261010/SPEC.md) |
 | 区分基础设计目标与实际实现 | [phase 2 目标方案](releases/R2-20261010/PROPOSED_DESIGN.md)、[统一实施计划](releases/R2-20261010/IMPLEMENTATION_PLAN.md) |
 | 核对基础功能的历史检查与限制 | [phase 2 统一验收](releases/R2-20261010/VERIFICATION.md) |
 | 深入使用命令行工具 | [工具说明](../../tools/experiment/README.md) |
@@ -104,7 +104,7 @@ phase 5 已形成[CF-RAG 文献与工程分析](releases/phase5-20261021/CF_RAG_
 
 | 问题或记录 | 阅读入口及用途 |
 |---|---|
-| CF-RAG 对 phase 5 有什么启发 | [文献与工程分析](releases/phase5-20261021/CF_RAG_ANALYSIS.md)、[统一优化计划](releases/phase5-20261021/IMPLEMENTATION_PLAN.md)：核对论文与作者代码，纠正直接相减和强制分支隔离等误读；建议先做有来源的对照查询、同池重排和独立评价；目前只交付规划 |
+| CF-RAG 对 phase 5 有什么启发 | [文献与工程分析](releases/phase5-20261021/CF_RAG_ANALYSIS.md)、[统一优化计划](releases/phase5-20261021/IMPLEMENTATION_PLAN.md)：核对论文与作者代码，纠正直接相减和强制分支隔离等误读；已实现有来源的对照查询、同池重排和独立评价设施；[实际结果](releases/phase5-20261021/VERIFICATION.md)保留编码阻断及空成绩 |
 | ACTaint 对 phase 4 有什么启发 | [phase 4 文献与工程分析](releases/phase4-20261019/ACTAINT_ANALYSIS.md)、[统一优化计划](releases/phase4-20261019/IMPLEMENTATION_PLAN.md)：纠正六类操作、全文提示和实验口径；安排定位、权限事实、保护证明及独立评价；实际进展见[验收记录](releases/phase4-20261019/VERIFICATION.md) |
 | 2026-10-20 phase 4 实施与采集 | [实施与真实实验报告](releases/phase4-20261019/experiments/2026-10-20_IMPLEMENTATION_AND_REAL_API_REPORT.md)：16/16 请求有效、另 16 单元输入阻断；四条件 F1 相同，12 条候选为 8 支持／4 未知；用量、身份、原件与研究限制 |
 | 开题的实验设计与稿件审查怎样使用技能 | [本机开题工作流与技能配置](../../thesis/开题工作流评审与Skill配置_20260922.md#七2026-10-16补充实验设计与稿件审查)：2026-10-16 补充两个固定版本技能；开题材料与安装登记不随 Git 同步，安装不代表方法有效或独立审核完成 |

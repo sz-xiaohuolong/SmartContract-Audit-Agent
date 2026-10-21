@@ -272,6 +272,144 @@ def evaluate_offline(data, qrels=None, k=4):
             'requestAttempts': 0, 'researchEligible': False}
 
 
+def evaluate_phase5(run, reviews=None):
+    """独立的完整配对指标；先在目标内平均，再按目标汇总，旧片段指标不变。"""
+    from phase5_cli import validate_run, review_template
+    from phase5_retrieval import CONDITIONS
+    validate_run(run)
+    data = run['dataset']
+    targets = {t['targetKey']: t for t in data['targets']}
+    indexed = {}
+
+    def independent(record, statuses):
+        if record.get('status') not in statuses:
+            raise ValueError('独立审核状态无效')
+        if record['status'] != 'UNREVIEWED' and (record.get('reviewerType') != 'INDEPENDENT_HUMAN'
+                or not isinstance(record.get('reviewer'), str) or not record['reviewer'].strip()
+                or not isinstance(record.get('rationale'), str) or not record['rationale'].strip()):
+            raise ValueError('独立审核需要人工审核身份、审核人和依据；AI 诊断不能代填')
+
+    if reviews is not None:
+        if (reviews.get('schemaVersion') != 'phase5-review-1' or reviews.get('datasetHash') != data['datasetHash']
+                or reviews.get('scope') != 'CASE_PAIR_CANDIDATE_POOL'):
+            raise ValueError('独立审核与冻结输入身份不符')
+        seen_targets = set()
+        expected_review = {t['targetKey']: t for t in review_template(data)['targets']}
+        for reviewed in reviews['targets']:
+            key = reviewed['targetKey']
+            target = targets.get(key)
+            if (key in seen_targets or target is None or target['status'] != 'READY'
+                    or reviewed['sourceHash'] != target['sourceHash'] or reviewed['poolHash'] != target['pool']['poolHash']):
+                raise ValueError('审核目标、来源或候选池身份不符')
+            seen_targets.add(key)
+            display = expected_review[key]
+            if any(reviewed.get(field) != display[field] for field in ('materials', 'sourceText', 'poolIds')):
+                raise ValueError('人工审核所见材料或目标源码与冻结输入不符')
+            queries = {q['operationKey']: q for q in target['queries']['queries']}
+            shown_queries = {q['operationKey']: q for q in display['queries']}
+            for q in reviewed['queries']:
+                identity = key, q['operationKey']
+                original = queries.get(q['operationKey'])
+                if identity in indexed or original is None or q['queryHash'] != fingerprint(original):
+                    raise ValueError('查询审核身份重复或不符')
+                if any(q.get(field) != shown_queries[q['operationKey']][field] for field in
+                       ('original', 'contrasts', 'references', 'structureStatus')):
+                    raise ValueError('人工审核所见查询或事实来源与冻结输入不符')
+                independent(q, {'UNREVIEWED', 'ACCEPTED', 'REJECTED'})
+                independent(q['relevance'], {'UNREVIEWED', 'REVIEWED'})
+                if q['status'] == 'ACCEPTED' and original['structureStatus'] != 'VALID':
+                    raise ValueError('不支持的结构不能提升为有效查询')
+                if q['relevance']['status'] == 'REVIEWED' and (set(q['pairGrades']) != {
+                        e['pairId'] for e in target['pool']['evidence']} or any(
+                        type(v) is not int or v not in (0, 1, 2) for v in q['pairGrades'].values())):
+                    raise ValueError('独立相关性审核必须覆盖完整配对池，等级为 0、1、2')
+                indexed[identity] = q
+
+    rows = []
+    accepted, scorable, structures = set(), set(), set()
+    comparison_index = {(c['targetKey'], c['operationKey']): c for c in run['comparisons']}
+    for key, target in targets.items():
+        if target['status'] != 'READY':
+            for condition in CONDITIONS:
+                rows.append({'targetKey': key, 'operationKey': None, 'strategy': condition, 'status': target['status'],
+                    'reason': target.get('reason'), 'scores': dict.fromkeys(RANK_METRICS), 'retrievedCount': 0, 'contextBytes': 0})
+            continue
+        for q in target['queries']['queries']:
+            identity = key, q['operationKey']
+            comparison = comparison_index[identity]
+            review = indexed.get(identity)
+            if q['structureStatus'] == 'VALID': structures.add(identity)
+            if comparison['scores']['status'] == 'SCORED': scorable.add(identity)
+            if review and review['status'] == 'ACCEPTED': accepted.add(identity)
+            for condition in CONDITIONS:
+                ranking = comparison['rankings'][condition]
+                scores, status = dict.fromkeys(RANK_METRICS), comparison['scores']['status']
+                if status == 'SCORED':
+                    if not review or review['status'] != 'ACCEPTED':
+                        status = review['status'] if review else 'UNREVIEWED'
+                    elif review['relevance']['status'] != 'REVIEWED':
+                        status = 'RELEVANCE_UNREVIEWED'
+                    else:
+                        scores = rank_metrics(ranking['selectedPairs'], review['pairGrades'], data['k'])
+                rows.append({'targetKey': key, 'operationKey': q['operationKey'], 'strategy': condition,
+                    'status': status, 'scores': scores, 'reason': q.get('reason') or comparison['scores']['errors'],
+                    'retrievedCount': len(ranking['selectedPairs']), 'contextBytes': ranking['contextBytes']})
+
+    # 每一指标先在各目标内对有定义的操作取均值，零相关项仍按原定义保留空值。
+    def aggregate(selected_rows):
+        result = {}
+        for condition in CONDITIONS:
+            chosen = [r for r in selected_rows if r['strategy'] == condition]
+            stats = {'planned': len(chosen), 'statuses': dict(Counter(r['status'] for r in chosen))}
+            for metric in RANK_METRICS:
+                means = []
+                for key in sorted({r['targetKey'] for r in chosen}):
+                    values = [r['scores'][metric] for r in chosen if r['targetKey'] == key and r['scores'][metric] is not None]
+                    if values: means.append(sum(values) / len(values))
+                stats[metric] = {'mean': sum(means) / len(means) if means else None, 'count': len(means)}
+            result[condition] = stats
+        return result
+
+    complete, partial, empty, target_coverage = [], [], [], []
+    for key, target in targets.items():
+        own = [r for r in rows if r['targetKey'] == key]
+        scored = [r for r in own if r['status'] == 'SCORED']
+        queries = target.get('queries', {})
+        if own and len(scored) == len(own) and queries.get('queries') and not queries.get('entryGaps'):
+            complete.append(key)
+        elif scored: partial.append(key)
+        else: empty.append(key)
+        target_coverage.append({'targetKey': key, 'inputStatus': target['status'],
+            'reason': target.get('reason'), 'plannedQueries': len(queries.get('queries', [])),
+            'structurallyValidQueries': sum(t == key for t, _ in structures),
+            'scorableQueries': sum(t == key for t, _ in scorable),
+            'independentlyAcceptedQueries': sum(t == key for t, _ in accepted),
+            'entryGaps': queries.get('entryGaps', []),
+            'evaluationStatus': 'COMPLETE' if key in complete else 'PARTIAL' if key in partial else 'UNSCORED',
+            'comparisonStatuses': dict(Counter(c['scores']['status'] for c in run['comparisons'] if c['targetKey'] == key))})
+    planned_queries = sum(len(t.get('queries', {}).get('queries', [])) for t in targets.values())
+    valid_common = sorted({r['targetKey'] for r in rows if r['status'] == 'SCORED'})
+    paired_rows = [r for r in rows if r['targetKey'] in valid_common and r['status'] == 'SCORED']
+    return {'schemaVersion': 'phase5-evaluation-1', 'datasetHash': data['datasetHash'], 'runHash': run['runHash'],
+        'reviewsHash': fingerprint(reviews), 'rankingUnit': 'CASE_PAIR', 'scope': 'CANDIDATE_POOL', 'k': data['k'],
+        'coverage': {'plannedTargets': len(targets), 'plannedQueries': planned_queries,
+            'structurallyValidQueries': len(structures), 'scorableQueries': len(scorable),
+            'scorableQueryRate': len(scorable) / planned_queries if planned_queries else None,
+            'independentlyAcceptedQueries': len(accepted),
+            'independentAcceptanceRate': len(accepted) / len(structures) if structures else None,
+            'completeScoredTargets': len(complete), 'partialScoredTargets': len(partial),
+            'unscoredTargets': len(empty), 'targetStatuses': dict(Counter(t['status'] for t in targets.values()))},
+        'strategies': aggregate(rows), 'rows': rows, 'targetCoverage': target_coverage,
+        'paired': {'targetKeys': valid_common, 'completeTargetKeys': complete, 'partialTargetKeys': partial,
+                   'metrics': aggregate(paired_rows)},
+        'encoding': {'calls': sum(c['scores']['encodingCalls'] for c in run['comparisons']),
+            'texts': sum(c['scores']['encodingTexts'] for c in run['comparisons']),
+            'durationMs': sum(c['scores']['durationMs'] for c in run['comparisons'])},
+        'requestAttempts': 0, 'researchEligible': False,
+        'limitations': ['只评价完整配对在冻结候选池内的排序，不能解释为漏洞 F1 或全知识库召回率',
+                       '独立审核不充分的操作仍在分母；方法效果须结合完整目标和来源划分另行判断']}
+
+
 def render_report(report):
     lines = ['# 检索评估报告', '', '本报告使用冻结输入和独立相关性标注；缺失或未审核时保留空分数。', '',
              f"评估输入摘要：`{report['datasetHash']}`。k={report['k']}，评估单位为检索片段。", '',

@@ -1,0 +1,244 @@
+{
+  "schemaVersion": "phase5-source-register-1",
+  "date": "2026-10-21",
+  "baseCommit": "38f34e2",
+  "historicalBatches": [
+    {
+      "batchId": "9ec220e9e03c485c8871703ec4711b27",
+      "plannedTargets": 53,
+      "plannedUnits": 159,
+      "savedUnits": 159,
+      "candidateCount": 163,
+      "origin": {
+        "batchId": "9ec220e9e03c485c8871703ec4711b27",
+        "plan": {
+          "path": "research-artifacts/runs/benchmarks/9ec220e9e03c485c8871703ec4711b27/plan.json",
+          "sha256": "e77eb02ad84bfa64ebdaace43fb0cfc71fd46cfa2d44dfb72279419c67669b32"
+        },
+        "planHash": "e007976b81b5144a952c872ac50b2f6e7afc6f617b5ef3da084389cea9fa2af8",
+        "samples": {
+          "path": "research-artifacts/runs/benchmarks/9ec220e9e03c485c8871703ec4711b27/samples.jsonl",
+          "sha256": "2a0618b96d886c01f92dcde5be747eb388ef28180e4e38043b9594f53718c1d7"
+        }
+      },
+      "unitIndex": {
+        "path": ".evidence/R2-20261010/API-synapse-20261014/effective-unit-index.json",
+        "sha256": "ef5fb67b1652bdd3f5c61e2e2d8008987f68575d32e90614e2e3e40e8a38a65a"
+      },
+      "segments": [
+        {
+          "batchId": "9ec220e9e03c485c8871703ec4711b27",
+          "plan": {
+            "path": "research-artifacts/runs/benchmarks/9ec220e9e03c485c8871703ec4711b27/plan.json",
+            "sha256": "e77eb02ad84bfa64ebdaace43fb0cfc71fd46cfa2d44dfb72279419c67669b32"
+          },
+          "planHash": "e007976b81b5144a952c872ac50b2f6e7afc6f617b5ef3da084389cea9fa2af8",
+          "samples": {
+            "path": "research-artifacts/runs/benchmarks/9ec220e9e03c485c8871703ec4711b27/samples.jsonl",
+            "sha256": "2a0618b96d886c01f92dcde5be747eb388ef28180e4e38043b9594f53718c1d7"
+          }
+        },
+        {
+          "batchId": "df80ee324191450fb26ac6743d64cc3e",
+          "plan": {
+            "path": "research-artifacts/runs/benchmarks/df80ee324191450fb26ac6743d64cc3e/plan.json",
+            "sha256": "4f346212a9d3c8eaeb81c91b420dd591185728b72ef24a40cf76782de0070718"
+          },
+          "planHash": "585957447f8672da13be2f815dee17e6e2be6baef8be4213b60aa1cc4cee7023",
+          "samples": {
+            "path": "research-artifacts/runs/benchmarks/df80ee324191450fb26ac6743d64cc3e/samples.jsonl",
+            "sha256": "f664f01be84b73208ae6439e1d7d3ce1ae074eca0aebf443752d5b204e6e96e9"
+          }
+        },
+        {
+          "batchId": "2f171ae1c6dc4d1aa86159001a01812f",
+          "plan": {
+            "path": "research-artifacts/runs/benchmarks/2f171ae1c6dc4d1aa86159001a01812f/plan.json",
+            "sha256": "27e03b77c167469f24edbc20204f3e8a5480235b7a53fdac7483e6a8dedb2634"
+          },
+          "planHash": "023386d221e1fc0738a0dffb1d34dcae906f7ce806592bf32bf6ca6656e7d205",
+          "samples": {
+            "path": "research-artifacts/runs/benchmarks/2f171ae1c6dc4d1aa86159001a01812f/samples.jsonl",
+            "sha256": "1bf869777da329c520201ae43922da6d838f61cc7bb39c992c9ce1131e6f9d7f"
+          }
+        },
+        {
+          "batchId": "fb20e37e52664be9aa0e9e630cefd920",
+          "plan": {
+            "path": "research-artifacts/runs/benchmarks/fb20e37e52664be9aa0e9e630cefd920/plan.json",
+            "sha256": "c5319fefaf745fa8a594cbf396c1da7ac3c10fede84bc71ec5da8baa6aefb753"
+          },
+          "planHash": "7f4aa5f66724df0062e4f512c8b76ef3ef844cd905ee7385d9531307d03a8794",
+          "samples": {
+            "path": "research-artifacts/runs/benchmarks/fb20e37e52664be9aa0e9e630cefd920/samples.jsonl",
+            "sha256": "59f279d6217fb25d1e7ab85646ce2a26885f5e91e5186e60c30aa0e3141ff93f"
+          }
+        },
+        {
+          "batchId": "519a48e8a4904f5e81ca2a53c18958b8",
+          "plan": {
+            "path": "research-artifacts/runs/benchmarks/519a48e8a4904f5e81ca2a53c18958b8/plan.json",
+            "sha256": "0e2fa8e305270d4fc4cd0c5336f99e4eaf4208b0baefe8d3c06cbe1ed4b53393"
+          },
+          "planHash": "2166df0c3cc34d45afc9350e76d2baa8b51ead8b7e357128b170368df0da9ef6",
+          "samples": {
+            "path": "research-artifacts/runs/benchmarks/519a48e8a4904f5e81ca2a53c18958b8/samples.jsonl",
+            "sha256": "625f969e8c9b817e2c0b0045a8c13d257c83e0a91a7da20d579d29f4d3d86c54"
+          }
+        },
+        {
+          "batchId": "4711412ad1164d9ebf848c0934569d58",
+          "plan": {
+            "path": "research-artifacts/runs/benchmarks/4711412ad1164d9ebf848c0934569d58/plan.json",
+            "sha256": "5bd6af9b983ab90f3ea7195b033539d8b001d549f40955114478f257ef18110d"
+          },
+          "planHash": "46fdda9fe15b52a7d5b50e0198bdb86e17e4ea8caaa86bcca7f42cdfa2337ada",
+          "samples": {
+            "path": "research-artifacts/runs/benchmarks/4711412ad1164d9ebf848c0934569d58/samples.jsonl",
+            "sha256": "ee530d77951a8459f562b0323ea364590bd3583add84c6e703c58b944f2f295c"
+          }
+        }
+      ]
+    },
+    {
+      "batchId": "be23621ebe4f404e956a5f4261d5810d",
+      "plannedTargets": 8,
+      "plannedUnits": 40,
+      "savedUnits": 40,
+      "candidateCount": 22,
+      "origin": {
+        "batchId": "be23621ebe4f404e956a5f4261d5810d",
+        "plan": {
+          "path": "research-artifacts/runs/benchmarks/be23621ebe4f404e956a5f4261d5810d/plan.json",
+          "sha256": "0a1a94381bc0777ca20e88893c6a6a4c40dae87f772f4a62dcd19a60a18ea5ce"
+        },
+        "planHash": "54d05a1414ca809c09dfc8fae8145132182e3f67afef40138ab897d7805904e2",
+        "samples": {
+          "path": "research-artifacts/runs/benchmarks/be23621ebe4f404e956a5f4261d5810d/samples.jsonl",
+          "sha256": "b61ee5ae31ffab8e767ab675fc853bcc2c9fe78d73a85875bfe19ced3abde1f1"
+        }
+      },
+      "unitIndex": null,
+      "segments": [
+        {
+          "batchId": "be23621ebe4f404e956a5f4261d5810d",
+          "plan": {
+            "path": "research-artifacts/runs/benchmarks/be23621ebe4f404e956a5f4261d5810d/plan.json",
+            "sha256": "0a1a94381bc0777ca20e88893c6a6a4c40dae87f772f4a62dcd19a60a18ea5ce"
+          },
+          "planHash": "54d05a1414ca809c09dfc8fae8145132182e3f67afef40138ab897d7805904e2",
+          "samples": {
+            "path": "research-artifacts/runs/benchmarks/be23621ebe4f404e956a5f4261d5810d/samples.jsonl",
+            "sha256": "b61ee5ae31ffab8e767ab675fc853bcc2c9fe78d73a85875bfe19ced3abde1f1"
+          }
+        }
+      ]
+    },
+    {
+      "batchId": "6beeb4553a30422e883fdefcdc085073",
+      "plannedTargets": 8,
+      "plannedUnits": 32,
+      "savedUnits": 32,
+      "candidateCount": 12,
+      "origin": {
+        "batchId": "6beeb4553a30422e883fdefcdc085073",
+        "plan": {
+          "path": "research-artifacts/runs/benchmarks/6beeb4553a30422e883fdefcdc085073/plan.json",
+          "sha256": "28d24053d0379d206ac5ccd0f4c1a043a5a8f02c0940d64f195d1e213d100b20"
+        },
+        "planHash": "ee03b7f87fa2bc527c70101ebedff7a8e1b8aa9b8e7bbba108ee3c610221c977",
+        "samples": {
+          "path": "research-artifacts/runs/benchmarks/6beeb4553a30422e883fdefcdc085073/samples.jsonl",
+          "sha256": "83d938508c9f17882f10233a72f84d14cf99ef5e93b1939dff377f97a34ec428"
+        }
+      },
+      "unitIndex": null,
+      "segments": [
+        {
+          "batchId": "6beeb4553a30422e883fdefcdc085073",
+          "plan": {
+            "path": "research-artifacts/runs/benchmarks/6beeb4553a30422e883fdefcdc085073/plan.json",
+            "sha256": "28d24053d0379d206ac5ccd0f4c1a043a5a8f02c0940d64f195d1e213d100b20"
+          },
+          "planHash": "ee03b7f87fa2bc527c70101ebedff7a8e1b8aa9b8e7bbba108ee3c610221c977",
+          "samples": {
+            "path": "research-artifacts/runs/benchmarks/6beeb4553a30422e883fdefcdc085073/samples.jsonl",
+            "sha256": "83d938508c9f17882f10233a72f84d14cf99ef5e93b1939dff377f97a34ec428"
+          }
+        }
+      ]
+    }
+  ],
+  "comparisonBatchId": "be23621ebe4f404e956a5f4261d5810d",
+  "snapshotId": "a6d70058bb93a26505def7878553d01e7667248d387f41a101a4ff2f71bd36db",
+  "datasetHash": "25188ebb5f1e7bd19ed1d1617e376489eae26fa11c29eec1b2c623caf39b554d",
+  "runHash": "0442eb506887f0a9ed4a8f70e4079fa3614d60dbbf750015b7d6a36ef5d212f2",
+  "derivedArtifacts": {
+    "inventory": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/inventory/manifest.json",
+      "sha256": "a8159e12f8d1db741f0fd55b55d4af80824355f9699713f4e8c9967ee3615a29"
+    },
+    "dataset": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/prepared/dataset.json",
+      "sha256": "cb7151e0534051018043258d4e5f189d8aa6453e0dd23b5abdb5bd4574101c9a"
+    },
+    "reviews": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/prepared/reviews.template.json",
+      "sha256": "28442e8f2c074ef209472af26e5b401cf7b691dd8b277b4ba16df17f302251b7"
+    },
+    "lineage": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/prepared/lineage.template.json",
+      "sha256": "2e4c32db7fe7a26460306cbb5a4cf3ba172e9147de97af30ba4c3e0b1e9cfb2d"
+    },
+    "comparison": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/comparison/run.json",
+      "sha256": "8438a4db13cd681944997ade2b877900ab627f41cb38b4da71f5810d738963c3"
+    },
+    "evaluation": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/evaluation/report.json",
+      "sha256": "e854a1630493d11e4c3e85cc9507bd35374fcdea2a20c0121802f318ab53b987"
+    },
+    "lineageCheck": {
+      "path": "research-artifacts/runs/benchmarks/phase5-20261021/lineage/lineage-report.json",
+      "sha256": "7080e5d1d0991b3d9453b1159ce7733272bc360c018a00d4f1736f6c4a4f4346"
+    }
+  },
+  "model": {
+    "documentPrefix": "",
+    "identity": {
+      "dimension": 384,
+      "model": "BAAI/bge-small-en-v1.5",
+      "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+      "weightsHash": "92aa207eba31cb050d95b792e771660bc4bfb0410e3f8a9b36319fa005e8c841"
+    },
+    "maxInputTokens": 512,
+    "queryPrefix": ""
+  },
+  "coverage": {
+    "completeScoredTargets": 0,
+    "independentAcceptanceRate": 0.0,
+    "independentlyAcceptedQueries": 0,
+    "partialScoredTargets": 0,
+    "plannedQueries": 46,
+    "plannedTargets": 8,
+    "scorableQueries": 0,
+    "scorableQueryRate": 0.0,
+    "structurallyValidQueries": 13,
+    "targetStatuses": {
+      "READY": 8
+    },
+    "unscoredTargets": 8
+  },
+  "lineageCheck": {
+    "status": "REVIEW_REQUIRED",
+    "records": 308,
+    "missingFields": 624
+  },
+  "requestAttempts": 0,
+  "researchEligible": false,
+  "limitations": [
+    "历史批次独立登记，不将两组各163条候选混合",
+    "13个结构有效操作均在完整token预检中阻断，未执行向量推理",
+    "查询、相关性及项目／事件／补丁谱系均无独立审核；真实排序成绩为空"
+  ]
+}

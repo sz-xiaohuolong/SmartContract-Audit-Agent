@@ -365,3 +365,53 @@ PYTHONPATH=tools/experiment python3 tools/experiment/r3_cli.py --allow-unreviewe
 评估仍使用 `eval_ragas.py`：R3 代码对与卡片统一按案例计数（CASE_PAIR），原片段 ID 继续保存。卡片评估会回读冻结卡片原件并核对实际正文；原实验仍按代码片段计数（SNIPPET）。R3 每次最多两案例，计算案例排序时显式选择 `--k 2`；没有独立相关性标注时分数留空。实施边界与批量预算见 [R3 统一计划](../../docs/vibe/releases/R3-20261015/IMPLEMENTATION_PLAN.md#8-2026-10-16-首期实施决定与状态)。
 
 2026-10-16 的一次真实采集已完成：40/40 模型请求有效、零重试，五条件分类 F1 均为 1.0；完整流程 33 项完成、7 项风险绑定失败。22 条新候选为 10 支持、0 反驳、12 未知。该次授权已消费，结果及原件身份见 [R3 实施与真实实验报告](../../docs/vibe/releases/R3-20261015/experiments/2026-10-16_R3_IMPLEMENTATION_AND_REAL_API_REPORT.md)。
+
+## phase 5：离线对照查询与同池重排
+
+这个入口检查参考案例是否能区分调用主体或余额写入顺序。它从重验的编译事实生成问题，让同一份完整前后材料分别与原问题和对照问题比较。`P5_RELEVANCE` 按原相似度排序；`P5_MARGIN` 按“原相似度减去最大对照相似度”排序。过滤、完整配对、最多两案例及 4096 UTF-8 字节预算共用，只改变排序依据。默认工作台和 D2 继续使用原路径。
+
+下面所有命令在项目根目录运行。输出目录必须不存在，不能覆盖已冻结结果。先登记历史输入，再准备查询及盲审模板；准备时会调用原编译器重验保存的收据，不需要 Milvus 或模型 API。
+
+```bash
+python3 tools/experiment/phase5_cli.py inventory \
+  --batch-id 9ec220e9e03c485c8871703ec4711b27 \
+  --batch-id be23621ebe4f404e956a5f4261d5810d \
+  --batch-id 6beeb4553a30422e883fdefcdc085073 \
+  --unit-index .evidence/R2-20261010/API-synapse-20261014/effective-unit-index.json \
+  --output research-artifacts/runs/benchmarks/phase5-复现/inventory
+
+python3 tools/experiment/phase5_cli.py prepare \
+  --batch-id be23621ebe4f404e956a5f4261d5810d \
+  --output research-artifacts/runs/benchmarks/phase5-复现/prepared
+```
+
+第一步按原批次保留计划目标和候选数量；权威分段索引必须与原件行、源码及完整计划一致。第二步导出 `dataset.json`、`reviews.template.json`、`lineage.template.json`，分别保存冻结输入、隐藏方法分数与排名的审核材料、项目／事件／补丁来源表。没有事实、没有对照、入口不支持和超预算都保留原因，不当成零分。
+
+编码必须显式选择已登记本机 BGE 权重和对应 Python 环境；不会下载或调用外部嵌入服务。`--allow-unreviewed` 表示允许工程演练，不表示独立审核通过。
+
+```bash
+.local/envs/embedding/bin/python tools/experiment/phase5_cli.py compare \
+  --dataset research-artifacts/runs/benchmarks/phase5-复现/prepared/dataset.json \
+  --model-dir .local/models/bge --allow-unreviewed \
+  --output research-artifacts/runs/benchmarks/phase5-复现/comparison
+
+python3 tools/experiment/phase5_cli.py replay \
+  --run research-artifacts/runs/benchmarks/phase5-复现/comparison/run.json
+
+python3 tools/experiment/phase5_cli.py evaluate \
+  --run research-artifacts/runs/benchmarks/phase5-复现/comparison/run.json \
+  --reviews research-artifacts/runs/benchmarks/phase5-复现/prepared/reviews.template.json \
+  --output research-artifacts/runs/benchmarks/phase5-复现/evaluation
+
+python3 tools/experiment/phase5_cli.py lineage \
+  --ledger research-artifacts/runs/benchmarks/phase5-复现/prepared/lineage.template.json \
+  --output research-artifacts/runs/benchmarks/phase5-复现/lineage
+```
+
+`compare` 在运行前从原件重建输入，拒绝改正文后重新封摘要的替换。`run.json` 保存每个操作的完整分数、向量、选中配对、消费文本及失败。`replay` 使用保存向量复算，不重新编码；输入全部失败时，它核对失败与空排序的记录是否一致。命令退出 0 只表示报告完整保存，仍需查看各操作的 `status`。
+
+`evaluate` 以完整配对计分，先在目标内平均，再跨目标平均。独立人工应在审核模板副本中分别填写：查询的 `status=ACCEPTED/REJECTED`，材料相关性的 `relevance.status=REVIEWED`，以及覆盖完整候选池的 `pairGrades`（0 无关、1 部分有用、2 直接有用）。两种审核都需填写 `reviewerType=INDEPENDENT_HUMAN`、`reviewer` 与 `rationale`；源码、问题、引用和材料正文保持冻结版本。未审核、AI 诊断或不完整池不能产生正式成绩。逐目标覆盖表保留零操作目标和入口缺口。
+
+`lineage` 检查已填写的字节摘要、项目、事件和补丁是否跨知识／开发／评价划分；缺字段保持需要审核（REVIEW_REQUIRED）。它只检查登记的一致性，不代替独立来源审核。
+
+2026-10-21 的本机集成保留 8 个目标、46 个操作；13 个结构有效，33 个未支持。13 个有效单元均因池内完整材料超过固定模型的 512 token 上限而失败，未执行向量推理；排序指标为空，零真实模型请求。来源登记见 [data/audit/phase5](../../data/audit/phase5/)，测试、技术说明与限制见[统一验收](../../docs/vibe/releases/phase5-20261021/VERIFICATION.md)。这批结果尚不能说明检索质量或漏洞发现效果提高。
