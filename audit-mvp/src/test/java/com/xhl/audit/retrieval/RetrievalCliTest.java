@@ -1,6 +1,6 @@
 package com.xhl.audit.retrieval;
 
-import com.xhl.audit.AuditCli;
+import com.xhl.audit.cli.AuditCli;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

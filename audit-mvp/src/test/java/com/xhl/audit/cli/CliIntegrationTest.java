@@ -1,4 +1,4 @@
-package com.xhl.audit;
+package com.xhl.audit.cli;
 
 import com.sun.net.httpserver.HttpServer;
 import com.fasterxml.jackson.databind.ObjectMapper;

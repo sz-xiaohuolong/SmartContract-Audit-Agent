@@ -1,4 +1,4 @@
-package com.xhl.audit;
+package com.xhl.audit.config;
 
 import java.net.URI;
 import java.time.Duration;

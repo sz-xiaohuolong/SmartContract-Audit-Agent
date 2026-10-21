@@ -1,4 +1,10 @@
-package com.xhl.audit;
+package com.xhl.audit.cli;
+
+import com.xhl.audit.config.ProviderRegistry;
+import com.xhl.audit.dto.AuditResult;
+import com.xhl.audit.gateway.ModelGateway;
+import com.xhl.audit.gateway.SpringAiGateway;
+import com.xhl.audit.service.AuditService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.PrintStream;

@@ -1,4 +1,8 @@
-package com.xhl.audit;
+package com.xhl.audit.service;
+
+import com.xhl.audit.dto.GatewayReply;
+import com.xhl.audit.gateway.ModelGateway;
+import com.xhl.audit.exception.ModelCallException;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -164,7 +168,7 @@ public final class HypothesisService {
                 null, null, 0, 0, List.of());
         } catch (IllegalArgumentException e) { return failed("INPUT_INVALID", null); }
           catch (Exception e) {
-              int attempts = e instanceof SpringAiGateway.CallFailure failure ? failure.attempts : 1;
+              int attempts = e instanceof ModelCallException failure ? failure.requestAttempts() : 1;
               return new Result("2", "FAILED", "UNRESOLVED", List.of(), "MODEL_CALL_ERROR", null,
                   null, null, 0, attempts, List.of());
           }

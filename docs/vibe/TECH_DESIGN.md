@@ -10,6 +10,21 @@ Java 21 使用 Spring Boot 4.1.1 的依赖体系和 Spring AI 2.0.1，负责供�
 
 这种分工让模型协议集中在 Java，研究机制集中在 Python。两侧通过子进程参数及结构化 JSON 交换数据。Java 检索 CLI 也提供三策略与条件绑定实现，Python 有运行和回退入口；对应配对数量、上下文内容和状态通过一致性检查核对。并发入口与工作台锁位于 Python，不能把所有并发控制归到 Java。
 
+Java 类位于 `audit-mvp/src/main/java/com/xhl/audit/` 下，按实际职责分包，测试目录采用对应结构：
+
+| 包 | 职责 |
+|---|---|
+| `cli` | 命令行入口、参数和文件校验、响应输出；JAR 启动类为 `com.xhl.audit.cli.AuditCli` |
+| `service` | 单次审计与漏洞猜想的业务流程、提示构造和结果校验 |
+| `gateway` | 模型调用接口与 Spring AI 适配实现 |
+| `config` | 按显式选择解析供应商配置与凭证 |
+| `dto` | 审计结果、模型回执等用于层间传递的数据对象 |
+| `exception` | 服务与网关共享的模型调用异常，保留实际请求次数 |
+| `tool` | 本机子进程执行和静态分析工具适配 |
+| `retrieval` | 沿用既有检索策略、事实提取与检索命令行入口 |
+
+依赖由命令行入口显式构造，再通过构造函数传入服务和适配器；当前没有 Spring Bean 扫描或自动注入。Java 模块没有 HTTP 接口和数据库访问，因此无需创建控制器或数据库访问层。现有命令参数和 JSON 字段继续沿用，内部 Java 包名随职责调整。
+
 ## 默认流程与研究开关
 
 默认流程描述系统通常怎样运行；实验入口描述为研究比较而额外选择的功能。默认离线模式不调用模型，真实模式仍需显式选择供应商和工具配置。
@@ -182,7 +197,7 @@ Python 目标显式设置 `factGuidanceEnabled=true` 时，请求前重建并核
 | 机制 | 主要源码入口 | 读代码时关注什么 |
 |---|---|---|
 | 工作台编排 | [audit_workbench.py](../../tools/experiment/audit_workbench.py)、[local_ui.py](../../tools/experiment/local_ui.py) | 预览、计划、运行与报告怎样衔接 |
-| 模型协议 | [HypothesisService.java](../../audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java)、[HypothesisCli.java](../../audit-mvp/src/main/java/com/xhl/audit/HypothesisCli.java) | 请求实际消费的资料与输出校验 |
+| 模型协议 | [HypothesisService.java](../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java)、[HypothesisCli.java](../../audit-mvp/src/main/java/com/xhl/audit/cli/HypothesisCli.java) | 请求实际消费的资料与输出校验 |
 | 配对与研究检索 | [d1_consumption.py](../../tools/experiment/d1_consumption.py)、[r3_retrieval.py](../../tools/experiment/r3_retrieval.py) | 默认配对与研究多路召回的区别 |
 | 编译和权限事实 | [compiler_facts.py](../../tools/experiment/compiler_facts.py)、[focus_context.py](../../tools/experiment/focus_context.py) | 原字节位置、依赖和事实关系 |
 | 候选定位 | [risk_binding.py](../../tools/experiment/risk_binding.py) | 同一入口、同一操作是否唯一对应 |

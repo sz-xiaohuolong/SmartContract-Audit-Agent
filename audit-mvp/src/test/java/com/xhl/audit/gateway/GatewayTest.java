@@ -1,4 +1,8 @@
-package com.xhl.audit;
+package com.xhl.audit.gateway;
+
+import com.xhl.audit.exception.ModelCallException;
+
+import com.xhl.audit.config.ProviderRegistry;
 
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
@@ -149,10 +153,10 @@ class GatewayTest {
             props.setProperty("providers.ark.max-retries", "0");
             calls.set(0);
             var once = new SpringAiGateway(new ProviderRegistry(props, Map.of()));
-            var failure = assertThrows(SpringAiGateway.CallFailure.class,
+            var failure = assertThrows(ModelCallException.class,
                 () -> once.complete("ark", "系统", "单次批量预算"));
             assertEquals(1, calls.get(), "显式零重试预算只允许一次HTTP尝试");
-            assertEquals(1, failure.attempts);
+            assertEquals(1, failure.requestAttempts());
         } finally { server.stop(0); }
     }
 

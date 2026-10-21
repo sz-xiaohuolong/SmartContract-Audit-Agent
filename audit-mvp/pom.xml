@@ -32,7 +32,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.xhl.audit.AuditCli</mainClass>
+                    <mainClass>com.xhl.audit.cli.AuditCli</mainClass>
                 </configuration>
             </plugin>
         </plugins>

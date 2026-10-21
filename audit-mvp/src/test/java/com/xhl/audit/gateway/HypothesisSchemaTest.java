@@ -1,4 +1,6 @@
-package com.xhl.audit;
+package com.xhl.audit.gateway;
+
+import com.xhl.audit.support.RiskCatalogFixture;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,4 +1,6 @@
-package com.xhl.audit;
+package com.xhl.audit.gateway;
+
+import com.xhl.audit.dto.GatewayReply;
 
 @FunctionalInterface
 public interface ModelGateway {

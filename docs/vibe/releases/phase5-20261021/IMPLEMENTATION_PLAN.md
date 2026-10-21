@@ -58,7 +58,7 @@
 | 复用 | [compiler_facts.py](../../../../tools/experiment/compiler_facts.py)、[focus_context.py](../../../../tools/experiment/focus_context.py)、[risk_binding.py](../../../../tools/experiment/risk_binding.py) | 读取已校验事实与来源，不扩充证明能力；P5-01 |
 | 修改 | [eval_ragas.py](../../../../tools/experiment/eval_ragas.py) | 接入按完整配对计分的离线适配和审核覆盖；保留原片段指标定义；P5-03 |
 | 新增／修改测试 | `tests/test_phase5_retrieval.py`、`tests/test_phase5_cli.py`，及现有 [test_r3_retrieval.py](../../../../tools/experiment/tests/test_r3_retrieval.py)、[test_eval_ragas.py](../../../../tools/experiment/tests/test_eval_ragas.py) | 测试均位于 `tools/experiment/` 下；用固定向量和事实夹具，不依赖真实 API、Milvus 或工具安装 |
-| 后置，首期只读 | [benchmark_runtime.py](../../../../tools/experiment/benchmark_runtime.py)、[r3_protocol.py](../../../../tools/experiment/r3_protocol.py)、[r3_cli.py](../../../../tools/experiment/r3_cli.py)、[HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java) | P5-04 获准后才接入新条件、冻结和消费预检；不直接复用旧 CLI 中一次实验的历史授权文字 |
+| 后置，首期只读 | [benchmark_runtime.py](../../../../tools/experiment/benchmark_runtime.py)、[r3_protocol.py](../../../../tools/experiment/r3_protocol.py)、[r3_cli.py](../../../../tools/experiment/r3_cli.py)、[HypothesisService.java](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java) | P5-04 获准后才接入新条件、冻结和消费预检；不直接复用旧 CLI 中一次实验的历史授权文字 |
 | 附加数据 | `data/audit/phase5/`；派生运行放 `research-artifacts/runs/benchmarks/` | 前者保存来源与审核登记，后者保存冻结派生结果；不复制整个数据集或覆盖历史快照 |
 | 文档 | 本计划、分析、PROJECT、PROGRESS；开工后按需维护同目录 `VERIFICATION.md` | 任务统一在本计划，状态统一在 PROGRESS；实现成立后再更新 TECH_DESIGN |
 
@@ -104,6 +104,7 @@ margin(e) = originalScore(e) − max(contrastScores(e))
 | P5-03：离线独立评价 | 查询审核、配对相关性、覆盖和干扰测试报告 | P5-02；真实效果另需独立审核 | AC5-05 |
 | P5-04：受控发现比较 | 实际消费预检与模型比较；已授权的一次开发集探索见第 1 节 | 正式研究仍须 P5-03 独立增益与输入准入；探索按补充授权 | AC5-06 |
 | P5-05：多视角起草，条件性后续 | 单独研究是否值得增加分支 | P5-04 完成，另行确认成本和范围 | AC5-07 |
+| 工程维护：Java 职责分包 | 落实用户补充的 Spring Boot 工程规范，保持命令行行为 | 核对现有包、构建入口与依赖关系 | 见下方工程维护验收 |
 
 **就绪前沿：** P5-00—03 的工程设施已实施；随后获准的一次 P5-04 开发集探索也已完成，真实结果见[追加报告](experiments/2026-10-21_REAL_MODEL_COMPARISON.md)。Nomic 已解决首期评分长度阻断，但三条件未观察到分类或候选核验增益。来源谱系、查询与完整池相关性的独立审核仍缺，正式研究准入未通过，P5-05 继续后置；本次单次调用授权已消费。
 
@@ -212,3 +213,9 @@ java -jar audit-mvp/target/audit-mvp-0.1.0-SNAPSHOT.jar --help
 | 能判断多分支是否必要 | 成本匹配消融与候选追溯成立 | 条件性 P5-05 |
 
 接手时先读 PROJECT 地图与 PROGRESS，再核对本计划、[统一验收](VERIFICATION.md)和 Git。显式 Nomic 入口已解决本批评分长度问题。当前下一项研究工作是补独立审核与有区分力的独立评价集；本次真实探索授权已消费，不自动追加调用。不得静默裁剪或更换模型。参数、评分器或材料表达若改变，先更新本计划与派生版本，重新冻结受影响输入；实现和验证成立后才写入 TECH_DESIGN。phase 4 真实修复和独立研究缺口继续保留，不因进入新阶段而结项。
+
+## 7. 工程维护：Java 职责分包（2026-10-21）
+
+**目标与范围：** 用户要求将七条 Spring Boot 工程规范写入根目录 `AGENTS.md`，并规范现有 Java 代码。先核对 Java 21、Spring Boot 4.1.1、Spring AI 2.0.1 及命令行架构，再将根包中的入口、服务、配置、数据、网关和工具类移入职责包。保留既有检索包和构造函数注入方式；提取服务与网关共享的调用异常，避免业务服务依赖具体模型适配类。同步测试目录、JAR 启动类及当前技术设计中的源码链接。
+
+**验收：** Java 文件路径与包声明一致，根包不再堆放业务类；Java 21 下 `mvn clean verify` 通过，JAR 帮助与 Python 离线测试通过，命令参数、结构化结果、失败分类、实际请求次数及缺失用量保持既有契约。用户原有修改保留，真实模型调用与研究结论不在本次范围内。最终结果登记在[统一验收](VERIFICATION.md)，任务状态进入现有进度表。

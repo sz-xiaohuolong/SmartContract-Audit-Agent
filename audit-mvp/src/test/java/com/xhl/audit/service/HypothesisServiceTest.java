@@ -1,4 +1,8 @@
-package com.xhl.audit;
+package com.xhl.audit.service;
+
+import com.xhl.audit.dto.GatewayReply;
+import com.xhl.audit.gateway.ModelGateway;
+import com.xhl.audit.support.RiskCatalogFixture;
 
 import org.junit.jupiter.api.Test;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.xhl.audit;
+package com.xhl.audit.cli;
 
 import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;

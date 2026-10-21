@@ -1,4 +1,8 @@
-package com.xhl.audit;
+package com.xhl.audit.service;
+
+import com.xhl.audit.exception.ModelCallException;
+
+import com.xhl.audit.dto.GatewayReply;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +14,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** 消费回执必须绑定传给网关的实际消息，而非另一份估算提示。 */
 class HypothesisConsumptionTest {
+    @Test void 调用失败后服务与消费回执保留实际次数且不泄露异常正文() throws Exception {
+        String source = "contract C { function f() public {} }";
+        var request = new HypothesisService.Request(source, source, null, "FULL", 1, 1,
+            "ACCESS_CONTROL", "f", "", List.of());
+        var result = new HypothesisService((name, system, user) -> {
+            throw new ModelCallException(new IllegalStateException("敏感供应商正文"), 2);
+        }).analyze(request, "fixture");
+        var json = new ObjectMapper().valueToTree(result);
+        assertEquals("FAILED", result.status());
+        assertEquals("UNRESOLVED", result.conclusion());
+        assertEquals("MODEL_CALL_ERROR", result.errorCategory());
+        assertEquals(2, result.requestAttempts());
+        assertEquals(2, json.path("requestConsumptionReceipt").path("requestAttempts").asInt());
+        assertNull(result.inputTokens());
+        assertNull(result.outputTokens());
+        assertFalse(json.toString().contains("敏感供应商正文"));
+    }
+
     private static String sha(String value) throws Exception {
         return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
             .digest(value.getBytes(StandardCharsets.UTF_8)));

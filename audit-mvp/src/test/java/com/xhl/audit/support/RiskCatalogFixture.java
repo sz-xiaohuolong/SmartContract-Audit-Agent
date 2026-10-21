@@ -1,4 +1,4 @@
-package com.xhl.audit;
+package com.xhl.audit.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -7,13 +7,13 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 
 /** 本地目录接口夹具，只验证绑定行为，不作为真实编译或漏洞证据。 */
-final class RiskCatalogFixture {
-    static final ObjectMapper MAPPER = new ObjectMapper();
-    static String digest(byte[] value) {
+public final class RiskCatalogFixture {
+    public static final ObjectMapper MAPPER = new ObjectMapper();
+    public static String digest(byte[] value) {
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value)); }
         catch (Exception error) { throw new AssertionError(error); }
     }
-    static ObjectNode catalog(String source) {
+    public static ObjectNode catalog(String source) {
         var catalog = MAPPER.createObjectNode();
         catalog.put("schemaVersion", "compiler-risk-1").put("provider", "solc-standard-json")
             .put("verificationStatus", "RECOMPILED_MATCH").put("sourceHash", digest(source.getBytes(StandardCharsets.UTF_8)))
@@ -25,7 +25,7 @@ final class RiskCatalogFixture {
             .put("sha256", catalog.path("sourceHash").asText());
         return catalog;
     }
-    static ObjectNode guidance(ObjectNode catalog, String text) {
+    public static ObjectNode guidance(ObjectNode catalog, String text) {
         var result = MAPPER.createObjectNode().put("schemaVersion", "permission-guidance-1")
             .put("text", text).put("textSha256", digest(text.getBytes(StandardCharsets.UTF_8)))
             .put("textBytes", text.getBytes(StandardCharsets.UTF_8).length)
@@ -36,7 +36,7 @@ final class RiskCatalogFixture {
         result.putArray("omittedRelationIds");
         return result;
     }
-    static ObjectNode operation(ObjectNode catalog, String source, String contract, String function,
+    public static ObjectNode operation(ObjectNode catalog, String source, String contract, String function,
                                 String expression, String operation, String factId) {
         int offset = source.indexOf(expression);
         int start = source.substring(0, offset).getBytes(StandardCharsets.UTF_8).length;

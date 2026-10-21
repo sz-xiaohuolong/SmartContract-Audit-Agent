@@ -1,4 +1,8 @@
-package com.xhl.audit;
+package com.xhl.audit.service;
+
+import com.xhl.audit.dto.AuditResult;
+import com.xhl.audit.dto.GatewayReply;
+import com.xhl.audit.gateway.ModelGateway;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;

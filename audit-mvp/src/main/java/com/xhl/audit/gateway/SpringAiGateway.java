@@ -1,4 +1,8 @@
-package com.xhl.audit;
+package com.xhl.audit.gateway;
+
+import com.xhl.audit.config.ProviderRegistry;
+import com.xhl.audit.dto.GatewayReply;
+import com.xhl.audit.exception.ModelCallException;
 
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
@@ -43,7 +47,7 @@ public final class SpringAiGateway implements ModelGateway {
                 return new GatewayReply(reply.content(), reply.provider(), reply.model(), reply.inputTokens(),
                     reply.outputTokens(), (System.nanoTime() - started) / 1_000_000, reply.finishReason(), attempt + 1);
             } catch (RuntimeException error) {
-                if (attempt >= maxRetries) throw new CallFailure(error, attempt + 1);
+                if (attempt >= maxRetries) throw new ModelCallException(error, attempt + 1);
                 if (!transientFailure(error)) throw error;
                 // 仅允许一次退避重试；SDK 自带重试关闭，避免请求次数叠加。
                 try { Thread.sleep(1000L << attempt); }
@@ -52,14 +56,6 @@ public final class SpringAiGateway implements ModelGateway {
                     throw new IllegalStateException("模型重试被中断", interrupted);
                 }
             }
-        }
-    }
-    /** 重试耗尽时保留实际请求数与原始异常链，不输出凭证或供应商正文。 */
-    static final class CallFailure extends RuntimeException {
-        final int attempts;
-        CallFailure(RuntimeException cause, int attempts) {
-            super("模型调用重试耗尽", cause);
-            this.attempts = attempts;
         }
     }
     private static boolean transientFailure(Throwable error) {

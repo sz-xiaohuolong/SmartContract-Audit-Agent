@@ -66,6 +66,18 @@
 - 数据入口：`data/README.md`；公开原始数据直接使用根目录 `smartbugs-curated/`、`SolidiFI-benchmark/`，版本与校验摘要登记在 `data/datasets.json`；额外对照位于 `data/controls/openzeppelin/`。不重新复制整套原始数据；保持历史样本编号与标签，原始输入变化不能续写旧实验计划。
 - 旧应用已退役；当前构建仅使用 `audit-mvp`，旧 Java、测试、配置与独立构建不再维护。历史代码通过 Git 恢复，当前架构以 TECH_DESIGN 为准。
 
+### Spring Boot 工程规范
+
+1. 编码前先检查项目现有目录结构、包命名和技术栈，优先遵循已有约定，不得随意重构。
+2. 新建 Spring Boot 项目时，默认使用 Controller、Service、ServiceImpl、Mapper、Entity、DTO、VO、Config、Exception 分层结构。
+3. Java 类必须放在对应职责的 package 中，不得将业务代码全部放在根包或项目根目录。
+4. Controller 只负责参数接收、校验和响应；Service 负责业务逻辑；Mapper 负责数据库访问。
+5. 根据职责创建类，不为简单需求机械增加不必要的抽象层。
+6. 新增文件必须使用与目录匹配的 package 声明，检查 Spring Bean 扫描范围及依赖注入。
+7. 实现完成后检查目录结构、执行项目构建和相关测试，修复发现的问题。
+
+上述分层分别用于请求入口、业务接口与实现、数据库访问、持久化对象、传输与展示数据、配置和异常。包名使用小写。现有 `audit-mvp` 是不启动 Spring 容器的命令行程序，按实际职责使用 `cli`、`service`、`gateway`、`config`、`dto`、`exception`、`tool` 和既有 `retrieval` 包；依赖通过构造函数显式传入。没有 HTTP 或数据库需求时，不补建 Controller、Mapper、Entity，也不强制拆分只有一种实现的 Service 接口。
+
 ### 文档必须通俗易懂
 
 本规则适用于 `docs/`、README、计划、报告及其他新增或修改的项目说明。文档面向人类读者，默认读者第一次接触本项目，不熟悉代码和内部约定。

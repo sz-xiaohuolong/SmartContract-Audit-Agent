@@ -33,7 +33,7 @@
 | Gemini 说法 | 实际代码或记录 | 对 phase 5 的处理 |
 |---|---|---|
 | Dense 的 F1 下降已经证明“相关性陷阱” | [2026-10-14 报告](../R2-20261010/experiments/2026-10-14_SYNAPSE_REAL_API_REPORT.md)对 52 个共同有效目标报告 Vanilla 0.9792、Dense 0.9684、D1 0.9787；没有逐条独立相关性／干扰归因标注 | 下降是研究线索；先做盲审误导案例与候选错误类型，不预写根因 |
-| D1 无增益源于同提示词的正反资料抵消 | 当前 [Java 提示](../../../../audit-mvp/src/main/java/com/xhl/audit/HypothesisService.java)确实一起呈现配对资料；[Python 消费](../../../../tools/experiment/d1_consumption.py)保留完整前后配对与 4096 UTF-8 字节预算；没有只改变上下文结构的对照实验 | 上下文互扰是待测假设，不据此删除修复材料；保留全文和完整配对身份 |
+| D1 无增益源于同提示词的正反资料抵消 | 当前 [Java 提示](../../../../audit-mvp/src/main/java/com/xhl/audit/service/HypothesisService.java)确实一起呈现配对资料；[Python 消费](../../../../tools/experiment/d1_consumption.py)保留完整前后配对与 4096 UTF-8 字节预算；没有只改变上下文结构的对照实验 | 上下文互扰是待测假设，不据此删除修复材料；保留全文和完整配对身份 |
 | 只要把 `a.denseScore()+b.denseScore()` 改成相减就是 CF-RAG | [D1Retriever.java](../../../../audit-mvp/src/main/java/com/xhl/audit/retrieval/D1Retriever.java)的该加和仅在条件绑定与覆盖排序之后使用；自动标注路径转交 `AutomaticContrast`，Python 软配对也另有 `min+0.25×差值`；phase 3 已有[多路召回、冲突过滤和互补选择](../../../../tools/experiment/r3_retrieval.py) | 保持现有路径；对同一查询、同一证据比较原问题与有效对照问题的分数，先作离线重排 |
 | CF-RAG 仲裁可以直接由 D2 取代，形成“机器真值” | [D2](../../../../tools/experiment/compiled_d2.py)及[本机执行](../../../../tools/experiment/evm_witness.py)只覆盖受支持属性和可行见证；[phase 4 验收](../phase4-20261019/VERIFICATION.md)保留真实修复未知／未知 | D2 继续逐候选检查；支持、反驳、未知、失败各自保留，不让检索分数更改裁决 |
 

@@ -1,4 +1,7 @@
-package com.xhl.audit;
+package com.xhl.audit.service;
+
+import com.xhl.audit.dto.AuditResult;
+import com.xhl.audit.dto.GatewayReply;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

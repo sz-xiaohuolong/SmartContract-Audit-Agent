@@ -1,4 +1,4 @@
-package com.xhl.audit;
+package com.xhl.audit.dto;
 
 public record AuditResult(String schemaVersion, String sourceHash, Status status, Conclusion conclusion,
     String vulnerabilityType, String reason, String provider, String model,
