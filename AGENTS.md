@@ -53,6 +53,7 @@
 
 - Python 离线工具验证：`PYTHONPATH=tools/experiment python3 -m unittest discover -s tools/experiment/tests -v`；实现位于 `tools/experiment/`。
 - 文档恢复：先读 `docs/vibe/PROJECT.md` 的唯一文档地图和 `docs/vibe/PROGRESS.md` 首屏，再按当前任务读取地图中的规格、架构、计划或验证入口。
+- 个人知识库（2026-10-27）：今后论文、技术文章及相关阅读笔记统一保存到根目录 `knowledge-base/`，入口为 `knowledge-base/README.md`。按主题和文章组织原文、卡片与附件，维护索引、版本和来源；原有 `thesis/` 文献作为历史来源保留，不破坏既有引用。本约定针对阅读资料，不改变项目规格、实验数据与运行原件的既有目录职责；知识库默认仅在本机保存。
 - Slice 组织：同一 Release 内的切片记录在统一实施计划的 Slice Map 和进度表中，不新增切片独立目录或整套规格／计划／验证文件；存量目录按地图标明职责，移动前核对代码与证据引用。
 - 文档结构：`docs/vibe/` 根目录只维护 PROJECT、PROGRESS、TECH_DESIGN；各 Release 的基线、规格、目标方案、计划和验收放在 `docs/vibe/releases/<release-id>/`。Slice 只进入统一计划与当前进度。
 - 阶段命名（2026-10-19）：面向读者使用 `phase X：具体工作`；phase 4 与原称 R4 是同一阶段，文档入口为 `docs/vibe/releases/phase4-20261019/`。旧 R0—R3 名称作为历史别名，既有目录、实验 ID、收据及原件路径不批量改名；完整对应关系由 PROJECT 的文档地图维护。版本名称与工作流的 Planning／Building 等执行状态分别记录。

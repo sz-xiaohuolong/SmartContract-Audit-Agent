@@ -102,6 +102,8 @@ phase 5 已依据[CF-RAG 分析](releases/phase5-20261021/CF_RAG_ANALYSIS.md)和
 
 ### 第三层：实验、论文与复现
 
+个人阅读资料统一从 [知识库](../../knowledge-base/README.md) 进入。当前收录 16 篇论文及已有笔记；以后新增的论文、技术文章和阅读笔记都放在根目录 `knowledge-base/`。该目录仅在本机保存，历史 `thesis/` 引用继续保留，项目规格与实验原件仍沿用本地图中的位置。
+
 | 问题或记录 | 阅读入口及用途 |
 |---|---|
 | CF-RAG 对 phase 5 有什么启发 | [文献与工程分析](releases/phase5-20261021/CF_RAG_ANALYSIS.md)、[统一优化计划](releases/phase5-20261021/IMPLEMENTATION_PLAN.md)：核对论文与作者代码，纠正直接相减和强制分支隔离等误读；已实现有来源的对照查询、同池重排和独立评价设施；[实际结果](releases/phase5-20261021/VERIFICATION.md)保留首期编码阻断及后续 Nomic／真实探索；独立成绩仍为空 |

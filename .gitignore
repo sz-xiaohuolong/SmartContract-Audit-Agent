@@ -66,6 +66,8 @@ paper/**/*.toc
 paper/
 experiment-reports/
 thesis/
+# 个人知识库沿用论文资料的本地保存方式，正文与 PDF 不随代码同步。
+/knowledge-base/
 
 # 新增原始运行证据默认只在本机暂存；已跟踪证据继续保留。
 /.evidence/
